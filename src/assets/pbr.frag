@@ -1,8 +1,8 @@
-#version 430 core
+#version 430
 
-in vec3 fColor;
 in vec3 fNormal;
 in vec3 fPosition;
+in vec2 fUV;
 
 // light sources
 // use vec4 instead vec3 for GLSL std140 data layout standard
@@ -10,19 +10,15 @@ struct DirectionalLight
 {
 	vec4 direction;
 
-	vec4 ambient;
-    vec4 diffuse;
-    vec4 specular;
+	vec4 intensity;
 };
 
 struct PositionalLight
 {
 	vec4 position;
 	vec4 attenuation;
-
-	vec4 ambient;
-    vec4 diffuse;
-    vec4 specular;
+    
+	vec4 intensity;
 };
 
 struct SpotLight
@@ -31,18 +27,17 @@ struct SpotLight
 	vec4 direction;
 	vec4 Angles;
 	vec4 attenuation;
-
-	vec4 ambient;
-    vec4 diffuse;
-    vec4 specular;
+    
+	vec4 intensity;
 };
 
 struct Material
 {
-	vec4 ambient;
-	vec4 diffuse;
-	vec4 specular;
-	vec4 shininess;
+	sampler2D albedo;
+	sampler2D specular;
+	samplerCube irradiance;
+    vec4 coefficients;
+    float reflection;
 };
 
 // light source data in uniform blocks
@@ -60,7 +55,6 @@ uniform uint pLightCount ;
 layout (std140, binding = 2) uniform sLightUBlock {
  SpotLight sLights [ sMAXLIGHTS ];
 };
-
 uniform uint sLightCount ;
 
 uniform Material material;
@@ -69,14 +63,18 @@ uniform vec3 viewPos;
 
 out vec4 FragColor;
 
-// material parameters
-vec3 albedo = fColor;
-float metallic = material.ambient.x;
-float roughness = material.ambient.y;
-float ao = material.ambient.z;
+//todo
+vec3 albedo = pow(texture(material.albedo, fUV).rgb, vec3(2.2));
+float metallic = material.coefficients.x;
+float roughness = material.coefficients.y;
+float ao = material.coefficients.z;
 
 const float PI = 3.14159265359;
 
+vec3 Idirectional(DirectionalLight light, vec3 normal, vec3 viewDir);
+vec3 Ipoint(PositionalLight light, vec3 N, vec3 fPosition, vec3 V, vec3 F0);
+vec3 Ispot(SpotLight light, vec3 normal, vec3 fPosition, vec3 viewDir);
+vec3 calculateLight();
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)
 {
@@ -118,26 +116,99 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0)
     return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
 
-void main()
-{		
-    vec3 N = normalize(fNormal);
-    vec3 V = normalize(viewPos - fPosition);
+vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
+{
+    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+}   
 
+void main()
+{
+    if(material.reflection == 1.0f)
+    {
+        FragColor = texture(material.irradiance, fPosition);
+    }else
+    {
+        FragColor = vec4(calculateLight(),1.0f);
+    }
+}
+
+vec3 calculateLight() {
+	
+    vec3 N = normalize(fNormal);
+	vec3 V = normalize(viewPos - fPosition);
+    vec3 R = reflect(-V, N);
+    
     // calculate reflectance at normal incidence; if dia-electric (like plastic) use F0 
     // of 0.04 and if it's a metal, use the albedo color as F0 (metallic workflow)    
     vec3 F0 = vec3(0.04); 
     F0 = mix(F0, albedo, metallic);
+    vec3 F; // needs to be at the top, otherwise it will be "undefined"
 
     // reflectance equation
     vec3 Lo = vec3(0.0);
-    for(int i = 0; i < pLightCount; ++i) 
-    {
-        // calculate per-light radiance
-        vec3 L = normalize(vec3(pLights[i].position) - fPosition);
+
+	// add the directional light's contribution to the output
+	for(int i = 0; i < dLightCount; i++)
+	//result += Idirectional(dLights[i], N, V);
+
+	// do the same for all point lights
+	for(int i = 0; i < pLightCount; i++)
+  	Lo += Ipoint(pLights[i], N, fPosition, V, F0);
+
+	// and add spotlights as well
+	for(int i = 0; i < sLightCount; i++)
+	//result += Ispot(sLights[i], vec3(N), fPosition, V);
+
+    // ambient lighting (we now use IBL as the ambient term)
+    F = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);    
+    vec3 kS = F;
+    vec3 kD = 1.0 - kS;
+    kD *= 1.0 - metallic;	  
+    
+    vec3 irradiance = texture(material.irradiance, N).rgb;
+    vec3 diffuse      = irradiance * albedo;
+    
+    vec3 ambient = (kD * diffuse) * ao;
+    
+    vec3 color = ambient + Lo;
+
+    // HDR tonemapping
+    color = color / (color + vec3(1.0));
+    // gamma correct
+    color = pow(color, vec3(1.0/2.2)); 
+
+    return color;
+}
+
+// calculate directional lights
+vec3 Idirectional(DirectionalLight light, vec3 normal, vec3 viewDir)
+{
+    vec3 lightDir = normalize(vec3(-light.direction));
+
+    // diffuse shading
+    float diff = max(dot(normal, lightDir), 0.0f);
+
+    // specular shading
+    vec3 reflectDir = reflect(-lightDir, normal);
+    vec3 halfway = normalize(lightDir + viewDir);
+    float spec = pow(max(dot(normal, halfway), 0.0f), material.coefficients.w);
+
+    // combine results
+    vec3 ambient  = texture(material.albedo, fUV).xyz * material.coefficients.x;
+    vec3 diffuse  = diff * texture(material.albedo, fUV).xyz * material.coefficients.y;
+    vec3 specular = spec * texture(material.specular, fUV).xyz * material.coefficients.z;
+    return light.intensity.xyz * (ambient + diffuse + specular);
+}  
+
+// calculate postional lights
+vec3 Ipoint(PositionalLight light, vec3 N, vec3 fPosition, vec3 V, vec3 F0)
+{
+    // calculate per-light radiance
+        vec3 L = normalize(vec3(light.position) - fPosition);
         vec3 H = normalize(V + L);
-        float distance = length(vec3(pLights[i].position) - fPosition);
+        float distance = length(vec3(light.position) - fPosition);
         float attenuation = 1.0 / (distance * distance);
-        vec3 radiance = vec3(3000.0 * pLights[i].ambient) * attenuation;
+        vec3 radiance = light.intensity.xyz * attenuation;
 
         // Cook-Torrance BRDF
         float NDF = DistributionGGX(N, H, roughness);   
@@ -163,17 +234,40 @@ void main()
         float NdotL = max(dot(N, L), 0.0);        
 
         // add to outgoing radiance Lo
-        Lo += (kD * albedo / PI + specular) * radiance * NdotL; // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
-    }   
+        return (kD * albedo / PI + specular) * radiance * NdotL; // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
     
-    vec3 ambient = vec3(0.03) * albedo * ao;
+}
 
-    vec3 color = ambient * Lo;
-
-    // HDR tonemapping
-    color = color / (color + vec3(1.0));
-    // gamma correct
-    color = pow(color, vec3(1.0/2.2)); 
+// calculate spot lights
+vec3 Ispot(SpotLight light, vec3 normal, vec3 fPosition, vec3 viewDir)
+{
+    vec3 lightDir = normalize(vec3(light.position) - fPosition);
     
-    FragColor = vec4(color, 1.0);
+
+    // diffuse shading
+    float diff = max(dot(normal, lightDir), 0.0f);
+
+    // specular shading
+    vec3 reflectDir = reflect(-lightDir, normal);
+    vec3 halfway = normalize(lightDir + viewDir);
+    float spec = pow(max(dot(normal, halfway), 0.0f), material.coefficients.w);
+
+    // attenuation
+    float distance    = length(vec3(light.position) - fPosition);
+    float attenuation = 1.0f / (light.attenuation[0] + light.attenuation[1] * distance + 
+  			     light.attenuation[2] * (distance * distance));    
+
+    // cone light (x is outer angle, y is inner angle)
+    float theta     = dot(lightDir, normalize(vec3(-light.direction)));
+    float epsilon   = light.Angles.y - light.Angles.x;
+    float intensity = smoothstep(0.0, 1.0, (theta - light.Angles.x) / epsilon);
+
+    // combine results
+    vec3 ambient  = texture(material.albedo, fUV).xyz * material.coefficients.x;
+    vec3 diffuse  = diff * texture(material.albedo, fUV).xyz * material.coefficients.y;
+    vec3 specular = spec * texture(material.specular, fUV).xyz * material.coefficients.z;
+    ambient  *= attenuation * intensity;
+    diffuse  *= attenuation * intensity;
+    specular *= attenuation * intensity;
+    return light.intensity.xyz * (ambient + diffuse + specular);
 }

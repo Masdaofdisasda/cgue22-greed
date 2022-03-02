@@ -462,9 +462,9 @@ void Mesh::setTextures(Texture* diff, Texture* spec, Cubemap* cube)
 
 void Mesh::uploadMaterial(Shader shader)
 {
-	shader.setInt("material.tex0", 0);
-	shader.setInt("material.tex1", 1);
-	shader.setInt("material.tex2", 2);
+	shader.setInt("material.albedo", 0);
+	shader.setInt("material.specular", 1);
+	shader.setInt("material.irradiance", 2);
 	shader.setVec4("material.coefficients", coefficients);
 	shader.setFloat("material.reflection", reflection);
 }

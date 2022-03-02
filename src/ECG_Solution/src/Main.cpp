@@ -221,25 +221,15 @@ int main(int argc, char** argv)
 	skybox.translate(glm::vec3(0.0f, -5.0f, 0.0f));
 
 	Mesh box = box.Cube(1.5f, 1.5f, 1.5f);
-	box.setMaterial(glm::vec4(0.1f, 0.7f, 0.1f, 2.0f), 0.0f);
+	box.setMaterial(glm::vec4(0.5f, 0.5f, 1.0f, 1.0f), 0.0f);
 	box.setTextures(&diffWood, &specWood, &cubemap);
-	box.translate(glm::vec3(0.0f, 1.5f, 0.0f));
-
-	Mesh cylinder = cylinder.Cylinder(32, 1.3f, 1.0f);
-	cylinder.setMaterial(glm::vec4(0.1f, 0.7f, 0.3f, 8.0f), 0.5f);
-	cylinder.setTextures(&diffTile, &specTile, &cubemap);
-	cylinder.translate(glm::vec3(1.5f, -1.0f, 0.0f));
-
-	Mesh sphere = sphere.Sphere(64, 32, 1.0f);
-	sphere.setMaterial(glm::vec4(0.1f, 0.7f, 0.3f, 8.0f), 0.5f);
-	sphere.setTextures(&diffTile, &specTile, &cubemap);
-	sphere.translate(glm::vec3(-1.5f, -1.0f, 0.0f));
+	box.translate(glm::vec3(0.0f, -2.0f, 0.0f));
 
 
 	// build shader programms from vertex and fragment shader files
-	std::cout << "build Phong shader from phong.vert and phong.frag in assets folder..." << std::endl;
-	Shader phongShader("assets/phong.vert", "assets/phong.frag", dLightsBuffer.size(), pLightsBuffer.size(), sLightsBuffer.size(), 0);
-	phongShader.Use();
+	std::cout << "build PBR shader from PBR.vert and PBR.frag in assets folder..." << std::endl;
+	Shader PBRShader("assets/pbr.vert", "assets/pbr.frag", dLightsBuffer.size(), pLightsBuffer.size(), sLightsBuffer.size(), 0);
+	PBRShader.Use();
 
 	// create Uniform Buffer Objects from light source struct vectors
 	UBO directionalLights = UBO(dLightsBuffer);
@@ -247,13 +237,13 @@ int main(int argc, char** argv)
 	UBO spotLights = UBO(sLightsBuffer);
 
 	// bind UBOs to bindings in shader
-	directionalLights.bindBufferBaseToBindingPoint(phongShader.dirLoc);
-	positionalLights.bindBufferBaseToBindingPoint(phongShader.posLoc);
-	spotLights.bindBufferBaseToBindingPoint(phongShader.spotLoc);
+	directionalLights.bindBufferBaseToBindingPoint(PBRShader.dirLoc);
+	positionalLights.bindBufferBaseToBindingPoint(PBRShader.posLoc);
+	spotLights.bindBufferBaseToBindingPoint(PBRShader.spotLoc);
 	// set light source count variables
-	phongShader.setuInt("dLightCount", dLightsBuffer.size());
-	phongShader.setuInt("pLightCount", pLightsBuffer.size());
-	phongShader.setuInt("sLightCount", sLightsBuffer.size());
+	PBRShader.setuInt("dLightCount", dLightsBuffer.size());
+	PBRShader.setuInt("pLightCount", pLightsBuffer.size());
+	PBRShader.setuInt("sLightCount", sLightsBuffer.size());
 
 
 
@@ -290,8 +280,6 @@ int main(int argc, char** argv)
 			glm::mat4 traCyl = glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, -1.0f, 0.0f));
 			glm::mat4 traSph = glm::translate(glm::mat4(1.0f), glm::vec3(-1.5f, -1.0f, 0.0f));
 			box.model = traBox * rot;
-			cylinder.model = traCyl * rot;
-			sphere.model = traSph*rot;
 			s += 0.01f;
 		}
 
@@ -310,21 +298,35 @@ int main(int argc, char** argv)
 		if (useZoom){ camera.Zoom(yOffset); useZoom = false; } // prevents infinity zooms}
 		if (useStrafe) { camera.Strafe(prev, window); }
 
-		phongShader.Use();
+		PBRShader.Use();
 
 		// update camera for shader
-		phongShader.setVec3("viewPos", camera.camPos);
-		phongShader.setMat4("viewProject", camera.getViewProj());
+		PBRShader.setVec3("viewPos", camera.camPos);
+		PBRShader.setMat4("viewProject", camera.getViewProj());
 
 		// draw phong shaded meshes
-		box.Draw(phongShader);
-		cylinder.Draw(phongShader);
-		sphere.Draw(phongShader);
+		box.Draw(PBRShader);
+
+		// cheap demo 
+		float Zoff = -5.0f;
+		for (int i = 0; i < 10; i++)
+		{
+			for (int j = 0; j < 10; j++)
+			{
+				Mesh sph = sph.Sphere(16, 8, .45f);
+				sph.setTextures(&diffTile, &specTile, &cubemap);
+				sph.translate(glm::vec3(i - 4.5f, j - 4.5f, Zoff));
+				sph.setMaterial(
+					glm::vec4((float)i / 10.0f, glm::clamp((float)j / 10.0f, 0.01f, 1.0f), 1.0f, 1.0f),
+					0.0f);
+				sph.Draw(PBRShader);
+			}
+		}
 
 		// draw skybox        
 		glDepthFunc(GL_LEQUAL);
-		phongShader.setMat4("viewProject", camera.getViewProjSkybox());
-		skybox.Draw(phongShader);
+		PBRShader.setMat4("viewProject", camera.getViewProjSkybox());
+		skybox.Draw(PBRShader);
 		glDepthFunc(GL_LESS);
 
 
