@@ -120,7 +120,7 @@ void Shader::getUniformLocations()
 
 void Shader::bindBufferBaseToBindingPoint(const std::string &name, UBO value)
 {
-	glBindBufferBase(GL_UNIFORM_BUFFER, glGetUniformBlockIndex(shader_program, name.c_str()), value.ubo);
+	glBindBufferBase(GL_UNIFORM_BUFFER, glGetUniformBlockIndex(shader_program, name.c_str()), *value.getID());
 }
 
 void Shader::setuInt(const std::string& name, int value)

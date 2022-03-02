@@ -46,5 +46,4 @@ class VAO
 		void LinkAttrib(VBO* VBO, GLuint layout, GLuint numComp, GLenum type, GLsizeiptr stride, void* offset);
 		void Bind();
 		void Unbind();
-		void Delete();
 };
