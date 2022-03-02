@@ -209,46 +209,32 @@ int main(int argc, char** argv)
 
 		glm::vec4(0.8f,0.8f,0.8f,1.0f) }); // intensity
 
+	Texture diffWood = Texture("assets/textures/wood_texture.dds");
+	Texture specWood = Texture("assets/textures/wood_texture_specular.dds", 1);
+	Texture diffTile = Texture("assets/textures/tiles_diffuse.dds");
+	Texture specTile = Texture("assets/textures/tiles_specular.dds",1);
+	Cubemap cubemap = Cubemap("assets/textures/cubemap");
 
-	// generate skybox mesh
-	Mesh skybox(40.0);
-	skybox.setMaterial(
-		"assets/textures/wood_texture.dds",				// texture
-		"assets/textures/wood_texture_specular.dds",	// specular map
-		"assets/textures/cubemap",						// cube map
-		glm::vec4(0.0f, 0.0f, 0.0f, 0.0f),				// coefficients (ka, kd, ks, alpha)
-		1.0f);											// reflection (0-100%)
+	Mesh skybox = skybox.Skybox(40.0f);
+	skybox.setMaterial(glm::vec4(0.0f, 0.0f, 0.0f, 0.0f), 1.0f);
+	skybox.setTextures(&diffWood, &specWood, &cubemap);
 	skybox.translate(glm::vec3(0.0f, -5.0f, 0.0f));
 
-	//		 width	height	depth	red		green	blue
-	Mesh box(1.5f, 1.5f, 1.5f, 0.0f, 0.0f, 0.0f);
-	box.setMaterial(
-		"assets/textures/wood_texture.dds",
-		"assets/textures/wood_texture_specular.dds",
-		"assets/textures/cubemap",						
-		glm::vec4(0.1f, 0.7f, 0.1f, 2.0f),
-		0.0f);
+	Mesh box = box.Cube(1.5f, 1.5f, 1.5f);
+	box.setMaterial(glm::vec4(0.1f, 0.7f, 0.1f, 2.0f), 0.0f);
+	box.setTextures(&diffWood, &specWood, &cubemap);
 	box.translate(glm::vec3(0.0f, 1.5f, 0.0f));
 
-	// segments, height, radius, red, green, blue
-	Mesh cylinder(32, 1.3f, 1.0f, 0.0f, 0.0f, 0.0f);
-	cylinder.setMaterial(
-		"assets/textures/tiles_diffuse.dds",
-		"assets/textures/tiles_specular.dds",
-		"assets/textures/cubemap",						
-		glm::vec4(0.1f, 0.7f, 0.3f, 8.0f),
-		.5f);
+	Mesh cylinder = cylinder.Cylinder(32, 1.3f, 1.0f);
+	cylinder.setMaterial(glm::vec4(0.1f, 0.7f, 0.3f, 8.0f), 0.5f);
+	cylinder.setTextures(&diffTile, &specTile, &cubemap);
 	cylinder.translate(glm::vec3(1.5f, -1.0f, 0.0f));
 
-	// longitude segments, latitude segments, radius, red, green, blue
-	Mesh sphere(64, 32, 1.0f, 0.0f, 0.0f, 0.0f);
-	sphere.setMaterial(
-		"assets/textures/tiles_diffuse.dds",
-		"assets/textures/tiles_specular.dds",
-		"assets/textures/cubemap",						
-		glm::vec4(0.1f, 0.7f, 0.3f, 8.0f),
-		.5f);
+	Mesh sphere = sphere.Sphere(64, 32, 1.0f);
+	sphere.setMaterial(glm::vec4(0.1f, 0.7f, 0.3f, 8.0f), 0.5f);
+	sphere.setTextures(&diffTile, &specTile, &cubemap);
 	sphere.translate(glm::vec3(-1.5f, -1.0f, 0.0f));
+
 
 	// build shader programms from vertex and fragment shader files
 	std::cout << "build Phong shader from phong.vert and phong.frag in assets folder..." << std::endl;

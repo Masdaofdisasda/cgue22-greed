@@ -2,7 +2,7 @@
 #include <algorithm>
 
 // box geometry constructor
-Mesh::Mesh(float w, float h, float d, float r, float g, float b)
+Mesh::Mesh(float w, float h, float d)
 {
 	if (w <= 0.0f || h <= 0.0f || d <= 0.0f)
 	{
@@ -14,8 +14,6 @@ Mesh::Mesh(float w, float h, float d, float r, float g, float b)
 	std::cout << "width = " << w << std::endl;
 	std::cout << "height = " << h << std::endl;
 	std::cout << "depth = " << d << std::endl;
-	std::cout << "color = " << r << "f " << g << "f " << b << "f " << std::endl;
-	glm::vec3 color = glm::vec3(r, g, b);
 
 	// normals
 	glm::vec3 back = glm::vec3(0.0f, 0.0f, -1.0f);
@@ -42,42 +40,42 @@ Mesh::Mesh(float w, float h, float d, float r, float g, float b)
 		//Vertex{glm::vec3(	0.5f*w,		0.5f*h,		0.5f*d),	color}, // G
 		//Vertex{glm::vec3(	-0.5f*w,	0.5f*h,		0.5f*d),	color}, // H
 
-		//	postion		x * width	y * height	z * depth	color	normal	uv
+		//	postion		x * width	y * height	z * depth	normal	uv
 		// back
-		Vertex{glm::vec3(-0.5f * w,	-0.5f * h,	-0.5f * d),	color,	back, botleft}, // A0
-		Vertex{glm::vec3(0.5f * w,	-0.5f * h,	-0.5f * d),	color,	back, topright}, // B1
-		Vertex{glm::vec3(0.5f * w,	0.5f * h,	-0.5f * d),	color,	back, botright}, // C2
-		Vertex{glm::vec3(-0.5f * w,	0.5f * h,	-0.5f * d),	color,	back, topleft}, // D3
+		Vertex{glm::vec3(-0.5f * w,	-0.5f * h,	-0.5f * d),	back, botleft}, // A0
+		Vertex{glm::vec3(0.5f * w,	-0.5f * h,	-0.5f * d),	back, topright}, // B1
+		Vertex{glm::vec3(0.5f * w,	0.5f * h,	-0.5f * d),	back, botright}, // C2
+		Vertex{glm::vec3(-0.5f * w,	0.5f * h,	-0.5f * d),	back, topleft}, // D3
 
 		// front
-		Vertex{glm::vec3(-0.5f * w,	-0.5f * h,	0.5f * d),	color,	front, botleft}, // E4
-		Vertex{glm::vec3(0.5f * w,	-0.5f * h,	0.5f * d),	color,	front, topright}, // F5
-		Vertex{glm::vec3(0.5f * w,	0.5f * h,	0.5f * d),	color,	front, botright}, // G6
-		Vertex{glm::vec3(-0.5f * w,	0.5f * h,	0.5f * d),	color,	front, topleft}, // H7
+		Vertex{glm::vec3(-0.5f * w,	-0.5f * h,	0.5f * d),	front, botleft}, // E4
+		Vertex{glm::vec3(0.5f * w,	-0.5f * h,	0.5f * d),	front, topright}, // F5
+		Vertex{glm::vec3(0.5f * w,	0.5f * h,	0.5f * d),	front, botright}, // G6
+		Vertex{glm::vec3(-0.5f * w,	0.5f * h,	0.5f * d),	front, topleft}, // H7
 
 		// right
-		Vertex{glm::vec3(0.5f * w,	-0.5f * h,	-0.5f * d),	color,	right, botleft}, // B8
-		Vertex{glm::vec3(0.5f * w,	0.5f * h,	-0.5f * d),	color,	right, topleft}, // C9
-		Vertex{glm::vec3(0.5f * w,	-0.5f * h,	0.5f * d),	color,	right, botright}, // F10
-		Vertex{glm::vec3(0.5f * w,	0.5f * h,	0.5f * d),	color,	right, topright}, // G11
+		Vertex{glm::vec3(0.5f * w,	-0.5f * h,	-0.5f * d),	right, botleft}, // B8
+		Vertex{glm::vec3(0.5f * w,	0.5f * h,	-0.5f * d),	right, topleft}, // C9
+		Vertex{glm::vec3(0.5f * w,	-0.5f * h,	0.5f * d),	right, botright}, // F10
+		Vertex{glm::vec3(0.5f * w,	0.5f * h,	0.5f * d),	right, topright}, // G11
 
 		// left
-		Vertex{glm::vec3(-0.5f * w,	-0.5f * h,	-0.5f * d),	color,	left, botleft}, // A12
-		Vertex{glm::vec3(-0.5f * w,	0.5f * h,	-0.5f * d),	color,	left, topleft}, // D13
-		Vertex{glm::vec3(-0.5f * w,	-0.5f * h,	0.5f * d),	color,	left, botright}, // E14
-		Vertex{glm::vec3(-0.5f * w,	0.5f * h,	0.5f * d),	color,	left, topright}, // H15
+		Vertex{glm::vec3(-0.5f * w,	-0.5f * h,	-0.5f * d),	left, botleft}, // A12
+		Vertex{glm::vec3(-0.5f * w,	0.5f * h,	-0.5f * d),	left, topleft}, // D13
+		Vertex{glm::vec3(-0.5f * w,	-0.5f * h,	0.5f * d),	left, botright}, // E14
+		Vertex{glm::vec3(-0.5f * w,	0.5f * h,	0.5f * d),	left, topright}, // H15
 
 		// top
-		Vertex{glm::vec3(0.5f * w,	0.5f * h,	-0.5f * d),	color,	top, botright}, // C16
-		Vertex{glm::vec3(-0.5f * w,	0.5f * h,	-0.5f * d),	color,	top, botleft}, // D17
-		Vertex{glm::vec3(0.5f * w,	0.5f * h,	0.5f * d),	color,	top, topright}, // G18
-		Vertex{glm::vec3(-0.5f * w,	0.5f * h,	0.5f * d),	color,	top, topleft}, // H19
+		Vertex{glm::vec3(0.5f * w,	0.5f * h,	-0.5f * d),	top, botright}, // C16
+		Vertex{glm::vec3(-0.5f * w,	0.5f * h,	-0.5f * d),	top, botleft}, // D17
+		Vertex{glm::vec3(0.5f * w,	0.5f * h,	0.5f * d),	top, topright}, // G18
+		Vertex{glm::vec3(-0.5f * w,	0.5f * h,	0.5f * d),	top, topleft}, // H19
 
 		// bottom
-		Vertex{glm::vec3(-0.5f * w,	-0.5f * h,	-0.5f * d),	color,	bottom, botleft}, // A20
-		Vertex{glm::vec3(0.5f * w,	-0.5f * h,	-0.5f * d),	color,	bottom, botright}, // B21
-		Vertex{glm::vec3(-0.5f * w,	-0.5f * h,	0.5f * d),	color,	bottom, topleft}, // E22
-		Vertex{glm::vec3(0.5f * w,	-0.5f * h,	0.5f * d),	color,	bottom, topright}, // F23
+		Vertex{glm::vec3(-0.5f * w,	-0.5f * h,	-0.5f * d),	bottom, botleft}, // A20
+		Vertex{glm::vec3(0.5f * w,	-0.5f * h,	-0.5f * d),	bottom, botright}, // B21
+		Vertex{glm::vec3(-0.5f * w,	-0.5f * h,	0.5f * d),	bottom, topleft}, // E22
+		Vertex{glm::vec3(0.5f * w,	-0.5f * h,	0.5f * d),	bottom, topright}, // F23
 
 	};
 
@@ -133,42 +131,42 @@ Mesh::Mesh(float size)
 		//Vertex{glm::vec3(	0.5f*w,		0.5f*h,		0.5f*d),	color}, // G
 		//Vertex{glm::vec3(	-0.5f*w,	0.5f*h,		0.5f*d),	color}, // H
 
-		//	postion		x * width	y * height	z * depth	color	normal	uv
+		//	postion		x * width	y * height	z * depth	normal	uv
 		// back
-		Vertex{glm::vec3(-0.5f * w,	-0.5f * h,	-0.5f * d),	color,	back, botleft}, // A0
-		Vertex{glm::vec3(0.5f * w,	-0.5f * h,	-0.5f * d),	color,	back, topright}, // B1
-		Vertex{glm::vec3(0.5f * w,	0.5f * h,	-0.5f * d),	color,	back, botright}, // C2
-		Vertex{glm::vec3(-0.5f * w,	0.5f * h,	-0.5f * d),	color,	back, topleft}, // D3
+		Vertex{glm::vec3(-0.5f * w,	-0.5f * h,	-0.5f * d),	back, botleft}, // A0
+		Vertex{glm::vec3(0.5f * w,	-0.5f * h,	-0.5f * d),	back, topright}, // B1
+		Vertex{glm::vec3(0.5f * w,	0.5f * h,	-0.5f * d),	back, botright}, // C2
+		Vertex{glm::vec3(-0.5f * w,	0.5f * h,	-0.5f * d),	back, topleft}, // D3
 
 		// front
-		Vertex{glm::vec3(-0.5f * w,	-0.5f * h,	0.5f * d),	color,	front, botleft}, // E4
-		Vertex{glm::vec3(0.5f * w,	-0.5f * h,	0.5f * d),	color,	front, topright}, // F5
-		Vertex{glm::vec3(0.5f * w,	0.5f * h,	0.5f * d),	color,	front, botright}, // G6
-		Vertex{glm::vec3(-0.5f * w,	0.5f * h,	0.5f * d),	color,	front, topleft}, // H7
+		Vertex{glm::vec3(-0.5f * w,	-0.5f * h,	0.5f * d),	front, botleft}, // E4
+		Vertex{glm::vec3(0.5f * w,	-0.5f * h,	0.5f * d),	front, topright}, // F5
+		Vertex{glm::vec3(0.5f * w,	0.5f * h,	0.5f * d),	front, botright}, // G6
+		Vertex{glm::vec3(-0.5f * w,	0.5f * h,	0.5f * d),	front, topleft}, // H7
 
 		// right
-		Vertex{glm::vec3(0.5f * w,	-0.5f * h,	-0.5f * d),	color,	right, botleft}, // B8
-		Vertex{glm::vec3(0.5f * w,	0.5f * h,	-0.5f * d),	color,	right, topleft}, // C9
-		Vertex{glm::vec3(0.5f * w,	-0.5f * h,	0.5f * d),	color,	right, botright}, // F10
-		Vertex{glm::vec3(0.5f * w,	0.5f * h,	0.5f * d),	color,	right, topright}, // G11
+		Vertex{glm::vec3(0.5f * w,	-0.5f * h,	-0.5f * d),	right, botleft}, // B8
+		Vertex{glm::vec3(0.5f * w,	0.5f * h,	-0.5f * d),	right, topleft}, // C9
+		Vertex{glm::vec3(0.5f * w,	-0.5f * h,	0.5f * d),	right, botright}, // F10
+		Vertex{glm::vec3(0.5f * w,	0.5f * h,	0.5f * d),	right, topright}, // G11
 
 		// left
-		Vertex{glm::vec3(-0.5f * w,	-0.5f * h,	-0.5f * d),	color,	left, botleft}, // A12
-		Vertex{glm::vec3(-0.5f * w,	0.5f * h,	-0.5f * d),	color,	left, topleft}, // D13
-		Vertex{glm::vec3(-0.5f * w,	-0.5f * h,	0.5f * d),	color,	left, botright}, // E14
-		Vertex{glm::vec3(-0.5f * w,	0.5f * h,	0.5f * d),	color,	left, topright}, // H15
+		Vertex{glm::vec3(-0.5f * w,	-0.5f * h,	-0.5f * d),	left, botleft}, // A12
+		Vertex{glm::vec3(-0.5f * w,	0.5f * h,	-0.5f * d),	left, topleft}, // D13
+		Vertex{glm::vec3(-0.5f * w,	-0.5f * h,	0.5f * d),	left, botright}, // E14
+		Vertex{glm::vec3(-0.5f * w,	0.5f * h,	0.5f * d),	left, topright}, // H15
 
 		// top
-		Vertex{glm::vec3(0.5f * w,	0.5f * h,	-0.5f * d),	color,	top, botright}, // C16
-		Vertex{glm::vec3(-0.5f * w,	0.5f * h,	-0.5f * d),	color,	top, botleft}, // D17
-		Vertex{glm::vec3(0.5f * w,	0.5f * h,	0.5f * d),	color,	top, topright}, // G18
-		Vertex{glm::vec3(-0.5f * w,	0.5f * h,	0.5f * d),	color,	top, topleft}, // H19
+		Vertex{glm::vec3(0.5f * w,	0.5f * h,	-0.5f * d),	top, botright}, // C16
+		Vertex{glm::vec3(-0.5f * w,	0.5f * h,	-0.5f * d),	top, botleft}, // D17
+		Vertex{glm::vec3(0.5f * w,	0.5f * h,	0.5f * d),	top, topright}, // G18
+		Vertex{glm::vec3(-0.5f * w,	0.5f * h,	0.5f * d),	top, topleft}, // H19
 
 		// bottom
-		Vertex{glm::vec3(-0.5f * w,	-0.5f * h,	-0.5f * d),	color,	bottom, botleft}, // A20
-		Vertex{glm::vec3(0.5f * w,	-0.5f * h,	-0.5f * d),	color,	bottom, botright}, // B21
-		Vertex{glm::vec3(-0.5f * w,	-0.5f * h,	0.5f * d),	color,	bottom, topleft}, // E22
-		Vertex{glm::vec3(0.5f * w,	-0.5f * h,	0.5f * d),	color,	bottom, topright}, // F23
+		Vertex{glm::vec3(-0.5f * w,	-0.5f * h,	-0.5f * d),	bottom, botleft}, // A20
+		Vertex{glm::vec3(0.5f * w,	-0.5f * h,	-0.5f * d),	bottom, botright}, // B21
+		Vertex{glm::vec3(-0.5f * w,	-0.5f * h,	0.5f * d),	bottom, topleft}, // E22
+		Vertex{glm::vec3(0.5f * w,	-0.5f * h,	0.5f * d),	bottom, topright}, // F23
 
 	};
 
@@ -193,7 +191,7 @@ Mesh::Mesh(float size)
 }
 
 // cylinder geometry constructor
-Mesh::Mesh(int s, float h, float rad, float r, float g, float b)
+Mesh::Mesh(int s, float h, float rad)
 {
 	if (s < 3 || h <= 0.0f || rad <= 0.0f)
 	{
@@ -204,20 +202,17 @@ Mesh::Mesh(int s, float h, float rad, float r, float g, float b)
 	std::cout << "generating cylinder with:" << std::endl;
 	std::cout << "segments = " << s << std::endl;
 	std::cout << "height = " << h << std::endl;
-	std::cout << "radius = " << r << std::endl;
-	std::cout << "color = " << r << "f " << g << "f " << b << "f " << std::endl;
-	glm::vec3 color = glm::vec3(r, g, b);
 	const float PI = 3.1415926f;
 
 	std::cout << "generating cylinder vertices..." << std::endl;
 
 	//--------TOP CIRCLE--------//
 	glm::vec3 top = glm::vec3(0.0f, 1.0f, 0.0f);
-	vertices.push_back(Vertex{ glm::vec3(0.0f, h / 2, 0.0f), color , top, glm::vec2(0.5f,0.5f)}); // top circle center
+	vertices.push_back(Vertex{ glm::vec3(0.0f, h / 2, 0.0f) , top, glm::vec2(0.5f,0.5f)}); // top circle center
 
 	for(int i = 0; i < s; i++){ // create vertices
 		float theta = (float)i/s * PI * 2.0f;
-		vertices.push_back(Vertex{ glm::vec3(rad* cos(theta), h/2, rad*sin(theta)),color, top , glm::vec2(0.5f*cos(theta)+0.5f,0.5f * sin(theta) + 0.5f) });
+		vertices.push_back(Vertex{ glm::vec3(rad* cos(theta), h/2, rad*sin(theta)), top , glm::vec2(0.5f*cos(theta)+0.5f,0.5f * sin(theta) + 0.5f) });
 	}
 	
 	for(int i = 1; i < s; i++){ // assign indices 
@@ -231,10 +226,10 @@ Mesh::Mesh(int s, float h, float rad, float r, float g, float b)
 
 	//--------BOTTOM CIRCLE--------//
 	glm::vec3 bottom = glm::vec3(0.0f, -1.0f, 0.0f);
-	vertices.push_back(Vertex{ glm::vec3(0.0f, -h / 2, 0.0f), color, bottom, glm::vec2(0.5f,0.5f) }); // bottom circle center
+	vertices.push_back(Vertex{ glm::vec3(0.0f, -h / 2, 0.0f), bottom, glm::vec2(0.5f,0.5f) }); // bottom circle center
 	for(int i = 0; i < s; i++){ // create vertices 
 		float theta = (float)i / s * PI * 2.0f;
-		vertices.push_back(Vertex{ glm::vec3(rad * cos(theta), -h / 2, rad * sin(theta)),color, bottom, glm::vec2(0.5f * cos(theta) + 0.5f,0.5f * sin(theta) + 0.5f) });
+		vertices.push_back(Vertex{ glm::vec3(rad * cos(theta), -h / 2, rad * sin(theta)), bottom, glm::vec2(0.5f * cos(theta) + 0.5f,0.5f * sin(theta) + 0.5f) });
 	}
 	
 	for (int i = s+2; i < s*2+1; i++) { // assign indices
@@ -253,14 +248,14 @@ Mesh::Mesh(int s, float h, float rad, float r, float g, float b)
 		glm::vec3 position = glm::vec3(rad * cos(theta), h / 2, rad * sin(theta));
 		glm::vec3 normal = glm::normalize(glm::vec3(cos(theta), 0.0f, sin(theta)));
 		glm::vec2 uv = glm::vec2(theta/ (PI * 2.0f), 1);
-		vertices.push_back(Vertex{ position ,color, normal, uv });
+		vertices.push_back(Vertex{ position , normal, uv });
 	}
 	for (int i = 0; i < s; i++) { // create vertices
 		float theta = (float)i / s * PI * 2.0f;
 		glm::vec3 position = glm::vec3(rad * cos(theta), -h / 2, rad * sin(theta));
 		glm::vec3 normal = glm::normalize(glm::vec3(cos(theta), 0.0f, sin(theta)));
 		glm::vec2 uv = glm::vec2(theta / (PI * 2.0f), 0);
-		vertices.push_back(Vertex{ position ,color, normal, uv });
+		vertices.push_back(Vertex{ position , normal, uv });
 	}
 	for (int i = offset; i < offset + s-1; i++){ // 2s+2 vertices
 		int bl = i,		br = bl + 1,		tl = bl + s,		tr = tl + 1;	//					tl---tr
@@ -282,7 +277,7 @@ Mesh::Mesh(int s, float h, float rad, float r, float g, float b)
 }
 
 // sphere geometry constructor
-Mesh::Mesh(int longs, int lats, float rad, float r, float g, float b)
+Mesh::Mesh(int longs, int lats, float rad)
 {
 	if (longs < 3 || lats < 3 || rad <= 0.0f)
 	{
@@ -294,11 +289,9 @@ Mesh::Mesh(int longs, int lats, float rad, float r, float g, float b)
 	std::cout << "longitude segments = " << longs << std::endl;
 	std::cout << "latitude segments = " << lats << std::endl;
 	std::cout << "sphere radius = " << rad << std::endl;
-	std::cout << "color = " << r << "f " << g << "f " << b << "f " << std::endl;
 
-	glm::vec3 color = glm::vec3(r, g, b);
 	const float PI = 3.1415926f;
-	r = rad; // prevents confusion and errors
+	float r = rad; // prevents confusion and errors
 
 	std::cout << "generating sphere vertices..." << std::endl;
 
@@ -328,12 +321,12 @@ Mesh::Mesh(int longs, int lats, float rad, float r, float g, float b)
 			glm::vec3 p = glm::normalize(position - glm::vec3(0.0f));
 			glm::vec2 uv = glm::vec2(atan2(p.x,p.z)/ (2.0f*PI) + 0.5f, p.y * 0.5f + 0.5f);
 
-			vertices.push_back(Vertex{ position,color, normal, uv});
+			vertices.push_back(Vertex{ position, normal, uv});
 		}
 
 	}
-	vertices.push_back(Vertex{ glm::vec3(0.0f, r, 0.0f),color });
-	vertices.push_back(Vertex{ glm::vec3(0.0f, -r, 0.0f),color });
+	vertices.push_back(Vertex{ glm::vec3(0.0f, r, 0.0f) });
+	vertices.push_back(Vertex{ glm::vec3(0.0f, -r, 0.0f) });
 
 	int south = vertices.size()-1;
 	int north = south - 1;
@@ -415,8 +408,8 @@ void Mesh::PrepareBuffer()
 
 	VAO.LinkAttrib(&VBO, 0, 3, GL_FLOAT, sizeof(Vertex), (void*)0);
 	VAO.LinkAttrib(&VBO, 1, 3, GL_FLOAT, sizeof(Vertex), (void*)(3 * sizeof(float)));
-	VAO.LinkAttrib(&VBO, 2, 3, GL_FLOAT, sizeof(Vertex), (void*)(6 * sizeof(float)));
-	VAO.LinkAttrib(&VBO, 3, 2, GL_FLOAT, sizeof(Vertex), (void*)(9 * sizeof(float)));
+	VAO.LinkAttrib(&VBO, 2, 2, GL_FLOAT, sizeof(Vertex), (void*)(6 * sizeof(float)));
+	//VAO.LinkAttrib(&VBO, 3, 2, GL_FLOAT, sizeof(Vertex), (void*)(9 * sizeof(float)));
 	VAO.Unbind();
 	VBO.Unbind();
 	EBO.Unbind();
@@ -440,11 +433,11 @@ void Mesh::Draw(Shader shader)
 
 	// use texture 
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texture);
+	glBindTexture(GL_TEXTURE_2D, *diffuse->getID());
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, specular);
+	glBindTexture(GL_TEXTURE_2D, *specular->getID());
 	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, *cubemap->getID());
 
 	// load mesh on shader
 	uploadMaterial(shader);
@@ -454,11 +447,17 @@ void Mesh::Draw(Shader shader)
 	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 }
 
-void Mesh::setMaterial(const char* texFile, const char* specFile, const char* cubeFile, glm::vec4 coeff, float reflect)
+void Mesh::setMaterial(glm::vec4 coeff, float reflect)
 {
-	loadTexture(texFile, specFile, cubeFile);
 	coefficients = coeff;
 	reflection = reflect;
+}
+
+void Mesh::setTextures(Texture* diff, Texture* spec, Cubemap* cube)
+{
+	diffuse = diff;
+	specular = spec;
+	cubemap = cube;
 }
 
 void Mesh::uploadMaterial(Shader shader)
@@ -475,117 +474,4 @@ void Mesh::reverseIndices()
 	std::reverse(indices.begin(), indices.end());
 }
 
-void Mesh::loadTexture(const char* tex, const char* spec, const char* cube)
-{
-	// generate diffuse texture
-	glGenTextures(1, &texture);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texture);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	DDSImage imgTex = loadDDS(tex);
-
-	if (imgTex.size > 0)
-	{
-		glCompressedTexImage2D(GL_TEXTURE_2D, 0, imgTex.format, imgTex.width, imgTex.height, 0, imgTex.size, imgTex.data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-
-	}
-	else
-	{
-		std::cout << "could not load texture" << std::endl;
-	}
-
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-	// generate specular map
-	glGenTextures(1, &specular);
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, specular);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	DDSImage imgSpec = loadDDS(spec);
-
-	if (imgSpec.size > 0)
-	{
-		glCompressedTexImage2D(GL_TEXTURE_2D, 0, imgSpec.format, imgSpec.width, imgSpec.height, 0, imgSpec.size, imgSpec.data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-
-	}
-	else
-	{
-		std::cout << "could not load texture" << std::endl;
-	}
-
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-	// generate cube map
-	glGenTextures(1, &cubemap);
-	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap); 
-
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	char c[100];
-	strcpy(c, cube);
-
-	const char* location = strcat(c, "/negx.dds");
-	DDSImage imgMap = loadDDS(location);
-	glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, imgMap.format, imgMap.width, imgMap.height, 0, imgMap.size, imgMap.data);
-
-	strcpy(c, cube);
-	location = strcat(c, "/negy.dds");
-	imgMap = loadDDS(location);
-	glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, imgMap.format, imgMap.width, imgMap.height, 0, imgMap.size, imgMap.data);
-
-	strcpy(c, cube);
-	location = strcat(c, "/negz.dds");
-	imgMap = loadDDS(location);
-	glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, imgMap.format, imgMap.width, imgMap.height, 0, imgMap.size, imgMap.data);
-
-	strcpy(c, cube);
-	location = strcat(c, "/posx.dds");
-	imgMap = loadDDS(location);
-	glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, imgMap.format, imgMap.width, imgMap.height, 0, imgMap.size, imgMap.data);
-
-	strcpy(c, cube);
-	location = strcat(c, "/posy.dds");
-	imgMap = loadDDS(location);
-	glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, imgMap.format, imgMap.width, imgMap.height, 0, imgMap.size, imgMap.data);
-
-	strcpy(c, cube);
-	location = strcat(c, "/posz.dds");
-	imgMap = loadDDS(location);
-	glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, imgMap.format, imgMap.width, imgMap.height, 0, imgMap.size, imgMap.data);
-
-	// debugging black cubemap
-	GLenum err;
-	while ((err = glGetError()) != GL_NO_ERROR)
-	{
-		std::cout << "ERROR" << std::endl;
-		std::cout << err << std::endl;
-	}
-
-	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-
-}
-
-/*
-Mesh::~Mesh()
-{
-	std::cout << "delete Mesh..." << std::endl;
-	VAO.Delete();
-}*/
 

@@ -30,10 +30,3 @@ void VAO::Unbind()
 	glBindVertexArray(0);
 
 }
-
-// deletes EBO
-void VAO::Delete()
-{
-	glDeleteVertexArrays(1, &vao_ID);
-
-}

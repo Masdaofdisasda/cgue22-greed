@@ -7,7 +7,7 @@ class EBO
 	private:
 
 		// Reference ID of the EBO
-		GLuint ebo_ID;
+		GLuint ebo_ID = 0;
 
 		void Release()
 		{

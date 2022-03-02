@@ -3,12 +3,14 @@
 #include "EBO.h"
 #include "VAO.h"
 #include "shaderClass.h"
+#include "Texture.h"
+#include "Cubemap.h"
 
 
 // primitive mesh objects (box, cylinder, sphere, torus)
 class Mesh
 {
-public:
+private:
 
 	// VAO of the mesh
 	VAO VAO;
@@ -18,40 +20,38 @@ public:
 	// contains connected vertices
 	std::vector <GLuint> indices; // EBO
 
-	glm::mat4 model = glm::mat4(1.0f);
-
-	// material
-	GLuint texture, specular, cubemap;
+	// Texture & Material
+	Texture* diffuse; //todo: add default textures
+	Texture* specular;
+	Cubemap* cubemap;
 	glm::vec4 coefficients;
 	float reflection;
 
+	void PrepareBuffer();
+	void reverseIndices(); // changes face orientation
 
-	// box geometry constructor
-	// width, height, depth, red, green, blue
-	Mesh(float w, float h, float d, float r, float g, float b);
-
-	// skybox geometry constructor
+	// geometry constructors
+	Mesh(float w, float h, float d);
 	Mesh(float size);
+	Mesh(int s, float h, float rad);
+	Mesh(int longs, int lats, float rad);
 
-	// cylinder geometry constructor
-	// segments, height, radius, red, green, blue
-	Mesh(int s, float h, float rad, float r, float g, float b);
+public:
+	glm::mat4 model = glm::mat4(1.0f);
 
-	// sphere geometry constructor
-	// longitude segments, latitude segments, radius, red, green, blue
-	Mesh(int longs, int lats, float rad, float r, float g, float b);
+	static Mesh Cube(float width, float height, float depth) {return  Mesh(width, height, depth);}
+	static Mesh Cylinder(int segments, float height, float radius) { return  Mesh(segments, height, radius); }
+	static Mesh Sphere(int longsegments, int latisegments, float radius) { return  Mesh(longsegments, latisegments, radius); }
+	static Mesh Skybox(float size) { return  Mesh(size); }
+	// todo obj loading
 
 	glm::mat4 translate(glm::vec3 position);
 	glm::mat4 rotate(float theta, glm::vec3 axis);
 
-	void setMaterial(const char* texFile, const char* specFile, const char* cubeFile, glm::vec4 coeff, float reflect);
+	void setMaterial(glm::vec4 coeff, float reflect);
+	void setTextures(Texture* diff, Texture* spec, Cubemap* cube);
 	void uploadMaterial(Shader shader);
 	
 	void Draw(Shader shader); // draws triangles
-	//~Mesh(); // deletes Mesh
 	
-private:
-	void PrepareBuffer();
-	void reverseIndices(); // if wrong face is drawn
-	void loadTexture(const char* tex, const char* spec, const char* cube);
 };

@@ -21,10 +21,3 @@ void EBO::Unbind()
 {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
-
-// deletes EBO
-void EBO::Delete()
-{
-	std::cout << "delete Element Buffer Object (EBO)..." << std::endl;
-	glDeleteBuffers(1, &ebo_ID);
-}

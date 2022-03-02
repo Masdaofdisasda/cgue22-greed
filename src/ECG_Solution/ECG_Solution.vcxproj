@@ -2,6 +2,8 @@
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="src\CameraClass.cpp" />
+    <ClCompile Include="src\Cubemap.cpp" />
+    <ClCompile Include="src\Texture.cpp" />
     <ClCompile Include="src\Mesh.cpp" />
     <ClCompile Include="src\EBO.cpp" />
     <ClCompile Include="src\shaderClass.cpp" />
@@ -9,6 +11,8 @@
     <ClCompile Include="src\VAO.cpp" />
     <ClCompile Include="src\VBO.cpp" />
     <ClInclude Include="src\CameraClass.h" />
+    <ClInclude Include="src\Cubemap.h" />
+    <ClInclude Include="src\Texture.h" />
     <ClInclude Include="src\LightSource.h" />
     <ClInclude Include="src\Mesh.h" />
     <ClInclude Include="src\EBO.h" />

@@ -8,7 +8,7 @@ class UBO
     private:
 
         // reference ID
-        GLuint ubo_ID;
+        GLuint ubo_ID = 0;
 
         void Release()
         {
