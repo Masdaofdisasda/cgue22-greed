@@ -1,6 +1,5 @@
 #version 430
 
-in vec3 fColor;
 in vec3 fNormal;
 in vec3 fPosition;
 in vec2 fUV;

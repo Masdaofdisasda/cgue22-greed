@@ -29,9 +29,6 @@ struct SpotLight
 
 struct Material
 {
-	int tex0;
-	int tex1;
-	int tex2;
 	glm::vec4 coefficients;
 	float reflection;
 };
