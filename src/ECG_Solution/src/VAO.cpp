@@ -5,7 +5,7 @@ VAO::VAO()
 	std::cout << "create Vertex Array Object (VAO)..." << std::endl;
 
 	// generate VAO
-	glGenVertexArrays(1, &vao);
+	glGenVertexArrays(1, &vao_ID);
 }
 
 void VAO::LinkAttrib(VBO* VBO, GLuint layout, GLuint numComp, GLenum type, GLsizeiptr stride, void* offset)
@@ -20,7 +20,7 @@ void VAO::LinkAttrib(VBO* VBO, GLuint layout, GLuint numComp, GLenum type, GLsiz
 // bind VAO to current context
 void VAO::Bind()
 {
-	glBindVertexArray(vao);
+	glBindVertexArray(vao_ID);
 
 }
 
@@ -34,6 +34,6 @@ void VAO::Unbind()
 // deletes EBO
 void VAO::Delete()
 {
-	glDeleteVertexArrays(1, &vao);
+	glDeleteVertexArrays(1, &vao_ID);
 
 }
