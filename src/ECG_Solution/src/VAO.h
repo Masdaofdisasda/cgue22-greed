@@ -13,7 +13,7 @@ public:
 	VAO();
 
 	// links an VBO color and position to an VAO
-	void LinkAttrib(VBO VBO, GLuint layout, GLuint numComp, GLenum type, GLsizeiptr stride, void* offset);
+	void LinkAttrib(VBO* VBO, GLuint layout, GLuint numComp, GLenum type, GLsizeiptr stride, void* offset);
 	void Bind();
 	void Unbind();
 	void Delete();

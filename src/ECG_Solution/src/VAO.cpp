@@ -8,13 +8,13 @@ VAO::VAO()
 	glGenVertexArrays(1, &vao);
 }
 
-void VAO::LinkAttrib(VBO VBO, GLuint layout, GLuint numComp, GLenum type, GLsizeiptr stride, void* offset)
+void VAO::LinkAttrib(VBO* VBO, GLuint layout, GLuint numComp, GLenum type, GLsizeiptr stride, void* offset)
 {
 	// bind position or color to VAO
-	VBO.Bind();
+	(*VBO).Bind();
 	glVertexAttribPointer(layout, numComp, type, GL_FALSE, stride, offset);
 	glEnableVertexAttribArray(layout);
-	VBO.Unbind();
+	(*VBO).Unbind();
 }
 
 // bind VAO to current context
