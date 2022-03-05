@@ -123,13 +123,7 @@ vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
 
 void main()
 {
-    if(material.reflection == 1.0f)
-    {
-        FragColor = texture(material.irradiance, fPosition);
-    }else
-    {
-        FragColor = vec4(calculateLight(),1.0f);
-    }
+    FragColor = vec4(calculateLight(),1.0f);
 }
 
 vec3 calculateLight() {

@@ -229,6 +229,10 @@ int main(int argc, char** argv)
 	Program PBRShader(pbrVert, pbrFrag);
 	PBRShader.Use();
 
+	Shader skyboxVert("assets/shaders/skybox/skybox.vert");
+	Shader skyboxFrag("assets/shaders/skybox/skybox.frag");
+	Program skyboxShader(skyboxVert, skyboxFrag);
+
 
 	// create Uniform Buffer Objects from light source struct vectors
 	UBO directionalLights = UBO(dLightsBuffer);
@@ -299,14 +303,15 @@ int main(int argc, char** argv)
 		PBRShader.setVec3("viewPos", camera.camPos);
 		PBRShader.setMat4("viewProject", camera.getViewProj());
 
-		// draw phong shaded meshes
+		// draw meshes
 		PBRShader.Draw(box);
 
 
-		// draw skybox        
+		// draw skybox    
+		skyboxShader.Use();
 		glDepthFunc(GL_LEQUAL);
-		PBRShader.setMat4("viewProject", camera.getViewProjSkybox());
-		PBRShader.Draw(skybox);
+		skyboxShader.setMat4("viewProject", camera.getViewProjSkybox());
+		skyboxShader.Draw(skybox);
 		glDepthFunc(GL_LESS);
 
 
