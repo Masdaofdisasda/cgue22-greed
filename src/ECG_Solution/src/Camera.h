@@ -1,60 +1,51 @@
 #pragma once
 #include "Utils.h"
+#include <glm/glm.hpp>
+#include <glm/ext.hpp>
 
 class Camera
 {
 	public:
-		// needed for rotating the camera in x and y direction
-		float xRot = 0.0f;
-		float yRot = 0.0f;
+		struct Movement
+		{
+			bool forward_ = false;
+			bool backward_ = false;
+			bool left_ = false;
+			bool right_ = false;
+			bool up_ = false;
+			bool down_ = false;
 
-		// set ballarc camera radius to 6 units
-		float radius = 6.0f;
-		float rotationX = 3.1415926f/2; // 
-		float rotationY = 0.0f;
+			bool fastSpeed_ = false;
+		} movement_;
 
-		// clamps roation angle to 89.9 degrees
-		float yClamp = 89.9f;
+		float mouseSpeed_ = 4.0f;
+		float acceleration_ = 150.0f;
+		float damping_ = 0.2f;
+		float maxSpeed_ = 10.0f;
+		float fastCoef_ = 10.0f;
+		
+		glm::mat4 glmlookAt(glm::vec3 eye, glm::vec3 target, glm::vec3 up);
+		Camera(const glm::vec3& pos, const glm::vec3& target, const glm::vec3& up)
+			: cameraPosition_(pos)
+			, cameraOrientation_(glmlookAt(pos, target, up))
+			, up_(up)
+		{}
+		void update(double deltaSeconds, const glm::vec2& mousePos, bool mousePressed);
+		glm::mat4 getViewMatrix();
+		glm::vec3 getPosition();
+		void setPosition(const glm::vec3& pos);
+		void resetMousePosition(const glm::vec2& p) { mousePos_ = p; };
+		void setUpVector(const glm::vec3& up);
+		inline void lookAt(const glm::vec3& pos, const glm::vec3& target, const glm::vec3& up);
 
-		int height;
-		int width;
+		/*_____________________________________________________________________________________________________*/
 
-		// euler angles
-		float yaw = -3.1415926f / 2;
-		float pitch = 0.0f;
-
-		glm::vec3 camPos;
-		glm::vec3 camFront;
-		glm::vec3 camUp;
-		glm::vec3 camRight;
-		glm::vec3 camTarget;
-		glm::vec3 worldUp;
-
-		// initialize matrices to be unit matrices
-		glm::mat4 world = glm::mat4(1.0f);
-		glm::mat4 view = glm::mat4(1.0f);
-		glm::mat4 projection = glm::mat4(1.0f);
-
-		Camera(glm::vec3 pos, glm::vec3 front, glm::vec3 up, float fov, int width, int height, float Znear, float Zfar);
-
-		void BallArc(glm::vec3 &prev, GLFWwindow* window);
-
-		void Zoom(float &yOffset);
-
-		void Strafe(glm::vec3 &prev, GLFWwindow* window);
-
-		glm::mat4 getViewProj();
-		glm::mat4 getViewProjSkybox();
-
-		void print();
-
-		glm::mat4 lookAt(glm::vec3 eye, glm::vec3 target, glm::vec3 up);
-
-		void updateCamVectors();
-
-		glm::vec3 getUnitSphereVector(float x, float y);
-
-		glm::vec3 getSphericalCoordinates(glm::vec3 cartesian);
-		glm::vec3 getCartesianCoordinates(glm::vec3 spherical);
+		glm::mat4 getViewMatrixSkybox();
+	private:
+		glm::vec2 mousePos_ = glm::vec2(0);
+		glm::vec3 cameraPosition_ = glm::vec3(0.0f, 10.0f, 10.0f);
+		glm::quat cameraOrientation_ = glm::quat(glm::vec3(0));
+		glm::vec3 moveSpeed_ = glm::vec3(0.0f);
+		glm::vec3 up_ = glm::vec3(0.0f, 0.0f, 1.0f);
 
 };

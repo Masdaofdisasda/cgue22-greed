@@ -1,179 +1,93 @@
 #include "Camera.h"
 
+void Camera::update(double deltaSeconds, const glm::vec2& mousePos, bool mousePressed) {
+	if (mousePressed)
+	{
+		const glm::vec2 delta = mousePos - mousePos_;
+		const glm::quat deltaQuat = glm::quat(glm::vec3(-mouseSpeed_ * delta.y, mouseSpeed_ * delta.x, 0.0f));
+		cameraOrientation_ = deltaQuat * cameraOrientation_;
+		cameraOrientation_ = glm::normalize(cameraOrientation_);
+		setUpVector(up_);
+	}
+	mousePos_ = mousePos;
 
-Camera::Camera(glm::vec3 pos, glm::vec3 front, glm::vec3 up, float fov, int width, int height, float Znear, float Zfar)
-{
-	std::cout << "setting up camera matrix..." << std::endl;
+	const glm::mat4 v = glm::mat4_cast(cameraOrientation_);
 
-	camPos = pos;
-	camFront = front;
-	camUp = up;
-	camTarget = camPos + camFront;
-	worldUp = up;
+	const glm::vec3 forward = -glm::vec3(v[0][2], v[1][2], v[2][2]);
+	const glm::vec3 right = glm::vec3(v[0][0], v[1][0], v[2][0]);
+	const glm::vec3 up = glm::cross(right, forward);
 
-	view = lookAt(camPos, camTarget, camUp);
-	projection = glm::perspective(glm::radians(fov), (float)(width / height), Znear, Zfar);
-	Camera::width = width;
-	Camera::height = height;
+	glm::vec3 accel(0.0f);
+
+	if (movement_.forward_) accel += forward;
+	if (movement_.backward_) accel -= forward;
+
+	if (movement_.left_) accel -= right;
+	if (movement_.right_) accel += right;
+
+	if (movement_.up_) accel += up;
+	if (movement_.down_) accel -= up;
+
+	if (movement_.fastSpeed_) accel *= fastCoef_;
+
+	if (accel == glm::vec3(0))
+	{
+		// decelerate naturally according to the damping value
+		moveSpeed_ -= moveSpeed_ * std::min((1.0f / damping_) * static_cast<float>(deltaSeconds), 1.0f);
+	}
+	else
+	{
+		// acceleration
+		moveSpeed_ += accel * acceleration_ * static_cast<float>(deltaSeconds);
+		const float maxSpeed = movement_.fastSpeed_ ? maxSpeed_ * fastCoef_ : maxSpeed_;
+		if (glm::length(moveSpeed_) > maxSpeed) moveSpeed_ = glm::normalize(moveSpeed_) * maxSpeed;
+	}
+
+	cameraPosition_ += moveSpeed_ * static_cast<float>(deltaSeconds);
 }
 
-void Camera::BallArc(glm::vec3 &prev, GLFWwindow* window)
+glm::mat4 Camera::getViewMatrix()
 {
-
-	// get current mouse cursor position
-	double xCur = 0, yCur = 0;
-	glfwGetCursorPos(window, &xCur, &yCur);
-
-	float dx = xCur - prev.x;
-	float dy = prev.y - yCur;
-
-	// determine mouse sensitivity
-	float xScale = abs(dx) / width;
-	float yScale = abs(dy) / height;
-	float sensitivity = 5.0;
-	glm::vec3 unit = glm::vec3(0.0f,0.0f,1.0f);
-	float rad = glm::length(camPos);
-	float theta = std::acos(camPos.z / rad);
-	float phi = std::atan2(camPos.y, camPos.x);
-
-	// move camera horizontal (on the y-axis)
-	if (dx < 0)
-	{
-		yaw += xScale * sensitivity;
-	}
-	else if (dx > 0)
-	{
-		yaw -= (xScale * sensitivity);
-	}
-
-	// rotation in y direction (needed if rotation > 90 degrees)
-	float rot = yScale * sensitivity;
-
-	// move camera horizontal (on the x-axis)
-	/*
-	if (dy < 0)
-	{
-		std::cout << "rotate x-axis..." << std::endl;
-		//if (yRot + rot > yClamp) rot = yClamp - yRot; //rotate upto nearly 90 degree
-
-		pitch = std::min(std::max(pitch + rot, 0.0f), 3.1415926f / 2.0f);
-	}
-	else if (dy > 0)
-	{
-		std::cout << "rotate x-axis..." << std::endl;
-		//if (yRot - rot < -yClamp) rot = yClamp + yRot; //rotate upto nearly 90 degree
-
-		pitch = std::max(std::min(pitch - rot, 0.0f), -3.1415926f / 2.0f);
-	}
-	if (pitch > 3.1415926f / 2.0f)
-		pitch = 3.1415926f / 2.0f;
-	if (pitch < -3.1415926f / 2.0f)
-		pitch = -3.1415926f / 2.0f;
-		*/
-
-	glm::vec3 dir;
-	dir.x = cos(yaw) * cos(pitch);
-	dir.y = sin(pitch);
-	dir.z = sin(yaw) * cos(pitch);
-	camFront = glm::normalize(dir);
-
-	updateCamVectors();
-
-	// update previous cursor position
-	prev.x = xCur;
-	prev.y = yCur;
-
-	// prints cam matrix if needed
-	//print();
+	const glm::mat4 t = glm::translate(glm::mat4(1.0f), -cameraPosition_);
+	const glm::mat4 r = glm::mat4_cast(cameraOrientation_);
+	return r * t;
 }
 
-void Camera::Zoom(float &yOffset)
+glm::vec3 Camera::getPosition()
 {
-
-	float sensitivity = 0.1f; // how sensitive the zoom is (between 0 and 1)
-	float height = 0.0f;
-
-	if (yOffset < 0) // scrolling in down direction
-	{
-		camPos -= camFront * sensitivity;
-	}
-	else if (yOffset > 0) // scrolling in up direction
-	{
-		camPos += camFront * sensitivity;
-	}
-
-	updateCamVectors();
+	return cameraPosition_;
 }
 
-void Camera::Strafe(glm::vec3 &prev, GLFWwindow* window) 
+void Camera::setPosition(const glm::vec3& pos)
 {
-
-	double xCur = 0, yCur = 0;
-	glfwGetCursorPos(window, &xCur, &yCur);
-
-	// calculate the distance between last cursor position
-	float dx = xCur - prev.x;
-	float dy = prev.y - yCur;
-
-	// determine mouse sensitivity
-	float xScale = abs(dx) / width;
-	float yScale = abs(dy) / height;
-	float sensitivity = 0.05f;
-
-	if (dx < 0) 
-	{
-		camPos -= camRight * sensitivity;
-	}
-	else if (dx > 0) 
-	{
-		camPos += camRight * sensitivity;
-	}
-
-	if (dy < 0) 
-	{
-		camPos -= camUp * sensitivity;
-	}
-	else if (dy > 0) 
-	{
-		camPos += camUp * sensitivity;
-	}
-
-	updateCamVectors();
-
-	// update mouse cursor position
-	prev.x = xCur;
-	prev.y = yCur;
+	cameraPosition_ = pos;
 }
 
-glm::mat4 Camera::getViewProj()
+void Camera::setUpVector(const glm::vec3& up)
+{
+	const glm::mat4 view = getViewMatrix();
+	const glm::vec3 dir = -glm::vec3(view[0][2], view[1][2], view[2][2]);
+	cameraOrientation_ = glmlookAt(cameraPosition_, cameraPosition_ + dir, up);
+}
+
+inline void Camera::lookAt(const glm::vec3& pos, const glm::vec3& target, const glm::vec3& up) {
+	cameraPosition_ = pos;
+	cameraOrientation_ = glmlookAt(pos, target, up);
+}
+
+glm::mat4 Camera::getViewMatrixSkybox()
 {
 	// calculate and return view projection matrix
-	return projection * lookAt(camPos, camPos + camFront, camUp);
-}
-
-glm::mat4 Camera::getViewProjSkybox()
-{
-	// calculate and return view projection matrix
-	glm::mat4 V = lookAt(camPos, camPos + camFront, camUp);
+	glm::mat4 V = getViewMatrix();
 	V = glm::mat4(glm::mat3(V)); // remove translation
-	return projection * V;
+	return  V;
 }
 
-
-// only for debug purposes
-void Camera::print()
-{
-	glm::mat4 realview = lookAt(camPos, camTarget, camUp);
-	std::cout << "m00=" << realview[0][0] << ", m01=" << realview[0][1] << ", m02=" << realview[0][2] << ", m03=" << realview[0][3] << std::endl;
-	std::cout << "m10=" << realview[1][0] << ", m11=" << realview[1][1] << ", m12=" << realview[1][2] << ", m13=" << realview[1][3] << std::endl;
-	std::cout << "m20=" << realview[2][0] << ", m21=" << realview[2][1] << ", m22=" << realview[2][2] << ", m23=" << realview[2][3] << std::endl;
-	std::cout << "m30=" << realview[3][0] << ", m31=" << realview[3][1] << ", m32=" << realview[3][2] << ", m33=" << realview[3][3] << std::endl;
-}
 
 // takes an eye vector which is the camera position in world space,
 // a target vector which is the position the camera should look at
 // and an up vector which defines the up axis in the world
-glm::mat4 Camera::lookAt(glm::vec3 eye, glm::vec3 target, glm::vec3 up)
+glm::mat4 Camera::glmlookAt(glm::vec3 eye, glm::vec3 target, glm::vec3 up)
 {
 	// view is the diretion vector from the camera to the target
 	glm::vec3 view = glm::normalize(target - eye);
@@ -197,72 +111,5 @@ glm::mat4 Camera::lookAt(glm::vec3 eye, glm::vec3 target, glm::vec3 up)
 	
 	// the inverse of R is its transpose
 	return glm::transpose(R) * T;
-}
-
-void Camera::updateCamVectors()
-{
-	// calculate the new Front vector
-	//glm::vec3 front;
-	//front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-	//front.y = sin(glm::radians(pitch));
-	//front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-	//camFront = glm::normalize(front);
-	// 
-	// also re-calculate the Right and Up vector
-	camRight = glm::normalize(glm::cross(camFront, camUp));  // normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
-	camUp = glm::normalize(glm::cross(camRight, camFront));
-}
-
-glm::vec3 Camera::getUnitSphereVector(float x, float y)
-{
-	float centerX = (width - 1) / 2.0f;
-	float centerY = (height - 1) / 2.0f;
-	int scale = std::min(width, height) - 1;
-	float radius = 1.0f;
-
-	// calculate the distance between last cursor position
-	glm::vec3 Pt;
-	Pt.x = 2 * (x - centerX) / (radius * scale);
-	Pt.y = 2 * (centerY - y) / (radius * scale);
-	float r = Pt.x * Pt.x + Pt.y * Pt.y;
-	if (r > 1.0f)
-	{
-		float s = 1.0f / sqrt(r);
-		Pt.x *= s;
-		Pt.y *= s;
-		Pt.z = 0.0f;
-	}
-	else
-	{
-		Pt.z = sqrt(1.0f - r);
-	}
-
-	return Pt;
-}
-
-glm::vec3 Camera::getSphericalCoordinates(glm::vec3 cartesian)
-{
-
-	float r = sqrt(cartesian.x * cartesian.x + cartesian.y * cartesian.y + cartesian.z * cartesian.z);
-	float phi = std::atan2(cartesian.z/cartesian.x, cartesian.x);
-	float theta = acos(cartesian.y/r);
-
-	if (cartesian.x < 0.0f)
-	{
-		phi += 3.1415926f;
-	}
-
-	return glm::vec3(r,phi,theta);
-}
-
-glm::vec3 Camera::getCartesianCoordinates(glm::vec3 spherical)
-{
-	glm::vec3 result;
-
-	result.x = spherical.x * sin(spherical.y) * cos(spherical.z);
-	result.y = spherical.x * sin(spherical.y) * sin(spherical.z);
-	result.z = spherical.x * cos(spherical.y);
-
-	return result;
 }
 

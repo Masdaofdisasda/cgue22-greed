@@ -21,30 +21,24 @@ static std::string FormatDebugOutput(GLenum source, GLenum type, GLuint id, GLen
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void mouse_callback(GLFWwindow* window, int button, int action, int mods);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+void glfwSetCursorPosCallback(GLFWwindow* window, double x, double y);
 
 /* --------------------------------------------- */
 // Global variables
 /* --------------------------------------------- */
 
-// used for activating camera tranformation
-bool useBall = false;
-bool useZoom = false;
-bool useStrafe = false;
-// used for zooming by scrolling
-float yOffset = 0.0f;
-// used for calculating mouse cursor deltas
-glm::vec3 prev = glm::vec3(0, 0, 0);
 // used for toggling render settings
 bool useCulling = true;
 bool useWireFrame = false;
 bool useRotatingObject = false;
-// used for fps count
-double prevTime = 0.0;
-double curTime = 0.0;
-double deltaTime;
-unsigned int tCount = 0;
-// used for animations
-float s = 0.0f;
+
+struct MouseState
+{
+	glm::vec2 pos = glm::vec2(0.0f);
+	bool pressedLeft = false;
+} mouseState;
+
+Camera camera(glm::vec3(0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
 /* --------------------------------------------- */
 // Main
@@ -256,31 +250,29 @@ int main(int argc, char** argv)
 	glm::vec3 pos = glm::vec3(0.0f,0.0f, 6.0f);
 	glm::vec3 front = glm::vec3(0.0f,0.0f, -6.0f);
 	glm::vec3 up = glm::vec3(0.0f,1.0f,0.0f);
-	Camera camera(pos, front, up, fov, width, height, Znear, Zfar);
+
+	double timeStamp = glfwGetTime();
+	float deltaSeconds = 0.0f;
 
 	//---------------------------------- RENDER LOOP ----------------------------------//
+
 	std::cout << "enter render loop..." << std::endl << std::endl;
 	while (!glfwWindowShouldClose(window))
 	{
+		camera.update(deltaSeconds, mouseState.pos, mouseState.pressedLeft);
+
 		// fps counter
-		curTime = glfwGetTime();
-		deltaTime = curTime - prevTime;
-		tCount++;
-		if (deltaTime >= 1.0/30.0)
+		const double newTimeStamp = glfwGetTime();
+		deltaSeconds = static_cast<float>(newTimeStamp - timeStamp);
+		timeStamp = newTimeStamp;
+
+		if (deltaSeconds >= 1.0/30.0)
 		{
-			std::string fps = std::to_string((1.0 / deltaTime) * tCount);
+			std::string fps = std::to_string((1.0 / deltaSeconds) * 1);
 			std::string title = window_title + " " + fps + " fps";
 			glfwSetWindowTitle(window, title.c_str());
 		}
 
-		// animate objects
-		if (useRotatingObject)
-		{
-			glm::mat4 rot = glm::rotate(glm::mat4(1.0f), s, glm::vec3(0.0f, 1.0f, 0.0f));
-			glm::mat4 traBox = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.5f, 0.0f));
-			box.model = traBox * rot;
-			s += 0.01f;
-		}
 
 		// toggle wireframe mode with F1 key
 		glPolygonMode(GL_FRONT_AND_BACK, useWireFrame ? GL_LINE : GL_FILL);
@@ -293,15 +285,16 @@ int main(int argc, char** argv)
 		// handle input
 		glViewport(0, 0, width, height);
 		glfwPollEvents();
-		if (useBall) camera.BallArc(prev, window);
-		if (useZoom){ camera.Zoom(yOffset); useZoom = false; } // prevents infinity zooms}
-		if (useStrafe) { camera.Strafe(prev, window); }
+
+		const glm::mat4 projection = glm::perspective(glm::radians(fov), (float)(width / height), Znear, Zfar);
+		const glm::mat4 ViewProj = projection * camera.getViewMatrix();
+		const glm::mat4 ViewProjSkybox = projection * camera.getViewMatrixSkybox();
 
 		PBRShader.Use();
 
 		// update camera for shader
-		PBRShader.setVec3("viewPos", camera.camPos);
-		PBRShader.setMat4("viewProject", camera.getViewProj());
+		PBRShader.setVec3("viewPos", camera.getPosition());
+		PBRShader.setMat4("viewProject", ViewProj);
 
 		// draw meshes
 		PBRShader.Draw(box);
@@ -310,7 +303,7 @@ int main(int argc, char** argv)
 		// draw skybox    
 		skyboxShader.Use();
 		glDepthFunc(GL_LEQUAL);
-		skyboxShader.setMat4("viewProject", camera.getViewProjSkybox());
+		skyboxShader.setMat4("viewProject", ViewProjSkybox);
 		skyboxShader.Draw(skybox);
 		glDepthFunc(GL_LESS);
 
@@ -344,12 +337,30 @@ int main(int argc, char** argv)
 // action: GLFW_PRESS or GLFW_RELEASE
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
+
+	const bool pressed = action != GLFW_RELEASE;
 	// close window when ESC key is pressed
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 	{
 		std::cout << "register ESC key press..." << std::endl;
 		glfwSetWindowShouldClose(window, true);
 	}
+	if (key == GLFW_KEY_W)
+		camera.movement_.forward_ = pressed;
+	if (key == GLFW_KEY_S)
+		camera.movement_.backward_ = pressed;
+	if (key == GLFW_KEY_A)
+		camera.movement_.left_ = pressed;
+	if (key == GLFW_KEY_D)
+		camera.movement_.right_ = pressed;
+	if (key == GLFW_KEY_1)
+		camera.movement_.up_ = pressed;
+	if (key == GLFW_KEY_2)
+		camera.movement_.down_ = pressed;
+	if (mods & GLFW_MOD_SHIFT)
+		camera.movement_.fastSpeed_ = pressed;
+	if (key == GLFW_KEY_SPACE)
+		camera.setUpVector(glm::vec3(0.0f, 1.0f, 0.0f));
 
 	if (key == GLFW_KEY_F1 && action == GLFW_PRESS)
 	{
@@ -406,49 +417,40 @@ void mouse_callback(GLFWwindow* window, int button, int action, int mods)
 	// register left mouse button press
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
 	{
-		// save mouse cursor location for calulation
-		double xCur = 0, yCur = 0;
-		glfwGetCursorPos(window, &xCur, &yCur);
-		prev = glm::vec3(xCur, yCur, -1);
-
-		// active use of ballarc camera
-		useBall = true;
+		mouseState.pressedLeft = action == GLFW_PRESS;
 	}
 
 	// register left mouse button release
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
 	{
-		// deactivate ballarc camera
-		useBall = false;
+		
 	}
 
 	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
 	{
-		// save mouse cursor location for calulation
-		double xCur = 0, yCur = 0;
-		glfwGetCursorPos(window, &xCur, &yCur);
-		prev = glm::vec3(xCur, yCur, -1);
-
-		// activate strafe camera
-		useStrafe = true;
+		
 	}
 
 	// register left mouse button release
 	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_RELEASE)
 	{
-		// deactivate ballarc camera
-		useStrafe = false;
+		
 	}
 
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-	if (yoffset != 0)
-	{
-		useZoom = true;
-		yOffset = yoffset;
-	}
+	
+}
+
+
+void glfwSetCursorPosCallback(GLFWwindow* window, double x, double y)
+{
+	int width, height;
+	glfwGetFramebufferSize(window, &width, &height);
+	mouseState.pos.x = static_cast<float>(x / width);
+	mouseState.pos.y = static_cast<float>(y / height);
 }
 
 
