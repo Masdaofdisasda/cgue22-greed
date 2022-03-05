@@ -1,10 +1,14 @@
 #pragma once
+
 #include "Utils.h"
 
 class Texture
 {
 private:
 	GLuint tex_ID = 0;
+	const char* path;
+
+	void loadCompressedTex(const char* texPath, int texUnit);
 
 	void Release()
 	{

@@ -208,20 +208,19 @@ int main(int argc, char** argv)
 
 		glm::vec4(0.8f,0.8f,0.8f,1.0f) }); // intensity
 
-	Texture diffWood = Texture("assets/textures/wood_texture.dds");
-	Texture specWood = Texture("assets/textures/wood_texture_specular.dds", 1);
-	Texture diffTile = Texture("assets/textures/tiles_diffuse.dds");
-	Texture specTile = Texture("assets/textures/tiles_specular.dds",1);
+	Texture brickDiff = Texture("assets/textures/brick03-diff.jpeg");
+	//Texture brickDiff = Texture("assets/textures/wood_texture.dds");
+	Texture brickSpec = Texture("assets/textures/brick03-spec.jpeg", 1);
 	Cubemap cubemap = Cubemap("assets/textures/cubemap");
 
 	Mesh skybox = skybox.Skybox(40.0f);
 	skybox.setMaterial(glm::vec4(0.0f, 0.0f, 0.0f, 0.0f), 1.0f);
-	skybox.setTextures(&diffWood, &specWood, &cubemap);
+	skybox.setTextures(&brickDiff, &brickSpec, &cubemap);
 	skybox.translate(glm::vec3(0.0f, -5.0f, 0.0f));
 
 	Mesh box = box.Cube(1.5f, 1.5f, 1.5f);
 	box.setMaterial(glm::vec4(0.5f, 0.5f, 1.0f, 1.0f), 0.0f);
-	box.setTextures(&diffWood, &specWood, &cubemap);
+	box.setTextures(&brickDiff, &brickSpec, &cubemap);
 	box.translate(glm::vec3(0.0f, -2.0f, 0.0f));
 
 
