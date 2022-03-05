@@ -62,9 +62,9 @@ void Program::getUniformLocations()
 
 void Program::bindLightBuffers(UBO* directional, UBO* positional, UBO* spot)
 {
-	glBindBufferBase(GL_UNIFORM_BUFFER, glGetUniformBlockIndex(program_ID, "dLightUBlock"), *directional->getID());
-	glBindBufferBase(GL_UNIFORM_BUFFER, glGetUniformBlockIndex(program_ID, "pLightUBlock"), *positional->getID());
-	glBindBufferBase(GL_UNIFORM_BUFFER, glGetUniformBlockIndex(program_ID, "sLightUBlock"), *spot->getID());
+	glBindBufferBase(GL_UNIFORM_BUFFER, 0, *directional->getID());
+	glBindBufferBase(GL_UNIFORM_BUFFER, 1, *positional->getID());
+	glBindBufferBase(GL_UNIFORM_BUFFER, 2, *spot->getID());
 }
 
 void Program::setuInt(const std::string& name, int value)

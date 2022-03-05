@@ -130,7 +130,6 @@ void main()
     {
         FragColor = vec4(calculateLight(),1.0f);
     }
-
 }
 
 vec3 calculateLight() {

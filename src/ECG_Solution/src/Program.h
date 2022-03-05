@@ -17,6 +17,7 @@ private:
 	{
 		glDeleteProgram(program_ID);
 		program_ID = 0;
+		dirLoc = 0, posLoc = 0, spotLoc = 0;
 	}
 
 	void getUniformLocations();
@@ -39,6 +40,9 @@ public:
 	Program(Program&& other)noexcept : program_ID(other.program_ID)
 	{
 		other.program_ID = 0; //Use the "null" ID for the old object.
+		other.dirLoc = 0;
+		other.posLoc = 0;
+		other.spotLoc = 0;
 	}
 
 	Program& operator=(Program&& other)
@@ -49,6 +53,9 @@ public:
 			Release();
 			//obj_ is now 0.
 			std::swap(program_ID, other.program_ID);
+			std::swap(dirLoc, other.dirLoc);
+			std::swap(posLoc, other.posLoc);
+			std::swap(spotLoc, other.spotLoc);
 		}
 	}
 

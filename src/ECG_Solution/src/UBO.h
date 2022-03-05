@@ -43,8 +43,6 @@ class UBO
 				std::swap(ubo_ID, other.ubo_ID);
 			}
 		}
-
-		void bindBufferBaseToBindingPoint(const GLuint bindingPoint);
 		
 		GLuint* getID() {return &ubo_ID;}
 };
