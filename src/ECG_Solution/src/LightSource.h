@@ -26,9 +26,3 @@ struct SpotLight
 
 	glm::vec4 intensity;
 };
-
-struct Material
-{
-	glm::vec4 coefficients;
-	float reflection;
-};

@@ -2,7 +2,7 @@
 #include <algorithm>
 
 // box geometry constructor
-Mesh::Mesh(float w, float h, float d)
+Mesh::Mesh(float w, float h, float d, Material* mat)
 {
 	if (w <= 0.0f || h <= 0.0f || d <= 0.0f)
 	{
@@ -14,6 +14,8 @@ Mesh::Mesh(float w, float h, float d)
 	std::cout << "width = " << w << std::endl;
 	std::cout << "height = " << h << std::endl;
 	std::cout << "depth = " << d << std::endl;
+
+	material = mat;
 
 	// normals
 	glm::vec3 back = glm::vec3(0.0f, 0.0f, -1.0f);
@@ -99,10 +101,11 @@ Mesh::Mesh(float w, float h, float d)
 }
 
 // box geometry constructor
-Mesh::Mesh(float size)
+Mesh::Mesh(float size, Material* mat)
 {
 	std::cout << "generate skybox with:" << std::endl;
 	std::cout << "size = " << size << std::endl;
+	material = mat;
 	float w = size, h = size, d = size;
 	glm::vec3 color = glm::vec3(0.0f);
 
@@ -191,7 +194,7 @@ Mesh::Mesh(float size)
 }
 
 // cylinder geometry constructor
-Mesh::Mesh(int s, float h, float rad)
+Mesh::Mesh(int s, float h, float rad, Material* mat)
 {
 	if (s < 3 || h <= 0.0f || rad <= 0.0f)
 	{
@@ -203,6 +206,7 @@ Mesh::Mesh(int s, float h, float rad)
 	std::cout << "segments = " << s << std::endl;
 	std::cout << "height = " << h << std::endl;
 	const float PI = 3.1415926f;
+	material = mat;
 
 	std::cout << "generating cylinder vertices..." << std::endl;
 
@@ -277,7 +281,7 @@ Mesh::Mesh(int s, float h, float rad)
 }
 
 // sphere geometry constructor
-Mesh::Mesh(int longs, int lats, float rad)
+Mesh::Mesh(int longs, int lats, float rad, Material* mat)
 {
 	if (longs < 3 || lats < 3 || rad <= 0.0f)
 	{
@@ -291,6 +295,7 @@ Mesh::Mesh(int longs, int lats, float rad)
 	std::cout << "sphere radius = " << rad << std::endl;
 
 	const float PI = 3.1415926f;
+	material = mat;
 	float r = rad; // prevents confusion and errors
 
 	std::cout << "generating sphere vertices..." << std::endl;
@@ -409,7 +414,6 @@ void Mesh::PrepareBuffer()
 	VAO.LinkAttrib(&VBO, 0, 3, GL_FLOAT, sizeof(Vertex), (void*)0);
 	VAO.LinkAttrib(&VBO, 1, 3, GL_FLOAT, sizeof(Vertex), (void*)(3 * sizeof(float)));
 	VAO.LinkAttrib(&VBO, 2, 2, GL_FLOAT, sizeof(Vertex), (void*)(6 * sizeof(float)));
-	//VAO.LinkAttrib(&VBO, 3, 3, GL_FLOAT, sizeof(Vertex), (void*)(9 * sizeof(float)));
 	VAO.Unbind();
 	VBO.Unbind();
 	EBO.Unbind();
@@ -426,47 +430,20 @@ glm::mat4 Mesh::rotate(float theta, glm::vec3 axis)
 	return  model = glm::rotate(glm::mat4(1.0f),glm::radians(theta) , axis);
 }
 
-void Mesh::Draw(Shader shader)
+
+Material* Mesh::getMaterial()
 {
-	// load model matrix on shader
-	shader.setMat4("model", model);
+	return material;
+}
 
-	// use texture 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, *diffuse->getID());
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, *specular->getID());
-	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, *cubemap->getID());
+int Mesh::getIndicesSize()
+{
+	return indices.size();
+}
 
-	// load mesh on shader
-	uploadMaterial(shader);
-
-	// draw meshgl
+void Mesh::BindVAO()
+{
 	VAO.Bind();
-	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
-}
-
-void Mesh::setMaterial(glm::vec4 coeff, float reflect)
-{
-	coefficients = coeff;
-	reflection = reflect;
-}
-
-void Mesh::setTextures(Texture* diff, Texture* spec, Cubemap* cube)
-{
-	diffuse = diff;
-	specular = spec;
-	cubemap = cube;
-}
-
-void Mesh::uploadMaterial(Shader shader)
-{
-	shader.setInt("material.albedo", 0);
-	shader.setInt("material.specular", 1);
-	shader.setInt("material.irradiance", 2);
-	shader.setVec4("material.coefficients", coefficients);
-	shader.setFloat("material.reflection", reflection);
 }
 
 void Mesh::reverseIndices()

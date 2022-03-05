@@ -28,7 +28,7 @@ class UBO
 		UBO(const UBO&) = delete;
 		UBO& operator=(const UBO&) = delete;
 
-		UBO(UBO&& other) : ubo_ID(other.ubo_ID)
+		UBO(UBO&& other) noexcept : ubo_ID(other.ubo_ID)
 		{
 			other.ubo_ID = 0; //Use the "null" ID for the old object.
 		}

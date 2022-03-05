@@ -3,6 +3,8 @@
   <ItemGroup>
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\Cubemap.cpp" />
+    <ClCompile Include="src\Material.cpp" />
+    <ClCompile Include="src\Program.cpp" />
     <ClCompile Include="src\Texture.cpp" />
     <ClCompile Include="src\Mesh.cpp" />
     <ClCompile Include="src\EBO.cpp" />
@@ -12,6 +14,8 @@
     <ClCompile Include="src\VBO.cpp" />
     <ClInclude Include="src\Camera.h" />
     <ClInclude Include="src\Cubemap.h" />
+    <ClInclude Include="src\Material.h" />
+    <ClInclude Include="src\Program.h" />
     <ClInclude Include="src\Texture.h" />
     <ClInclude Include="src\LightSource.h" />
     <ClInclude Include="src\Mesh.h" />

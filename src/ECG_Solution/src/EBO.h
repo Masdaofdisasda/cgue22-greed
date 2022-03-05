@@ -26,7 +26,7 @@ class EBO
 		EBO(const EBO&) = delete;
 		EBO& operator=(const EBO&) = delete;
 
-		EBO(EBO&& other) : ebo_ID(other.ebo_ID)
+		EBO(EBO&& other) noexcept : ebo_ID(other.ebo_ID)
 		{
 			other.ebo_ID = 0; //Use the "null" ID for the old object.
 		}

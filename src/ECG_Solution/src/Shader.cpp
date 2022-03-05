@@ -27,69 +27,64 @@ std::string Shader::insertLightcount(std::string code)
 	return code;
 }
 
-// creates shader programm with vertex and fragment shader
-Shader::Shader(const char*  vertexSource, const char* fragmentSource, int dir, int pos, int spot, int shadeType)
+GLenum Shader::GLShaderTypeFromFileName(const char* fileName)
 {
-	setLightCounts(dir, pos, spot);
-	name = vertexSource;
-
-	std::cout << "reading shader code from files..." << std::endl;
-	std::string vert = read_code_from(vertexSource);
-	std::string frag = read_code_from(fragmentSource);
-	if (shadeType == 0) // phong
-	{
-		frag = insertLightcount(frag);
-	}
-	else if (shadeType == 1) // gouraud
-	{
-		vert = insertLightcount(vert);
-	}
-
-	//std::cout << frag <<std::endl;
-	//std::cout << vert << std::endl;
-
-	// read shader code from source and save as char
-	const char* vertex_code = vert.c_str();
-	const char* fragment_code = frag.c_str();
-
-	// build vertex shader from vertex code
-	std::cout << "compiling vertex shader..." << std::endl;
-	GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertex_shader, 1, &vertex_code, nullptr);
-	glCompileShader(vertex_shader);
-	// check for compile error
-
-	compileErrors(vertex_shader, "shader");
-
-	// build fragment shader from fragment code
-	std::cout << "compiling fragment shader..." << std::endl;
-	GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragment_shader, 1, &fragment_code, nullptr);
-	glCompileShader(fragment_shader);
-	// check for compile error
-	compileErrors(fragment_shader, "shader");
-
-	// build shader porgramm 
-	std::cout << "compile shader program from vertex and fragment shader..." << std::endl;
-	shader_program = glCreateProgram();
-	// attach vertex and fragment shaders
-	glAttachShader(shader_program, vertex_shader);
-	glAttachShader(shader_program, fragment_shader);
-	// link shaders together
-	glLinkProgram(shader_program);
-	//check for errors
-	compileErrors(shader_program, "program");
-
-	// delete useless shaders (only needed for recompiling)
-	std::cout << "delete shader objects..." << std::endl;
-	glDeleteShader(vertex_shader);
-	glDeleteShader(fragment_shader);
-
-	std::cout << "get uniform locations..." << std::endl;
-	getUniformLocations();
-
-	std::cout << std::endl;
+	if (endsWith(fileName, ".vert"))
+		return GL_VERTEX_SHADER;
+	if (endsWith(fileName, ".frag"))
+		return GL_FRAGMENT_SHADER;
+	if (endsWith(fileName, ".geom"))
+		return GL_GEOMETRY_SHADER;
+	if (endsWith(fileName, ".tesc"))
+		return GL_TESS_CONTROL_SHADER;
+	if (endsWith(fileName, ".tese"))
+		return GL_TESS_EVALUATION_SHADER;
+	if (endsWith(fileName, ".comp"))
+		return GL_COMPUTE_SHADER;
+	assert(false);
+	return 0;
 }
+
+int Shader::endsWith(const char* s, const char* part) {
+	return (strstr(s, part) - s) == (strlen(s) - strlen(part));
+}
+
+Shader::Shader(const char* fileName)
+{
+	hasLights = false;
+
+	type = GLShaderTypeFromFileName(fileName);
+	shader_ID = glCreateShader(type);
+
+	std::string shader = read_code_from(fileName);
+	const char* shaderCode = shader.c_str();
+
+
+	glShaderSource(shader_ID, 1, &shaderCode, nullptr);
+	glCompileShader(shader_ID);
+
+	compileErrors();
+}
+
+Shader::Shader(const char* fileName, glm::ivec3 lights)
+{
+	hasLights = true;
+	setLightCounts(lights.x, lights.y, lights.z);
+
+	type = GLShaderTypeFromFileName(fileName);
+	shader_ID = glCreateShader(type);
+
+	std::string shader = read_code_from(fileName);
+	shader = insertLightcount(shader);
+	const char* shaderCode = shader.c_str();
+
+
+	glShaderSource(shader_ID, 1, &shaderCode, nullptr);
+	glCompileShader(shader_ID);
+
+	compileErrors();
+}
+
 
 void Shader::setLightCounts(int dir, int pos, int spot)
 {
@@ -100,100 +95,20 @@ void Shader::setLightCounts(int dir, int pos, int spot)
 }
 
 
-void Shader::Use()
-{
-	// activate shader programm 
-	glUseProgram(shader_program);
-
-	//getUniformLocations();
-}
-
-void Shader::getUniformLocations()
-{
-
-	dirLoc = glGetUniformBlockIndex(shader_program, "dLightUBlock");
-	posLoc = glGetUniformBlockIndex(shader_program, "pLightUBlock");
-	spotLoc = glGetUniformBlockIndex(shader_program, "sLightUBlock");
-
-}
-
-
-void Shader::bindBufferBaseToBindingPoint(const std::string &name, UBO value)
-{
-	glBindBufferBase(GL_UNIFORM_BUFFER, glGetUniformBlockIndex(shader_program, name.c_str()), *value.getID());
-}
-
-void Shader::setuInt(const std::string& name, int value)
-{
-	glUniform1ui(glGetUniformLocation(shader_program, name.c_str()), value);
-}
-
-void Shader::setInt(const std::string& name, int value)
-{
-	glUniform1i(glGetUniformLocation(shader_program, name.c_str()), value);
-}
-
-
-void Shader::setFloat(const std::string& name, float value)
-{
-	glUniform1f(glGetUniformLocation(shader_program, name.c_str()), value);
-}
-
-void Shader::setVec3(const std::string& name, glm::vec3 value)
-{
-	glUniform3fv(glGetUniformLocation(shader_program, name.c_str()), 1, &value[0]);
-}
-
-void Shader::setVec4(const std::string& name, glm::vec4 value)
-{
-	glUniform4fv(glGetUniformLocation(shader_program, name.c_str()), 1, &value[0]);
-}
-
-void Shader::setMat4(const std::string& name, glm::mat4 value)
-{
-	glUniformMatrix4fv(glGetUniformLocation(shader_program, name.c_str()), 1, GL_FALSE, &value[0][0]);
-}
-
-Shader::~Shader()
-{
-	//std::cout << "delete shader programm..." << std::endl;
-	// delete shader programm 
-	glDeleteProgram(shader_program);
-}
-
 // check for compile errors
-int Shader::compileErrors(unsigned int shader, const char* type)
+int Shader::compileErrors()
 {
 	GLint succeded;
 
-	std::cout << "check for compile errors..." << std::endl;
-
-	if (type == "shader")
+	glGetShaderiv(shader_ID, GL_COMPILE_STATUS, &succeded);
+	if (succeded == GL_FALSE)
 	{
-		glGetShaderiv(shader, GL_COMPILE_STATUS, &succeded);
-		if (succeded == GL_FALSE)
-		{
-			// get error
-			GLint logSize;
-			glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logSize);
-			GLchar* message = new char[logSize];
-			glGetShaderInfoLog(shader, logSize, nullptr, message);
-			EXIT_WITH_ERROR(message); // print error
-			delete[] message;
-		}
-	}
-	else
-	{
-		glGetProgramiv(shader, GL_LINK_STATUS, &succeded);
-		if (succeded == GL_FALSE)
-		{
-			// get error
-			GLint logSize;
-			glGetProgramiv(shader, GL_INFO_LOG_LENGTH, &logSize);
-			GLchar* message = new char[logSize];
-			glGetProgramInfoLog(shader, logSize, nullptr, message);
-			EXIT_WITH_ERROR(message); // print error
-			delete[] message;
-		}
+		// get error
+		GLint logSize;
+		glGetShaderiv(shader_ID, GL_INFO_LOG_LENGTH, &logSize);
+		GLchar* message = new char[logSize];
+		glGetShaderInfoLog(shader_ID, logSize, nullptr, message);
+		EXIT_WITH_ERROR(message); // print error
+		delete[] message;
 	}
 }

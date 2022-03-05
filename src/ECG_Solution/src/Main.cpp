@@ -6,13 +6,11 @@
 
 
 #pragma once
-#include "Utils.h"
 #include <sstream>
-#include "Shader.h"
+#include "Program.h"
+#include "Texture.h"
 #include "Camera.h"
-#include "Mesh.h"
 #include "UBO.h"
-#include "LightSource.h"
 
 /* --------------------------------------------- */
 // Prototypes
@@ -208,26 +206,29 @@ int main(int argc, char** argv)
 
 		glm::vec4(0.8f,0.8f,0.8f,1.0f) }); // intensity
 
-	Texture brickDiff = Texture("assets/textures/brick03-diff.jpeg");
-	//Texture brickDiff = Texture("assets/textures/wood_texture.dds");
-	Texture brickSpec = Texture("assets/textures/brick03-spec.jpeg", 1);
-	Cubemap cubemap = Cubemap("assets/textures/cubemap");
+	Texture brickDiff("assets/textures/brick03-diff.jpeg");
+	Texture brickSpec("assets/textures/brick03-spec.jpeg");
+	Cubemap brickCube("assets/textures/cubemap");
 
-	Mesh skybox = skybox.Skybox(40.0f);
-	skybox.setMaterial(glm::vec4(0.0f, 0.0f, 0.0f, 0.0f), 1.0f);
-	skybox.setTextures(&brickDiff, &brickSpec, &cubemap);
+	Material brick(&brickDiff,&brickSpec,&brickCube,
+		glm::vec4(0.5f, 0.5f, 1.0f, 1.0f), 1.0f);
+
+	Material sky(&brickDiff, &brickSpec, &brickCube,
+		glm::vec4(0.0f, 0.0f, 0.0f, 0.0f), 0.0f);
+
+	Mesh skybox = skybox.Skybox(40.0f, &sky);
 	skybox.translate(glm::vec3(0.0f, -5.0f, 0.0f));
 
-	Mesh box = box.Cube(1.5f, 1.5f, 1.5f);
-	box.setMaterial(glm::vec4(0.5f, 0.5f, 1.0f, 1.0f), 0.0f);
-	box.setTextures(&brickDiff, &brickSpec, &cubemap);
+	Mesh box = box.Cube(1.5f, 1.5f, 1.5f, &brick);
 	box.translate(glm::vec3(0.0f, -2.0f, 0.0f));
 
 
-	// build shader programms from vertex and fragment shader files
-	std::cout << "build PBR shader from PBR.vert and PBR.frag in assets folder..." << std::endl;
-	Shader PBRShader("assets/pbr.vert", "assets/pbr.frag", dLightsBuffer.size(), pLightsBuffer.size(), sLightsBuffer.size(), 0);
+	// build shader programms
+	Shader pbrVert("assets/shaders/pbr/pbr.vert");
+	Shader pbrFrag("assets/shaders/pbr/pbr.frag", glm::ivec3(dLightsBuffer.size(), pLightsBuffer.size(), sLightsBuffer.size()));
+	Program PBRShader(pbrVert, pbrFrag);
 	PBRShader.Use();
+
 
 	// create Uniform Buffer Objects from light source struct vectors
 	UBO directionalLights = UBO(dLightsBuffer);
@@ -235,9 +236,7 @@ int main(int argc, char** argv)
 	UBO spotLights = UBO(sLightsBuffer);
 
 	// bind UBOs to bindings in shader
-	directionalLights.bindBufferBaseToBindingPoint(PBRShader.dirLoc);
-	positionalLights.bindBufferBaseToBindingPoint(PBRShader.posLoc);
-	spotLights.bindBufferBaseToBindingPoint(PBRShader.spotLoc);
+	PBRShader.bindLightBuffers(&directionalLights, &positionalLights, &spotLights);
 	// set light source count variables
 	PBRShader.setuInt("dLightCount", dLightsBuffer.size());
 	PBRShader.setuInt("pLightCount", pLightsBuffer.size());
@@ -275,8 +274,6 @@ int main(int argc, char** argv)
 		{
 			glm::mat4 rot = glm::rotate(glm::mat4(1.0f), s, glm::vec3(0.0f, 1.0f, 0.0f));
 			glm::mat4 traBox = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.5f, 0.0f));
-			glm::mat4 traCyl = glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, -1.0f, 0.0f));
-			glm::mat4 traSph = glm::translate(glm::mat4(1.0f), glm::vec3(-1.5f, -1.0f, 0.0f));
 			box.model = traBox * rot;
 			s += 0.01f;
 		}
@@ -303,13 +300,13 @@ int main(int argc, char** argv)
 		PBRShader.setMat4("viewProject", camera.getViewProj());
 
 		// draw phong shaded meshes
-		box.Draw(PBRShader);
+		PBRShader.Draw(box);
 
 
 		// draw skybox        
 		glDepthFunc(GL_LEQUAL);
 		PBRShader.setMat4("viewProject", camera.getViewProjSkybox());
-		skybox.Draw(PBRShader);
+		PBRShader.Draw(skybox);
 		glDepthFunc(GL_LESS);
 
 

@@ -33,7 +33,7 @@ class VBO
 		VBO(const VBO&) = delete;
 		VBO &operator=(const VBO&) = delete; 
 
-		VBO(VBO&& other) : vbo_ID(other.vbo_ID)
+		VBO(VBO&& other) noexcept : vbo_ID(other.vbo_ID)
 		{
 			other.vbo_ID = 0; //Use the "null" ID for the old object.
 		}

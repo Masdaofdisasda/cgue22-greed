@@ -3,14 +3,18 @@
 #include <stb/stb_image.h>
 
 
+Texture::Texture()
+{
+	path = "";
+
+}
+
 Texture::Texture(const char* texPath, int texUnit)
 {
 	path = texPath;
 	
 	// generate texture
 	glCreateTextures(GL_TEXTURE_2D, 1, &tex_ID);
-	glActiveTexture(GL_TEXTURE0+ texUnit);
-	glBindTexture(GL_TEXTURE_2D, tex_ID);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);

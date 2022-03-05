@@ -11,38 +11,19 @@ class Shader
 public:
 
 	// Reference ID of the Shader Program
-	GLuint shader_program;
+	GLuint shader_ID = 0;
+	GLenum type;
+	boolean hasLights;
 
-	string name;
-
-	// location of the model matrix
-	GLuint modelLoc;
-
-	// location of the view projection matrix
-	GLuint viewProLoc;
-
-
-	// Location of light source buffer blocks
-	GLuint dirLoc, posLoc, spotLoc;
-
-	// Location of light source count
-	GLuint dCountLoc, pCountLoc, sCountLoc;
-	
-	// Location of material struct
-	GLuint mAmbLoc, mDiffLoc, mSpecLoc, mShiLoc;
-
-	// Location of view position
-	GLuint viewPosLoc;
+	const char* fileName;
 
 	// light counts
 	std::string dLights, pLights, sLights;
 
-	// Constructor, builds shader programm from vertex- and fragement shader
-	//					code location			code location	amount of dir/pos/spot lights	0 = lights in frag, 1 = lights in vert
-	Shader(const char* vertexSource, const char* fragmentSource, int dir, int pos, int spot, int shadeType);
+	explicit Shader(const char* fileName);
+	Shader(const char* fileName, glm::ivec3 lights);
 
-	// Activates the Shader Program
-	void Use();
+	GLuint* getID() { return &shader_ID; }
 
 	void getUniformLocations();
 
@@ -54,15 +35,42 @@ public:
 	void setVec4(const std::string& name, glm::vec4 value);
 	void setMat4(const std::string& name, glm::mat4 value);
 
-	// Deletes the Shader Program
-	~Shader();
+	// ensure RAII compliance
+	Shader(const Shader&) = delete;
+	Shader& operator=(const Shader&) = delete;
+
+	Shader(Shader&& other)noexcept : shader_ID(other.shader_ID)
+	{
+		other.shader_ID = 0; //Use the "null" ID for the old object.
+	}
+
+	Shader& operator=(Shader&& other)
+	{
+		//ALWAYS check for self-assignment.
+		if (this != &other)
+		{
+			Release();
+			//obj_ is now 0.
+			std::swap(shader_ID, other.shader_ID);
+		}
+	}
+
+	~Shader() { Release(); }
 
 private:
-
+	Shader(GLenum type, const char* text);
+	GLenum GLShaderTypeFromFileName(const char* fileName); 
+	int endsWith(const char* s, const char* part);
 	// set light counts
 	void setLightCounts(int dir, int pos, int spot);
 	// Checks if the different Shaders have compiled properly
-	int compileErrors(unsigned int shader, const char* type);
+	int compileErrors();
 	// Replace MAXLIGHTS with correct light count
 	std::string insertLightcount(std::string code);
+
+	void Release()
+	{
+		glDeleteShader(shader_ID);
+		shader_ID = 0;
+	}
 };

@@ -20,10 +20,10 @@ public:
 	Cubemap(const Cubemap&) = delete;
 	Cubemap& operator=(const Cubemap&) = delete;
 
-	Cubemap(Cubemap&& other) : cube_ID(other.cube_ID)
+	 Cubemap(Cubemap&& other) noexcept : cube_ID(other.cube_ID)
 	{
 		other.cube_ID = 0; //Use the "null" ID for the old object.
-	}
+	} 
 
 	Cubemap& operator=(Cubemap&& other)
 	{

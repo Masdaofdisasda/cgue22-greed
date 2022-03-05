@@ -26,7 +26,7 @@ class VAO
 		VAO(const VAO&) = delete;
 		VAO& operator=(const VAO&) = delete;
 
-		VAO(VAO&& other) : vao_ID(other.vao_ID)
+		VAO(VAO&& other) noexcept : vao_ID(other.vao_ID)
 		{
 			other.vao_ID = 0; //Use the "null" ID for the old object.
 		}

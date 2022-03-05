@@ -2,9 +2,7 @@
 
 #include "EBO.h"
 #include "VAO.h"
-#include "Shader.h"
-#include "Texture.h"
-#include "Cubemap.h"
+#include "Material.h"
 
 
 // primitive mesh objects (box, cylinder, sphere, torus)
@@ -21,37 +19,32 @@ private:
 	std::vector <GLuint> indices; // EBO
 
 	// Texture & Material
-	Texture* diffuse; //todo: add default textures
-	Texture* specular;
-	Cubemap* cubemap;
-	glm::vec4 coefficients;
-	float reflection;
+	Material* material;
+
 
 	void PrepareBuffer();
 	void reverseIndices(); // changes face orientation
 
 	// geometry constructors
-	Mesh(float w, float h, float d);
-	Mesh(float size);
-	Mesh(int s, float h, float rad);
-	Mesh(int longs, int lats, float rad);
+	Mesh(float w, float h, float d, Material* mat);
+	Mesh(float size, Material* mat);
+	Mesh(int s, float h, float rad, Material* mat);
+	Mesh(int longs, int lats, float rad, Material* mat);
 
 public:
 	glm::mat4 model = glm::mat4(1.0f);
 
-	static Mesh Cube(float width, float height, float depth) {return  Mesh(width, height, depth);}
-	static Mesh Cylinder(int segments, float height, float radius) { return  Mesh(segments, height, radius); }
-	static Mesh Sphere(int longsegments, int latisegments, float radius) { return  Mesh(longsegments, latisegments, radius); }
-	static Mesh Skybox(float size) { return  Mesh(size); }
+	static Mesh Cube(float width, float height, float depth, Material* mat) {return  Mesh(width, height, depth, mat);}
+	static Mesh Cylinder(int segments, float height, float radius, Material* mat) { return  Mesh(segments, height, radius, mat); }
+	static Mesh Sphere(int longsegments, int latisegments, float radius, Material* mat) { return  Mesh(longsegments, latisegments, radius, mat); }
+	static Mesh Skybox(float size, Material* mat) { return  Mesh(size, mat); }
 	// todo obj loading
 
 	glm::mat4 translate(glm::vec3 position);
 	glm::mat4 rotate(float theta, glm::vec3 axis);
 
-	void setMaterial(glm::vec4 coeff, float reflect);
-	void setTextures(Texture* diff, Texture* spec, Cubemap* cube);
-	void uploadMaterial(Shader shader);
-	
-	void Draw(Shader shader); // draws triangles
+	Material* getMaterial();
+	int getIndicesSize();
+	void BindVAO();
 	
 };

@@ -6,7 +6,7 @@ class Texture
 {
 private:
 	GLuint tex_ID = 0;
-	const char* path;
+	string path;
 
 	void loadCompressedTex(const char* texPath, int texUnit);
 
@@ -18,13 +18,14 @@ private:
 
 public:
 	Texture(const char* texPath, int texUnit = 0);
+	Texture();
 	~Texture() { Release(); }
 
 	// ensure RAII compliance
 	Texture(const Texture&) = delete;
 	Texture& operator=(const Texture&) = delete;
 
-	Texture(Texture&& other) : tex_ID(other.tex_ID)
+	Texture(Texture&& other) noexcept : tex_ID(other.tex_ID)
 	{
 		other.tex_ID = 0; //Use the "null" ID for the old object.
 	}
@@ -40,5 +41,5 @@ public:
 		}
 	}
 
-	GLuint* getID() { return &tex_ID; }
+	GLuint* getID() {return &tex_ID;}
 };
