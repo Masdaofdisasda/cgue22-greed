@@ -2,7 +2,7 @@
 
 #include "EBO.h"
 #include "VAO.h"
-#include "shaderClass.h"
+#include "Shader.h"
 #include "Texture.h"
 #include "Cubemap.h"
 

@@ -1,4 +1,4 @@
-#include "shaderClass.h"
+#include "Shader.h"
 
 
 // read shader source code from file and return it as string

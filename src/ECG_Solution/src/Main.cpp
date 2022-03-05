@@ -8,8 +8,8 @@
 #pragma once
 #include "Utils.h"
 #include <sstream>
-#include "shaderClass.h"
-#include "CameraClass.h"
+#include "Shader.h"
+#include "Camera.h"
 #include "Mesh.h"
 #include "UBO.h"
 #include "LightSource.h"
