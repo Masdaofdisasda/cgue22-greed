@@ -97,10 +97,9 @@ int main(int argc, char** argv)
 		EXIT_WITH_ERROR("Failed to init GLFW");
 	}
 
-	// GLFW should use OpenGL Version 4.3 with core functions
-	std::cout << "set OpenGL to version 4.3 core..." << std::endl;
+	// GLFW should use OpenGL Version 4.6 with core functions
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);  
 	glfwWindowHint(GLFW_REFRESH_RATE, refresh_rate); 
@@ -307,21 +306,6 @@ int main(int argc, char** argv)
 		// draw phong shaded meshes
 		box.Draw(PBRShader);
 
-		// cheap demo 
-		float Zoff = -5.0f;
-		for (int i = 0; i < 10; i++)
-		{
-			for (int j = 0; j < 10; j++)
-			{
-				Mesh sph = sph.Sphere(16, 8, .45f);
-				sph.setTextures(&diffTile, &specTile, &cubemap);
-				sph.translate(glm::vec3(i - 4.5f, j - 4.5f, Zoff));
-				sph.setMaterial(
-					glm::vec4((float)i / 10.0f, glm::clamp((float)j / 10.0f, 0.01f, 1.0f), 1.0f, 1.0f),
-					0.0f);
-				sph.Draw(PBRShader);
-			}
-		}
 
 		// draw skybox        
 		glDepthFunc(GL_LEQUAL);

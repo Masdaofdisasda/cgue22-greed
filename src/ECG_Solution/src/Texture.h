@@ -8,7 +8,7 @@ private:
 
 	void Release()
 	{
-		glDeleteBuffers(1, &tex_ID);
+		glDeleteTextures(1, &tex_ID);
 		tex_ID = 0;
 	}
 

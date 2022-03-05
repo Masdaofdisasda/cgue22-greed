@@ -8,7 +8,7 @@ private:
 
 	void Release()
 	{
-		glDeleteBuffers(1, &cube_ID);
+		glDeleteTextures(1, &cube_ID);
 		cube_ID = 0;
 	}
 
