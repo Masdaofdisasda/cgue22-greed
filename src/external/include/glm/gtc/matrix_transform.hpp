@@ -431,7 +431,7 @@ namespace glm
 	GLM_FUNC_DECL tmat4x4<T, P> lookAt(
 		tvec3<T, P> const & eye,
 		tvec3<T, P> const & center,
-		tvec3<T, P> const & up) = delete;
+		tvec3<T, P> const & up);
 
 	/// Build a right handed look at view matrix.
 	///
@@ -444,7 +444,7 @@ namespace glm
 	GLM_FUNC_DECL tmat4x4<T, P> lookAtRH(
 		tvec3<T, P> const & eye,
 		tvec3<T, P> const & center,
-		tvec3<T, P> const & up) = delete;
+		tvec3<T, P> const & up);
 
 	/// Build a left handed look at view matrix.
 	///
@@ -457,7 +457,7 @@ namespace glm
 	GLM_FUNC_DECL tmat4x4<T, P> lookAtLH(
 		tvec3<T, P> const & eye,
 		tvec3<T, P> const & center,
-		tvec3<T, P> const & up) = delete;
+		tvec3<T, P> const & up);
 
 	/// @}
 }//namespace glm

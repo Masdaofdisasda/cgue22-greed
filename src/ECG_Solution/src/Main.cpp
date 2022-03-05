@@ -37,7 +37,9 @@ struct MouseState
 	bool pressedLeft = false;
 } mouseState;
 
-Camera camera(glm::vec3(0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+
+CameraPositioner_FirstPerson positioner(glm::vec3(0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+Camera camera(positioner);
 
 /* --------------------------------------------- */
 // Main
@@ -269,7 +271,7 @@ int main(int argc, char** argv)
 	std::cout << "enter render loop..." << std::endl << std::endl;
 	while (!glfwWindowShouldClose(window))
 	{
-		camera.update(deltaSeconds, mouseState.pos, mouseState.pressedLeft);
+		positioner.update(deltaSeconds, mouseState.pos, mouseState.pressedLeft);
 
 		// fps counter
 		const double newTimeStamp = glfwGetTime();
@@ -356,21 +358,21 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		glfwSetWindowShouldClose(window, true);
 	}
 	if (key == GLFW_KEY_W)
-		camera.movement_.forward_ = pressed;
+		positioner.movement_.forward_ = pressed;
 	if (key == GLFW_KEY_S)
-		camera.movement_.backward_ = pressed;
+		positioner.movement_.backward_ = pressed;
 	if (key == GLFW_KEY_A)
-		camera.movement_.left_ = pressed;
+		positioner.movement_.left_ = pressed;
 	if (key == GLFW_KEY_D)
-		camera.movement_.right_ = pressed;
+		positioner.movement_.right_ = pressed;
 	if (key == GLFW_KEY_1)
-		camera.movement_.up_ = pressed;
+		positioner.movement_.up_ = pressed;
 	if (key == GLFW_KEY_2)
-		camera.movement_.down_ = pressed;
+		positioner.movement_.down_ = pressed;
 	if (mods & GLFW_MOD_SHIFT)
-		camera.movement_.fastSpeed_ = pressed;
+		positioner.movement_.fastSpeed_ = pressed;
 	if (key == GLFW_KEY_SPACE)
-		camera.setUpVector(glm::vec3(0.0f, 1.0f, 0.0f));
+		positioner.setUpVector(glm::vec3(0.0f, 1.0f, 0.0f));
 
 	if (key == GLFW_KEY_F1 && action == GLFW_PRESS)
 	{

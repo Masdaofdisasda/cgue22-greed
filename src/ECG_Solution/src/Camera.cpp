@@ -1,6 +1,6 @@
 #include "Camera.h"
 
-void Camera::update(double deltaSeconds, const glm::vec2& mousePos, bool mousePressed) {
+void CameraPositioner_FirstPerson::update(double deltaSeconds, const glm::vec2& mousePos, bool mousePressed) {
 
 	std::cout << mousePos.x << std::endl;
 	std::cout << mousePos.y << std::endl;
@@ -49,48 +49,28 @@ void Camera::update(double deltaSeconds, const glm::vec2& mousePos, bool mousePr
 	cameraPosition_ += moveSpeed_ * static_cast<float>(deltaSeconds);
 }
 
-glm::mat4 Camera::getViewMatrix()
-{
-	const glm::mat4 t = glm::translate(glm::mat4(1.0f), -cameraPosition_);
-	const glm::mat4 r = glm::mat4_cast(cameraOrientation_);
-	return r * t;
-}
-
-glm::vec3 Camera::getPosition()
-{
-	return cameraPosition_;
-}
-
-void Camera::setPosition(const glm::vec3& pos)
+void CameraPositioner_FirstPerson::setPosition(const glm::vec3& pos)
 {
 	cameraPosition_ = pos;
 }
 
-void Camera::setUpVector(const glm::vec3& up)
+void CameraPositioner_FirstPerson::setUpVector(const glm::vec3& up)
 {
 	const glm::mat4 view = getViewMatrix();
 	const glm::vec3 dir = -glm::vec3(view[0][2], view[1][2], view[2][2]);
 	cameraOrientation_ = glmlookAt(cameraPosition_, cameraPosition_ + dir, up);
 }
 
-inline void Camera::lookAt(const glm::vec3& pos, const glm::vec3& target, const glm::vec3& up) {
+inline void CameraPositioner_FirstPerson::lookAt(const glm::vec3& pos, const glm::vec3& target, const glm::vec3& up) {
 	cameraPosition_ = pos;
+	//cameraOrientation_ = glmlookAt(pos, target, up);
 	cameraOrientation_ = glmlookAt(pos, target, up);
 }
-
-glm::mat4 Camera::getViewMatrixSkybox()
-{
-	// calculate and return view projection matrix
-	glm::mat4 V = getViewMatrix();
-	V = glm::mat4(glm::mat3(V)); // remove translation
-	return  V;
-}
-
 
 // takes an eye vector which is the camera position in world space,
 // a target vector which is the position the camera should look at
 // and an up vector which defines the up axis in the world
-glm::mat4 Camera::glmlookAt(glm::vec3 eye, glm::vec3 target, glm::vec3 up)
+glm::mat4 CameraPositioner_FirstPerson::glmlookAt(glm::vec3 eye, glm::vec3 target, glm::vec3 up)
 {
 	// view is the diretion vector from the camera to the target
 	glm::vec3 view = glm::normalize(target - eye);

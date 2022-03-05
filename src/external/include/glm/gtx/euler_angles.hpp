@@ -107,7 +107,7 @@ namespace glm
 	GLM_FUNC_DECL tmat4x4<T, defaultp> yawPitchRoll(
 		T const & yaw,
 		T const & pitch,
-		T const & roll) = delete;
+		T const & roll);
 
 	/// Creates a 2D 2 * 2 rotation matrix from an euler angle.
 	/// @see gtx_euler_angles
