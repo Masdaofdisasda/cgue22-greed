@@ -21,7 +21,6 @@ static std::string FormatDebugOutput(GLenum source, GLenum type, GLuint id, GLen
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void mouse_callback(GLFWwindow* window, int button, int action, int mods);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-void glfwSetCursorPosCallback(GLFWwindow* window, double x, double y);
 
 /* --------------------------------------------- */
 // Global variables
@@ -117,6 +116,14 @@ int main(int argc, char** argv)
 	glfwSetKeyCallback(window, key_callback);
 	glfwSetMouseButtonCallback(window, mouse_callback);
 	glfwSetScrollCallback(window, scroll_callback);
+	glfwSetCursorPosCallback(
+		window, [](auto* window, double x, double y) {
+			int width, height;
+			glfwGetFramebufferSize(window, &width, &height);
+			mouseState.pos.x = static_cast<float>(x / width);
+			mouseState.pos.y = static_cast<float>(y / height);
+		}
+	);
 
 	// load all OpenGL function pointers with GLEW
 	std::cout << "initializing GLEW..." << std::endl;
@@ -214,7 +221,7 @@ int main(int argc, char** argv)
 	skybox.translate(glm::vec3(0.0f, -5.0f, 0.0f));
 
 	Mesh box = box.Cube(1.5f, 1.5f, 1.5f, &brick);
-	box.translate(glm::vec3(0.0f, -2.0f, 0.0f));
+	box.translate(glm::vec3(0.0f, 0.0f, -5.0f));
 
 
 	// build shader programms
@@ -253,6 +260,9 @@ int main(int argc, char** argv)
 
 	double timeStamp = glfwGetTime();
 	float deltaSeconds = 0.0f;
+
+	// locks mouse to window
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	//---------------------------------- RENDER LOOP ----------------------------------//
 
@@ -444,14 +454,6 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 	
 }
 
-
-void glfwSetCursorPosCallback(GLFWwindow* window, double x, double y)
-{
-	int width, height;
-	glfwGetFramebufferSize(window, &width, &height);
-	mouseState.pos.x = static_cast<float>(x / width);
-	mouseState.pos.y = static_cast<float>(y / height);
-}
 
 
 static void APIENTRY DebugCallbackDefault(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const GLvoid* userParam) {

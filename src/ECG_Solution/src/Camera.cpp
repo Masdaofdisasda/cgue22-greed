@@ -1,6 +1,9 @@
 #include "Camera.h"
 
 void Camera::update(double deltaSeconds, const glm::vec2& mousePos, bool mousePressed) {
+
+	std::cout << mousePos.x << std::endl;
+	std::cout << mousePos.y << std::endl;
 	if (mousePressed)
 	{
 		const glm::vec2 delta = mousePos - mousePos_;
