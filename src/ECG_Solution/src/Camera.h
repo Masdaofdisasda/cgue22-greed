@@ -53,7 +53,7 @@ class CameraPositioner_FirstPerson final : public CameraPositionerInterface
 
 
 
-		glm::mat4 glmlookAt(glm::vec3 pos, glm::vec3 target, glm::vec3 up); // accroding to "real time rendering"
+		glm::mat4 glmlookAt(glm::vec3 pos, glm::vec3 target, glm::vec3 up); // according to "real time rendering"
 		glm::mat4 glmlookAt2(glm::vec3 eye, glm::vec3 target, glm::vec3 up); //actual glm implementation
 		CameraPositioner_FirstPerson(const glm::vec3& pos, const glm::vec3& target, const glm::vec3& up)
 			: cameraPosition_(pos)

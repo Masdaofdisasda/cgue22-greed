@@ -11,6 +11,7 @@
 #include "Texture.h"
 #include "Camera.h"
 #include "UBO.h"
+#include "FPSCounter.h"
 
 /* --------------------------------------------- */
 // Prototypes
@@ -291,6 +292,7 @@ int main(int argc, char** argv)
 
 	double timeStamp = glfwGetTime();
 	float deltaSeconds = 0.0f;
+	FPSCounter fpsCounter = FPSCounter();
 
 	// locks mouse to window
 	//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -307,12 +309,9 @@ int main(int argc, char** argv)
 		deltaSeconds = static_cast<float>(newTimeStamp - timeStamp);
 		timeStamp = newTimeStamp;
 
-		if (deltaSeconds >= 1.0/30.0)
-		{
-			std::string fps = std::to_string((1.0 / deltaSeconds) * 1);
-			std::string title = window_title + " " + fps + " fps";
-			glfwSetWindowTitle(window, title.c_str());
-		}
+		fpsCounter.tick(deltaSeconds);
+		std::string title = window_title + " " + fpsCounter.getFPS() + " fps";
+		glfwSetWindowTitle(window, title.c_str());
 
 		// toggle wireframe mode with F1 key
 		glPolygonMode(GL_FRONT_AND_BACK, useWireFrame ? GL_LINE : GL_FILL);
