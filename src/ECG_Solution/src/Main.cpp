@@ -18,9 +18,6 @@
 
 static void APIENTRY DebugCallbackDefault(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const GLvoid* userParam);
 static std::string FormatDebugOutput(GLenum source, GLenum type, GLuint id, GLenum severity, const char* msg);
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
-void mouse_callback(GLFWwindow* window, int button, int action, int mods);
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 /* --------------------------------------------- */
 // Global variables
@@ -35,6 +32,7 @@ struct MouseState
 {
 	glm::vec2 pos = glm::vec2(0.0f);
 	bool pressedLeft = false;
+	bool pressedRight = false;
 } mouseState;
 
 
@@ -59,14 +57,14 @@ int main(int argc, char** argv)
 	INIReader reader("assets/settings.ini");
 	// load values from ini file
 	// first param: section [window], second param: property name, third param: default value
-	const int width = reader.GetInteger("window", "width", 800);
-	const int height = reader.GetInteger("window", "height", 800);
-	const int refresh_rate = reader.GetInteger("window", "refresh_rate", 60);
-	const bool fullscreen = reader.GetBoolean("window", "fullscreen", false);
+	int width = reader.GetInteger("window", "width", 800);
+	int height = reader.GetInteger("window", "height", 800);
+	int refresh_rate = reader.GetInteger("window", "refresh_rate", 60);
+	bool fullscreen = reader.GetBoolean("window", "fullscreen", false);
 	std::string window_title = reader.Get("window", "title", "ECG 2021");
-	const float fov = reader.GetReal("camera", "fov", 60.0f);
-	const float Znear = reader.GetReal("camera", "near", 0.1f);
-	const float Zfar = reader.GetReal("camera", "far", 100.0f);
+	float fov = reader.GetReal("camera", "fov", 60.0f);
+	float Znear = reader.GetReal("camera", "near", 0.1f);
+	float Zfar = reader.GetReal("camera", "far", 100.0f);
 	std::cout << "settings loaded:" << std::endl
 		<< "width = " << width << std::endl
 		<< "height = " << height << std::endl
@@ -97,7 +95,7 @@ int main(int argc, char** argv)
 	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);  
 	glfwWindowHint(GLFW_REFRESH_RATE, refresh_rate); 
 	glfwWindowHint(GLFW_SAMPLES, 4);
-	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+	//glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 	glfwSwapInterval(0);
 
 	// creates new GLFWwindow Object using data from settings.ini
@@ -115,15 +113,46 @@ int main(int argc, char** argv)
 	glfwMakeContextCurrent(window);
 
 	// register input callbacks to window
-	glfwSetKeyCallback(window, key_callback);
-	glfwSetMouseButtonCallback(window, mouse_callback);
-	glfwSetScrollCallback(window, scroll_callback);
+	glfwSetKeyCallback(window,
+		[](GLFWwindow* window,
+			int key, int scancode, int action, int mods)
+		{
+			const bool press = action != GLFW_RELEASE;
+			if (key == GLFW_KEY_ESCAPE)
+				glfwSetWindowShouldClose(window, GLFW_TRUE);
+			if (key == GLFW_KEY_W)
+				positioner.movement_.forward_ = press;
+			if (key == GLFW_KEY_S)
+				positioner.movement_.backward_ = press;
+			if (key == GLFW_KEY_A)
+				positioner.movement_.left_ = press; 
+			if (key == GLFW_KEY_D)
+				positioner.movement_.right_ = press;
+			if (key == GLFW_KEY_1)
+				positioner.movement_.up_ = press;
+			if (key == GLFW_KEY_2)
+				positioner.movement_.down_ = press;
+			if (mods & GLFW_MOD_SHIFT)
+				positioner.movement_.fastSpeed_ = press;
+			if (key == GLFW_KEY_SPACE)
+				positioner.setUpVector(glm::vec3(0.0f, 1.0f, 0.0f));
+		});
+	glfwSetMouseButtonCallback(window,
+		[](auto* window, int button, int action, int mods)
+		{
+			if (button == GLFW_MOUSE_BUTTON_LEFT)
+				mouseState.pressedLeft = action == GLFW_PRESS;
+
+			if (button == GLFW_MOUSE_BUTTON_RIGHT)
+				mouseState.pressedRight = action == GLFW_PRESS;
+
+		});
 	glfwSetCursorPosCallback(
 		window, [](auto* window, double x, double y) {
-			int width, height;
-			glfwGetFramebufferSize(window, &width, &height);
-			mouseState.pos.x = static_cast<float>(x / width);
-			mouseState.pos.y = static_cast<float>(y / height);
+			int w, h;
+			glfwGetFramebufferSize(window, &w, &h);
+			mouseState.pos.x = static_cast<float>(x / w);
+			mouseState.pos.y = static_cast<float>(y / h);
 		}
 	);
 
@@ -219,7 +248,7 @@ int main(int argc, char** argv)
 	Material sky(&brickDiff, &brickSpec, &brickCube,
 		glm::vec4(0.0f, 0.0f, 0.0f, 0.0f), 1.0f);
 
-	Mesh skybox = skybox.Skybox(40.0f, &sky);
+	Mesh skybox = skybox.Skybox(400.0f, &sky);
 	skybox.translate(glm::vec3(0.0f, -5.0f, 0.0f));
 
 	Mesh box = box.Cube(1.5f, 1.5f, 1.5f, &brick);
@@ -264,7 +293,7 @@ int main(int argc, char** argv)
 	float deltaSeconds = 0.0f;
 
 	// locks mouse to window
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	//---------------------------------- RENDER LOOP ----------------------------------//
 
@@ -285,7 +314,6 @@ int main(int argc, char** argv)
 			glfwSetWindowTitle(window, title.c_str());
 		}
 
-
 		// toggle wireframe mode with F1 key
 		glPolygonMode(GL_FRONT_AND_BACK, useWireFrame ? GL_LINE : GL_FILL);
 		useCulling ? glEnable(GL_CULL_FACE) : glDisable(GL_CULL_FACE);
@@ -298,9 +326,12 @@ int main(int argc, char** argv)
 		glViewport(0, 0, width, height);
 		glfwPollEvents();
 
-		const glm::mat4 projection = glm::perspective(glm::radians(fov), (float)(width / height), Znear, Zfar);
-		const glm::mat4 ViewProj = projection * camera.getViewMatrix();
-		const glm::mat4 ViewProjSkybox = projection * camera.getViewMatrixSkybox();
+		glfwGetFramebufferSize(window, &width, &height);
+		const float ratio = width / (float)height;
+		const glm::mat4 projection = glm::perspective(glm::radians(fov), ratio, Znear, Zfar);
+		const glm::mat4 view = camera.getViewMatrix();
+		const glm::mat4 ViewProj = projection * view;
+		const glm::mat4 ViewProjSkybox = projection * glm::mat4(glm::mat3(view)); // remove translation
 
 		PBRShader.Use();
 
@@ -344,120 +375,7 @@ int main(int argc, char** argv)
 }
 
 
-// callback prototype
-// key: pressed key, compare GLFW_KEY_*
-// action: GLFW_PRESS or GLFW_RELEASE
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
-
-	const bool pressed = action != GLFW_RELEASE;
-	// close window when ESC key is pressed
-	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-	{
-		std::cout << "register ESC key press..." << std::endl;
-		glfwSetWindowShouldClose(window, true);
-	}
-	if (key == GLFW_KEY_W)
-		positioner.movement_.forward_ = pressed;
-	if (key == GLFW_KEY_S)
-		positioner.movement_.backward_ = pressed;
-	if (key == GLFW_KEY_A)
-		positioner.movement_.left_ = pressed;
-	if (key == GLFW_KEY_D)
-		positioner.movement_.right_ = pressed;
-	if (key == GLFW_KEY_1)
-		positioner.movement_.up_ = pressed;
-	if (key == GLFW_KEY_2)
-		positioner.movement_.down_ = pressed;
-	if (mods & GLFW_MOD_SHIFT)
-		positioner.movement_.fastSpeed_ = pressed;
-	if (key == GLFW_KEY_SPACE)
-		positioner.setUpVector(glm::vec3(0.0f, 1.0f, 0.0f));
-
-	if (key == GLFW_KEY_F1 && action == GLFW_PRESS)
-	{
-		std::cout << "register F1 key press..." << std::endl;
-
-		// toggle between solid and wireframe rendering by pressing F1
-		if (useWireFrame)
-		{
-			std::cout << "disabling wire-frame mode..." << std::endl;
-			useWireFrame = false;
-		}
-		else {
-			std::cout << "enabling wire-frame mode..." << std::endl;
-			useWireFrame = true;
-		}
-	}
-
-	if (key == GLFW_KEY_F2 && action == GLFW_PRESS)
-	{
-		std::cout << "register F2 key press..." << std::endl;
-
-		// toggle between using culling or not by pressing F2
-		if (useCulling)
-		{
-			std::cout << "disabling back-face culling..." << std::endl;
-			useCulling = false;
-		}
-		else {
-			std::cout << "enabling back-face culling..." << std::endl;
-			useCulling = true;
-		}
-	}
-
-	if (key == GLFW_KEY_F3 && action == GLFW_PRESS)
-	{
-		std::cout << "register F3 key press..." << std::endl;
-
-		// toggle between using culling or not by pressing F2
-		if (!useRotatingObject)
-		{
-			std::cout << "rotate objects..." << std::endl;
-			useRotatingObject = true;
-		}
-		else {
-			std::cout << "stop rotation..." << std::endl;
-			useRotatingObject = false;
-		}
-	}
-
-}
-
-void mouse_callback(GLFWwindow* window, int button, int action, int mods)
-{
-	// register left mouse button press
-	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
-	{
-		mouseState.pressedLeft = action == GLFW_PRESS;
-	}
-
-	// register left mouse button release
-	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
-	{
-		
-	}
-
-	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
-	{
-		
-	}
-
-	// register left mouse button release
-	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_RELEASE)
-	{
-		
-	}
-
-}
-
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
-{
-	
-}
-
-
-
+// callbacks
 static void APIENTRY DebugCallbackDefault(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const GLvoid* userParam) {
 	if (id == 131185 || id == 131218) return; // ignore performance warnings from nvidia
 	std::string error = FormatDebugOutput(source, type, id, severity, message);

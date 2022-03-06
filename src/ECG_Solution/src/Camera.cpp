@@ -2,12 +2,10 @@
 
 void CameraPositioner_FirstPerson::update(double deltaSeconds, const glm::vec2& mousePos, bool mousePressed) {
 
-	std::cout << mousePos.x << std::endl;
-	std::cout << mousePos.y << std::endl;
 	if (mousePressed)
 	{
 		const glm::vec2 delta = mousePos - mousePos_;
-		const glm::quat deltaQuat = glm::quat(glm::vec3(-mouseSpeed_ * delta.y, mouseSpeed_ * delta.x, 0.0f));
+		const glm::quat deltaQuat = glm::quat(glm::vec3(mouseSpeed_ * delta.y, mouseSpeed_ * delta.x, 0.0f));
 		cameraOrientation_ = deltaQuat * cameraOrientation_;
 		cameraOrientation_ = glm::normalize(cameraOrientation_);
 		setUpVector(up_);
@@ -58,13 +56,12 @@ void CameraPositioner_FirstPerson::setUpVector(const glm::vec3& up)
 {
 	const glm::mat4 view = getViewMatrix();
 	const glm::vec3 dir = -glm::vec3(view[0][2], view[1][2], view[2][2]);
-	cameraOrientation_ = glmlookAt(cameraPosition_, cameraPosition_ + dir, up);
+	cameraOrientation_ = glmlookAt2(cameraPosition_, cameraPosition_ + dir, up);
 }
 
-inline void CameraPositioner_FirstPerson::lookAt(const glm::vec3& pos, const glm::vec3& target, const glm::vec3& up) {
+inline void CameraPositioner_FirstPerson::flookAt(const glm::vec3& pos, const glm::vec3& target, const glm::vec3& up) {
 	cameraPosition_ = pos;
-	//cameraOrientation_ = glmlookAt(pos, target, up);
-	cameraOrientation_ = glmlookAt(pos, target, up);
+	cameraOrientation_ = glmlookAt2(pos, target, up);
 }
 
 // takes an eye vector which is the camera position in world space,
@@ -91,8 +88,39 @@ glm::mat4 CameraPositioner_FirstPerson::glmlookAt(glm::vec3 eye, glm::vec3 targe
 
 	// the camera postion is translate to it's inverse position
 	glm::mat4 T = glm::translate(glm::mat4(1.0f), eye * -1.0f);
-	
+
 	// the inverse of R is its transpose
 	return glm::transpose(R) * T;
+}
+
+glm::mat4 CameraPositioner_FirstPerson::glmlookAt2(glm::vec3 pos, glm::vec3 target, glm::vec3 up)
+{
+	// 1. Position = known
+	// 2. Calculate cameraDirection
+	glm::vec3 zaxis = glm::normalize(pos - target);
+	// 3. Get positive right axis vector
+	glm::vec3 xaxis = glm::normalize(glm::cross(glm::normalize(up), zaxis));
+	// 4. Calculate camera up vector
+	glm::vec3 yaxis = glm::cross(zaxis, xaxis);
+
+	// Create translation and rotation matrix
+	// In glm we access elements as mat[col][row] due to column-major layout
+	glm::mat4 translation; // Identity matrix by default
+	translation[3][0] = -pos.x; // Third column, first row
+	translation[3][1] = -pos.y;
+	translation[3][2] = -pos.z;
+	glm::mat4 rotation;
+	rotation[0][0] = xaxis.x; // First column, first row
+	rotation[1][0] = xaxis.y;
+	rotation[2][0] = xaxis.z;
+	rotation[0][1] = yaxis.x; // First column, second row
+	rotation[1][1] = yaxis.y;
+	rotation[2][1] = yaxis.z;
+	rotation[0][2] = zaxis.x; // First column, third row
+	rotation[1][2] = zaxis.y;
+	rotation[2][2] = zaxis.z;
+
+	// Return lookAt matrix as combination of translation and rotation matrix
+	return rotation * translation; // Remember to read from right to left (first translation then rotation)
 }
 

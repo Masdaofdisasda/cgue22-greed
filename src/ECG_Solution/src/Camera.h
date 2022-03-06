@@ -10,7 +10,6 @@ class CameraPositionerInterface
 public:
 	virtual ~CameraPositionerInterface() = default;
 	virtual glm::mat4 getViewMatrix() const = 0;
-	virtual glm::mat4 getViewMatrixSkybox() const = 0;
 	virtual glm::vec3 getPosition() const = 0;
 };
 
@@ -25,7 +24,6 @@ public:
 	Camera& operator = (const Camera&) = default;
 
 	glm::mat4 getViewMatrix() const { return positioner_->getViewMatrix(); }
-	glm::mat4 getViewMatrixSkybox() const { return positioner_->getViewMatrixSkybox(); }
 	glm::vec3 getPosition() const { return positioner_->getPosition(); }
 
 private:
@@ -54,11 +52,12 @@ class CameraPositioner_FirstPerson final : public CameraPositionerInterface
 		float fastCoef_ = 10.0f;
 
 
-		
-		glm::mat4 glmlookAt(glm::vec3 eye, glm::vec3 target, glm::vec3 up);
+
+		glm::mat4 glmlookAt(glm::vec3 pos, glm::vec3 target, glm::vec3 up); // accroding to "real time rendering"
+		glm::mat4 glmlookAt2(glm::vec3 eye, glm::vec3 target, glm::vec3 up); //actual glm implementation
 		CameraPositioner_FirstPerson(const glm::vec3& pos, const glm::vec3& target, const glm::vec3& up)
 			: cameraPosition_(pos)
-			, cameraOrientation_(glmlookAt(pos, target, up))
+			, cameraOrientation_(glmlookAt2(pos, target, up))
 			, up_(up)
 		{}
 		void update(double deltaSeconds, const glm::vec2& mousePos, bool mousePressed);
@@ -68,12 +67,6 @@ class CameraPositioner_FirstPerson final : public CameraPositionerInterface
 			const glm::mat4 r = glm::mat4_cast(cameraOrientation_);
 			return r * t;
 		};
-		virtual glm::mat4 getViewMatrixSkybox() const override
-		{
-			glm::mat4 V = getViewMatrix();
-			V = glm::mat4(glm::mat3(V)); // remove translation
-			return  V;
-		};
 		virtual glm::vec3 getPosition() const override
 		{
 			return cameraPosition_;
@@ -81,7 +74,7 @@ class CameraPositioner_FirstPerson final : public CameraPositionerInterface
 		void setPosition(const glm::vec3& pos);
 		void resetMousePosition(const glm::vec2& p) { mousePos_ = p; };
 		void setUpVector(const glm::vec3& up);
-		inline void lookAt(const glm::vec3& pos, const glm::vec3& target, const glm::vec3& up);
+		inline void flookAt(const glm::vec3& pos, const glm::vec3& target, const glm::vec3& up);
 
 	private:
 		glm::vec2 mousePos_ = glm::vec2(0);
