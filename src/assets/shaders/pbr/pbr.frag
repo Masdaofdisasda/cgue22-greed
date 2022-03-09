@@ -34,10 +34,11 @@ struct SpotLight
 struct Material
 {
 	sampler2D albedo;
-	sampler2D specular;
+	sampler2D normal;
+    sampler2D metallic;
+    sampler2D roughness;
+    sampler2D ao;
 	samplerCube irradiance;
-    vec4 coefficients;
-    float reflection;
 };
 
 layout(std140, binding = 0) uniform PerFrameData
@@ -70,9 +71,9 @@ out vec4 FragColor;
 
 //todo
 vec3 albedo = pow(texture(material.albedo, fUV).rgb, vec3(2.2));
-float metallic = material.coefficients.x;
-float roughness = material.coefficients.y;
-float ao = material.coefficients.z;
+float metallic = texture(material.metallic, fUV).r;
+float roughness = texture(material.roughness, fUV).r;
+float ao = texture(material.ao,fUV).r;
 
 const float PI = 3.14159265359;
 
@@ -80,6 +81,23 @@ vec3 Idirectional(DirectionalLight light, vec3 normal, vec3 viewDir);
 vec3 Ipoint(PositionalLight light, vec3 N, vec3 fPosition, vec3 V, vec3 F0);
 vec3 Ispot(SpotLight light, vec3 normal, vec3 fPosition, vec3 viewDir);
 vec3 calculateLight();
+
+vec3 getNormalFromMap()
+{
+    vec3 tangentNormal = texture(material.normal, fUV).xyz * 2.0 - 1.0;
+
+    vec3 Q1  = dFdx(fPosition);
+    vec3 Q2  = dFdy(fPosition);
+    vec2 st1 = dFdx(fUV);
+    vec2 st2 = dFdy(fUV);
+
+    vec3 N   = normalize(fNormal);
+    vec3 T  = normalize(Q1*st2.t - Q2*st1.t);
+    vec3 B  = -normalize(cross(N, T));
+    mat3 TBN = mat3(T, B, N);
+
+    return normalize(TBN * tangentNormal);
+}
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)
 {
@@ -133,7 +151,7 @@ void main()
 
 vec3 calculateLight() {
 	
-    vec3 N = normalize(fNormal);
+    vec3 N = getNormalFromMap();
 	vec3 V = normalize(vec3(viewPos) - fPosition);
     vec3 R = reflect(-V, N);
     
@@ -166,6 +184,12 @@ vec3 calculateLight() {
     
     vec3 irradiance = texture(material.irradiance, N).rgb;
     vec3 diffuse      = irradiance * albedo;
+
+    // sample both the pre-filter map and the BRDF lut and combine them together as per the Split-Sum approximation to get the IBL specular part.
+    /*const float MAX_REFLECTION_LOD = 4.0;
+    vec3 prefilteredColor = textureLod(prefilterMap, R,  roughness * MAX_REFLECTION_LOD).rgb;    
+    vec2 brdf  = texture(brdfLUT, vec2(max(dot(N, V), 0.0), roughness)).rg;
+    vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);*/
     
     vec3 ambient = (kD * diffuse) * ao;
     
@@ -180,6 +204,7 @@ vec3 calculateLight() {
 }
 
 // calculate directional lights
+/*
 vec3 Idirectional(DirectionalLight light, vec3 normal, vec3 viewDir)
 {
     vec3 lightDir = normalize(vec3(-light.direction));
@@ -197,7 +222,7 @@ vec3 Idirectional(DirectionalLight light, vec3 normal, vec3 viewDir)
     vec3 diffuse  = diff * texture(material.albedo, fUV).xyz * material.coefficients.y;
     vec3 specular = spec * texture(material.specular, fUV).xyz * material.coefficients.z;
     return light.intensity.xyz * (ambient + diffuse + specular);
-}  
+}  */
 
 // calculate postional lights
 vec3 Ipoint(PositionalLight light, vec3 N, vec3 fPosition, vec3 V, vec3 F0)
@@ -238,7 +263,7 @@ vec3 Ipoint(PositionalLight light, vec3 N, vec3 fPosition, vec3 V, vec3 F0)
 }
 
 // calculate spot lights
-vec3 Ispot(SpotLight light, vec3 normal, vec3 fPosition, vec3 viewDir)
+/*vec3 Ispot(SpotLight light, vec3 normal, vec3 fPosition, vec3 viewDir)
 {
     vec3 lightDir = normalize(vec3(light.position) - fPosition);
     
@@ -269,4 +294,4 @@ vec3 Ispot(SpotLight light, vec3 normal, vec3 fPosition, vec3 viewDir)
     diffuse  *= attenuation * intensity;
     specular *= attenuation * intensity;
     return light.intensity.xyz * (ambient + diffuse + specular);
-}
+}*/

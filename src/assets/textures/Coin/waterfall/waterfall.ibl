@@ -1,0 +1,39 @@
+[Header]
+ICOfile = "waterfall_Thumb.jpg"
+PREVIEWfile = "waterfall_preview.jpg"
+Name = "waterfall"
+Author = "tischbein3"
+Location = "splotchdog land"
+Comment = "deep forest lightning, shot with a mirror ball"
+
+[Background]
+BGfile = "waterfall_Bg.jpg"
+BGmap = 1
+BGu = 0.000000
+BGv = 0.000000
+BGheight = 1860
+
+[Enviroment]
+EVfile = "waterfall_Env.exr"
+EVmap = 1
+EVu = 0.000000
+EVv = 0.000000
+EVheight = 180
+EVmulti = 1.000000
+EVgamma = 1.500000
+
+[Reflection]
+REFfile = "waterfall_Ref.exr"
+REFmap = 1
+REFu = 0.000000
+REFv = 0.000000
+REFheight = 930
+REFmulti = 1.000000
+REFgamma = 1.500000
+
+[Sun]
+SUNcolor = 247,255,231
+SUNmulti = 60.500000
+SUNu = 0.639247
+SUNv = 0.258065
+

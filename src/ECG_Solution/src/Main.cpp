@@ -133,22 +133,21 @@ int main(int argc, char** argv)
 	Renderer renderer(globalState,perframeData);
 
 	std::cout << "initialize models and textuers..." << std::endl;
-	Texture brickDiff("assets/textures/brick03-diff.jpeg");
-	Texture brickSpec("assets/textures/brick03-spec.jpeg");
+	Texture goldAlbedo("assets/textures/Coin/albedo.jpg");
+	Texture goldNormal("assets/textures/Coin/normal.jpg");
+	Texture goldMetal("assets/textures/Coin/metal.jpg");
+	Texture goldRough("assets/textures/Coin/rough.jpg");
+	Texture goldAO("assets/textures/Coin/ao.jpg");
 	Cubemap brickCube("assets/textures/cubemap");
 
-	Material brick(&brickDiff,&brickSpec,&brickCube,
-		glm::vec4(0.5f, 0.5f, 1.0f, 1.0f), 1.0f);
+	Material gold(&goldAlbedo,&goldNormal,&goldMetal,&goldRough,&goldAO,&brickCube);
 
-	Material sky(&brickDiff, &brickSpec, &brickCube,
-		glm::vec4(0.0f, 0.0f, 0.0f, 0.0f), 1.0f);
-
-	Mesh coin("assets/models/coin.obj", &brick);
+	Mesh coin("assets/models/coin.obj", &gold);
 	coin.translate(glm::vec3(0.0f, 0.0f, -5.0f));
 
-	Mesh skybox = skybox.Skybox(400.0f, &sky);
+	Mesh skybox = skybox.Skybox(400.0f, &gold);
 
-	Mesh box = box.Cube(1.5f, 1.5f, 1.5f, &brick);
+	Mesh box = box.Cube(1.5f, 1.5f, 1.5f, &gold);
 	box.translate(glm::vec3(0.0f, 0.0f, -5.0f));
 	std::vector <Mesh*> models;
 	models.push_back(&coin);

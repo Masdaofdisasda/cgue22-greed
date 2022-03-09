@@ -59,13 +59,14 @@ void Program::Use()
 	glUseProgram(program_ID);
 }
 
-void Program::uploadMaterial(Material* material)
+void Program::uploadMaterial()
 {
 	setInt("material.albedo", 0);
-	setInt("material.specular", 1);
-	setInt("material.irradiance", 2);
-	setVec4("material.coefficients", material->coefficients);
-	setFloat("material.reflection", material->reflection);
+	setInt("material.normal", 1);
+	setInt("material.metallic", 2);
+	setInt("material.roughness", 3);
+	setInt("material.ao", 4);
+	setInt("material.irradiance", 5);
 }
 
 void Program::Draw(Mesh& mesh)
@@ -76,14 +77,20 @@ void Program::Draw(Mesh& mesh)
 
 	// use texture 
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, *mesh.getMaterial()->getDiffuse()->getID());
+	glBindTexture(GL_TEXTURE_2D, *mesh.getMaterial()->getAlbedo()->getID());
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, *mesh.getMaterial()->getSpecular()->getID());
+	glBindTexture(GL_TEXTURE_2D, *mesh.getMaterial()->getNormalmap()->getID());
 	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, *mesh.getMaterial()->getMetallic()->getID());
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, *mesh.getMaterial()->getRoughness()->getID());
+	glActiveTexture(GL_TEXTURE4);
+	glBindTexture(GL_TEXTURE_2D, *mesh.getMaterial()->getAOmap()->getID());
+	glActiveTexture(GL_TEXTURE5);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, *mesh.getMaterial()->getCubemap()->getID());
 
 	// load mesh on shader
-	uploadMaterial(mesh.getMaterial());
+	uploadMaterial();
 
 	// draw meshgl
 	mesh.BindVAO();

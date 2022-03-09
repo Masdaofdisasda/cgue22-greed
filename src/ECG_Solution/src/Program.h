@@ -33,7 +33,7 @@ public:
 
 	void Use();
 
-	void uploadMaterial(Material* material);
+	void uploadMaterial();
 
 	void Draw(Mesh& mesh); // draws triangles
 

@@ -7,10 +7,11 @@ in vec2 fUV;
 struct Material
 {
 	sampler2D albedo;
-	sampler2D specular;
+	sampler2D normal;
+    sampler2D metallic;
+    sampler2D roughness;
+    sampler2D ao;
 	samplerCube irradiance;
-    vec4 coefficients;
-    float reflection;
 };
 
 uniform Material material;

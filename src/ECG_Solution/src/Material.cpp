@@ -1,11 +1,12 @@
 #include "Material.h"
 
 
-Material::Material(Texture* diff, Texture* spec, Cubemap* cube, glm::vec4 coeffs, float reflect)
+Material::Material(Texture* alb, Texture* norm, Texture* metal, Texture* rough, Texture* ao, Cubemap* cube)
 {
-	diffuse = diff;
-	specular = spec;
+	albedo = alb;
+	normal = norm;
+	metallic = metal;
+	roughness = rough;
+	ambientocclusion = ao;
 	cubemap = cube;
-	coefficients = coeffs;
-	reflection = reflect;
 }
