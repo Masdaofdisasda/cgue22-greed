@@ -134,7 +134,7 @@ void main()
 vec3 calculateLight() {
 	
     vec3 N = normalize(fNormal);
-	vec3 V = normalize(viewPos - fPosition);
+	vec3 V = normalize(vec3(viewPos) - fPosition);
     vec3 R = reflect(-V, N);
     
     // calculate reflectance at normal incidence; if dia-electric (like plastic) use F0 

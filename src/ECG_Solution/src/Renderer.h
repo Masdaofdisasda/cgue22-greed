@@ -30,11 +30,8 @@ private:
 	Program skyboxShader;
 
 	void loadLightsources();
+	void fillLightsources();
 	void buildShaderPrograms();
 };
 
 
-
-Renderer::~Renderer()
-{
-}

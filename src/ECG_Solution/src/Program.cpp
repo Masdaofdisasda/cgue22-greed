@@ -1,10 +1,45 @@
 #include "Program.h"
 
-Program::Program(Shader& a, Shader& b)
+void Program::buildFrom(Shader& a, Shader& b)
 {
-	program_ID = glCreateProgram();
 	glAttachShader(program_ID, *a.getID());
 	glAttachShader(program_ID, *b.getID());
+	glLinkProgram(program_ID);
+
+	compileErrors();
+
+	getUniformLocations();
+}
+void Program::buildFrom(Shader& a, Shader& b, Shader& c)
+{
+	glAttachShader(program_ID, *a.getID());
+	glAttachShader(program_ID, *b.getID());
+	glAttachShader(program_ID, *c.getID());
+	glLinkProgram(program_ID);
+
+	compileErrors();
+
+	getUniformLocations();
+}
+void Program::buildFrom(Shader& a, Shader& b, Shader& c, Shader& d)
+{
+	glAttachShader(program_ID, *a.getID());
+	glAttachShader(program_ID, *b.getID());
+	glAttachShader(program_ID, *c.getID());
+	glAttachShader(program_ID, *d.getID());
+	glLinkProgram(program_ID);
+
+	compileErrors();
+
+	getUniformLocations();
+}
+void Program::buildFrom(Shader& a, Shader& b, Shader& c, Shader& d, Shader& e)
+{
+	glAttachShader(program_ID, *a.getID());
+	glAttachShader(program_ID, *b.getID());
+	glAttachShader(program_ID, *c.getID());
+	glAttachShader(program_ID, *d.getID());
+	glAttachShader(program_ID, *e.getID());
 	glLinkProgram(program_ID);
 
 	compileErrors();

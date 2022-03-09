@@ -18,11 +18,11 @@ class UBO
 
     public:
 
-        UBO(std::vector<DirectionalLight>& bufferData);
-        UBO(std::vector<PositionalLight>& bufferData);
-		UBO(std::vector<SpotLight>& bufferData);
+		void fillBuffer(std::vector<DirectionalLight>& bufferData);
+		void fillBuffer(std::vector<PositionalLight>& bufferData);
+		void fillBuffer(std::vector<SpotLight>& bufferData);
+		void fillBuffer(PerFrameData pfbuffer);
 		UBO();
-		UBO(PerFrameData pfbuffer);
         
 		~UBO() { Release(); }
 

@@ -2,11 +2,13 @@
 
 Renderer::Renderer(GlobalState& state, PerFrameData& pfdata)
 {
-	globalState = &state;
-	perframeData = &pfdata;
-	perframeBuffer = UBO(pfdata);
-	buildShaderPrograms();
-	loadLightsources();
+	globalState = &state; // link global variables
+	perframeData = &pfdata; // link per frame data
+	loadLightsources(); // load lights and lightcounts for shaders
+	std::cout << "fail..." << std::endl;
+	buildShaderPrograms(); // build shader program
+	fillLightsources(); // binds lights to biding points in shader
+	perframeBuffer.fillBuffer(pfdata); // load buffer to shader;
 
 }
 
@@ -39,7 +41,6 @@ void Renderer::loadLightsources()
 		glm::vec4(0.8f, 0.8f, 0.8f ,1.0f), });		// intensity 
 
 	// positional light
-	std::vector <PositionalLight> pLightsBuffer;
 	pLightsBuffer.push_back(PositionalLight{
 		glm::vec4(0.0f,  0.0f,  0.0f ,1.0f),		// position
 		glm::vec4(1.0f, 0.4f, 0.1f, 1.0f),			// attenuation (constant, linear, quadratic)
@@ -88,10 +89,14 @@ void Renderer::loadLightsources()
 		glm::vec4(0.8f,0.8f,0.8f,1.0f) }); // intensity
 
 
+}
+
+void Renderer::fillLightsources()
+{
 	// create Uniform Buffer Objects from light source struct vectors
-	directionalLights = UBO(dLightsBuffer);
-	positionalLights = UBO(pLightsBuffer);
-	spotLights = UBO(sLightsBuffer);
+	directionalLights.fillBuffer(dLightsBuffer);
+	positionalLights.fillBuffer(pLightsBuffer);
+	spotLights.fillBuffer(sLightsBuffer);
 
 	// bind UBOs to bindings in shader
 	PBRShader.bindLightBuffers(&directionalLights, &positionalLights, &spotLights);
@@ -106,12 +111,12 @@ void Renderer::buildShaderPrograms()
 	// build shader programms
 	Shader pbrVert("assets/shaders/pbr/pbr.vert");
 	Shader pbrFrag("assets/shaders/pbr/pbr.frag", glm::ivec3(dLightsBuffer.size(), pLightsBuffer.size(), sLightsBuffer.size()));
-	PBRShader = Program(pbrVert, pbrFrag);
+	PBRShader.buildFrom(pbrVert, pbrFrag);
 	PBRShader.Use();
 
 	Shader skyboxVert("assets/shaders/skybox/skybox.vert");
 	Shader skyboxFrag("assets/shaders/skybox/skybox.frag");
-	skyboxShader = Program(skyboxVert, skyboxFrag);
+	skyboxShader.buildFrom(skyboxVert, skyboxFrag);
 
 }
 
@@ -130,4 +135,10 @@ void Renderer::Draw(std::vector <Mesh*> models, Mesh& skybox)
 	glDepthFunc(GL_LEQUAL);
 	skyboxShader.Draw(skybox);
 	glDepthFunc(GL_LESS);
+}
+
+Renderer::~Renderer()
+{
+	globalState = nullptr;
+	perframeData = nullptr;
 }

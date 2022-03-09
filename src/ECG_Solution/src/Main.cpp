@@ -7,10 +7,7 @@
 
 #pragma once
 #include <sstream>
-#include "Program.h"
-#include "Texture.h"
 #include "Camera.h"
-#include "UBO.h"
 #include "Renderer.h"
 #include "FPSCounter.h"
 #include <assimp/scene.h>
@@ -164,8 +161,10 @@ int main(int argc, char** argv)
 	// Initialize scene and render loop
 	/* --------------------------------------------- */
 
+	std::cout << "initialize scene and render loop..." << std::endl;
 	Renderer renderer(globalState,perframeData);
 
+	std::cout << "initialize models and textuers..." << std::endl;
 	Texture brickDiff("assets/textures/brick03-diff.jpeg");
 	Texture brickSpec("assets/textures/brick03-spec.jpeg");
 	Cubemap brickCube("assets/textures/cubemap");
