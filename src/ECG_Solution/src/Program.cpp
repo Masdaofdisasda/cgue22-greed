@@ -12,6 +12,11 @@ Program::Program(Shader& a, Shader& b)
 	getUniformLocations();
 }
 
+Program::Program()
+{
+	program_ID = glCreateProgram();
+}
+
 
 void Program::Use()
 {
@@ -62,9 +67,9 @@ void Program::getUniformLocations()
 
 void Program::bindLightBuffers(UBO* directional, UBO* positional, UBO* spot)
 {
-	glBindBufferBase(GL_UNIFORM_BUFFER, 0, *directional->getID());
-	glBindBufferBase(GL_UNIFORM_BUFFER, 1, *positional->getID());
-	glBindBufferBase(GL_UNIFORM_BUFFER, 2, *spot->getID());
+	glBindBufferBase(GL_UNIFORM_BUFFER, 1, *directional->getID());
+	glBindBufferBase(GL_UNIFORM_BUFFER, 2, *positional->getID());
+	glBindBufferBase(GL_UNIFORM_BUFFER, 3, *spot->getID());
 }
 
 void Program::setuInt(const std::string& name, int value)

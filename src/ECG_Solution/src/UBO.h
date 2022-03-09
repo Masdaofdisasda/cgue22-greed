@@ -20,9 +20,13 @@ class UBO
 
         UBO(std::vector<DirectionalLight>& bufferData);
         UBO(std::vector<PositionalLight>& bufferData);
-        UBO(std::vector<SpotLight>& bufferData);
+		UBO(std::vector<SpotLight>& bufferData);
+		UBO();
+		UBO(PerFrameData pfbuffer);
         
 		~UBO() { Release(); }
+
+		void Update(PerFrameData pfbuffer);
 
 		// ensure RAII compliance
 		UBO(const UBO&) = delete;

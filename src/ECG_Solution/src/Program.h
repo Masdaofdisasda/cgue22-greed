@@ -24,6 +24,7 @@ private:
 
 public:
 	Program(Shader& a, Shader& b);
+	Program();
 
 	~Program() { Release(); }
 
