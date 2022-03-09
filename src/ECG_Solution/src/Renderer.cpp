@@ -5,7 +5,6 @@ Renderer::Renderer(GlobalState& state, PerFrameData& pfdata)
 	globalState = &state; // link global variables
 	perframeData = &pfdata; // link per frame data
 	loadLightsources(); // load lights and lightcounts for shaders
-	std::cout << "fail..." << std::endl;
 	buildShaderPrograms(); // build shader program
 	fillLightsources(); // binds lights to biding points in shader
 	perframeBuffer.fillBuffer(pfdata); // load buffer to shader;

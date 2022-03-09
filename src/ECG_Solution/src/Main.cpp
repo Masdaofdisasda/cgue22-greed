@@ -10,6 +10,7 @@
 #include "Camera.h"
 #include "Renderer.h"
 #include "FPSCounter.h"
+#include "GLFWApp.h"
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <assimp/cimport.h>
@@ -61,40 +62,11 @@ int main(int argc, char** argv)
 	// Init framework
 	/* --------------------------------------------- */
 
-	
-	// load GLFW 
-	// false if something goes wrong
-	if (!glfwInit())
-	{
-		EXIT_WITH_ERROR("Failed to init GLFW");
-	}
-
-	// GLFW should use OpenGL Version 4.6 with core functions
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);  
-	glfwWindowHint(GLFW_REFRESH_RATE, globalState.refresh_rate);
-	glfwWindowHint(GLFW_SAMPLES, 4);
-	//glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-	glfwSwapInterval(0);
-
-	// creates new GLFWwindow Object using data from settings.ini
-	std::cout << "create GLFWwindow Object..." << std::endl;
-	GLFWwindow* window = glfwCreateWindow(globalState.width, globalState.height, globalState.window_title.c_str(),  nullptr, nullptr);
-	// check if glfwCreateWindow was succesful
-	if (window == nullptr)
-	{
-		EXIT_WITH_ERROR("failed to create GLFW window");
-		glfwTerminate();
-		return EXIT_FAILURE;
-	}
-
-	// introduce window into context
-	glfwMakeContextCurrent(window);
+	//load GLFW
+	GLFWApp GLFWapp(globalState);
 
 	// register input callbacks to window
-	glfwSetKeyCallback(window,
+	glfwSetKeyCallback(GLFWapp.getWindow(),
 		[](GLFWwindow* window,
 			int key, int scancode, int action, int mods)
 		{
@@ -118,7 +90,7 @@ int main(int argc, char** argv)
 			if (key == GLFW_KEY_SPACE)
 				positioner.setUpVector(glm::vec3(0.0f, 1.0f, 0.0f));
 		});
-	glfwSetMouseButtonCallback(window,
+	glfwSetMouseButtonCallback(GLFWapp.getWindow(),
 		[](auto* window, int button, int action, int mods)
 		{
 			if (button == GLFW_MOUSE_BUTTON_LEFT)
@@ -129,7 +101,7 @@ int main(int argc, char** argv)
 
 		});
 	glfwSetCursorPosCallback(
-		window, [](auto* window, double x, double y) {
+		GLFWapp.getWindow(), [](auto* window, double x, double y) {
 			int w, h;
 			glfwGetFramebufferSize(window, &w, &h);
 			mouseState.pos.x = static_cast<float>(x / w);
@@ -197,7 +169,7 @@ int main(int argc, char** argv)
 	//---------------------------------- RENDER LOOP ----------------------------------//
 
 	std::cout << "enter render loop..." << std::endl << std::endl;
-	while (!glfwWindowShouldClose(window))
+	while (!glfwWindowShouldClose(GLFWapp.getWindow()))
 	{
 		positioner.update(deltaSeconds, mouseState.pos, mouseState.pressedLeft);
 
@@ -205,20 +177,17 @@ int main(int argc, char** argv)
 		const double newTimeStamp = glfwGetTime();
 		deltaSeconds = static_cast<float>(newTimeStamp - timeStamp);
 		timeStamp = newTimeStamp;
-
 		fpsCounter.tick(deltaSeconds);
 		std::string title = globalState.window_title + " " + fpsCounter.getFPS() + " fps";
-		glfwSetWindowTitle(window, title.c_str());
+		glfwSetWindowTitle(GLFWapp.getWindow(), title.c_str());
 
 		// prepare depth buffer
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glClearColor(1.0f, 1.0f, 1.0f, 1.0f); //RGBA
 
-		// handle input
 		glViewport(0, 0, globalState.width, globalState.height);
-		glfwPollEvents();
 
-		glfwGetFramebufferSize(window, &globalState.width, &globalState.height);
+		glfwGetFramebufferSize(GLFWapp.getWindow(), &globalState.width, &globalState.height);
 		const float ratio = globalState.width / (float)globalState.height;
 		const glm::mat4 projection = glm::perspective(glm::radians(globalState.fov), ratio, globalState.Znear, globalState.Zfar);
 		const glm::mat4 view = camera.getViewMatrix();
@@ -229,7 +198,7 @@ int main(int argc, char** argv)
 		renderer.Draw(models, skybox);
 
 		// swap back and front buffers
-		glfwSwapBuffers(window);
+		GLFWapp.swapBuffers();
 	}
 
 	/* --------------------------------------------- */
@@ -237,7 +206,6 @@ int main(int argc, char** argv)
 	/* --------------------------------------------- */
 
 	destroyFramework();
-	glfwDestroyWindow(window);
 	glfwTerminate();
 
 
