@@ -23,7 +23,11 @@ private:
 	void getUniformLocations();
 
 public:
-	Program(Shader& a, Shader& b);
+	void buildFrom(Shader& a, Shader& b);
+	void buildFrom(Shader& a, Shader& b, Shader& c);
+	void buildFrom(Shader& a, Shader& b, Shader& c, Shader& d);
+	void buildFrom(Shader& a, Shader& b, Shader& c, Shader& d, Shader& e);
+	Program();
 
 	~Program() { Release(); }
 

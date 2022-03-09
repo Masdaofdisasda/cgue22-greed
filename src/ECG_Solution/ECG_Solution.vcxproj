@@ -5,6 +5,7 @@
     <ClCompile Include="src\Cubemap.cpp" />
     <ClCompile Include="src\Material.cpp" />
     <ClCompile Include="src\Program.cpp" />
+    <ClCompile Include="src\Renderer.cpp" />
     <ClCompile Include="src\Texture.cpp" />
     <ClCompile Include="src\Mesh.cpp" />
     <ClCompile Include="src\EBO.cpp" />
@@ -17,6 +18,7 @@
     <ClInclude Include="src\FPSCounter.h" />
     <ClInclude Include="src\Material.h" />
     <ClInclude Include="src\Program.h" />
+    <ClInclude Include="src\Renderer.h" />
     <ClInclude Include="src\Texture.h" />
     <ClInclude Include="src\LightSource.h" />
     <ClInclude Include="src\Mesh.h" />

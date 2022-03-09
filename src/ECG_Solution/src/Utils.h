@@ -14,6 +14,28 @@
 #include <glm\gtc\matrix_transform.hpp>
 #include <glm\glm.hpp>
 
+struct GlobalState
+{
+	int width = 800;
+	int height = 800;
+	int refresh_rate = 60;
+	bool _fullscreen = false;
+	std::string window_title = "Greed";
+	float fov = 60;
+	float Znear = 0.1;
+	float Zfar = 1000.0;
+
+	bool _flag1 = false;
+	bool _flag2 = false;
+};
+
+struct PerFrameData
+{
+	glm::vec4 viewPos;
+	glm::mat4 ViewProj;
+	glm::mat4 ViewProjSkybox;
+};
+
 
 #define EXIT_WITH_ERROR(err) \
         { \

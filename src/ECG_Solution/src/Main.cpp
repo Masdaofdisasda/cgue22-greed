@@ -7,10 +7,8 @@
 
 #pragma once
 #include <sstream>
-#include "Program.h"
-#include "Texture.h"
 #include "Camera.h"
-#include "UBO.h"
+#include "Renderer.h"
 #include "FPSCounter.h"
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -29,10 +27,9 @@ static std::string FormatDebugOutput(GLenum source, GLenum type, GLuint id, GLen
 // Global variables
 /* --------------------------------------------- */
 
-// used for toggling render settings
-bool useCulling = true;
-bool useWireFrame = false;
-bool useRotatingObject = false;
+GlobalState globalState;
+
+PerFrameData perframeData;
 
 struct MouseState
 {
@@ -58,29 +55,7 @@ int main(int argc, char** argv)
 	// Load settings.ini
 	/* --------------------------------------------- */
 
-	// init reader for ini files
-	std::cout << "reading setting from settings.ini..." << std::endl;
-	INIReader reader("assets/settings.ini");
-	// load values from ini file
-	// first param: section [window], second param: property name, third param: default value
-	int width = reader.GetInteger("window", "width", 800);
-	int height = reader.GetInteger("window", "height", 800);
-	int refresh_rate = reader.GetInteger("window", "refresh_rate", 60);
-	bool fullscreen = reader.GetBoolean("window", "fullscreen", false);
-	std::string window_title = reader.Get("window", "title", "ECG 2021");
-	float fov = reader.GetReal("camera", "fov", 60.0f);
-	float Znear = reader.GetReal("camera", "near", 0.1f);
-	float Zfar = reader.GetReal("camera", "far", 100.0f);
-	std::cout << "settings loaded:" << std::endl
-		<< "width = " << width << std::endl
-		<< "height = " << height << std::endl
-		<< "refresh rate = " << refresh_rate << std::endl
-		<< "fullscreen = " << fullscreen << std::endl
-		<< "window title = " << window_title << std::endl
-		<< "field of view = " << fov << std::endl
-		<< "near value = " << Znear << std::endl
-		<< "far value = " << Zfar << std::endl;
-	std::cout << std::endl;
+	globalState = Renderer::loadSettings(globalState);
 
 	/* --------------------------------------------- */
 	// Init framework
@@ -99,14 +74,14 @@ int main(int argc, char** argv)
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);  
-	glfwWindowHint(GLFW_REFRESH_RATE, refresh_rate); 
+	glfwWindowHint(GLFW_REFRESH_RATE, globalState.refresh_rate);
 	glfwWindowHint(GLFW_SAMPLES, 4);
 	//glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 	glfwSwapInterval(0);
 
 	// creates new GLFWwindow Object using data from settings.ini
 	std::cout << "create GLFWwindow Object..." << std::endl;
-	GLFWwindow* window = glfwCreateWindow(width, height, window_title.c_str(),  nullptr, nullptr);
+	GLFWwindow* window = glfwCreateWindow(globalState.width, globalState.height, globalState.window_title.c_str(),  nullptr, nullptr);
 	// check if glfwCreateWindow was succesful
 	if (window == nullptr)
 	{
@@ -186,64 +161,10 @@ int main(int argc, char** argv)
 	// Initialize scene and render loop
 	/* --------------------------------------------- */
 
-	
-	// directional light
-	std::vector <DirectionalLight> dLightsBuffer;
-	dLightsBuffer.push_back(DirectionalLight{
-		glm::vec4(0.0f, -1.0f, -1.0f ,1.0f),		// direction
+	std::cout << "initialize scene and render loop..." << std::endl;
+	Renderer renderer(globalState,perframeData);
 
-		glm::vec4(0.8f, 0.8f, 0.8f ,1.0f), });		// intensity 
-
-	// positional light
-	std::vector <PositionalLight> pLightsBuffer;
-	pLightsBuffer.push_back(PositionalLight{
-		glm::vec4(0.0f,  0.0f,  0.0f ,1.0f),		// position
-		glm::vec4(1.0f, 0.4f, 0.1f, 1.0f),			// attenuation (constant, linear, quadratic)
-
-		glm::vec4(1.0f, 1.0f, 1.0f ,1.0f) });		// intensity
-	
-
-	// spot light
-	std::vector <SpotLight> sLightsBuffer;
-	sLightsBuffer.push_back(SpotLight{
-		glm::vec4(5.0f,-4.0f,-2.0f,1.0f), // position
-		glm::vec4(0.0f,-9.0f,-1.0f,1.0f), // direction
-		glm::vec4(glm::cos(glm::radians(7.0f)),glm::cos(glm::radians(5.0f)),1.0f,1.0f), // angles (outer, inner)
-		glm::vec4(1.0f,0.09f,0.032f,1.0f), // attenuation (constant, linear, quadratic)
-
-		glm::vec4(0.8f,0.8f,0.8f,1.0f) }); // intensity
-
-	sLightsBuffer.push_back(SpotLight{
-		glm::vec4(2.5f,-4.0f,-2.0f,1.0f), // position
-		glm::vec4(0.0f,-9.0f,-1.0f,1.0f), // direction
-		glm::vec4(glm::cos(glm::radians(14.0f)),glm::cos(glm::radians(10.0f)),1.0f,1.0f), // angles (outer, inner)
-		glm::vec4(1.0f,0.09f,0.032f,1.0f), // attenuation (constant, linear, quadratic)
-
-		glm::vec4(0.8f,0.8f,0.8f,1.0f) }); // intensity
-
-	sLightsBuffer.push_back(SpotLight{
-		glm::vec4(0.0f,-4.0f,-2.0f,1.0f), // position
-		glm::vec4(0.0f,-9.0f,-1.0f,1.0f), // direction
-		glm::vec4(glm::cos(glm::radians(28.0f)),glm::cos(glm::radians(20.0f)),1.0f,1.0f), // angles (outer, inner)
-		glm::vec4(1.0f,0.09f,0.032f,1.0f), // attenuation (constant, linear, quadratic)
-
-		glm::vec4(0.8f,0.8f,0.8f,1.0f) }); // intensity
-
-	sLightsBuffer.push_back(SpotLight{
-		glm::vec4(-2.5f,-4.0f,-2.0f,1.0f), // position
-		glm::vec4(0.0f,-9.0f,-1.0f,1.0f), // direction
-		glm::vec4(glm::cos(glm::radians(56.0f)),glm::cos(glm::radians(40.0f)),1.0f,1.0f), // angles (outer, inner)
-		glm::vec4(1.0f,0.09f,0.032f,1.0f), // attenuation (constant, linear, quadratic)
-
-		glm::vec4(0.8f,0.8f,0.8f,1.0f) }); // intensity
-	sLightsBuffer.push_back(SpotLight{
-		glm::vec4(-5.0f,-4.0f,-2.0f,1.0f), // position
-		glm::vec4(0.0f,-9.0f,-1.0f,1.0f), // direction
-		glm::vec4(glm::cos(glm::radians(112.0f)),glm::cos(glm::radians(80.0f)),1.0f,1.0f), // angles (outer, inner)
-		glm::vec4(1.0f,0.09f,0.032f,1.0f), // attenuation (constant, linear, quadratic)
-
-		glm::vec4(0.8f,0.8f,0.8f,1.0f) }); // intensity
-
+	std::cout << "initialize models and textuers..." << std::endl;
 	Texture brickDiff("assets/textures/brick03-diff.jpeg");
 	Texture brickSpec("assets/textures/brick03-spec.jpeg");
 	Cubemap brickCube("assets/textures/cubemap");
@@ -259,41 +180,12 @@ int main(int argc, char** argv)
 
 	Mesh box = box.Cube(1.5f, 1.5f, 1.5f, &brick);
 	box.translate(glm::vec3(0.0f, 0.0f, -5.0f));
-
-
-	// build shader programms
-	Shader pbrVert("assets/shaders/pbr/pbr.vert");
-	Shader pbrFrag("assets/shaders/pbr/pbr.frag", glm::ivec3(dLightsBuffer.size(), pLightsBuffer.size(), sLightsBuffer.size()));
-	Program PBRShader(pbrVert, pbrFrag);
-	PBRShader.Use();
-
-	Shader skyboxVert("assets/shaders/skybox/skybox.vert");
-	Shader skyboxFrag("assets/shaders/skybox/skybox.frag");
-	Program skyboxShader(skyboxVert, skyboxFrag);
-
-
-	// create Uniform Buffer Objects from light source struct vectors
-	UBO directionalLights = UBO(dLightsBuffer);
-	UBO positionalLights = UBO(pLightsBuffer);
-	UBO spotLights = UBO(sLightsBuffer);
-
-	// bind UBOs to bindings in shader
-	PBRShader.bindLightBuffers(&directionalLights, &positionalLights, &spotLights);
-	// set light source count variables
-	PBRShader.setuInt("dLightCount", dLightsBuffer.size());
-	PBRShader.setuInt("pLightCount", pLightsBuffer.size());
-	PBRShader.setuInt("sLightCount", sLightsBuffer.size());
-
-
+	std::vector <Mesh*> models;
+	models.push_back(&box);
 
 	// Use Depth Buffer
 	std::cout << "enable depth buffer..." << std::endl;
 	glEnable(GL_DEPTH_TEST);
-
-	std::cout << "create Camera..." << std::endl;
-	glm::vec3 pos = glm::vec3(0.0f,0.0f, 6.0f);
-	glm::vec3 front = glm::vec3(0.0f,0.0f, -6.0f);
-	glm::vec3 up = glm::vec3(0.0f,1.0f,0.0f);
 
 	double timeStamp = glfwGetTime();
 	float deltaSeconds = 0.0f;
@@ -315,45 +207,26 @@ int main(int argc, char** argv)
 		timeStamp = newTimeStamp;
 
 		fpsCounter.tick(deltaSeconds);
-		std::string title = window_title + " " + fpsCounter.getFPS() + " fps";
+		std::string title = globalState.window_title + " " + fpsCounter.getFPS() + " fps";
 		glfwSetWindowTitle(window, title.c_str());
-
-		// toggle wireframe mode with F1 key
-		glPolygonMode(GL_FRONT_AND_BACK, useWireFrame ? GL_LINE : GL_FILL);
-		useCulling ? glEnable(GL_CULL_FACE) : glDisable(GL_CULL_FACE);
 
 		// prepare depth buffer
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glClearColor(1.0f, 1.0f, 1.0f, 1.0f); //RGBA
 
 		// handle input
-		glViewport(0, 0, width, height);
+		glViewport(0, 0, globalState.width, globalState.height);
 		glfwPollEvents();
 
-		glfwGetFramebufferSize(window, &width, &height);
-		const float ratio = width / (float)height;
-		const glm::mat4 projection = glm::perspective(glm::radians(fov), ratio, Znear, Zfar);
+		glfwGetFramebufferSize(window, &globalState.width, &globalState.height);
+		const float ratio = globalState.width / (float)globalState.height;
+		const glm::mat4 projection = glm::perspective(glm::radians(globalState.fov), ratio, globalState.Znear, globalState.Zfar);
 		const glm::mat4 view = camera.getViewMatrix();
-		const glm::mat4 ViewProj = projection * view;
-		const glm::mat4 ViewProjSkybox = projection * glm::mat4(glm::mat3(view)); // remove translation
+		perframeData.ViewProj = projection * view;
+		perframeData.ViewProjSkybox = projection * glm::mat4(glm::mat3(view)); // remove translation
+		perframeData.viewPos = glm::vec4(camera.getPosition(),1.0f);
 
-		PBRShader.Use();
-
-		// update camera for shader
-		PBRShader.setVec3("viewPos", camera.getPosition());
-		PBRShader.setMat4("viewProject", ViewProj);
-
-		// draw meshes
-		PBRShader.Draw(box);
-
-
-		// draw skybox    
-		skyboxShader.Use();
-		glDepthFunc(GL_LEQUAL);
-		skyboxShader.setMat4("viewProject", ViewProjSkybox);
-		skyboxShader.Draw(skybox);
-		glDepthFunc(GL_LESS);
-
+		renderer.Draw(models, skybox);
 
 		// swap back and front buffers
 		glfwSwapBuffers(window);

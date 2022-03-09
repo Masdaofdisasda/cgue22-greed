@@ -40,26 +40,31 @@ struct Material
     float reflection;
 };
 
+layout(std140, binding = 0) uniform PerFrameData
+{
+	vec4 viewPos;
+	mat4 ViewProj;
+	mat4 ViewProjSkybox;
+};
+
 // light source data in uniform blocks
 // MAXLIGHTS gets replaced at runtime
-layout (std140, binding = 0) uniform dLightUBlock {
+layout (std140, binding = 1) uniform dLightUBlock {
  DirectionalLight dLights [ dMAXLIGHTS ];
 };
 uniform uint dLightCount ;
 
-layout (std140, binding = 1) uniform pLightUBlock {
+layout (std140, binding = 2) uniform pLightUBlock {
  PositionalLight pLights [ pMAXLIGHTS ];
 };
 uniform uint pLightCount ;
 
-layout (std140, binding = 2) uniform sLightUBlock {
+layout (std140, binding = 3) uniform sLightUBlock {
  SpotLight sLights [ sMAXLIGHTS ];
 };
 uniform uint sLightCount ;
 
 uniform Material material;
-
-uniform vec3 viewPos;
 
 out vec4 FragColor;
 
@@ -129,7 +134,7 @@ void main()
 vec3 calculateLight() {
 	
     vec3 N = normalize(fNormal);
-	vec3 V = normalize(viewPos - fPosition);
+	vec3 V = normalize(vec3(viewPos) - fPosition);
     vec3 R = reflect(-V, N);
     
     // calculate reflectance at normal incidence; if dia-electric (like plastic) use F0 
