@@ -15,7 +15,8 @@
 #include <assimp/postprocess.h>
 #include <assimp/cimport.h>
 #include <assimp/version.h>
-
+#include <bullet/btBulletCollisionCommon.h>
+#include <bullet/btBulletDynamicsCommon.h>
 
 /* --------------------------------------------- */
 // Prototypes
@@ -51,6 +52,14 @@ int main(int argc, char** argv)
 {
 	std::cout << "starting program..." << std::endl;
 	std::cout << std::endl;
+
+	/*//Bullet Initialization
+	btDbvtBroadphase* broadphase = new btDbvtBroadphase();
+	btDefaultCollisionConfiguration* collision_configuration = new btDefaultCollisionConfiguration();
+	btCollisionDispatcher* dispatcher = new btCollisionDispatcher(collision_configuration);
+	btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
+	btDiscreteDynamicsWorld* dynamics_world = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collision_configuration);
+	dynamics_world->setGravity(btVector3(0, -10, 0));*/
 
 	/* --------------------------------------------- */
 	// Load settings.ini
