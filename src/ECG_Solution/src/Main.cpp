@@ -18,6 +18,7 @@
 #include <bullet/btBulletCollisionCommon.h>
 #include <bullet/btBulletDynamicsCommon.h>
 
+
 /* --------------------------------------------- */
 // Prototypes
 /* --------------------------------------------- */
@@ -156,13 +157,15 @@ int main(int argc, char** argv)
 	Material sky(&brickDiff, &brickSpec, &brickCube,
 		glm::vec4(0.0f, 0.0f, 0.0f, 0.0f), 1.0f);
 
+	Mesh coin("assets/models/coin.obj", &brick);
+	coin.translate(glm::vec3(0.0f, 0.0f, -5.0f));
+
 	Mesh skybox = skybox.Skybox(400.0f, &sky);
-	skybox.translate(glm::vec3(0.0f, -5.0f, 0.0f));
 
 	Mesh box = box.Cube(1.5f, 1.5f, 1.5f, &brick);
 	box.translate(glm::vec3(0.0f, 0.0f, -5.0f));
 	std::vector <Mesh*> models;
-	models.push_back(&box);
+	models.push_back(&coin);
 
 	// Use Depth Buffer
 	std::cout << "enable depth buffer..." << std::endl;

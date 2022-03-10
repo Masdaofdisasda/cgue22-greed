@@ -38,7 +38,7 @@ public:
 	static Mesh Cylinder(int segments, float height, float radius, Material* mat) { return  Mesh(segments, height, radius, mat); }
 	static Mesh Sphere(int longsegments, int latisegments, float radius, Material* mat) { return  Mesh(longsegments, latisegments, radius, mat); }
 	static Mesh Skybox(float size, Material* mat) { return  Mesh(size, mat); }
-	// todo obj loading
+	Mesh(const char* fileName, Material* mat);
 
 	glm::mat4 translate(glm::vec3 position);
 	glm::mat4 rotate(float theta, glm::vec3 axis);

@@ -1,5 +1,9 @@
 #include "Mesh.h"
 #include <algorithm>
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+#include <assimp/cimport.h>
 
 // box geometry constructor
 Mesh::Mesh(float w, float h, float d, Material* mat)
@@ -400,6 +404,107 @@ Mesh::Mesh(int longs, int lats, float rad, Material* mat)
 
 	std::cout << std::endl;
 }
+
+Mesh::Mesh(const char* fileName, Material* mat)
+{
+	material = mat;
+
+	Assimp::Importer importer;
+	const aiScene* modelScene;
+	const aiNode* modelNode;
+	const aiMesh* modelMesh;
+	const aiFace* modelFace;
+
+	std::vector<const aiNode*> nodeBuff;
+	unsigned int numNodeBuff;
+
+	
+	modelScene = importer.ReadFile(fileName, aiProcess_MakeLeftHanded | aiProcess_FlipWindingOrder | aiProcess_FlipUVs | aiProcess_PreTransformVertices |
+		aiProcess_CalcTangentSpace |
+		aiProcess_GenSmoothNormals |
+		aiProcess_Triangulate |
+		aiProcess_FixInfacingNormals |
+		aiProcess_FindInvalidData |
+		aiProcess_ValidateDataStructure | 0);
+
+
+	if (!modelScene)
+	{
+		std::cerr << "ERROR: Couldn't load model " << fileName  << std::endl;
+	}
+
+	bool repeat = true;
+
+	nodeBuff.push_back(modelScene->mRootNode);
+
+	// I raise all nodes tree to the root level 
+	while (repeat)
+	{
+		for (unsigned int a = 0; a < nodeBuff.size(); a++)
+		{
+			modelNode = nodeBuff.at(a);
+			if (modelNode->mNumChildren > 0)
+				for (unsigned int c = 0; c < modelNode->mNumChildren; c++)
+				{
+					nodeBuff.push_back(modelNode->mChildren[c]);
+
+				}
+
+			else repeat = false;
+		}
+	}
+
+	// Get node information from the root level (all nodes)
+	for (unsigned int a = 0; a < nodeBuff.size(); a++)
+	{
+		modelNode = nodeBuff.at(a);
+
+		if (modelNode->mNumMeshes > 0)
+			for (unsigned int b = 0; b < modelNode->mNumMeshes; b++) {
+				const aiMesh* mesh = modelScene->mMeshes[b];
+				aiFace* face;
+
+
+				for (unsigned int v = 0; v < mesh->mNumVertices; v++)
+				{
+					glm::vec3 vertex(0.0f);
+					glm::vec2 uv(0.0f);
+					glm::vec3 normal(0.0f);
+
+
+					if (mesh->HasFaces())
+					{
+						vertex = glm::vec3(mesh->mVertices[v].x, mesh->mVertices[v].y, mesh->mVertices[v].z);
+					}
+
+					if (mesh->HasTextureCoords(0)) {
+						uv = glm::vec2(mesh->mTextureCoords[0][v].x, mesh->mTextureCoords[0][v].y);
+					}
+
+					if (mesh->HasNormals())
+					{
+						normal = glm::vec3(mesh->mNormals[v].x, mesh->mNormals[v].y, mesh->mNormals[v].z);
+					}
+					
+
+					vertices.push_back(Vertex{ vertex,	normal, uv });
+
+				}
+
+				for (unsigned int f = 0; f < mesh->mNumFaces; f++)
+				{
+					face = &mesh->mFaces[f];
+					indices.push_back(face->mIndices[0]);
+					indices.push_back(face->mIndices[1]);
+					indices.push_back(face->mIndices[2]);
+				}
+				std::cout << "stop..." << std::endl;
+			}
+	}
+
+	PrepareBuffer();
+}
+
 
 
 void Mesh::PrepareBuffer()
