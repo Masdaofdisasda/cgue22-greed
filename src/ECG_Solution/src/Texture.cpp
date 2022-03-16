@@ -9,7 +9,7 @@ Texture::Texture()
 
 }
 
-Texture::Texture(const char* texPath, int texUnit)
+void Texture::load(const char* texPath, int texUnit)
 {
 	path = texPath;
 	

@@ -1,12 +1,27 @@
 #include "Material.h"
 
 
-Material::Material(Texture* alb, Texture* norm, Texture* metal, Texture* rough, Texture* ao, Cubemap* cube)
+Material::Material(const char* texPath, const char* cubePath)
 {
-	albedo = alb;
-	normal = norm;
-	metallic = metal;
-	roughness = rough;
-	ambientocclusion = ao;
-	cubemap = cube;
+	
+	albedo.load(append(texPath, "/albedo.jpg"));
+	normal.load(append(texPath, "/normal.jpg"));
+	metallic.load(append(texPath, "/metal.jpg"));
+	roughness.load(append(texPath, "/rough.jpg"));
+	std::cout << append(texPath, "/test.jpg") << std::endl;
+	ambientocclusion.load(append(texPath, "/ao.jpg"));
+	cubemap.loadHDR(cubePath);
+}
+
+Material::Material(const char* cubePath)
+{
+	cubemap.loadHDR(cubePath);
+}
+
+const char* Material::append(const char* texPath, char* texType)
+{
+	char c[100];
+	strcpy(c, texPath);
+
+	return strcat(c, texType);
 }

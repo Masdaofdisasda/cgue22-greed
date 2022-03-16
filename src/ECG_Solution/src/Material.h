@@ -8,42 +8,39 @@
 class Material
 {
 public:
-	Material(Texture* alb, Texture* norm, Texture* metal, Texture* rough, Texture* ao, Cubemap* cube);
+	Material(const char* texPath, const char* cubePath);
+	Material(const char* cubePath);
 	~Material() { Release(); };
 
 	Texture* getAlbedo()
 	{
-		return albedo;
+		return &albedo;
 	}
 	Texture* getNormalmap()
 	{
-		return normal;
+		return &normal;
 	}
 	Texture* getMetallic()
 	{
-		return metallic;
+		return &metallic;
 	}
 	Texture* getRoughness()
 	{
-		return roughness;
+		return &roughness;
 	}
 	Texture* getAOmap()
 	{
-		return ambientocclusion;
+		return &ambientocclusion;
 	}
 	Cubemap* getCubemap()
 	{
-		return cubemap;
+		return &cubemap;
 	}
 
 	// ensure RAII compliance
+	
 	Material(const Material&) = delete;
 	Material& operator=(const Material&) = delete; 
-
-	Material(Material&& other) noexcept : albedo(other.albedo)
-	{
-		other.albedo = nullptr; //Use the "null" ID for the old object.
-	}
 
 	Material& operator=(Material&& other)
 	{
@@ -63,21 +60,23 @@ public:
 
 private:
 	
-	Texture* albedo;
-	Texture* normal;
-	Texture* metallic;
-	Texture* roughness;
-	Texture* ambientocclusion;
-	Cubemap* cubemap;
+	Texture albedo;
+	Texture normal;
+	Texture metallic;
+	Texture roughness;
+	Texture ambientocclusion;
+	Cubemap cubemap;
+
+	const char* append(const char* texPath, char* texType);
 
 	void Release()
 	{
-		albedo = nullptr;
-		normal = nullptr;
-		metallic = nullptr;
-		roughness = nullptr;
-		ambientocclusion = nullptr;
-		cubemap = nullptr;
+		free(&albedo);
+		free(&normal);
+		free(&metallic);
+		free(&roughness);
+		free(&ambientocclusion);
+		free(&cubemap);
 	}
 
 };
