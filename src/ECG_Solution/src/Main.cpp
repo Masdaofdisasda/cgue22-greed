@@ -143,20 +143,23 @@ int main(int argc, char** argv)
 	Renderer renderer(globalState, perframeData, level->getLights());
 
 	Material gold("assets/textures/coin", "assets/textures/cubemap/cellar.pic");
+	//Material rock("assets/textures/rockground", "assets/textures/cubemap/cellar.pic");
+	//Material wood("assets/textures/wood", "assets/textures/cubemap/cellar.pic");
 	Material sky("assets/textures/cubemap/cellar.pic");
 
 	Mesh coin1 = Mesh("assets/models/coin.obj", &gold);
 	coin1.translate(glm::vec3(1.0f, -1.0f, -5.0f));
 	Mesh coin2 = Mesh("assets/models/coin.obj", &gold);
+	coin2.translate(glm::vec3(0.0f, 0.0f, -3.0f));
+	Mesh coin3 = Mesh("assets/models/coin.obj", &gold);
 	coin2.translate(glm::vec3(-1.0f, 1.0f, -5.0f));
 
 	std::vector <Mesh*> models;
 	models.push_back(&coin1);
 	models.push_back(&coin2);
+	models.push_back(&coin3);
 	
-	
-
-	Mesh skybox = skybox.Skybox(400.0f, &sky);
+	Mesh skybox = skybox.Skybox(1.0f, &sky);
 
 	// Use Depth Buffer
 	std::cout << "enable depth buffer..." << std::endl;

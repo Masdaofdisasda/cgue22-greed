@@ -71,12 +71,6 @@ private:
 
 	void Release()
 	{
-		free(&albedo);
-		free(&normal);
-		free(&metallic);
-		free(&roughness);
-		free(&ambientocclusion);
-		free(&cubemap);
 	}
 
 };
