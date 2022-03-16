@@ -6,9 +6,9 @@ Renderer::Renderer(GlobalState& state, PerFrameData& pfdata)
 	perframeData = &pfdata; // link per frame data
 	loadLightsources(); // load lights and lightcounts for shaders
 	buildShaderPrograms(); // build shader program
+
 	fillLightsources(); // binds lights to biding points in shader
 	perframeBuffer.fillBuffer(pfdata); // load buffer to shader;
-
 }
 
 GlobalState Renderer::loadSettings(GlobalState state)
@@ -112,11 +112,15 @@ void Renderer::buildShaderPrograms()
 	Shader pbrFrag("assets/shaders/pbr/pbr.frag", glm::ivec3(dLightsBuffer.size(), pLightsBuffer.size(), sLightsBuffer.size()));
 	PBRShader.buildFrom(pbrVert, pbrFrag);
 	PBRShader.Use();
+	PBRShader.setTextures();
 
 	Shader skyboxVert("assets/shaders/skybox/skybox.vert");
 	Shader skyboxFrag("assets/shaders/skybox/skybox.frag");
 	skyboxShader.buildFrom(skyboxVert, skyboxFrag);
+	skyboxShader.Use();
+	skyboxShader.setSkyboxTextures();
 
+	PBRShader.Use();
 }
 
 void Renderer::Draw(std::vector <Mesh*> models, Mesh& skybox)
@@ -132,7 +136,7 @@ void Renderer::Draw(std::vector <Mesh*> models, Mesh& skybox)
 	// draw skybox    
 	skyboxShader.Use();
 	glDepthFunc(GL_LEQUAL);
-	skyboxShader.Draw(skybox);
+	skyboxShader.DrawSkybox(skybox);
 	glDepthFunc(GL_LESS);
 }
 

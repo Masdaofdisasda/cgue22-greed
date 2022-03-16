@@ -132,29 +132,35 @@ int main(int argc, char** argv)
 	std::cout << "initialize scene and render loop..." << std::endl;
 	Renderer renderer(globalState,perframeData);
 
-	std::cout << "initialize models and textuers..." << std::endl;
+	std::cout << "initialize models and textures..." << std::endl;
 	Texture goldAlbedo("assets/textures/Coin/albedo.jpg");
 	Texture goldNormal("assets/textures/Coin/normal.jpg");
 	Texture goldMetal("assets/textures/Coin/metal.jpg");
 	Texture goldRough("assets/textures/Coin/rough.jpg");
 	Texture goldAO("assets/textures/Coin/ao.jpg");
-	Cubemap brickCube("assets/textures/cubemap");
 
-	Material gold(&goldAlbedo,&goldNormal,&goldMetal,&goldRough,&goldAO,&brickCube);
+	Cubemap caveCube;
+	caveCube.loadHDR("assets/textures/cubemap/cellar.pic");
 
-	Mesh coin("assets/models/coin.obj", &gold);
-	coin.translate(glm::vec3(0.0f, 0.0f, -5.0f));
+	Material gold(&goldAlbedo,&goldNormal,&goldMetal,&goldRough,&goldAO,&caveCube);
+
+	Mesh coin1("assets/models/coin.obj", &gold);
+	coin1.translate(glm::vec3(1.0f, -1.0f, -5.0f));
+	Mesh coin2("assets/models/coin.obj", &gold);
+	coin2.translate(glm::vec3(-1.0f, 1.0f, -5.0f));
 
 	Mesh skybox = skybox.Skybox(400.0f, &gold);
 
 	Mesh box = box.Cube(1.5f, 1.5f, 1.5f, &gold);
 	box.translate(glm::vec3(0.0f, 0.0f, -5.0f));
 	std::vector <Mesh*> models;
-	models.push_back(&coin);
+	models.push_back(&coin1);
+	models.push_back(&coin2);
 
 	// Use Depth Buffer
 	std::cout << "enable depth buffer..." << std::endl;
 	glEnable(GL_DEPTH_TEST);
+	glViewport(0, 0, globalState.width, globalState.height);
 
 	double timeStamp = glfwGetTime();
 	float deltaSeconds = 0.0f;
@@ -203,7 +209,6 @@ int main(int argc, char** argv)
 	/* --------------------------------------------- */
 
 	destroyFramework();
-	glfwTerminate();
 
 
 	/* --------------------------------------------- */

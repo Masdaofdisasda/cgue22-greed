@@ -33,9 +33,11 @@ public:
 
 	void Use();
 
-	void uploadMaterial();
+	void setTextures();
+	void setSkyboxTextures();
 
 	void Draw(Mesh& mesh); // draws triangles
+	void DrawSkybox(Mesh& mesh); // draws triangles
 
 	// ensure RAII compliance
 	Program(const Program&) = delete;

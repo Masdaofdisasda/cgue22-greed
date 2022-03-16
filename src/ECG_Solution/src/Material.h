@@ -74,6 +74,9 @@ private:
 	{
 		albedo = nullptr;
 		normal = nullptr;
+		metallic = nullptr;
+		roughness = nullptr;
+		ambientocclusion = nullptr;
 		cubemap = nullptr;
 	}
 

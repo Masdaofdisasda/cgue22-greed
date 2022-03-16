@@ -21,7 +21,7 @@ void UBO::fillBuffer(std::vector<PositionalLight>& bufferData)
 
 void UBO::fillBuffer(std::vector<SpotLight>& bufferData)
 {
-	glGenBuffers(1, &ubo_ID);
+
 	glBindBuffer(GL_UNIFORM_BUFFER, ubo_ID);
 	glBufferData(GL_UNIFORM_BUFFER, bufferData.size() * sizeof(SpotLight), bufferData.data(), GL_STATIC_READ);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);

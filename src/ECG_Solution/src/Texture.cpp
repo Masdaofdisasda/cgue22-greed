@@ -34,7 +34,7 @@ Texture::Texture(const char* texPath, int texUnit)
 	}
 	else
 	{
-		std::cout << "could not load texture" << std::endl;
+		std::cout << "could not load texture" << texPath << std::endl;
 	}
 
 	glBindTexture(GL_TEXTURE_2D, 0);

@@ -18,6 +18,7 @@ uniform mat4 model;
 out vec3 fNormal;
 out vec3 fPosition;
 out vec2 fUV;
+out vec3 fviewPos;
 
 void main()
 {
