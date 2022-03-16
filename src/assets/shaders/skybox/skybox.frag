@@ -1,8 +1,6 @@
 #version 460
 
-in vec3 fNormal;
 in vec3 fPosition;
-in vec2 fUV;
 
 layout(std140, binding = 0) uniform PerFrameData
 {
@@ -17,7 +15,7 @@ out vec4 FragColor;
 
 void main()
 {
-   vec3 color = textureLod(environment, vec3(viewPos), 0.0).xyz;
+   vec3 color = textureLod(environment, vec3(fPosition), 0.0).xyz;
 
    // HDR tonemap and gamma correct
     color = color / (color + vec3(1.0));
