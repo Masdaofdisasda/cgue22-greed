@@ -10,6 +10,8 @@ private:
 	GLuint prefilt_ID = 0; // pre filtered (Cubemap)
 	GLuint brdfLut_ID = 0; // brdf LUT (Texture)
 
+	string path = "";
+
 	void Release()
 	{
 		glDeleteTextures(1, &hdr_ID);
@@ -33,6 +35,7 @@ public:
 	~Cubemap() { Release(); }
 
 	void loadHDR(const char* texPath);
+	bool equals(string tex);
 
 	// ensure RAII compliance
 	Cubemap(const Cubemap&) = delete;
@@ -63,4 +66,6 @@ public:
 	GLuint* getIrradianceID() { return &irrad_ID; }
 	GLuint* getPreFilterID() { return &prefilt_ID; }
 	GLuint* getBdrfLutID() { return &brdfLut_ID; }
+
+	string getPath() { return path; }
 };

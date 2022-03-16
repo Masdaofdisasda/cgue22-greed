@@ -12,8 +12,18 @@ Cubemap::Cubemap()
     glGenTextures(1, &brdfLut_ID);
 }
 
+bool Cubemap::equals(string tex)
+{
+    if (path == tex)
+    {
+        return true;
+    } return false;
+
+}
+
 void Cubemap::loadHDR(const char* texPath)
 {
+    path = texPath;
 
     // pbr: setup framebuffer
     // ----------------------

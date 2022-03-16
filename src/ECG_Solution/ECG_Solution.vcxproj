@@ -17,7 +17,7 @@
     <ClInclude Include="src\Debugger.h" />
     <ClInclude Include="src\Camera.h" />
     <ClInclude Include="src\Cubemap.h" />
-    <ClInclude Include="src\FBO.h" />
+    <ClInclude Include="src\Framebuffer.h" />
     <ClInclude Include="src\FPSCounter.h" />
     <ClInclude Include="src\GLFWApp.h" />
     <ClInclude Include="src\Level.h" />
@@ -176,6 +176,7 @@
       <AdditionalDependencies>opengl32.lib;glew32s.lib;glfw3.lib;ECG_Library_Debug.lib;BulletCollision_vs2010_debug.lib;BulletDynamics_vs2010_debug.lib;LinearMath_vs2010_debug.lib;assimp-vc142-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>MSVCRTD;LIBCMT</IgnoreSpecificDefaultLibraries>
       <TargetMachine>MachineX86</TargetMachine>
+      <AdditionalOptions>/FORCE:MULTIPLE %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
       <Command>

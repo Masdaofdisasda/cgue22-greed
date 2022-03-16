@@ -2,8 +2,6 @@
 
 VBO::VBO(std::vector<Vertex>& vertices)
 {
-	std::cout << "create Vertex Buffer Object (VBO)..." << std::endl;
-
 	glGenBuffers(1, &vbo_ID);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_ID);
 	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);

@@ -2,8 +2,6 @@
 
 EBO::EBO(std::vector<GLuint>& indices)
 {
-	std::cout << "create Element Buffer Object (EBO)..." << std::endl;
-
 	// generate EBO, bind buffer, link to indices
 	glGenBuffers(1, &ebo_ID);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_ID);

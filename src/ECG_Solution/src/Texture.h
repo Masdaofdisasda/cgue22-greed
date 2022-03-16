@@ -7,8 +7,7 @@ class Texture
 private:
 	GLuint tex_ID = 0;
 	string path;
-
-	void loadCompressedTex(const char* texPath, int texUnit);
+	GLenum type_ = 0;
 
 	void Release()
 	{
@@ -16,11 +15,16 @@ private:
 		tex_ID = 0;
 	}
 
+	int getNumMipMapLevels2D(int w, int h);
+
 public:
 	Texture();
+
+	Texture(GLenum type, int width, int height, GLenum internalFormat);
 	~Texture() { Release(); }
 
 	void load(const char* texPath, int texUnit = 0);
+	bool equals(string tex);
 
 	// ensure RAII compliance
 	Texture(const Texture&) = delete;
@@ -43,4 +47,6 @@ public:
 	}
 
 	GLuint* getID() {return &tex_ID;}
+	GLuint getHandle() const { return tex_ID; }
+	string getPath() { return path; }
 };

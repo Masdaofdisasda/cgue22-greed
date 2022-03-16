@@ -19,7 +19,7 @@ private:
 	std::vector <GLuint> indices; // EBO
 
 	// Texture & Material
-	Material* material;
+	Material* material = nullptr;
 
 
 	void PrepareBuffer();

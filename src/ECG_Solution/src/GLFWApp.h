@@ -21,15 +21,21 @@ public:
 	}
 
 	// todo fullscreen
-	void updateWindow(std::string title)
+	void updateWindow()
 	{
-		glfwSetWindowTitle(window_, title.c_str());
-		if (globalState->_fullscreen)
+		
+		if (globalState->fullscreen_)
 		{
 			const GLFWvidmode* info = glfwGetVideoMode(glfwGetPrimaryMonitor());
 			globalState->width = info->width;
 			globalState->height = info->height;
-		}
+		}else{
+			int w, h;
+			glfwGetFramebufferSize(window_, &w, &h);
+			globalState->width = w;
+			globalState->height = h;
+			}
+
 	}
 
 private:

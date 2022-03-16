@@ -9,6 +9,7 @@ Renderer::Renderer(GlobalState& state, PerFrameData& pfdata, LightSources lights
 
 	fillLightsources(); // binds lights to biding points in shader
 	perframeBuffer.fillBuffer(pfdata); // load buffer to shader;
+	prepareFramebuffers();
 }
 
 GlobalState Renderer::loadSettings(GlobalState state)
@@ -21,7 +22,7 @@ GlobalState Renderer::loadSettings(GlobalState state)
 	state.width = reader.GetInteger("window", "width", 800);
 	state.height = reader.GetInteger("window", "height", 800);
 	state.refresh_rate = reader.GetInteger("window", "refresh_rate", 60);
-	state._fullscreen = reader.GetBoolean("window", "fullscreen", false);
+	state.fullscreen_ = reader.GetBoolean("window", "fullscreen", false);
 	state.window_title = reader.Get("window", "title", "ECG 2021");
 	state.fov = reader.GetReal("camera", "fov", 60.0f);
 	state.Znear = reader.GetReal("camera", "near", 0.1f);
@@ -64,8 +65,22 @@ void Renderer::buildShaderPrograms()
 	PBRShader.Use();
 }
 
+void Renderer::prepareFramebuffers() {
+	
+	// offscreen render targets
+	// create a texture view into the last mip-level (1x1 pixel) of our luminance framebuffer
+	GLuint luminance1x1;
+	glGenTextures(1, &luminance1x1);
+	glTextureView(luminance1x1, GL_TEXTURE_2D, luminance.getTextureColor().getHandle(), GL_R16F, 6, 1, 0, 1);
+	const GLint Mask[] = { GL_RED, GL_RED, GL_RED, GL_RED };
+	glTextureParameteriv(luminance1x1, GL_TEXTURE_SWIZZLE_RGBA, Mask);
+
+}
+
 void Renderer::Draw(std::vector <Mesh*> models, Mesh& skybox)
 {
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 	perframeBuffer.Update(*perframeData);
 
 	PBRShader.Use();
@@ -79,7 +94,9 @@ void Renderer::Draw(std::vector <Mesh*> models, Mesh& skybox)
 	glDepthFunc(GL_LEQUAL);
 	skyboxShader.DrawSkybox(skybox);
 	glDepthFunc(GL_LESS);
+
 }
+
 
 Renderer::~Renderer()
 {

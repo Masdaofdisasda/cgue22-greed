@@ -143,14 +143,16 @@ int main(int argc, char** argv)
 	Renderer renderer(globalState, perframeData, level->getLights());
 
 	Material gold("assets/textures/coin", "assets/textures/cubemap/cellar.pic");
-	//Material rock("assets/textures/rockground", "assets/textures/cubemap/cellar.pic");
-	//Material wood("assets/textures/wood", "assets/textures/cubemap/cellar.pic");
+	Material rock("assets/textures/rockground", "assets/textures/cubemap/cellar.pic");
+	Material wood("assets/textures/wood", "assets/textures/cubemap/cellar.pic");
 	Material sky("assets/textures/cubemap/cellar.pic");
 
-	Mesh coin1 = Mesh("assets/models/coin.obj", &gold);
+	// info: if multiple materials use the same cubemap, only the last created item contains the right cubemap id
+	// eg. wood contains the cubemap
+	Mesh coin1 = Mesh("assets/models/coin.obj", &wood);
 	coin1.translate(glm::vec3(1.0f, -1.0f, -5.0f));
-	Mesh coin2 = Mesh("assets/models/coin.obj", &gold);
-	coin2.translate(glm::vec3(0.0f, 0.0f, -3.0f));
+	Mesh coin2 = Mesh("assets/models/coin.obj", &rock);
+	coin2.translate(glm::vec3(0.0f, 0.0f, -6.0f));
 	Mesh coin3 = Mesh("assets/models/coin.obj", &gold);
 	coin2.translate(glm::vec3(-1.0f, 1.0f, -5.0f));
 
@@ -162,39 +164,37 @@ int main(int argc, char** argv)
 	Mesh skybox = skybox.Skybox(1.0f, &sky);
 
 	// Use Depth Buffer
-	std::cout << "enable depth buffer..." << std::endl;
 	glEnable(GL_DEPTH_TEST);
 	glViewport(0, 0, globalState.width, globalState.height);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 	double timeStamp = glfwGetTime();
 	float deltaSeconds = 0.0f;
 	FPSCounter fpsCounter = FPSCounter();
 
 	// locks mouse to window
-	//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	//glfwSetInputMode(GLFWapp.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	//---------------------------------- RENDER LOOP ----------------------------------//
 
 	std::cout << "enter render loop..." << std::endl << std::endl;
 	while (!glfwWindowShouldClose(GLFWapp.getWindow()))
 	{
+		fpsCounter.tick(deltaSeconds);
+
 		positioner.update(deltaSeconds, mouseState.pos, mouseState.pressedLeft);
 
 		// fps counter
 		const double newTimeStamp = glfwGetTime();
 		deltaSeconds = static_cast<float>(newTimeStamp - timeStamp);
 		timeStamp = newTimeStamp;
-		fpsCounter.tick(deltaSeconds);
 		std::string title = globalState.window_title + " " + fpsCounter.getFPS() + " fps";
 		glfwSetWindowTitle(GLFWapp.getWindow(), title.c_str());
 
-		// prepare depth buffer
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glClearColor(1.0f, 1.0f, 1.0f, 1.0f); //RGBA
 
 		glViewport(0, 0, globalState.width, globalState.height);
 
-		glfwGetFramebufferSize(GLFWapp.getWindow(), &globalState.width, &globalState.height);
+		GLFWapp.updateWindow();
 		const float ratio = globalState.width / (float)globalState.height;
 		const glm::mat4 projection = glm::perspective(glm::radians(globalState.fov), ratio, globalState.Znear, globalState.Zfar);
 		const glm::mat4 view = camera.getViewMatrix();

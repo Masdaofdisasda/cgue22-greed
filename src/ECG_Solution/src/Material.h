@@ -37,6 +37,7 @@ public:
 		return &cubemap;
 	}
 
+
 	// ensure RAII compliance
 	
 	Material(const Material&) = delete;

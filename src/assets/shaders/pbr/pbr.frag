@@ -1,5 +1,8 @@
 #version 460
 
+layout (location = 0) out vec4 FragColor;
+layout (location = 1) out vec4 BrightColor;
+
 in vec3 fNormal;
 in vec3 fPosition;
 in vec2 fUV;
@@ -68,8 +71,6 @@ layout (std140, binding = 3) uniform sLightUBlock {
 uniform uint sLightCount ;
 
 uniform Material material;
-
-out vec4 FragColor;
 
 //todo
 vec3 albedo = pow(texture(material.albedo, fUV).rgb, vec3(2.2));
@@ -148,7 +149,17 @@ vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
 
 void main()
 {
-    FragColor = vec4(calculateLight(),1.0f);
+    vec3 light = calculateLight();
+    float brightness = dot(light, vec3(0.2126, 0.7152, 0.0722));
+    if(brightness > 1.0)
+	{
+        BrightColor = vec4(light, 1.0);
+    }
+    else
+	{
+        BrightColor = vec4(0.0, 0.0, 0.0, 1.0);
+    }
+    FragColor = vec4(light, 1.0);
 }
 
 vec3 calculateLight() {

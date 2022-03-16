@@ -2,8 +2,6 @@
 
 VAO::VAO()
 {
-	std::cout << "create Vertex Array Object (VAO)..." << std::endl;
-
 	// generate VAO
 	glGenVertexArrays(1, &vao_ID);
 }

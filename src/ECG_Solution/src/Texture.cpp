@@ -8,6 +8,24 @@ Texture::Texture()
 	path = "";
 
 }
+bool Texture::equals(string tex)
+{
+	if (path == tex)
+	{
+		return true;
+	} return false;
+
+}
+
+Texture::Texture(GLenum type, int width, int height, GLenum internalFormat)
+	: type_(type)
+{
+	glCreateTextures(type, 1, &tex_ID);
+	glTextureParameteri(tex_ID, GL_TEXTURE_MAX_LEVEL, 0);
+	glTextureParameteri(tex_ID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTextureParameteri(tex_ID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTextureStorage2D(tex_ID, getNumMipMapLevels2D(width, height), internalFormat, width, height);
+}
 
 void Texture::load(const char* texPath, int texUnit)
 {
@@ -41,32 +59,10 @@ void Texture::load(const char* texPath, int texUnit)
 
 }
 
-// may be needed if we use dds textures, ignore for now
-void Texture::loadCompressedTex(const char* texPath, int texUnit)
+int Texture::getNumMipMapLevels2D(int w, int h)
 {
-	// generate texture
-	glGenTextures(1, &tex_ID);
-	glActiveTexture(GL_TEXTURE0 + texUnit);
-	glBindTexture(GL_TEXTURE_2D, tex_ID);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	DDSImage imgTex = loadDDS(texPath);
-
-	if (imgTex.size > 0)
-	{
-		glCompressedTexImage2D(GL_TEXTURE_2D, 0, imgTex.format, imgTex.width, imgTex.height, 0, imgTex.size, imgTex.data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-
-	}
-	else
-	{
-		std::cout << "could not load texture" << std::endl;
-	}
-
-	glBindTexture(GL_TEXTURE_2D, 0);
-
+	int levels = 1;
+	while ((w | h) >> levels)
+		levels += 1;
+	return levels;
 }

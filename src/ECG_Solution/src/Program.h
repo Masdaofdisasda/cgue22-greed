@@ -12,6 +12,15 @@ private:
 
 	// Location of light source buffer blocks
 	GLuint dirLoc=0, posLoc=0, spotLoc=0;
+
+	// last used textures
+	string albedo = "";
+	string normal = "";
+	string metallic = "";
+	string roughness = "";
+	string ao = "";
+	string cube = "";
+
 	
 	void Release()
 	{

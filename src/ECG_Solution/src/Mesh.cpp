@@ -107,8 +107,6 @@ Mesh::Mesh(float w, float h, float d, Material* mat)
 // box geometry constructor
 Mesh::Mesh(float size, Material* mat)
 {
-	std::cout << "generate skybox with:" << std::endl;
-	std::cout << "size = " << size << std::endl;
 	material = mat;
 	float w = size, h = size, d = size;
 	glm::vec3 color = glm::vec3(0.0f);
@@ -177,7 +175,6 @@ Mesh::Mesh(float size, Material* mat)
 
 	};
 
-	std::cout << "box geometry has " << vertices.size() << " vertices" << std::endl;
 	indices = {
 
 		3,0,1,		2,3,1,		//back
@@ -188,8 +185,6 @@ Mesh::Mesh(float size, Material* mat)
 		20,22,23,	21,20,23,	//bottom
 
 	};
-
-	std::cout << "and consists of " << indices.size() / 3 << " triangles" << std::endl;
 
 	reverseIndices();
 	PrepareBuffer();
@@ -498,7 +493,6 @@ Mesh::Mesh(const char* fileName, Material* mat)
 					indices.push_back(face->mIndices[1]);
 					indices.push_back(face->mIndices[2]);
 				}
-				std::cout << "stop..." << std::endl;
 			}
 	}
 
