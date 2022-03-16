@@ -11,14 +11,14 @@
 #include "Renderer.h"
 #include "FPSCounter.h"
 #include "GLFWApp.h"
-
-
-/* --------------------------------------------- */
-// Prototypes
-/* --------------------------------------------- */
-
-static void APIENTRY DebugCallbackDefault(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const GLvoid* userParam);
-static std::string FormatDebugOutput(GLenum source, GLenum type, GLuint id, GLenum severity, const char* msg);
+#include "Debugger.h"
+#include "Level.h"
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+#include <assimp/cimport.h>
+#include <assimp/version.h>
+#include <bullet/btBulletCollisionCommon.h>
+#include <bullet/btBulletDynamicsCommon.h>
 
 /* --------------------------------------------- */
 // Global variables
@@ -47,6 +47,14 @@ int main(int argc, char** argv)
 {
 	std::cout << "starting program..." << std::endl;
 	std::cout << std::endl;
+
+	/*//Bullet Initialization
+	btDbvtBroadphase* broadphase = new btDbvtBroadphase();
+	btDefaultCollisionConfiguration* collision_configuration = new btDefaultCollisionConfiguration();
+	btCollisionDispatcher* dispatcher = new btCollisionDispatcher(collision_configuration);
+	btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
+	btDiscreteDynamicsWorld* dynamics_world = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collision_configuration);
+	dynamics_world->setGravity(btVector3(0, -10, 0));*/
 
 	/* --------------------------------------------- */
 	// Load settings.ini
@@ -123,39 +131,16 @@ int main(int argc, char** argv)
 	std::cout << std::endl;
 
 	glEnable(GL_DEBUG_OUTPUT);
-	glDebugMessageCallback(DebugCallbackDefault, 0);
+	glDebugMessageCallback(Debugger::DebugCallbackDefault, 0);
 
 	/* --------------------------------------------- */
 	// Initialize scene and render loop
 	/* --------------------------------------------- */
 
+
 	std::cout << "initialize scene and render loop..." << std::endl;
-	Renderer renderer(globalState,perframeData);
-
-	std::cout << "initialize models and textures..." << std::endl;
-	Texture goldAlbedo("assets/textures/Coin/albedo.jpg");
-	Texture goldNormal("assets/textures/Coin/normal.jpg");
-	Texture goldMetal("assets/textures/Coin/metal.jpg");
-	Texture goldRough("assets/textures/Coin/rough.jpg");
-	Texture goldAO("assets/textures/Coin/ao.jpg");
-
-	Cubemap caveCube;
-	caveCube.loadHDR("assets/textures/cubemap/cellar.pic");
-
-	Material gold(&goldAlbedo,&goldNormal,&goldMetal,&goldRough,&goldAO,&caveCube);
-
-	Mesh coin1("assets/models/coin.obj", &gold);
-	coin1.translate(glm::vec3(1.0f, -1.0f, -5.0f));
-	Mesh coin2("assets/models/coin.obj", &gold);
-	coin2.translate(glm::vec3(-1.0f, 1.0f, -5.0f));
-
-	Mesh skybox = skybox.Skybox(400.0f, &gold);
-
-	Mesh box = box.Cube(1.5f, 1.5f, 1.5f, &gold);
-	box.translate(glm::vec3(0.0f, 0.0f, -5.0f));
-	std::vector <Mesh*> models;
-	models.push_back(&coin1);
-	models.push_back(&coin2);
+	LevelInterface* level = new ModelTesterLevel();
+	Renderer renderer(globalState, perframeData, level->getLights());
 
 	// Use Depth Buffer
 	std::cout << "enable depth buffer..." << std::endl;
@@ -198,7 +183,7 @@ int main(int argc, char** argv)
 		perframeData.ViewProjSkybox = projection * glm::mat4(glm::mat3(view)); // remove translation
 		perframeData.viewPos = glm::vec4(camera.getPosition(),1.0f);
 
-		renderer.Draw(models, skybox);
+		renderer.Draw(level->getModels(), *level->getSkybox());
 
 		// swap back and front buffers
 		GLFWapp.swapBuffers();
@@ -219,120 +204,5 @@ int main(int argc, char** argv)
 	std::cout << "exit programm..." << std::endl;
 
 	return EXIT_SUCCESS;
-}
-
-
-// callbacks
-static void APIENTRY DebugCallbackDefault(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const GLvoid* userParam) {
-	if (id == 131185 || id == 131218) return; // ignore performance warnings from nvidia
-	std::string error = FormatDebugOutput(source, type, id, severity, message);
-	std::cout << error << std::endl;
-}
-
-static std::string FormatDebugOutput(GLenum source, GLenum type, GLuint id, GLenum severity, const char* msg) {
-	std::stringstream stringStream;
-	std::string sourceString;
-	std::string typeString;
-	std::string severityString;
-
-	// The AMD variant of this extension provides a less detailed classification of the error,
-	// which is why some arguments might be "Unknown".
-	switch (source) {
-	case GL_DEBUG_CATEGORY_API_ERROR_AMD:
-	case GL_DEBUG_SOURCE_API: {
-		sourceString = "API";
-		break;
-	}
-	case GL_DEBUG_CATEGORY_APPLICATION_AMD:
-	case GL_DEBUG_SOURCE_APPLICATION: {
-		sourceString = "Application";
-		break;
-	}
-	case GL_DEBUG_CATEGORY_WINDOW_SYSTEM_AMD:
-	case GL_DEBUG_SOURCE_WINDOW_SYSTEM: {
-		sourceString = "Window System";
-		break;
-	}
-	case GL_DEBUG_CATEGORY_SHADER_COMPILER_AMD:
-	case GL_DEBUG_SOURCE_SHADER_COMPILER: {
-		sourceString = "Shader Compiler";
-		break;
-	}
-	case GL_DEBUG_SOURCE_THIRD_PARTY: {
-		sourceString = "Third Party";
-		break;
-	}
-	case GL_DEBUG_CATEGORY_OTHER_AMD:
-	case GL_DEBUG_SOURCE_OTHER: {
-		sourceString = "Other";
-		break;
-	}
-	default: {
-		sourceString = "Unknown";
-		break;
-	}
-	}
-
-	switch (type) {
-	case GL_DEBUG_TYPE_ERROR: {
-		typeString = "Error";
-		break;
-	}
-	case GL_DEBUG_CATEGORY_DEPRECATION_AMD:
-	case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: {
-		typeString = "Deprecated Behavior";
-		break;
-	}
-	case GL_DEBUG_CATEGORY_UNDEFINED_BEHAVIOR_AMD:
-	case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR: {
-		typeString = "Undefined Behavior";
-		break;
-	}
-	case GL_DEBUG_TYPE_PORTABILITY_ARB: {
-		typeString = "Portability";
-		break;
-	}
-	case GL_DEBUG_CATEGORY_PERFORMANCE_AMD:
-	case GL_DEBUG_TYPE_PERFORMANCE: {
-		typeString = "Performance";
-		break;
-	}
-	case GL_DEBUG_CATEGORY_OTHER_AMD:
-	case GL_DEBUG_TYPE_OTHER: {
-		typeString = "Other";
-		break;
-	}
-	default: {
-		typeString = "Unknown";
-		break;
-	}
-	}
-
-	switch (severity) {
-	case GL_DEBUG_SEVERITY_HIGH: {
-		severityString = "High";
-		break;
-	}
-	case GL_DEBUG_SEVERITY_MEDIUM: {
-		severityString = "Medium";
-		break;
-	}
-	case GL_DEBUG_SEVERITY_LOW: {
-		severityString = "Low";
-		break;
-	}
-	default: {
-		severityString = "Unknown";
-		break;
-	}
-	}
-
-	stringStream << "OpenGL Error: " << msg;
-	stringStream << " [Source = " << sourceString;
-	stringStream << ", Type = " << typeString;
-	stringStream << ", Severity = " << severityString;
-	stringStream << ", ID = " << id << "]";
-
-	return stringStream.str();
 }
 

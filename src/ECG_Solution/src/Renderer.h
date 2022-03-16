@@ -10,7 +10,7 @@
 class Renderer
 {
 public:
-	Renderer(GlobalState& state, PerFrameData& pfdata);
+	Renderer(GlobalState& state, PerFrameData& pfdata, LightSources lights);
 	~Renderer();
 
 	void Draw(std::vector <Mesh*> models, Mesh& skybox);
@@ -19,9 +19,7 @@ public:
 private:
 	GlobalState* globalState;
 	PerFrameData* perframeData;
-	std::vector <DirectionalLight> dLightsBuffer;
-	std::vector <PositionalLight> pLightsBuffer;
-	std::vector <SpotLight> sLightsBuffer;
+	LightSources lights;
 	UBO directionalLights;
 	UBO positionalLights;
 	UBO spotLights;
@@ -29,7 +27,6 @@ private:
 	Program PBRShader;
 	Program skyboxShader;
 
-	void loadLightsources();
 	void fillLightsources();
 	void buildShaderPrograms();
 };

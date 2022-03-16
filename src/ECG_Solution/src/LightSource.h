@@ -1,5 +1,6 @@
 #pragma once
 #include "Utils.h"
+#include "vector"
 
 // setup light sources
 struct DirectionalLight
@@ -25,4 +26,11 @@ struct SpotLight
 	glm::vec4 attenuation;
 
 	glm::vec4 intensity;
+};
+
+struct LightSources
+{
+	std::vector <DirectionalLight> directional;
+	std::vector <PositionalLight> point;
+	std::vector <SpotLight> spot;
 };
