@@ -12,6 +12,7 @@
 #include "FPSCounter.h"
 #include "GLFWApp.h"
 #include "Debugger.h"
+#include "Level.h"
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <assimp/cimport.h>
@@ -136,29 +137,10 @@ int main(int argc, char** argv)
 	// Initialize scene and render loop
 	/* --------------------------------------------- */
 
+
 	std::cout << "initialize scene and render loop..." << std::endl;
-	Renderer renderer(globalState,perframeData);
-
-	std::cout << "initialize models and textuers..." << std::endl;
-	Texture brickDiff("assets/textures/brick03-diff.jpeg");
-	Texture brickSpec("assets/textures/brick03-spec.jpeg");
-	Cubemap brickCube("assets/textures/cubemap");
-
-	Material brick(&brickDiff,&brickSpec,&brickCube,
-		glm::vec4(0.5f, 0.5f, 1.0f, 1.0f), 1.0f);
-
-	Material sky(&brickDiff, &brickSpec, &brickCube,
-		glm::vec4(0.0f, 0.0f, 0.0f, 0.0f), 1.0f);
-
-	Mesh coin("assets/models/coin.obj", &brick);
-	coin.translate(glm::vec3(0.0f, 0.0f, -5.0f));
-
-	Mesh skybox = skybox.Skybox(400.0f, &sky);
-
-	Mesh box = box.Cube(1.5f, 1.5f, 1.5f, &brick);
-	box.translate(glm::vec3(0.0f, 0.0f, -5.0f));
-	std::vector <Mesh*> models;
-	models.push_back(&coin);
+	LevelInterface* level = new ModelTesterLevel();
+	Renderer renderer(globalState, perframeData, level->getLights());
 
 	// Use Depth Buffer
 	std::cout << "enable depth buffer..." << std::endl;
@@ -200,7 +182,7 @@ int main(int argc, char** argv)
 		perframeData.ViewProjSkybox = projection * glm::mat4(glm::mat3(view)); // remove translation
 		perframeData.viewPos = glm::vec4(camera.getPosition(),1.0f);
 
-		renderer.Draw(models, skybox);
+		renderer.Draw(level->getModels(), *level->getSkybox());
 
 		// swap back and front buffers
 		GLFWapp.swapBuffers();
