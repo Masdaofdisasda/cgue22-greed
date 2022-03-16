@@ -134,9 +134,26 @@ int main(int argc, char** argv)
 	LevelInterface* level = new ModelTesterLevel();
 	Renderer renderer(globalState, perframeData, level->getLights());
 
+	Material gold("assets/textures/coin", "assets/textures/cubemap/cellar.pic");
+	Material sky("assets/textures/cubemap/cellar.pic");
+
+	Mesh coin1 = Mesh("assets/models/coin.obj", &gold);
+	coin1.translate(glm::vec3(1.0f, -1.0f, -5.0f));
+	Mesh coin2 = Mesh("assets/models/coin.obj", &gold);
+	coin2.translate(glm::vec3(-1.0f, 1.0f, -5.0f));
+
+	std::vector <Mesh*> models;
+	models.push_back(&coin1);
+	models.push_back(&coin2);
+	
+	
+
+	Mesh skybox = skybox.Skybox(400.0f, &sky);
+
 	// Use Depth Buffer
 	std::cout << "enable depth buffer..." << std::endl;
 	glEnable(GL_DEPTH_TEST);
+	glViewport(0, 0, globalState.width, globalState.height);
 
 	double timeStamp = glfwGetTime();
 	float deltaSeconds = 0.0f;
@@ -174,7 +191,7 @@ int main(int argc, char** argv)
 		perframeData.ViewProjSkybox = projection * glm::mat4(glm::mat3(view)); // remove translation
 		perframeData.viewPos = glm::vec4(camera.getPosition(),1.0f);
 
-		renderer.Draw(level->getModels(), *level->getSkybox());
+		renderer.Draw(models, skybox);
 
 		// swap back and front buffers
 		GLFWapp.swapBuffers();
@@ -185,7 +202,6 @@ int main(int argc, char** argv)
 	/* --------------------------------------------- */
 
 	destroyFramework();
-	glfwTerminate();
 
 
 	/* --------------------------------------------- */

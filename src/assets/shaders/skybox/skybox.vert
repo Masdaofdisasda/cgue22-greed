@@ -14,16 +14,16 @@ layout(std140, binding = 0) uniform PerFrameData
 
 uniform mat4 model;
 
-
-out vec3 fNormal;
 out vec3 fPosition;
-out vec2 fUV;
 
 void main()
 {
-	gl_Position = ViewProjSkybox * model * vec4(vPosition, 1.0);
-	fUV = vUV;
-	fPosition = vec3(model * vec4(vPosition, 1.0));
+	//gl_Position = ViewProjSkybox * model * vec4(vPosition, 1.0);
+	//fPosition = vec3(model * vec4(vPosition, 1.0));
 
-	fNormal = mat3(transpose(inverse(model))) * vNormal;
+	fPosition = vPosition;
+
+	vec4 clipPos = ViewProjSkybox * vec4(fPosition, 1.0);
+
+	gl_Position = clipPos.xyww;
 }

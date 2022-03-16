@@ -7,7 +7,6 @@ void Program::buildFrom(Shader& a, Shader& b)
 	glLinkProgram(program_ID);
 
 	compileErrors();
-
 	getUniformLocations();
 }
 void Program::buildFrom(Shader& a, Shader& b, Shader& c)
@@ -18,7 +17,6 @@ void Program::buildFrom(Shader& a, Shader& b, Shader& c)
 	glLinkProgram(program_ID);
 
 	compileErrors();
-
 	getUniformLocations();
 }
 void Program::buildFrom(Shader& a, Shader& b, Shader& c, Shader& d)
@@ -30,7 +28,6 @@ void Program::buildFrom(Shader& a, Shader& b, Shader& c, Shader& d)
 	glLinkProgram(program_ID);
 
 	compileErrors();
-
 	getUniformLocations();
 }
 void Program::buildFrom(Shader& a, Shader& b, Shader& c, Shader& d, Shader& e)
@@ -43,8 +40,8 @@ void Program::buildFrom(Shader& a, Shader& b, Shader& c, Shader& d, Shader& e)
 	glLinkProgram(program_ID);
 
 	compileErrors();
-
 	getUniformLocations();
+
 }
 
 Program::Program()
@@ -59,13 +56,21 @@ void Program::Use()
 	glUseProgram(program_ID);
 }
 
-void Program::uploadMaterial(Material* material)
+void Program::setTextures()
 {
 	setInt("material.albedo", 0);
-	setInt("material.specular", 1);
-	setInt("material.irradiance", 2);
-	setVec4("material.coefficients", material->coefficients);
-	setFloat("material.reflection", material->reflection);
+	setInt("material.normal", 1);
+	setInt("material.metallic", 2);
+	setInt("material.roughness", 3);
+	setInt("material.ao", 4);
+	setInt("material.irradiance", 5);
+	setInt("material.prefilter", 6);
+	setInt("material.brdfLut", 7);
+}
+
+void Program::setSkyboxTextures()
+{
+	setInt("environment", 0);
 }
 
 void Program::Draw(Mesh& mesh)
@@ -76,16 +81,33 @@ void Program::Draw(Mesh& mesh)
 
 	// use texture 
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, *mesh.getMaterial()->getDiffuse()->getID());
+	glBindTexture(GL_TEXTURE_2D, *mesh.getMaterial()->getAlbedo()->getID());
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, *mesh.getMaterial()->getSpecular()->getID());
+	glBindTexture(GL_TEXTURE_2D, *mesh.getMaterial()->getNormalmap()->getID());
 	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, *mesh.getMaterial()->getCubemap()->getID());
-
-	// load mesh on shader
-	uploadMaterial(mesh.getMaterial());
+	glBindTexture(GL_TEXTURE_2D, *mesh.getMaterial()->getMetallic()->getID());
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, *mesh.getMaterial()->getRoughness()->getID());
+	glActiveTexture(GL_TEXTURE4);
+	glBindTexture(GL_TEXTURE_2D, *mesh.getMaterial()->getAOmap()->getID());
+	glActiveTexture(GL_TEXTURE5);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, *mesh.getMaterial()->getCubemap()->getIrradianceID());
+	glActiveTexture(GL_TEXTURE6);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, *mesh.getMaterial()->getCubemap()->getPreFilterID());
+	glActiveTexture(GL_TEXTURE7);
+	glBindTexture(GL_TEXTURE_2D, *mesh.getMaterial()->getCubemap()->getBdrfLutID());
 
 	// draw meshgl
+	mesh.BindVAO();
+	glDrawElements(GL_TRIANGLES, mesh.getIndicesSize(), GL_UNSIGNED_INT, 0);
+}
+void Program::DrawSkybox(Mesh& mesh)
+{
+	setMat4("model", glm::mat4(0));
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, *mesh.getMaterial()->getCubemap()->getEnvironment());
+
 	mesh.BindVAO();
 	glDrawElements(GL_TRIANGLES, mesh.getIndicesSize(), GL_UNSIGNED_INT, 0);
 }

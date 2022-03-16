@@ -17,9 +17,10 @@ private:
 	}
 
 public:
-	Texture(const char* texPath, int texUnit = 0);
 	Texture();
 	~Texture() { Release(); }
+
+	void load(const char* texPath, int texUnit = 0);
 
 	// ensure RAII compliance
 	Texture(const Texture&) = delete;

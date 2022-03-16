@@ -8,36 +8,39 @@
 class Material
 {
 public:
-	Material(Texture* diff, Texture* spec, Cubemap* cube, glm::vec4 coeffs, float reflection);
+	Material(const char* texPath, const char* cubePath);
+	Material(const char* cubePath);
 	~Material() { Release(); };
 
-	//Texture* diffuse; //todo: add default textures
-	//Texture* specular;
-	//Cubemap* cubemap;
-	glm::vec4 coefficients;
-	float reflection;
-
-	Texture* getDiffuse()
+	Texture* getAlbedo()
 	{
-		return diffuse;
+		return &albedo;
 	}
-	Texture* getSpecular()
+	Texture* getNormalmap()
 	{
-		return specular;
+		return &normal;
+	}
+	Texture* getMetallic()
+	{
+		return &metallic;
+	}
+	Texture* getRoughness()
+	{
+		return &roughness;
+	}
+	Texture* getAOmap()
+	{
+		return &ambientocclusion;
 	}
 	Cubemap* getCubemap()
 	{
-		return cubemap;
+		return &cubemap;
 	}
 
 	// ensure RAII compliance
+	
 	Material(const Material&) = delete;
 	Material& operator=(const Material&) = delete; 
-
-	Material(Material&& other) noexcept : diffuse(other.diffuse)
-	{
-		other.diffuse = nullptr; //Use the "null" ID for the old object.
-	}
 
 	Material& operator=(Material&& other)
 	{
@@ -46,25 +49,34 @@ public:
 		{
 			Release();
 			//obj_ is now 0.
-			std::swap(diffuse, other.diffuse);
-			std::swap(specular, other.specular);
+			std::swap(albedo, other.albedo);
+			std::swap(normal, other.normal);
+			std::swap(metallic, other.metallic);
+			std::swap(roughness, other.roughness);
+			std::swap(ambientocclusion, other.ambientocclusion);
 			std::swap(cubemap, other.cubemap);
-			std::swap(coefficients, other.coefficients);
-			std::swap(reflection, other.reflection);
 		}
 	}
 
 private:
 	
-	Texture* diffuse; //todo: add default textures
-	Texture* specular;
-	Cubemap* cubemap;
+	Texture albedo;
+	Texture normal;
+	Texture metallic;
+	Texture roughness;
+	Texture ambientocclusion;
+	Cubemap cubemap;
+
+	const char* append(const char* texPath, char* texType);
 
 	void Release()
 	{
-		diffuse = nullptr;
-		specular = nullptr;
-		cubemap = nullptr;
+		free(&albedo);
+		free(&normal);
+		free(&metallic);
+		free(&roughness);
+		free(&ambientocclusion);
+		free(&cubemap);
 	}
 
 };

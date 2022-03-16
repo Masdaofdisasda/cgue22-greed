@@ -11,7 +11,7 @@ Level data could also be read from a file.
 */
 class LevelInterface {
 public:
-	virtual std::vector <Mesh*> getModels() = 0;
+	virtual Mesh* getModels() = 0;
 	virtual Mesh* getSkybox() = 0;
 	virtual LightSources getLights() = 0;
 	virtual std::vector <DirectionalLight> getDirectionalLights() = 0;
@@ -23,37 +23,19 @@ class ModelTesterLevel : public LevelInterface {
 private:
 	std::vector <Mesh*> models;
 	Mesh* skybox = nullptr;
+
 	LightSources lights;
 
 	void loadModels() {
-		// create textures
-		Texture*  brickDiff = new Texture("assets/textures/brick03-diff.jpeg");
-		Texture* brickSpec = new Texture("assets/textures/brick03-spec.jpeg");
-		Cubemap* brickCube = new Cubemap("assets/textures/cubemap");
 
-		// create materials
-		Material brick(brickDiff, brickSpec, brickCube,
-			glm::vec4(0.5f, 0.5f, 1.0f, 1.0f), 1.0f);
+		std::cout << "initialize models and textures..." << std::endl;
 
-		// create meshes
-		Mesh coin("assets/models/coin.obj", &brick);
+		//model1.translate(glm::vec3(1.0f, -1.0f, -5.0f));
+		//model2.translate(glm::vec3(-1.0f, 1.0f, -5.0f));
 
-		// move meshes
-		coin.translate(glm::vec3(0.0f, 0.0f, -5.0f));
 
-		// add meshes to models
-		models.push_back(&coin);
 	}
-	void loadSkybox() {
-		Texture brickDiff("assets/textures/brick03-diff.jpeg");
-		Texture brickSpec("assets/textures/brick03-spec.jpeg");
-		Cubemap brickCube("assets/textures/cubemap");
 
-		Material sky(&brickDiff, &brickSpec, &brickCube,
-			glm::vec4(0.0f, 0.0f, 0.0f, 0.0f), 1.0f);
-
-		Mesh skybox = skybox.Skybox(400.0f, &sky);
-	}
 	void loadLights() {
 		// directional light
 		lights.directional.push_back(DirectionalLight{
@@ -107,14 +89,13 @@ private:
 public:
 	ModelTesterLevel() {
 		loadModels();
-		loadSkybox();
 		loadLights();
 	}
 	~ModelTesterLevel() {}
 
-	std::vector <Mesh*> getModels() { return models; }
+	Mesh* getModels() { return nullptr; }
 
-	Mesh* getSkybox() { return skybox; }
+	Mesh* getSkybox() { return nullptr; }
 
 	LightSources getLights() { return lights; }
 
