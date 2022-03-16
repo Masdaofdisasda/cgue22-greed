@@ -106,8 +106,7 @@ void Program::DrawSkybox(Mesh& mesh)
 	setMat4("model", glm::mat4(0));
 
 	glActiveTexture(GL_TEXTURE0);
-	//glBindTexture(GL_TEXTURE_CUBE_MAP, *mesh.getMaterial()->getCubemap()->getEnvironment());
-	glBindTexture(GL_TEXTURE_CUBE_MAP, *mesh.getMaterial()->getCubemap()->getIrradianceID());
+	glBindTexture(GL_TEXTURE_CUBE_MAP, *mesh.getMaterial()->getCubemap()->getEnvironment());
 
 	mesh.BindVAO();
 	glDrawElements(GL_TRIANGLES, mesh.getIndicesSize(), GL_UNSIGNED_INT, 0);

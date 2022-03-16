@@ -8,7 +8,6 @@ Material::Material(const char* texPath, const char* cubePath)
 	normal.load(append(texPath, "/normal.jpg"));
 	metallic.load(append(texPath, "/metal.jpg"));
 	roughness.load(append(texPath, "/rough.jpg"));
-	std::cout << append(texPath, "/test.jpg") << std::endl;
 	ambientocclusion.load(append(texPath, "/ao.jpg"));
 	cubemap.loadHDR(cubePath);
 }
