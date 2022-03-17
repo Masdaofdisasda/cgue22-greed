@@ -39,22 +39,15 @@ struct MouseState
 CameraPositioner_FirstPerson positioner(glm::vec3(0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 Camera camera(positioner);
 
+static void print(string s);
+
 /* --------------------------------------------- */
 // Main
 /* --------------------------------------------- */
 
 int main(int argc, char** argv)
 {
-	std::cout << "starting program..." << std::endl;
-	std::cout << std::endl;
-
-	/*//Bullet Initialization
-	btDbvtBroadphase* broadphase = new btDbvtBroadphase();
-	btDefaultCollisionConfiguration* collision_configuration = new btDefaultCollisionConfiguration();
-	btCollisionDispatcher* dispatcher = new btCollisionDispatcher(collision_configuration);
-	btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
-	btDiscreteDynamicsWorld* dynamics_world = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collision_configuration);
-	dynamics_world->setGravity(btVector3(0, -10, 0));*/
+	print("starting program...\n");
 
 	/* --------------------------------------------- */
 	// Load settings.ini
@@ -121,21 +114,15 @@ int main(int argc, char** argv)
 	);
 
 	// load all OpenGL function pointers with GLEW
-	std::cout << "initializing GLEW..." << std::endl;
+	print("initializing GLEW...");
 	glewExperimental = GL_TRUE;
-	GLenum err = glewInit();
-	if (err != GLEW_OK)
-	{
+	if (glewInit() != GLEW_OK)
 		EXIT_WITH_ERROR("failed to load GLEW");
-	}
 
 	//do not delete this
-	std::cout << "initialize framework..." << std::endl;
+	print("initialize framework...\n");
 	if (!initFramework())
-	{
 		EXIT_WITH_ERROR("failed to init framework");
-	}
-	std::cout << std::endl;
 
 	glEnable(GL_DEBUG_OUTPUT);
 	glDebugMessageCallback(Debugger::DebugCallbackDefault, 0);
@@ -145,7 +132,7 @@ int main(int argc, char** argv)
 	/* --------------------------------------------- */
 
 
-	std::cout << "initialize scene and render loop..." << std::endl;
+	print("initialize scene and render loop...");
 	LevelInterface* level = new ModelTesterLevel();
 	Renderer renderer(globalState, perframeData, level->getLights());
 
@@ -171,6 +158,7 @@ int main(int argc, char** argv)
 	Mesh skybox = skybox.Skybox(1.0f, &sky);
 
 	// Use Depth Buffer
+	print("enable depth buffer...");
 	glEnable(GL_DEPTH_TEST);
 	glViewport(0, 0, globalState.width, globalState.height);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -184,7 +172,7 @@ int main(int argc, char** argv)
 
 	//---------------------------------- RENDER LOOP ----------------------------------//
 
-	std::cout << "enter render loop..." << std::endl << std::endl;
+	print("enter render loop...");
 	while (!glfwWindowShouldClose(GLFWapp.getWindow()))
 	{
 		fpsCounter.tick(deltaSeconds);
@@ -229,8 +217,11 @@ int main(int argc, char** argv)
 	/* --------------------------------------------- */
 
 
-	std::cout << "exit programm..." << std::endl;
+	print("exit programm...");
 
 	return EXIT_SUCCESS;
 }
 
+static void print(string s) {
+	std::cout << s << std::endl;
+}
