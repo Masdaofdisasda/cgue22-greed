@@ -79,7 +79,7 @@ float ao = texture(material.ao,fUV).r;
 
 const float PI = 3.14159265359;
 
-vec3 Idirectional(DirectionalLight light, vec3 normal, vec3 viewDir);
+vec3 Idirectional(DirectionalLight light, vec3 N, vec3 fPosition, vec3 V, vec3 F0);
 vec3 Ipoint(PositionalLight light, vec3 N, vec3 fPosition, vec3 V, vec3 F0);
 vec3 Ispot(SpotLight light, vec3 normal, vec3 fPosition, vec3 viewDir);
 vec3 calculateLight();
@@ -169,7 +169,7 @@ vec3 calculateLight() {
 
 	// add the directional light's contribution to the output
 	for(int i = 0; i < dLightCount; i++)
-	//result += Idirectional(dLights[i], N, V);
+	Lo += Idirectional(dLights[i], N, fPosition, V, F0);
 
 	// do the same for all point lights
 	for(int i = 0; i < pLightCount; i++)
@@ -202,25 +202,40 @@ vec3 calculateLight() {
 }
 
 // calculate directional lights
-/*
-vec3 Idirectional(DirectionalLight light, vec3 normal, vec3 viewDir)
+vec3 Idirectional(DirectionalLight light, vec3 N, vec3 fPosition, vec3 V, vec3 F0)
 {
-    vec3 lightDir = normalize(vec3(-light.direction));
+        // calculate per-light radiance
+        vec3 L = normalize(vec3(light.direction) );
+        vec3 H = normalize(V + L);
+        vec3 radiance = light.intensity.xyz;
 
-    // diffuse shading
-    float diff = max(dot(normal, lightDir), 0.0f);
+        // Cook-Torrance BRDF
+        float NDF = DistributionGGX(N, H, roughness);   
+        float G = GeometrySmith(N, V, L, roughness);    
+        vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);        
+        
+        vec3 numerator    = NDF * G * F;
+        float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001; // + 0.0001 to prevent divide by zero
+        vec3 specular = numerator / denominator;
+        
+         // kS is equal to Fresnel
+        vec3 kS = F;
+        // for energy conservation, the diffuse and specular light can't
+        // be above 1.0 (unless the surface emits light); to preserve this
+        // relationship the diffuse component (kD) should equal 1.0 - kS.
+        vec3 kD = vec3(1.0) - kS;
+        // multiply kD by the inverse metalness such that only non-metals 
+        // have diffuse lighting, or a linear blend if partly metal (pure metals
+        // have no diffuse light).
+        kD *= 1.0 - metallic;	                
+            
+        // scale light by NdotL
+        float NdotL = max(dot(N, L), 0.0);        
 
-    // specular shading
-    vec3 reflectDir = reflect(-lightDir, normal);
-    vec3 halfway = normalize(lightDir + viewDir);
-    float spec = pow(max(dot(normal, halfway), 0.0f), material.coefficients.w);
-
-    // combine results
-    vec3 ambient  = texture(material.albedo, fUV).xyz * material.coefficients.x;
-    vec3 diffuse  = diff * texture(material.albedo, fUV).xyz * material.coefficients.y;
-    vec3 specular = spec * texture(material.specular, fUV).xyz * material.coefficients.z;
-    return light.intensity.xyz * (ambient + diffuse + specular);
-}  */
+        // add to outgoing radiance Lo
+        return (kD * albedo / PI + specular) * radiance * NdotL; // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
+    
+}  
 
 // calculate postional lights
 vec3 Ipoint(PositionalLight light, vec3 N, vec3 fPosition, vec3 V, vec3 F0)

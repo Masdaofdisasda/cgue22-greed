@@ -32,6 +32,7 @@ private:
 	void getUniformLocations();
 
 public:
+	void buildFrom(Shader& a);
 	void buildFrom(Shader& a, Shader& b);
 	void buildFrom(Shader& a, Shader& b, Shader& c);
 	void buildFrom(Shader& a, Shader& b, Shader& c, Shader& d);

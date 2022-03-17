@@ -93,6 +93,13 @@ int main(int argc, char** argv)
 				positioner.movement_.fastSpeed_ = press;
 			if (key == GLFW_KEY_SPACE)
 				positioner.setUpVector(glm::vec3(0.0f, 1.0f, 0.0f));
+			if (key == GLFW_KEY_F1)
+				if (globalState.bloom_)
+				{
+					globalState.bloom_ = false;
+				} else {
+					globalState.bloom_ = true;
+				}
 		});
 	glfwSetMouseButtonCallback(GLFWapp.getWindow(),
 		[](auto* window, int button, int action, int mods)
@@ -206,6 +213,8 @@ int main(int argc, char** argv)
 
 		// swap back and front buffers
 		GLFWapp.swapBuffers();
+
+		renderer.swapLuminance();
 	}
 
 	/* --------------------------------------------- */

@@ -39,8 +39,8 @@ private:
 	void loadLights() {
 		// directional light
 		lights.directional.push_back(DirectionalLight{
-			glm::vec4(0.0f, -1.0f, -1.0f ,1.0f),		// direction
-			glm::vec4(0.8f, 0.8f, 0.8f ,1.0f), });		// intensity 
+			glm::vec4(0.0f, -1.0f, 0.0f ,1.0f),		// direction
+			glm::vec4(0.0f, 0.0f, 1.0f ,1.0f), });		// intensity 
 
 		// positional light
 		lights.point.push_back(PositionalLight{
@@ -54,34 +54,6 @@ private:
 			glm::vec4(5.0f,-4.0f,-2.0f,1.0f), // position
 			glm::vec4(0.0f,-9.0f,-1.0f,1.0f), // direction
 			glm::vec4(glm::cos(glm::radians(7.0f)),glm::cos(glm::radians(5.0f)),1.0f,1.0f), // angles (outer, inner)
-			glm::vec4(1.0f,0.09f,0.032f,1.0f), // attenuation (constant, linear, quadratic)
-			glm::vec4(0.8f,0.8f,0.8f,1.0f) }); // intensity
-
-		lights.spot.push_back(SpotLight{
-			glm::vec4(2.5f,-4.0f,-2.0f,1.0f), // position
-			glm::vec4(0.0f,-9.0f,-1.0f,1.0f), // direction
-			glm::vec4(glm::cos(glm::radians(14.0f)),glm::cos(glm::radians(10.0f)),1.0f,1.0f), // angles (outer, inner)
-			glm::vec4(1.0f,0.09f,0.032f,1.0f), // attenuation (constant, linear, quadratic)
-			glm::vec4(0.8f,0.8f,0.8f,1.0f) }); // intensity
-
-		lights.spot.push_back(SpotLight{
-			glm::vec4(0.0f,-4.0f,-2.0f,1.0f), // position
-			glm::vec4(0.0f,-9.0f,-1.0f,1.0f), // direction
-			glm::vec4(glm::cos(glm::radians(28.0f)),glm::cos(glm::radians(20.0f)),1.0f,1.0f), // angles (outer, inner)
-			glm::vec4(1.0f,0.09f,0.032f,1.0f), // attenuation (constant, linear, quadratic)
-			glm::vec4(0.8f,0.8f,0.8f,1.0f) }); // intensity
-
-		lights.spot.push_back(SpotLight{
-			glm::vec4(-2.5f,-4.0f,-2.0f,1.0f), // position
-			glm::vec4(0.0f,-9.0f,-1.0f,1.0f), // direction
-			glm::vec4(glm::cos(glm::radians(56.0f)),glm::cos(glm::radians(40.0f)),1.0f,1.0f), // angles (outer, inner)
-			glm::vec4(1.0f,0.09f,0.032f,1.0f), // attenuation (constant, linear, quadratic)
-			glm::vec4(0.8f,0.8f,0.8f,1.0f) }); // intensity
-
-		lights.spot.push_back(SpotLight{
-			glm::vec4(-5.0f,-4.0f,-2.0f,1.0f), // position
-			glm::vec4(0.0f,-9.0f,-1.0f,1.0f), // direction
-			glm::vec4(glm::cos(glm::radians(112.0f)),glm::cos(glm::radians(80.0f)),1.0f,1.0f), // angles (outer, inner)
 			glm::vec4(1.0f,0.09f,0.032f,1.0f), // attenuation (constant, linear, quadratic)
 			glm::vec4(0.8f,0.8f,0.8f,1.0f) }); // intensity
 	}

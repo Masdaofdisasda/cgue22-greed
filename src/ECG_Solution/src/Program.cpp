@@ -1,5 +1,14 @@
 #include "Program.h"
 
+void Program::buildFrom(Shader& a)
+{
+	glAttachShader(program_ID, *a.getID());
+	glLinkProgram(program_ID);
+
+	compileErrors();
+	getUniformLocations();
+}
+
 void Program::buildFrom(Shader& a, Shader& b)
 {
 	glAttachShader(program_ID, *a.getID());

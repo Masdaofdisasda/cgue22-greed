@@ -50,7 +50,8 @@ void Renderer::fillLightsources()
 
 void Renderer::setRenderSettings()
 {
-	perframsets.bloom = glm::vec4(globalState->exposure_, globalState->maxWhite_, globalState->bloomStrength_, 1.0f);
+	perframsets.bloom = glm::vec4(globalState->exposure_, globalState->maxWhite_, 
+		globalState->bloomStrength_,globalState->adaptationSpeed_);
 }
 
 void Renderer::buildShaderPrograms()
@@ -86,6 +87,9 @@ void Renderer::buildShaderPrograms()
 	Shader LuminanceFrag("assets/shaders/toLuminance/toLuminance.frag");
 	ToLuminance.buildFrom(LuminanceVert, LuminanceFrag);
 
+	Shader lightAdaptComp("assets/shaders/lightAdaption/lightAdaption.comp");
+	lightAdapt.buildFrom(lightAdaptComp);
+
 	PBRShader.Use();
 }
 
@@ -93,8 +97,8 @@ void Renderer::prepareFramebuffers() {
 
 	glGenTextures(1, &luminance1x1);
 	glTextureView(luminance1x1, GL_TEXTURE_2D, luminance.getTextureColor().getHandle(), GL_R16F, 6, 1, 0, 1);
-	const GLint Mask[] = { GL_RED, GL_RED, GL_RED, GL_RED };
-	glTextureParameteriv(luminance1x1, GL_TEXTURE_SWIZZLE_RGBA, Mask);
+
+	glTextureSubImage2D(luminance1.getHandle(), 0, 0, 0, 1, 1, GL_RGBA, GL_FLOAT, &(brightPixel)[0]);
 
 }
 
@@ -125,17 +129,13 @@ void Renderer::Draw(std::vector <Mesh*> models, Mesh& skybox)
 		PBRShader.Draw(*model);
 	}
 
-	framebuffer.unbind();
+	framebuffer.unbind(); 
+	glGenerateTextureMipmap(framebuffer.getTextureColor().getHandle());
+	glTextureParameteri(framebuffer.getTextureColor().getHandle(), GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
 	glDisable(GL_DEPTH_TEST);
-	// 2.1 Extract bright areas
-	brightPass.bind();
-	BrightPass.Use();
-	glBindTextureUnit(0, framebuffer.getTextureColor().getHandle());
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	brightPass.unbind();
 
-	// 2.2 Downscale and convert to luminance
+	// 2.1 Downscale and convert to luminance
 	luminance.bind();
 	ToLuminance.Use();
 	glBindTextureUnit(0, framebuffer.getTextureColor().getHandle());
@@ -143,8 +143,29 @@ void Renderer::Draw(std::vector <Mesh*> models, Mesh& skybox)
 	luminance.unbind();
 	glGenerateTextureMipmap(luminance.getTextureColor().getHandle());
 
+	// 2.2 Light adaptation
+	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+	lightAdapt.Use();
+#if 0
+	// Either way is possible. In this case, all access modes will be GL_READ_WRITE
+	const GLuint imageTextures[] = { luminances[0]->getHandle(), luminance1x1, luminances[1]->getHandle() };
+	glBindImageTextures(0, 3, imageTextures);
+#else
+	glBindImageTexture(0, luminances[0]->getHandle(), 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA16F);
+	glBindImageTexture(1, luminance1x1, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA16F);
+	glBindImageTexture(2, luminances[1]->getHandle(), 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA16F);
+#endif
+	glDispatchCompute(1, 1, 1);
+	glMemoryBarrier(GL_TEXTURE_FETCH_BARRIER_BIT);
+
+	// 2.3 Extract bright areas
+	brightPass.bind();
+	BrightPass.Use();
+	glBindTextureUnit(0, framebuffer.getTextureColor().getHandle());
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	brightPass.unbind();
 	glBlitNamedFramebuffer(brightPass.getHandle(), bloom2.getHandle(), 0, 0, 256, 256, 0, 0, 256, 256, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-	
+
 	for (int i = 0; i != 4; i++)
 	{
 		// 2.3 Blur X
@@ -166,13 +187,9 @@ void Renderer::Draw(std::vector <Mesh*> models, Mesh& skybox)
 
 	if (globalState->bloom_)
 	{
-		//glNamedBufferSubData(perFrameDataBuffer.getHandle(), 0, sizeof(g_HDRParams), &g_HDRParams);
-
-		CombineHDR.setFloat("exposure", globalState->exposure_);
-		CombineHDR.setFloat("maxWhite", globalState->maxWhite_);
-		CombineHDR.setFloat("bloomStrength", globalState->bloomStrength_);
 		CombineHDR.Use();
 		glBindTextureUnit(0, framebuffer.getTextureColor().getHandle());
+		//glBindTextureUnit(1, luminances[1]->getHandle()); //TODO
 		glBindTextureUnit(1, luminance1x1);
 		glBindTextureUnit(2, bloom2.getTextureColor().getHandle());
 		glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -183,9 +200,14 @@ void Renderer::Draw(std::vector <Mesh*> models, Mesh& skybox)
 	}
 }
 
+void Renderer::swapLuminance()// swap current and adapter luminances
+{
+	std::swap(luminances[0], luminances[1]);
+}
 
 Renderer::~Renderer()
 {
 	globalState = nullptr;
 	perframeData = nullptr;
+	glDeleteTextures(1, &luminance1x1);
 }
