@@ -1,7 +1,6 @@
 #version 460
 
-layout (location = 0) out vec4 FragColor;
-layout (location = 1) out vec4 BrightColor;
+layout (location=0) out vec4 out_FragColor;
 
 in vec3 fNormal;
 in vec3 fPosition;
@@ -150,16 +149,7 @@ vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
 void main()
 {
     vec3 light = calculateLight();
-    float brightness = dot(light, vec3(0.2126, 0.7152, 0.0722));
-    if(brightness > 1.0)
-	{
-        BrightColor = vec4(light, 1.0);
-    }
-    else
-	{
-        BrightColor = vec4(0.0, 0.0, 0.0, 1.0);
-    }
-    FragColor = vec4(light, 1.0);
+    out_FragColor = vec4(light, 1.0);
 }
 
 vec3 calculateLight() {
@@ -207,11 +197,6 @@ vec3 calculateLight() {
     vec3 ambient = (kD * diffuse + specular) * ao;
     
     vec3 color = ambient + Lo;
-
-    // HDR tonemapping
-    color = color / (color + vec3(1.0));
-    // gamma correct
-    color = pow(color, vec3(1.0/2.2)); 
 
     return color;
 }

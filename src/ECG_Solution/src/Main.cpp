@@ -152,9 +152,9 @@ int main(int argc, char** argv)
 	Mesh coin1 = Mesh("assets/models/coin.obj", &wood);
 	coin1.translate(glm::vec3(1.0f, -1.0f, -5.0f));
 	Mesh coin2 = Mesh("assets/models/coin.obj", &rock);
-	coin2.translate(glm::vec3(0.0f, 0.0f, -6.0f));
+	coin2.translate(glm::vec3(0.0f, 0.0f, -7.0f));
 	Mesh coin3 = Mesh("assets/models/coin.obj", &gold);
-	coin2.translate(glm::vec3(-1.0f, 1.0f, -5.0f));
+	coin3.translate(glm::vec3(-1.0f, 1.0f, -5.0f));
 
 	std::vector <Mesh*> models;
 	models.push_back(&coin1);

@@ -19,18 +19,25 @@ public:
 private:
 	GlobalState* globalState;
 	PerFrameData* perframeData;
+	PerFrameSettings perframsets;
 	LightSources lights;
 	UBO directionalLights;
 	UBO positionalLights;
 	UBO spotLights;
 	UBO perframeBuffer;
+	UBO perframesetBuffer;
 	Program PBRShader;
 	Program skyboxShader;
-	Program blurShader;
-	Program bloomShader;
+	Program BrightPass;
+	Program ToLuminance;
+	Program BlurX;
+	Program BlurY;
+	Program CombineHDR;
 
 	// Framebuffers for Bloom
-	Framebuffer framebuffer = Framebuffer(800, 800, GL_RGBA16F, GL_DEPTH_COMPONENT24);
+	GLuint luminance1x1;
+	// Framebuffer size cant be changed after init eg. window reisizing not correctly working
+	Framebuffer framebuffer = Framebuffer(1920, 1080, GL_RGBA16F, GL_DEPTH_COMPONENT24);
 	Framebuffer luminance = Framebuffer(64, 64, GL_R16F, 0);
 	Framebuffer brightPass = Framebuffer(256, 256, GL_RGBA16F, 0);
 	Framebuffer bloom1 = Framebuffer(256, 256, GL_RGBA16F, 0);
@@ -39,6 +46,7 @@ private:
 	void fillLightsources();
 	void buildShaderPrograms(); 
 	void prepareFramebuffers();
+	void setRenderSettings();
 };
 
 

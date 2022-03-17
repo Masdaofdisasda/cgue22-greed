@@ -61,11 +61,11 @@ public:
 		}
 	}
 
-	GLuint* getHdr() { return &hdr_ID; }
-	GLuint* getEnvironment() { return &env_ID; }
-	GLuint* getIrradianceID() { return &irrad_ID; }
-	GLuint* getPreFilterID() { return &prefilt_ID; }
-	GLuint* getBdrfLutID() { return &brdfLut_ID; }
+	GLuint getHdr() const { return hdr_ID; }
+	GLuint getEnvironment()const { return env_ID; }
+	GLuint getIrradianceID() const { return irrad_ID; }
+	GLuint getPreFilterID()const { return prefilt_ID; }
+	GLuint getBdrfLutID()const { return brdfLut_ID; }
 
 	string getPath() { return path; }
 };

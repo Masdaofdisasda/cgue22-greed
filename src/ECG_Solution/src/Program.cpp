@@ -83,41 +83,41 @@ void Program::Draw(Mesh& mesh)
 	if (!mesh.getMaterial()->getAlbedo()->equals(albedo))
 	{
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, *mesh.getMaterial()->getAlbedo()->getID());
+		glBindTexture(GL_TEXTURE_2D, mesh.getMaterial()->getAlbedo()->getHandle());
 		albedo = mesh.getMaterial()->getAlbedo()->getPath();
 	}
 	if (!mesh.getMaterial()->getNormalmap()->equals(normal))
 	{
 		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, *mesh.getMaterial()->getNormalmap()->getID());
+		glBindTexture(GL_TEXTURE_2D, mesh.getMaterial()->getNormalmap()->getHandle());
 		normal = mesh.getMaterial()->getNormalmap()->getPath();
 	}
 	if (!mesh.getMaterial()->getMetallic()->equals(metallic))
 	{
 		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, *mesh.getMaterial()->getMetallic()->getID());
+		glBindTexture(GL_TEXTURE_2D, mesh.getMaterial()->getMetallic()->getHandle());
 		metallic = mesh.getMaterial()->getMetallic()->getPath();
 	}
 	if (!mesh.getMaterial()->getRoughness()->equals(roughness))
 	{
 		glActiveTexture(GL_TEXTURE3);
-		glBindTexture(GL_TEXTURE_2D, *mesh.getMaterial()->getRoughness()->getID());
+		glBindTexture(GL_TEXTURE_2D, mesh.getMaterial()->getRoughness()->getHandle());
 		roughness = mesh.getMaterial()->getRoughness()->getPath();
 	}
 	if (!mesh.getMaterial()->getAOmap()->equals(ao))
 	{
 		glActiveTexture(GL_TEXTURE4);
-		glBindTexture(GL_TEXTURE_2D, *mesh.getMaterial()->getAOmap()->getID());
+		glBindTexture(GL_TEXTURE_2D, mesh.getMaterial()->getAOmap()->getHandle());
 		ao = mesh.getMaterial()->getAOmap()->getPath();
 	}
 	if (!mesh.getMaterial()->getCubemap()->equals(cube))
 	{
 		glActiveTexture(GL_TEXTURE5);
-		glBindTexture(GL_TEXTURE_CUBE_MAP, *mesh.getMaterial()->getCubemap()->getIrradianceID());
+		glBindTexture(GL_TEXTURE_CUBE_MAP, mesh.getMaterial()->getCubemap()->getIrradianceID());
 		glActiveTexture(GL_TEXTURE6);
-		glBindTexture(GL_TEXTURE_CUBE_MAP, *mesh.getMaterial()->getCubemap()->getPreFilterID());
+		glBindTexture(GL_TEXTURE_CUBE_MAP, mesh.getMaterial()->getCubemap()->getPreFilterID());
 		glActiveTexture(GL_TEXTURE7);
-		glBindTexture(GL_TEXTURE_2D, *mesh.getMaterial()->getCubemap()->getBdrfLutID());
+		glBindTexture(GL_TEXTURE_2D, mesh.getMaterial()->getCubemap()->getBdrfLutID());
 		cube = mesh.getMaterial()->getCubemap()->getPath();
 	}
 	
@@ -132,7 +132,7 @@ void Program::DrawSkybox(Mesh& mesh)
 	setMat4("model", glm::mat4(0));
 
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, *mesh.getMaterial()->getCubemap()->getEnvironment());
+	glBindTexture(GL_TEXTURE_CUBE_MAP, mesh.getMaterial()->getCubemap()->getEnvironment());
 
 	mesh.BindVAO();
 	glDrawElements(GL_TRIANGLES, mesh.getIndicesSize(), GL_UNSIGNED_INT, 0);

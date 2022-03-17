@@ -46,7 +46,6 @@ public:
 		}
 	}
 
-	GLuint* getID() {return &tex_ID;}
 	GLuint getHandle() const { return tex_ID; }
 	string getPath() { return path; }
 };

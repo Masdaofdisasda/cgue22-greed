@@ -28,8 +28,8 @@ struct GlobalState
 	bool bloom_ = true;
 	bool flag2_ = false;
 	float exposure_ = 0.9f;
-	float maxWhite_ = 1.17f;
-	float bloomStrength_ = 1.1f;
+	float maxWhite_ = 1.07f; //1.17
+	float bloomStrength_ = 0.1f;
 };
 
 struct PerFrameData
@@ -38,6 +38,13 @@ struct PerFrameData
 	glm::mat4 ViewProj;
 	glm::mat4 ViewProjSkybox;
 };
+
+struct PerFrameSettings
+{
+	glm::vec4 bloom;
+};
+
+
 
 
 #define EXIT_WITH_ERROR(err) \

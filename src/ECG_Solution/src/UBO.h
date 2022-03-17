@@ -22,11 +22,13 @@ class UBO
 		void fillBuffer(std::vector<PositionalLight>& bufferData);
 		void fillBuffer(std::vector<SpotLight>& bufferData);
 		void fillBuffer(PerFrameData pfbuffer);
+		void fillBuffer(PerFrameSettings pfsetbuffer);
 		UBO();
         
 		~UBO() { Release(); }
 
 		void Update(PerFrameData pfbuffer);
+		void Update(PerFrameSettings pfsetbuffer);
 
 		// ensure RAII compliance
 		UBO(const UBO&) = delete;

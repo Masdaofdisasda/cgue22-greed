@@ -6,9 +6,10 @@ Renderer::Renderer(GlobalState& state, PerFrameData& pfdata, LightSources lights
 	perframeData = &pfdata; // link per frame data
 	this->lights = lights; // set lights and lightcounts for shaders
 	buildShaderPrograms(); // build shader program
-
+	setRenderSettings();
 	fillLightsources(); // binds lights to biding points in shader
 	perframeBuffer.fillBuffer(pfdata); // load buffer to shader;
+	perframesetBuffer.fillBuffer(perframsets);
 	prepareFramebuffers();
 }
 
@@ -47,6 +48,11 @@ void Renderer::fillLightsources()
 	PBRShader.setuInt("sLightCount", lights.spot.size());
 }
 
+void Renderer::setRenderSettings()
+{
+	perframsets.bloom = glm::vec4(globalState->exposure_, globalState->maxWhite_, globalState->bloomStrength_, 1.0f);
+}
+
 void Renderer::buildShaderPrograms()
 {
 	// build shader programms
@@ -62,14 +68,29 @@ void Renderer::buildShaderPrograms()
 	skyboxShader.Use();
 	skyboxShader.setSkyboxTextures();
 
+	Shader BrightPassVert("assets/shaders/BrightPass/BrightPass.vert");
+	Shader BrightPassFrag("assets/shaders/BrightPass/BrightPass.frag");
+	BrightPass.buildFrom(BrightPassVert, BrightPassFrag);
+
+	Shader CombineHDRVert("assets/shaders/CombineHDR/CombineHDR.vert");
+	Shader CombineHDRFrag("assets/shaders/CombineHDR/CombineHDR.frag");
+	CombineHDR.buildFrom(CombineHDRVert, CombineHDRFrag);
+
+	Shader BlurVert("assets/shaders/Blur/Blur.vert");
+	Shader BlurXFrag("assets/shaders/Blur/BlurX.frag");
+	Shader BlurYFrag("assets/shaders/Blur/BlurY.frag");
+	BlurX.buildFrom(BlurVert, BlurXFrag);
+	BlurY.buildFrom(BlurVert, BlurYFrag);
+
+	Shader LuminanceVert("assets/shaders/toLuminance/toLuminance.vert");
+	Shader LuminanceFrag("assets/shaders/toLuminance/toLuminance.frag");
+	ToLuminance.buildFrom(LuminanceVert, LuminanceFrag);
+
 	PBRShader.Use();
 }
 
 void Renderer::prepareFramebuffers() {
-	
-	// offscreen render targets
-	// create a texture view into the last mip-level (1x1 pixel) of our luminance framebuffer
-	GLuint luminance1x1;
+
 	glGenTextures(1, &luminance1x1);
 	glTextureView(luminance1x1, GL_TEXTURE_2D, luminance.getTextureColor().getHandle(), GL_R16F, 6, 1, 0, 1);
 	const GLint Mask[] = { GL_RED, GL_RED, GL_RED, GL_RED };
@@ -79,15 +100,17 @@ void Renderer::prepareFramebuffers() {
 
 void Renderer::Draw(std::vector <Mesh*> models, Mesh& skybox)
 {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	
+	glClearNamedFramebufferfv(framebuffer.getHandle(), GL_COLOR, 0, &(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)[0]));
+	glClearNamedFramebufferfi(framebuffer.getHandle(), GL_DEPTH_STENCIL, 0, 1.0f, 0);
 
 	perframeBuffer.Update(*perframeData);
+	perframesetBuffer.Update(perframsets);
 
-	PBRShader.Use();
-	for (auto& model : models)
-	{
-		PBRShader.Draw(*model);
-	}
+
+	// first pass
+	glEnable(GL_DEPTH_TEST);
+	framebuffer.bind();
 
 	// draw skybox    
 	skyboxShader.Use();
@@ -95,6 +118,69 @@ void Renderer::Draw(std::vector <Mesh*> models, Mesh& skybox)
 	skyboxShader.DrawSkybox(skybox);
 	glDepthFunc(GL_LESS);
 
+	// draw models
+	PBRShader.Use();
+	for (auto& model : models)
+	{
+		PBRShader.Draw(*model);
+	}
+
+	framebuffer.unbind();
+
+	glDisable(GL_DEPTH_TEST);
+	// 2.1 Extract bright areas
+	brightPass.bind();
+	BrightPass.Use();
+	glBindTextureUnit(0, framebuffer.getTextureColor().getHandle());
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	brightPass.unbind();
+
+	// 2.2 Downscale and convert to luminance
+	luminance.bind();
+	ToLuminance.Use();
+	glBindTextureUnit(0, framebuffer.getTextureColor().getHandle());
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	luminance.unbind();
+	glGenerateTextureMipmap(luminance.getTextureColor().getHandle());
+
+	glBlitNamedFramebuffer(brightPass.getHandle(), bloom2.getHandle(), 0, 0, 256, 256, 0, 0, 256, 256, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+	
+	for (int i = 0; i != 4; i++)
+	{
+		// 2.3 Blur X
+		bloom1.bind();
+		BlurX.Use();
+		glBindTextureUnit(0, bloom2.getTextureColor().getHandle());
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		bloom1.unbind();
+		// 2.4 Blur Y
+		bloom2.bind();
+		BlurY.Use();
+		glBindTextureUnit(0, bloom1.getTextureColor().getHandle());
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		bloom2.unbind();
+	}
+
+	// 3. Apply tone mapping
+	glViewport(0, 0, globalState->width, globalState->height);
+
+	if (globalState->bloom_)
+	{
+		//glNamedBufferSubData(perFrameDataBuffer.getHandle(), 0, sizeof(g_HDRParams), &g_HDRParams);
+
+		CombineHDR.setFloat("exposure", globalState->exposure_);
+		CombineHDR.setFloat("maxWhite", globalState->maxWhite_);
+		CombineHDR.setFloat("bloomStrength", globalState->bloomStrength_);
+		CombineHDR.Use();
+		glBindTextureUnit(0, framebuffer.getTextureColor().getHandle());
+		glBindTextureUnit(1, luminance1x1);
+		glBindTextureUnit(2, bloom2.getTextureColor().getHandle());
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+	}
+	else
+	{
+		glBlitNamedFramebuffer(framebuffer.getHandle(), 0, 0, 0, globalState->width, globalState->height, 0, 0, globalState->width, globalState->height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+	}
 }
 
 
