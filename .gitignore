@@ -23,13 +23,13 @@ mono_crash.*
 [Rr]eleases/
 x64/
 x86/
-!Debug\*.dll
-!Release\*.dll
 [Ww][Ii][Nn]32/
 [Aa][Rr][Mm]/
 [Aa][Rr][Mm]64/
 bld/
 [Bb]in/
+!src/bin/Debug/assimp-vc142-mtd.dll
+!src/bin/Release/assimp-vc142-mt.dll
 [Oo]bj/
 [Oo]ut/
 [Ll]og/
