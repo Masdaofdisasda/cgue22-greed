@@ -13,16 +13,15 @@ std::string read_code_from(const char* file)
 	return content;
 }
 
+// insert light stuct size if needed
 std::string Shader::insertLightcount(std::string code)
 {
 	std::string dReplace = "dMAXLIGHTS";
 	std::string pReplace = "pMAXLIGHTS";
-	std::string sReplace = "sMAXLIGHTS";
 
 	// replace first (and only) occurence of xReplace and replace it with xLights
 	code.replace(code.find(dReplace), dReplace.length(), dLights);
 	code.replace(code.find(pReplace), pReplace.length(), pLights);
-	code.replace(code.find(sReplace), sReplace.length(), sLights);
 
 	return code;
 }
@@ -69,7 +68,7 @@ Shader::Shader(const char* fileName)
 Shader::Shader(const char* fileName, glm::ivec3 lights)
 {
 	hasLights = true;
-	setLightCounts(lights.x, lights.y, lights.z);
+	setLightCounts(lights.x, lights.y);
 
 	type = GLShaderTypeFromFileName(fileName);
 	shader_ID = glCreateShader(type);
@@ -86,12 +85,11 @@ Shader::Shader(const char* fileName, glm::ivec3 lights)
 }
 
 
-void Shader::setLightCounts(int dir, int pos, int spot)
+void Shader::setLightCounts(int dir, int pos)
 {
 	// sets light counts
 	dLights = std::to_string(dir);
 	pLights = std::to_string(pos);
-	sLights = std::to_string(spot);
 }
 
 

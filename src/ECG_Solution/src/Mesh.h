@@ -1,17 +1,17 @@
 #pragma once
 
 #include "EBO.h"
-#include "VAO.h"
+#include "VBO.h"
 #include "Material.h"
 
 
-// primitive mesh objects (box, cylinder, sphere, torus)
+// class for meshes containing vertices(
 class Mesh
 {
 private:
 
 	// VAO of the mesh
-	VAO VAO;
+	GLuint vao_ID = 0;
 
 	// contains vertices with position and color (vector for variable length) 
 	std::vector <Vertex> vertices; // VBO
@@ -22,29 +22,51 @@ private:
 	Material* material = nullptr;
 
 
-	void PrepareBuffer();
+	void PrepareBuffer();	// setup VAO
 	void reverseIndices(); // changes face orientation
+	void Mesh::LinkAttrib(GLuint layout, GLuint numComp, GLenum type, GLsizeiptr stride, void* offset);
 
-	// geometry constructors
-	Mesh(float w, float h, float d, Material* mat);
-	Mesh(float size, Material* mat);
-	Mesh(int s, float h, float rad, Material* mat);
-	Mesh(int longs, int lats, float rad, Material* mat);
+	// skybox constructor
+	Mesh(float size);
+
+	void Release()
+	{
+		glDeleteBuffers(1, &vao_ID);
+		vao_ID = 0;
+	}
 
 public:
 	glm::mat4 model = glm::mat4(1.0f);
 
-	static Mesh Cube(float width, float height, float depth, Material* mat) {return  Mesh(width, height, depth, mat);}
-	static Mesh Cylinder(int segments, float height, float radius, Material* mat) { return  Mesh(segments, height, radius, mat); }
-	static Mesh Sphere(int longsegments, int latisegments, float radius, Material* mat) { return  Mesh(longsegments, latisegments, radius, mat); }
-	static Mesh Skybox(float size, Material* mat) { return  Mesh(size, mat); }
+	static Mesh Skybox() { return  Mesh(1.0f); }
 	Mesh(const char* fileName, Material* mat);
+	Mesh();
 
-	glm::mat4 translate(glm::vec3 position);
-	glm::mat4 rotate(float theta, glm::vec3 axis);
+	void setMatrix(glm::vec3 translate, float degree, glm::vec3 axis, glm::vec3 scale);
+
+	// ensure RAII compliance
+	Mesh(const Mesh&) = delete;
+	Mesh& operator=(const Mesh&) = delete;
+
+	Mesh(Mesh&& other) noexcept : vao_ID(other.vao_ID)
+	{
+		other.vao_ID = 0; //Use the "null" ID for the old object.
+	}
+
+	Mesh& operator=(Mesh&& other)
+	{
+		//ALWAYS check for self-assignment.
+		if (this != &other)
+		{
+			Release();
+			//obj_ is now 0.
+			std::swap(vao_ID, other.vao_ID);
+		}
+	}
 
 	Material* getMaterial();
 	int getIndicesSize();
 	void BindVAO();
-	
+
+	~Mesh() { Release(); }
 };

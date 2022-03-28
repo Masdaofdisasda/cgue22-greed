@@ -5,6 +5,11 @@
 */
 
 
+/*
+ Main funtion of the game "Greed" by David Köppl and Nicolas Eder
+ contains initialization, resource loading and render loop
+*/
+
 #pragma once
 #include <sstream>
 #include "Camera.h"
@@ -59,7 +64,7 @@ int main(int argc, char** argv)
 	// Init framework
 	/* --------------------------------------------- */
 
-	//load GLFW
+	//setup GLFW window
 	GLFWApp GLFWapp(globalState);
 
 	// register input callbacks to window
@@ -67,6 +72,7 @@ int main(int argc, char** argv)
 		[](GLFWwindow* window,
 			int key, int scancode, int action, int mods)
 		{
+			// Movement
 			const bool press = action != GLFW_RELEASE;
 			if (key == GLFW_KEY_ESCAPE)
 				glfwSetWindowShouldClose(window, GLFW_TRUE);
@@ -86,13 +92,44 @@ int main(int argc, char** argv)
 				positioner.movement_.fastSpeed_ = press;
 			if (key == GLFW_KEY_SPACE)
 				positioner.setUpVector(glm::vec3(0.0f, 1.0f, 0.0f));
-			if (key == GLFW_KEY_F1)
+
+			// Debug & Effects
+			if (key == GLFW_KEY_F1 && action == GLFW_PRESS)
+			{
+				if (globalState.fullscreen_)
+				{
+					print("fullscreen off");
+					globalState.fullscreen_ = false;
+				}
+				else {
+					print("fullscreen on");
+					globalState.fullscreen_ = true;
+				}
+			}
+			if (key == GLFW_KEY_F2 && action == GLFW_PRESS) //TODO
+			{
+				if (globalState.focus_)
+				{
+					globalState.request_focus_ = true;
+				}
+				else
+				{
+
+					globalState.request_unfocus_ = true;
+				}
+			}
+			if (key == GLFW_KEY_F3 && action == GLFW_PRESS)
+			{
 				if (globalState.bloom_)
 				{
+					print("bloom off");
 					globalState.bloom_ = false;
-				} else {
+				}
+				else {
+					print("bloom on");
 					globalState.bloom_ = true;
 				}
+			}
 		});
 	glfwSetMouseButtonCallback(GLFWapp.getWindow(),
 		[](auto* window, int button, int action, int mods)
@@ -110,6 +147,7 @@ int main(int argc, char** argv)
 			glfwGetFramebufferSize(window, &w, &h);
 			mouseState.pos.x = static_cast<float>(x / w);
 			mouseState.pos.y = static_cast<float>(y / h);
+			//glfwSetCursorPos(window, 0, 0); // cursor disabled kind of fix
 		}
 	);
 
@@ -119,7 +157,7 @@ int main(int argc, char** argv)
 	if (glewInit() != GLEW_OK)
 		EXIT_WITH_ERROR("failed to load GLEW");
 
-	//do not delete this
+	//part of the ECG magical framework
 	print("initialize framework...\n");
 	if (!initFramework())
 		EXIT_WITH_ERROR("failed to init framework");
@@ -131,44 +169,38 @@ int main(int argc, char** argv)
 	// Initialize scene and render loop
 	/* --------------------------------------------- */
 
-
 	print("initialize scene and render loop...");
+
+	// load models and textures
 	LevelInterface* level = new ModelTesterLevel();
 	Renderer renderer(globalState, perframeData, level->getLights());
 
-	Material gold("assets/textures/coin", "assets/textures/cubemap/cellar.pic");
-	Material rock("assets/textures/rockground", "assets/textures/cubemap/cellar.pic");
-	Material wood("assets/textures/wood", "assets/textures/cubemap/cellar.pic");
-	Material sky("assets/textures/cubemap/cellar.pic");
+	//-------------------------WIP------------------------------------------//
+	Material gold("assets/textures/coin");
+	Material rock("assets/textures/rockground");
+	Material wood("assets/textures/wood");
 
-	// info: if multiple materials use the same cubemap, only the last created item contains the right cubemap id
-	// eg. wood contains the cubemap
 	Mesh coin1 = Mesh("assets/models/coin.obj", &wood);
-	coin1.translate(glm::vec3(1.0f, -1.0f, -5.0f));
+	coin1.setMatrix(glm::vec3(1.0f, -1.0f, -5.0f), 10.0f, glm::vec3(1.0f, -1.0f, 0.0f), glm::vec3(0.5));
 	Mesh coin2 = Mesh("assets/models/coin.obj", &rock);
-	coin2.translate(glm::vec3(0.0f, 0.0f, -7.0f));
+	coin2.setMatrix(glm::vec3(0.0f, 0.0f, -7.0f), 90.0f, glm::vec3(-1.0f, .0f, 0.0f), glm::vec3(0.5));
 	Mesh coin3 = Mesh("assets/models/coin.obj", &gold);
-	coin3.translate(glm::vec3(-1.0f, 1.0f, -5.0f));
+	coin3.setMatrix(glm::vec3(-1.0f, 1.0f, -5.0f), 45.0f, glm::vec3(1.0f, 0.0f, 1.0f), glm::vec3(0.5));
 
 	std::vector <Mesh*> models;
 	models.push_back(&coin1);
 	models.push_back(&coin2);
 	models.push_back(&coin3);
-	
-	Mesh skybox = skybox.Skybox(1.0f, &sky);
+	//-------------------------/WIP------------------------------------------//
 
-	// Use Depth Buffer
-	print("enable depth buffer...");
-	glEnable(GL_DEPTH_TEST);
 	glViewport(0, 0, globalState.width, globalState.height);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 	double timeStamp = glfwGetTime();
 	float deltaSeconds = 0.0f;
-	FPSCounter fpsCounter = FPSCounter();
-
-	// locks mouse to window
-	//glfwSetInputMode(GLFWapp.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	FPSCounter fpsCounter = FPSCounter(); 
+	
+	glfwSetInputMode(GLFWapp.getWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
 	//---------------------------------- RENDER LOOP ----------------------------------//
 
@@ -177,6 +209,7 @@ int main(int argc, char** argv)
 	{
 		fpsCounter.tick(deltaSeconds);
 
+		//positioner.update(deltaSeconds, mouseState.pos, globalState.focus_);
 		positioner.update(deltaSeconds, mouseState.pos, mouseState.pressedLeft);
 
 		// fps counter
@@ -186,10 +219,11 @@ int main(int argc, char** argv)
 		std::string title = globalState.window_title + " " + fpsCounter.getFPS() + " fps";
 		glfwSetWindowTitle(GLFWapp.getWindow(), title.c_str());
 
-
-		glViewport(0, 0, globalState.width, globalState.height);
-
+		// variable window size
+		glViewport(0, 0, globalState.width, globalState.height); 
 		GLFWapp.updateWindow();
+
+		// calculate and set per Frame matrices
 		const float ratio = globalState.width / (float)globalState.height;
 		const glm::mat4 projection = glm::perspective(glm::radians(globalState.fov), ratio, globalState.Znear, globalState.Zfar);
 		const glm::mat4 view = camera.getViewMatrix();
@@ -197,11 +231,11 @@ int main(int argc, char** argv)
 		perframeData.ViewProjSkybox = projection * glm::mat4(glm::mat3(view)); // remove translation
 		perframeData.viewPos = glm::vec4(camera.getPosition(),1.0f);
 
-		renderer.Draw(models, skybox);
+		// actual draw call
+		renderer.Draw(models);
 
-		// swap back and front buffers
+		// swap buffers
 		GLFWapp.swapBuffers();
-
 		renderer.swapLuminance();
 	}
 

@@ -3,6 +3,12 @@
 #include "Utils.h"
 #include "Shader.h"
 #include "Mesh.h"
+#include "Cubemap.h"
+
+/* class for shader Programms
+* a program can consist of 1-5 shaders
+* contains handle to a shader programm and the main draw call
+*/
 
 class Program
 {
@@ -11,22 +17,14 @@ private:
 	GLuint program_ID = 0;
 
 	// Location of light source buffer blocks
-	GLuint dirLoc=0, posLoc=0, spotLoc=0;
-
-	// last used textures
-	string albedo = "";
-	string normal = "";
-	string metallic = "";
-	string roughness = "";
-	string ao = "";
-	string cube = "";
+	GLuint dirLoc=0, posLoc=0;
 
 	
 	void Release()
 	{
 		glDeleteProgram(program_ID);
 		program_ID = 0;
-		dirLoc = 0, posLoc = 0, spotLoc = 0;
+		dirLoc = 0, posLoc = 0;
 	}
 
 	void getUniformLocations();
@@ -45,6 +43,8 @@ public:
 
 	void setTextures();
 	void setSkyboxTextures();
+	void uploadIBL(Cubemap* ibl);
+	void uploadSkybox(Cubemap* skybox);
 
 	void Draw(Mesh& mesh); // draws triangles
 	void DrawSkybox(Mesh& mesh); // draws triangles
@@ -58,7 +58,6 @@ public:
 		other.program_ID = 0; //Use the "null" ID for the old object.
 		other.dirLoc = 0;
 		other.posLoc = 0;
-		other.spotLoc = 0;
 	}
 
 	Program& operator=(Program&& other)
@@ -71,11 +70,11 @@ public:
 			std::swap(program_ID, other.program_ID);
 			std::swap(dirLoc, other.dirLoc);
 			std::swap(posLoc, other.posLoc);
-			std::swap(spotLoc, other.spotLoc);
 		}
 	}
 
-	void bindLightBuffers(UBO* directional, UBO* positional, UBO* spot);
+	// various unifrom set methods
+	void bindLightBuffers(UBO* directional, UBO* positional);
 	void setuInt(const std::string& name, int value);
 	void setInt(const std::string& name, int value);
 	void setFloat(const std::string& name, float value);

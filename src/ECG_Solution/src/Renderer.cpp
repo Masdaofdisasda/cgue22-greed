@@ -2,15 +2,19 @@
 
 Renderer::Renderer(GlobalState& state, PerFrameData& pfdata, LightSources lights)
 {
+	// initialize Renderer
 	globalState = &state; // link global variables
 	perframeData = &pfdata; // link per frame data
 	this->lights = lights; // set lights and lightcounts for shaders
-	buildShaderPrograms(); // build shader program
-	setRenderSettings();
-	fillLightsources(); // binds lights to biding points in shader
-	perframeBuffer.fillBuffer(pfdata); // load buffer to shader;
+	buildShaderPrograms(); // build shader programs
+	setRenderSettings();	// set effect settings 
+	fillLightsources(); // binds lights to binding points in shader
+	perframeBuffer.fillBuffer(pfdata); // load UBO to shader;
 	perframesetBuffer.fillBuffer(perframsets);
-	prepareFramebuffers();
+
+	prepareFramebuffers(); // for hdr rendering
+	IBL.loadHDR("assets/textures/cubemap/cellar.pic"); //load global enviroment cubemaps
+	skyTex.loadHDR("assets/textures/cubemap/cloudy.hdr");
 }
 
 GlobalState Renderer::loadSettings(GlobalState state)
@@ -29,6 +33,11 @@ GlobalState Renderer::loadSettings(GlobalState state)
 	state.Znear = reader.GetReal("camera", "near", 0.1f);
 	state.Zfar = reader.GetReal("camera", "far", 100.0f);
 
+	state.exposure_ = reader.GetReal("image", "exposure", 0.9f);
+	state.maxWhite_ = reader.GetReal("image", "maxWhite", 1.07f);
+	state.bloomStrength_ = reader.GetReal("image", "bloomStrength", 0.2f);
+	state.adaptationSpeed_ = reader.GetReal("image", "lightAdaption", 0.1f);
+
 	return state;
 
 }
@@ -38,14 +47,12 @@ void Renderer::fillLightsources()
 	// create Uniform Buffer Objects from light source struct vectors
 	directionalLights.fillBuffer(lights.directional);
 	positionalLights.fillBuffer(lights.point);
-	spotLights.fillBuffer(lights.spot);
 
 	// bind UBOs to bindings in shader
-	PBRShader.bindLightBuffers(&directionalLights, &positionalLights, &spotLights);
+	PBRShader.bindLightBuffers(&directionalLights, &positionalLights);
 	// set light source count variables
 	PBRShader.setuInt("dLightCount", lights.directional.size());
 	PBRShader.setuInt("pLightCount", lights.point.size());
-	PBRShader.setuInt("sLightCount", lights.spot.size());
 }
 
 void Renderer::setRenderSettings()
@@ -58,7 +65,7 @@ void Renderer::buildShaderPrograms()
 {
 	// build shader programms
 	Shader pbrVert("assets/shaders/pbr/pbr.vert");
-	Shader pbrFrag("assets/shaders/pbr/pbr.frag", glm::ivec3(lights.directional.size(), lights.point.size(), lights.spot.size()));
+	Shader pbrFrag("assets/shaders/pbr/pbr.frag", glm::ivec3(lights.directional.size(), lights.point.size(), 0));
 	PBRShader.buildFrom(pbrVert, pbrFrag);
 	PBRShader.Use();
 	PBRShader.setTextures();
@@ -102,7 +109,7 @@ void Renderer::prepareFramebuffers() {
 
 }
 
-void Renderer::Draw(std::vector <Mesh*> models, Mesh& skybox)
+void Renderer::Draw(std::vector <Mesh*> models)
 {
 	
 	glClearNamedFramebufferfv(framebuffer.getHandle(), GL_COLOR, 0, &(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)[0]));
@@ -112,22 +119,24 @@ void Renderer::Draw(std::vector <Mesh*> models, Mesh& skybox)
 	perframesetBuffer.Update(perframsets);
 
 
-	// first pass
+	// 1. pass - render scene to framebuffer
 	glEnable(GL_DEPTH_TEST);
 	framebuffer.bind();
 
-	// draw skybox    
-	skyboxShader.Use();
-	glDepthFunc(GL_LEQUAL);
-	skyboxShader.DrawSkybox(skybox);
-	glDepthFunc(GL_LESS);
+		// draw skybox (background)    
+		skyboxShader.Use();
+		skyboxShader.uploadSkybox(&skyTex);
+		glDepthFunc(GL_LEQUAL);
+		skyboxShader.DrawSkybox(skyBox);
+		glDepthFunc(GL_LESS);
 
-	// draw models
-	PBRShader.Use();
-	for (auto& model : models)
-	{
-		PBRShader.Draw(*model);
-	}
+		// draw models
+		PBRShader.Use();
+		for (auto& model : models)
+		{
+			PBRShader.uploadIBL(&IBL);
+			PBRShader.Draw(*model);
+		}
 
 	framebuffer.unbind(); 
 	glGenerateTextureMipmap(framebuffer.getTextureColor().getHandle());
@@ -135,15 +144,15 @@ void Renderer::Draw(std::vector <Mesh*> models, Mesh& skybox)
 
 	glDisable(GL_DEPTH_TEST);
 
-	// 2.1 Downscale and convert to luminance
+	// 2. pass - downscale for addiational blur and convert framebuffer to luminance
 	luminance.bind();
-	ToLuminance.Use();
-	glBindTextureUnit(0, framebuffer.getTextureColor().getHandle());
-	glDrawArrays(GL_TRIANGLES, 0, 6);
+		ToLuminance.Use();
+		glBindTextureUnit(0, framebuffer.getTextureColor().getHandle());
+		glDrawArrays(GL_TRIANGLES, 0, 6);
 	luminance.unbind();
 	glGenerateTextureMipmap(luminance.getTextureColor().getHandle());
 
-	// 2.2 Light adaptation
+	// 3. pass - compute light adaption (OpenGL memory model requires these memory barriers: https://www.khronos.org/opengl/wiki/Memory_Model )
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 	lightAdapt.Use();
 #if 0
@@ -158,31 +167,32 @@ void Renderer::Draw(std::vector <Mesh*> models, Mesh& skybox)
 	glDispatchCompute(1, 1, 1);
 	glMemoryBarrier(GL_TEXTURE_FETCH_BARRIER_BIT);
 
-	// 2.3 Extract bright areas
+	// 4. pass - filter bright spots from framebuffer
 	brightPass.bind();
-	BrightPass.Use();
-	glBindTextureUnit(0, framebuffer.getTextureColor().getHandle());
-	glDrawArrays(GL_TRIANGLES, 0, 6);
+		BrightPass.Use();
+		glBindTextureUnit(0, framebuffer.getTextureColor().getHandle());
+		glDrawArrays(GL_TRIANGLES, 0, 6);
 	brightPass.unbind();
 	glBlitNamedFramebuffer(brightPass.getHandle(), bloom2.getHandle(), 0, 0, 256, 256, 0, 0, 256, 256, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
+	// 5. pass - blur bright spots using ping pong buffers and a seperate blur in x and y direction
 	for (int i = 0; i != 4; i++)
 	{
-		// 2.3 Blur X
+		// blur x
 		bloom1.bind();
-		BlurX.Use();
-		glBindTextureUnit(0, bloom2.getTextureColor().getHandle());
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+			BlurX.Use();
+			glBindTextureUnit(0, bloom2.getTextureColor().getHandle());
+			glDrawArrays(GL_TRIANGLES, 0, 6);
 		bloom1.unbind();
-		// 2.4 Blur Y
+		// blur y
 		bloom2.bind();
-		BlurY.Use();
-		glBindTextureUnit(0, bloom1.getTextureColor().getHandle());
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+			BlurY.Use();
+			glBindTextureUnit(0, bloom1.getTextureColor().getHandle());
+			glDrawArrays(GL_TRIANGLES, 0, 6);
 		bloom2.unbind();
 	}
 
-	// 3. Apply tone mapping
+	// 6. pass - combine framebuffer with blurred image 
 	glViewport(0, 0, globalState->width, globalState->height);
 
 	if (globalState->bloom_)

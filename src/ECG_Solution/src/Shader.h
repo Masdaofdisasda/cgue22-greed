@@ -6,6 +6,10 @@
 // read shader source code into char
 std::string read_code_from(const char* file);
 
+/* class for single shader
+* a shader can have a vert, frag, geom, tesc, tese or comp file type
+*/
+
 class Shader
 {
 public:
@@ -18,7 +22,7 @@ public:
 	const char* fileName;
 
 	// light counts
-	std::string dLights, pLights, sLights;
+	std::string dLights, pLights;
 
 	explicit Shader(const char* fileName);
 	Shader(const char* fileName, glm::ivec3 lights);
@@ -62,7 +66,7 @@ private:
 	GLenum GLShaderTypeFromFileName(const char* fileName); 
 	int endsWith(const char* s, const char* part);
 	// set light counts
-	void setLightCounts(int dir, int pos, int spot);
+	void setLightCounts(int dir, int pos);
 	// Checks if the different Shaders have compiled properly
 	int compileErrors();
 	// Replace MAXLIGHTS with correct light count

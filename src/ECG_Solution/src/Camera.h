@@ -4,7 +4,9 @@
 #include <glm/ext.hpp>
 #include "glm/gtx/euler_angles.hpp"
 
-
+/* Camera Interface
+* every camera has to give a view matrix and position vector for rendering and shading
+*/
 class CameraPositionerInterface
 {
 public:
@@ -30,6 +32,10 @@ private:
 	const CameraPositionerInterface* positioner_;
 };
 
+/* Camera with first person view
+* view position can be moved in all 6 directions
+* the player can only add accelertion to the camera, if the player stops pressing a key, the movement slowly stops
+*/
 class CameraPositioner_FirstPerson final : public CameraPositionerInterface
 {
 	public:
@@ -47,13 +53,13 @@ class CameraPositioner_FirstPerson final : public CameraPositionerInterface
 
 		float mouseSpeed_ = 4.0f;
 		float acceleration_ = 150.0f;
-		float damping_ = 0.2f;
-		float maxSpeed_ = 10.0f;
-		float fastCoef_ = 10.0f;
+		float damping_ = 0.2f; // changes deceleration speed
+		float maxSpeed_ = 10.0f; // clamps movement
+		float fastCoef_ = 2.0f; // l-shift mode uses this
 
 
 
-		glm::mat4 glmlookAt(glm::vec3 pos, glm::vec3 target, glm::vec3 up); // according to "real time rendering"
+		glm::mat4 glmlookAt(glm::vec3 pos, glm::vec3 target, glm::vec3 up); // according to the book "real time rendering" (breaks camera)
 		glm::mat4 glmlookAt2(glm::vec3 eye, glm::vec3 target, glm::vec3 up); //actual glm implementation
 		CameraPositioner_FirstPerson(const glm::vec3& pos, const glm::vec3& target, const glm::vec3& up)
 			: cameraPosition_(pos)
@@ -84,77 +90,3 @@ class CameraPositioner_FirstPerson final : public CameraPositionerInterface
 		glm::vec3 up_ = glm::vec3(0.0f, 0.0f, 1.0f);
 
 };
-
-class CameraPositioner_MoveTo final : public CameraPositionerInterface
-{
-public:
-
-	float dampingLinear_ = 10.0f;
-	glm::vec3 dampingEulerAngles_ = glm::vec3(5.0f, 5.0f, 5.0f);
-
-	CameraPositioner_MoveTo(const glm::vec3& pos, const glm::vec3& angles)
-		: positionCurrent_(pos)
-		, positionDesired_(pos)
-		, anglesCurrent_(angles)
-		, anglesDesired_(angles)
-	{}
-	void update(float deltaSeconds, const glm::vec2& mousePos, bool mousePressed)
-	{
-		positionCurrent_ += dampingLinear_ * deltaSeconds * (positionDesired_ - positionCurrent_);
-
-		// normalization is required to avoid "spinning" around the object 2pi times
-		anglesCurrent_ = clipAngles(anglesCurrent_);
-		anglesDesired_ = clipAngles(anglesDesired_);
-
-		// update angles
-		anglesCurrent_ -= angleDelta(anglesCurrent_, anglesDesired_) * dampingEulerAngles_ * deltaSeconds;
-
-		// normalize new angles
-		anglesCurrent_ = clipAngles(anglesCurrent_);
-
-		const glm::vec3 a = glm::radians(anglesCurrent_);
-
-		//currentTransform_ = glm::translate(glm::yawPitchRoll(a.y, a.x, a.z), -positionCurrent_);
-	}
-	void setPosition(const glm::vec3& p) { positionCurrent_ = p; }
-	void setAngles(float pitch, float pan, float roll) { anglesCurrent_ = glm::vec3(pitch, pan, roll); }
-	void setAngles(const glm::vec3& angles) { anglesCurrent_ = angles; }
-	void setDesiredPosition(const glm::vec3& p) { positionDesired_ = p; }
-	void setDesiredAngles(float pitch, float pan, float roll) { anglesDesired_ = glm::vec3(pitch, pan, roll); }
-	void setDesiredAngles(const glm::vec3& angles) { anglesDesired_ = angles; }
-
-	virtual glm::vec3 getPosition() const override { return positionCurrent_; }
-	virtual glm::mat4 getViewMatrix() const override { return currentTransform_;}
-
-private:
-	glm::vec3 positionCurrent_ = glm::vec3(0.0f);
-	glm::vec3 positionDesired_ = glm::vec3(0.0f);
-
-	/// pitch, pan, roll
-	glm::vec3 anglesCurrent_ = glm::vec3(0.0f);
-	glm::vec3 anglesDesired_ = glm::vec3(0.0f);
-
-	glm::mat4 currentTransform_ = glm::mat4(1.0f);
-
-	static inline float clipAngle(float d)
-	{
-		if (d < -180.0f) return d + 360.0f;
-		if (d > +180.0f) return d - 360.f;
-		return d;
-	}
-
-	static inline glm::vec3 clipAngles(const glm::vec3 & angles)
-	{
-		return glm::vec3(
-			std::fmod(angles.x, 360.0f),
-			std::fmod(angles.y, 360.0f),
-			std::fmod(angles.z, 360.0f)
-		);
-	}
-
-	static inline glm::vec3 angleDelta(const glm::vec3 & anglesCurrent, const glm::vec3 & anglesDesired)
-	{
-		const glm::vec3 d = clipAngles(anglesCurrent) - clipAngles(anglesDesired);
-		return glm::vec3(clipAngle(d.x), clipAngle(d.y), clipAngle(d.z));
-	}
-	};

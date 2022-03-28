@@ -5,6 +5,8 @@ UBO::UBO()
 	glGenBuffers(1, &ubo_ID);
 }
 
+
+// lights
 void UBO::fillBuffer(std::vector<DirectionalLight>& bufferData)
 {
 	glBindBuffer(GL_UNIFORM_BUFFER, ubo_ID);
@@ -19,14 +21,7 @@ void UBO::fillBuffer(std::vector<PositionalLight>& bufferData)
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
-void UBO::fillBuffer(std::vector<SpotLight>& bufferData)
-{
-
-	glBindBuffer(GL_UNIFORM_BUFFER, ubo_ID);
-	glBufferData(GL_UNIFORM_BUFFER, bufferData.size() * sizeof(SpotLight), bufferData.data(), GL_STATIC_READ);
-	glBindBuffer(GL_UNIFORM_BUFFER, 0);
-}
-
+// Per Frame Data
 void UBO::fillBuffer(PerFrameData pfbuffer)
 {
 	glBindBuffer(GL_UNIFORM_BUFFER, ubo_ID);
@@ -40,6 +35,7 @@ void UBO::Update(PerFrameData pfbuffer)
 	glNamedBufferSubData(ubo_ID, 0, sizeof(PerFrameData), &pfbuffer);
 }
 
+// Per Frame Render Settings
 void UBO::fillBuffer(PerFrameSettings pfsetbuffer)
 {
 	glBindBuffer(GL_UNIFORM_BUFFER, ubo_ID);

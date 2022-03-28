@@ -12,7 +12,6 @@
     <ClCompile Include="src\EBO.cpp" />
     <ClCompile Include="src\Shader.cpp" />
     <ClCompile Include="src\UBO.cpp" />
-    <ClCompile Include="src\VAO.cpp" />
     <ClCompile Include="src\VBO.cpp" />
     <ClInclude Include="src\Debugger.h" />
     <ClInclude Include="src\Camera.h" />
@@ -33,7 +32,6 @@
     <ClInclude Include="src\Shader.h" />
     <ClInclude Include="src\UBO.h" />
     <ClInclude Include="src\Utils.h" />
-    <ClInclude Include="src\VAO.h" />
     <ClInclude Include="src\VBO.h" />
   </ItemGroup>
   <ItemGroup Label="ProjectConfigurations">

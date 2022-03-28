@@ -2,6 +2,10 @@
 #include "Utils.h"
 #include <GLFW/glfw3.h>
 
+/* class for GLFW window managment
+* handles most of the functions for glfw
+*/
+
 class GLFWApp
 {
 public:
@@ -20,7 +24,7 @@ public:
 		timeStamp_ = newTimeStamp;
 	}
 
-	// todo fullscreen
+	// should toggle between fullscreen and window mode
 	void updateWindow()
 	{
 		
@@ -29,13 +33,14 @@ public:
 			const GLFWvidmode* info = glfwGetVideoMode(glfwGetPrimaryMonitor());
 			globalState->width = info->width;
 			globalState->height = info->height;
+			glfwSetWindowSize(window_, globalState->width, globalState->height);
+			glfwSetWindowPos(window_, 0, 0);
 		}else{
 			int w, h;
 			glfwGetFramebufferSize(window_, &w, &h);
 			globalState->width = w;
 			globalState->height = h;
 			}
-
 	}
 
 private:

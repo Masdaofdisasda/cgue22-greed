@@ -2,6 +2,8 @@
 #include"Utils.h"
 #include <vector>
 
+// Class for an Element Buffer Object
+
 class EBO
 {
 	private:

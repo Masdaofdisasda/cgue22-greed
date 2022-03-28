@@ -1,16 +1,17 @@
 #pragma once
 #include "Utils.h"
 
+/* holds multiple Textures of an enviroment for Image Based Lighting
+*/
+
 class Cubemap
 {
 private:
 	GLuint hdr_ID = 0; // rectangular image in hdri format (Texture)
-	GLuint env_ID = 0; // enviroment (Cubemap)
+	GLuint env_ID = 0; // enviroment created from the hdri image (Cubemap)
 	GLuint irrad_ID = 0; // irradiance (Cubemap)
 	GLuint prefilt_ID = 0; // pre filtered (Cubemap)
 	GLuint brdfLut_ID = 0; // brdf LUT (Texture)
-
-	string path = "";
 
 	void Release()
 	{
@@ -26,6 +27,7 @@ private:
 		brdfLut_ID = 0;
 	}
 
+	// only needed for initialization
 	void renderCube();
 	void renderQuad();
 	glm::mat4 glmlookAt2(glm::vec3 eye, glm::vec3 target, glm::vec3 up);
@@ -35,7 +37,6 @@ public:
 	~Cubemap() { Release(); }
 
 	void loadHDR(const char* texPath);
-	bool equals(string tex);
 
 	// ensure RAII compliance
 	Cubemap(const Cubemap&) = delete;
@@ -66,6 +67,4 @@ public:
 	GLuint getIrradianceID() const { return irrad_ID; }
 	GLuint getPreFilterID()const { return prefilt_ID; }
 	GLuint getBdrfLutID()const { return brdfLut_ID; }
-
-	string getPath() { return path; }
 };

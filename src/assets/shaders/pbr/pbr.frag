@@ -18,19 +18,7 @@ struct DirectionalLight
 struct PositionalLight
 {
 	vec4 position;
-	vec4 attenuation;
-    
-	vec4 intensity;
-};
-
-struct SpotLight
-{
-	vec4 position;
-	vec4 direction;
-	vec4 Angles;
-	vec4 attenuation;
-    
-	vec4 intensity;
+    vec4 intensity;
 };
 
 struct Material
@@ -64,11 +52,6 @@ layout (std140, binding = 2) uniform pLightUBlock {
 };
 uniform uint pLightCount ;
 
-layout (std140, binding = 3) uniform sLightUBlock {
- SpotLight sLights [ sMAXLIGHTS ];
-};
-uniform uint sLightCount ;
-
 uniform Material material;
 
 //todo
@@ -81,7 +64,6 @@ const float PI = 3.14159265359;
 
 vec3 Idirectional(DirectionalLight light, vec3 N, vec3 fPosition, vec3 V, vec3 F0);
 vec3 Ipoint(PositionalLight light, vec3 N, vec3 fPosition, vec3 V, vec3 F0);
-vec3 Ispot(SpotLight light, vec3 normal, vec3 fPosition, vec3 viewDir);
 vec3 calculateLight();
 
 vec3 getNormalFromMap()
@@ -174,10 +156,6 @@ vec3 calculateLight() {
 	// do the same for all point lights
 	for(int i = 0; i < pLightCount; i++)
   	Lo += Ipoint(pLights[i], N, fPosition, V, F0);
-
-	// and add spotlights as well
-	for(int i = 0; i < sLightCount; i++)
-	//result += Ispot(sLights[i], vec3(N), fPosition, V);
 
     // ambient lighting (we now use IBL as the ambient term)
     F = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);    
@@ -274,37 +252,3 @@ vec3 Ipoint(PositionalLight light, vec3 N, vec3 fPosition, vec3 V, vec3 F0)
         return (kD * albedo / PI + specular) * radiance * NdotL; // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
     
 }
-
-// calculate spot lights
-/*vec3 Ispot(SpotLight light, vec3 normal, vec3 fPosition, vec3 viewDir)
-{
-    vec3 lightDir = normalize(vec3(light.position) - fPosition);
-    
-
-    // diffuse shading
-    float diff = max(dot(normal, lightDir), 0.0f);
-
-    // specular shading
-    vec3 reflectDir = reflect(-lightDir, normal);
-    vec3 halfway = normalize(lightDir + viewDir);
-    float spec = pow(max(dot(normal, halfway), 0.0f), material.coefficients.w);
-
-    // attenuation
-    float distance    = length(vec3(light.position) - fPosition);
-    float attenuation = 1.0f / (light.attenuation[0] + light.attenuation[1] * distance + 
-  			     light.attenuation[2] * (distance * distance));    
-
-    // cone light (x is outer angle, y is inner angle)
-    float theta     = dot(lightDir, normalize(vec3(-light.direction)));
-    float epsilon   = light.Angles.y - light.Angles.x;
-    float intensity = smoothstep(0.0, 1.0, (theta - light.Angles.x) / epsilon);
-
-    // combine results
-    vec3 ambient  = texture(material.albedo, fUV).xyz * material.coefficients.x;
-    vec3 diffuse  = diff * texture(material.albedo, fUV).xyz * material.coefficients.y;
-    vec3 specular = spec * texture(material.specular, fUV).xyz * material.coefficients.z;
-    ambient  *= attenuation * intensity;
-    diffuse  *= attenuation * intensity;
-    specular *= attenuation * intensity;
-    return light.intensity.xyz * (ambient + diffuse + specular);
-}*/

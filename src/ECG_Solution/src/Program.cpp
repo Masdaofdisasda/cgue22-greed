@@ -65,6 +65,7 @@ void Program::Use()
 	glUseProgram(program_ID);
 }
 
+// for PBR shading
 void Program::setTextures()
 {
 	setInt("material.albedo", 0);
@@ -77,6 +78,7 @@ void Program::setTextures()
 	setInt("material.brdfLut", 7);
 }
 
+// for skybox shader
 void Program::setSkyboxTextures()
 {
 	setInt("environment", 0);
@@ -84,67 +86,51 @@ void Program::setSkyboxTextures()
 
 void Program::Draw(Mesh& mesh)
 {
-
-	// load model matrix on shader
 	setMat4("model", mesh.model);
 
-	// use texture 
-	if (!mesh.getMaterial()->getAlbedo()->equals(albedo))
-	{
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, mesh.getMaterial()->getAlbedo()->getHandle());
-		albedo = mesh.getMaterial()->getAlbedo()->getPath();
-	}
-	if (!mesh.getMaterial()->getNormalmap()->equals(normal))
-	{
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, mesh.getMaterial()->getNormalmap()->getHandle());
-		normal = mesh.getMaterial()->getNormalmap()->getPath();
-	}
-	if (!mesh.getMaterial()->getMetallic()->equals(metallic))
-	{
-		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, mesh.getMaterial()->getMetallic()->getHandle());
-		metallic = mesh.getMaterial()->getMetallic()->getPath();
-	}
-	if (!mesh.getMaterial()->getRoughness()->equals(roughness))
-	{
-		glActiveTexture(GL_TEXTURE3);
-		glBindTexture(GL_TEXTURE_2D, mesh.getMaterial()->getRoughness()->getHandle());
-		roughness = mesh.getMaterial()->getRoughness()->getPath();
-	}
-	if (!mesh.getMaterial()->getAOmap()->equals(ao))
-	{
-		glActiveTexture(GL_TEXTURE4);
-		glBindTexture(GL_TEXTURE_2D, mesh.getMaterial()->getAOmap()->getHandle());
-		ao = mesh.getMaterial()->getAOmap()->getPath();
-	}
-	if (!mesh.getMaterial()->getCubemap()->equals(cube))
-	{
-		glActiveTexture(GL_TEXTURE5);
-		glBindTexture(GL_TEXTURE_CUBE_MAP, mesh.getMaterial()->getCubemap()->getIrradianceID());
-		glActiveTexture(GL_TEXTURE6);
-		glBindTexture(GL_TEXTURE_CUBE_MAP, mesh.getMaterial()->getCubemap()->getPreFilterID());
-		glActiveTexture(GL_TEXTURE7);
-		glBindTexture(GL_TEXTURE_2D, mesh.getMaterial()->getCubemap()->getBdrfLutID());
-		cube = mesh.getMaterial()->getCubemap()->getPath();
-	}
-	
-	
+	// bind textures 
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, mesh.getMaterial()->getAlbedo()->getHandle());
 
-	// draw meshgl
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, mesh.getMaterial()->getNormalmap()->getHandle());
+
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, mesh.getMaterial()->getMetallic()->getHandle());
+
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, mesh.getMaterial()->getRoughness()->getHandle());
+
+	glActiveTexture(GL_TEXTURE4);
+		glBindTexture(GL_TEXTURE_2D, mesh.getMaterial()->getAOmap()->getHandle());
+
+	// draw mesh
 	mesh.BindVAO();
 	glDrawElements(GL_TRIANGLES, mesh.getIndicesSize(), GL_UNSIGNED_INT, 0);
 }
+
 void Program::DrawSkybox(Mesh& mesh)
 {
 	setMat4("model", glm::mat4(0));
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, mesh.getMaterial()->getCubemap()->getEnvironment());
-
 	mesh.BindVAO();
 	glDrawElements(GL_TRIANGLES, mesh.getIndicesSize(), GL_UNSIGNED_INT, 0);
+}
+
+void Program::uploadIBL(Cubemap* ibl)
+{
+	glActiveTexture(GL_TEXTURE5);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, ibl->getIrradianceID());
+	glActiveTexture(GL_TEXTURE6);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, ibl->getPreFilterID());
+	glActiveTexture(GL_TEXTURE7);
+	glBindTexture(GL_TEXTURE_2D, ibl->getBdrfLutID());
+}
+
+void Program::uploadSkybox(Cubemap* skybox)
+{
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, skybox->getEnvironment());
 }
 
 void Program::getUniformLocations()
@@ -152,16 +138,14 @@ void Program::getUniformLocations()
 
 	dirLoc = glGetUniformBlockIndex(program_ID, "dLightUBlock");
 	posLoc = glGetUniformBlockIndex(program_ID, "pLightUBlock");
-	spotLoc = glGetUniformBlockIndex(program_ID, "sLightUBlock");
 
 }
 
 
-void Program::bindLightBuffers(UBO* directional, UBO* positional, UBO* spot)
+void Program::bindLightBuffers(UBO* directional, UBO* positional)
 {
 	glBindBufferBase(GL_UNIFORM_BUFFER, 1, *directional->getID());
 	glBindBufferBase(GL_UNIFORM_BUFFER, 2, *positional->getID());
-	glBindBufferBase(GL_UNIFORM_BUFFER, 3, *spot->getID());
 }
 
 void Program::setuInt(const std::string& name, int value)

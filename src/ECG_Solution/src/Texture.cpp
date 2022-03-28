@@ -5,16 +5,7 @@
 
 Texture::Texture()
 {
-	path = "";
-
-}
-bool Texture::equals(string tex)
-{
-	if (path == tex)
-	{
-		return true;
-	} return false;
-
+	tex_ID = 0;
 }
 
 Texture::Texture(GLenum type, int width, int height, GLenum internalFormat)
@@ -29,8 +20,6 @@ Texture::Texture(GLenum type, int width, int height, GLenum internalFormat)
 
 void Texture::load(const char* texPath, int texUnit)
 {
-	path = texPath;
-	
 	// generate texture
 	glCreateTextures(GL_TEXTURE_2D, 1, &tex_ID);
 

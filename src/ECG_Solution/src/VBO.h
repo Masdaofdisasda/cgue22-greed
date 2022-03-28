@@ -2,13 +2,15 @@
 #include"Utils.h"
 #include <vector>
 
-struct Vertex
+struct Vertex // for pbr shader
 {
 	glm::vec3 position;
 	glm::vec3 normal;
 	glm::vec2 uv;
 };
 
+
+// class for Vertex Buffer Objects
 class VBO
 {
 	private:

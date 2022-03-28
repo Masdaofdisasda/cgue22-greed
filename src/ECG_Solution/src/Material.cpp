@@ -1,21 +1,21 @@
 #include "Material.h"
 
 
-Material::Material(const char* texPath, const char* cubePath)
+Material::Material(const char* texPath)
 {
-	
-	albedo.load(append(texPath, "/albedo.jpg"));
-	normal.load(append(texPath, "/normal.jpg"));
-	metallic.load(append(texPath, "/metal.jpg"));
-	roughness.load(append(texPath, "/rough.jpg"));
-	ambientocclusion.load(append(texPath, "/ao.jpg"));
-	cubemap.loadHDR(cubePath);
+	textures.emplace_back(Texture());
+	textures.emplace_back(Texture());
+	textures.emplace_back(Texture());
+	textures.emplace_back(Texture());
+	textures.emplace_back(Texture());
+
+	textures[0].load(append(texPath, "/albedo.jpg"));
+	textures[1].load(append(texPath, "/normal.jpg"));
+	textures[2].load(append(texPath, "/metal.jpg"));
+	textures[3].load(append(texPath, "/rough.jpg"));
+	textures[4].load(append(texPath, "/ao.jpg"));
 }
 
-Material::Material(const char* cubePath)
-{
-	cubemap.loadHDR(cubePath);
-}
 
 const char* Material::append(const char* texPath, char* texType)
 {

@@ -4,6 +4,10 @@
 #include "Texture.h"
 #include <memory>
 
+/* class for a Framebuffer
+* can contain color or depth buffer (or both)
+*/
+
 class Framebuffer
 {
 public:
@@ -63,10 +67,10 @@ Framebuffer::~Framebuffer()
 void Framebuffer::bind()
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, handle_);
-	glViewport(0, 0, width_, height_);
+	glViewport(0, 0, width_, height_); // sets viewport according to size
 }
 
-void Framebuffer::unbind()
+void Framebuffer::unbind()	// viewport needs to be set manually after unbinding
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }

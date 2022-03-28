@@ -13,30 +13,39 @@ public:
 	Renderer(GlobalState& state, PerFrameData& pfdata, LightSources lights);
 	~Renderer();
 
-	void Draw(std::vector <Mesh*> models, Mesh& skybox);
+	void Draw(std::vector <Mesh*> models);
 	void swapLuminance();
 
 	GlobalState static loadSettings(GlobalState state);
 private:
+	// Render Settings
 	GlobalState* globalState;
-	PerFrameData* perframeData;
-	PerFrameSettings perframsets;
+	PerFrameData* perframeData;	// viewproj, viewpos,...
+	PerFrameSettings perframsets; // effect settings
+	UBO perframeBuffer;	
+	UBO perframesetBuffer;
+
+	// Illumination
 	LightSources lights;
 	UBO directionalLights;
 	UBO positionalLights;
-	UBO spotLights;
-	UBO perframeBuffer;
-	UBO perframesetBuffer;
-	Program PBRShader;
-	Program skyboxShader;
-	Program BrightPass;
-	Program ToLuminance;
-	Program BlurX;
-	Program BlurY;
-	Program CombineHDR;
-	Program lightAdapt;
 
-	// Framebuffers for Bloom
+	// Shader Programs
+	Program PBRShader;		// main illumination shader
+	Program skyboxShader;	// simple skybox shader
+	Program BrightPass;		// filter bright spots
+	Program ToLuminance;	// converts brightness
+	Program BlurX;			// gauss blur in x direction
+	Program BlurY;			// gauss blur in y direction
+	Program CombineHDR;		// combines blur with render fbo, tone mapping
+	Program lightAdapt;		// controls exposure changes
+
+	// global Textures
+	Cubemap IBL;
+	Cubemap skyTex;
+	Mesh skyBox = skyBox.Skybox();
+
+	// Framebuffers for HDR/Bloom
 	GLuint luminance1x1;
 	// Framebuffer size cant be changed after init eg. window reisizing not correctly working
 	Framebuffer framebuffer = Framebuffer(1920, 1080, GL_RGBA16F, GL_DEPTH_COMPONENT24);

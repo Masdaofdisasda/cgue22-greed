@@ -2,72 +2,43 @@
 
 #include "Utils.h"
 #include "Texture.h"
-#include "Cubemap.h"
+#include <vector>
 
-// descripes Material
+/* class for materials
+* every material holds a vector of 5 textures and can return handles to them
+*/
 class Material
 {
 public:
-	Material(const char* texPath, const char* cubePath);
-	Material(const char* cubePath);
+	Material(const char* texPath);
 	~Material() { Release(); };
 
 	Texture* getAlbedo()
 	{
-		return &albedo;
+		return &textures[0];
 	}
 	Texture* getNormalmap()
 	{
-		return &normal;
+		return &textures[1];
 	}
 	Texture* getMetallic()
 	{
-		return &metallic;
+		return &textures[2];
 	}
 	Texture* getRoughness()
 	{
-		return &roughness;
+		return &textures[3];
 	}
 	Texture* getAOmap()
 	{
-		return &ambientocclusion;
-	}
-	Cubemap* getCubemap()
-	{
-		return &cubemap;
-	}
-
-
-	// ensure RAII compliance
-	
-	Material(const Material&) = delete;
-	Material& operator=(const Material&) = delete; 
-
-	Material& operator=(Material&& other)
-	{
-		//ALWAYS check for self-assignment.
-		if (this != &other)
-		{
-			Release();
-			//obj_ is now 0.
-			std::swap(albedo, other.albedo);
-			std::swap(normal, other.normal);
-			std::swap(metallic, other.metallic);
-			std::swap(roughness, other.roughness);
-			std::swap(ambientocclusion, other.ambientocclusion);
-			std::swap(cubemap, other.cubemap);
-		}
+		return &textures[4];
 	}
 
 private:
 	
-	Texture albedo;
-	Texture normal;
-	Texture metallic;
-	Texture roughness;
-	Texture ambientocclusion;
-	Cubemap cubemap;
+	std::vector<Texture> textures;
 
+	//helper functions for easier loading
 	const char* append(const char* texPath, char* texType);
 
 	void Release()

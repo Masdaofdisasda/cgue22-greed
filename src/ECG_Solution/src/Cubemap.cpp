@@ -12,18 +12,10 @@ Cubemap::Cubemap()
     glGenTextures(1, &brdfLut_ID);
 }
 
-bool Cubemap::equals(string tex)
-{
-    if (path == tex)
-    {
-        return true;
-    } return false;
-
-}
-
+// loads an HDR image and processes it for IBL
+// https://learnopengl.com/PBR/IBL/Diffuse-irradiance
 void Cubemap::loadHDR(const char* texPath)
 {
-    path = texPath;
 
     // pbr: setup framebuffer
     // ----------------------

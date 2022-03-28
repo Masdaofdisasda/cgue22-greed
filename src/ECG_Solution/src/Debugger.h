@@ -5,6 +5,8 @@
 #include <sstream>
 #include <iostream>
 
+/* contains debugging callbacks to keep the main class cleaner
+*/
 class Debugger
 {
 public:
