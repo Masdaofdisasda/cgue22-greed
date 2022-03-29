@@ -3,6 +3,9 @@
 #include "Mesh.h"
 #include "LightSource.h"
 #include "Camera.h"
+#include <assimp/Importer.hpp>      // C++ importer interface
+#include <assimp/scene.h>           // Output data structure
+#include <assimp/postprocess.h>     // Post processing flags
 
 /*
 Abstract class for all Level classes.
@@ -17,12 +20,37 @@ public:
 	virtual std::vector <PositionalLight> getPointLights() = 0;
 };
 
+struct MeshDraw // data for drawing
+{
+	uint32_t meshIndex;
+	uint32_t materialID;		// material identifier
+	uint32_t indexOffset;
+	uint32_t vertexOffset;
+	uint32_t transformIndex;
+};
+
+struct MeshObj // mesh object
+{
+	uint32_t streamCount;
+	uint32_t indexOffset;
+	uint32_t vertexOffset;		
+	uint32_t vertexCount;
+	uint32_t streamOffset;
+	uint32_t streamElementSize;
+};
+
 //---------------------------------------------------------------------------------------------------------------//
 class ModelTesterLevel : public LevelInterface {
 private:
 	//TODO
 	//load fbx files with assimp, auto import materials (textures) from fbx
 	// and create a single vertex array and a single element array
+	GLuint VAO = 0;
+	GLuint VBO = 0;
+	GLuint EBO = 0;
+	std::vector <MeshObj> meshes; 
+	std::vector<float> vertices; 
+	std::vector <GLuint> indices;
 
 	LightSources lights;
 
@@ -34,7 +62,98 @@ private:
 
 	void loadModels() {
 
-		//TODO
+		std::cout << "load scene... (this could take a few minutes)"<< std::endl;
+		// load fbx file into assimps internal data structures
+		Assimp::Importer importer;
+		const aiScene* scene = importer.ReadFile("assets/Bistro_v5_2/BistroInterior.fbx", 
+			aiProcess_MakeLeftHanded | 
+			aiProcess_FlipWindingOrder |
+			aiProcess_FlipUVs | 
+			aiProcess_PreTransformVertices |
+			aiProcess_CalcTangentSpace |
+			aiProcess_GenSmoothNormals |
+			aiProcess_Triangulate |
+			aiProcess_FixInfacingNormals |
+			aiProcess_FindInvalidData |
+			aiProcess_ValidateDataStructure | 0);
+
+		std::cout << "done loading scene... " << std::endl;
+
+		if (!scene) // check if the scene was actually loaded
+		{
+			std::cerr << "ERROR: Couldn't load scene" << std::endl;
+		}
+
+		uint32_t globalVertexOffset = 0;
+		uint32_t globalIndexOffset = 0;
+
+		for (size_t i = 0; i < scene->mNumMeshes; i++)
+		{
+			const aiMesh* mesh = scene->mMeshes[i];
+			MeshObj m;
+			m.streamCount = 1;
+			m.indexOffset = globalIndexOffset;
+			m.vertexOffset = globalVertexOffset;
+			m.vertexCount = mesh->mNumVertices;
+			m.streamElementSize = static_cast<uint32_t>((3+2+3) * sizeof(float)); //pos,uv,normal
+			m.streamOffset = m.vertexOffset * m.streamElementSize;
+
+			// extract vertices
+			for(size_t j = 0; j < mesh->mNumVertices; j++)
+			{
+			std::cout << "load mesh " << i << " of " << scene->mNumMeshes << " - progress: " << j/(float)mesh->mNumVertices << std::endl;
+				const aiVector3D p = mesh->HasPositions() ? mesh->mVertices[j] : aiVector3D();
+				const aiVector3D n = mesh->HasNormals() ? mesh->mNormals[j] : aiVector3D();
+				const aiVector3D t = mesh->HasTextureCoords(0) ? mesh->mTextureCoords[0][j] : aiVector3D();
+
+				vertices.push_back(p.x);
+				vertices.push_back(p.y);
+				vertices.push_back(p.z);
+
+				vertices.push_back(t.x);
+				vertices.push_back(t.y);
+
+				vertices.push_back(n.x);
+				vertices.push_back(n.y);
+				vertices.push_back(n.z);
+			}
+
+			//extract indices
+			for (size_t j = 0; j < mesh->mNumFaces; j++)
+			{
+				if (mesh->mFaces[j].mNumIndices != 3)
+					continue;
+				for (unsigned k = 0; k != mesh->mFaces[j].mNumIndices; k++)
+					indices.push_back(mesh->mFaces[j].mIndices[k]);
+			}
+
+			globalVertexOffset += mesh->mNumVertices;
+			globalIndexOffset += indices.size() - globalIndexOffset;
+
+			meshes.push_back(m);
+
+		}
+
+		glCreateBuffers(1, &VBO);
+		glNamedBufferStorage(VBO, globalVertexOffset * 5 * sizeof(float), vertices.data(), 0);
+		glCreateBuffers(1, &EBO);
+		glNamedBufferStorage(EBO, globalIndexOffset * sizeof(GLuint), indices.data(), 0);
+
+		glCreateVertexArrays(1, &VAO);
+		glVertexArrayElementBuffer(VAO, EBO);
+		glVertexArrayVertexBuffer(VAO, 0, VBO, 0, sizeof(glm::vec3) + sizeof(glm::vec2) + sizeof(glm::vec3));
+		// position
+		glEnableVertexArrayAttrib(VAO, 0);
+		glVertexArrayAttribFormat(VAO, 0, 3, GL_FLOAT, GL_FALSE, 0);
+		glVertexArrayAttribBinding(VAO, 0, 0);
+		// uv
+		glEnableVertexArrayAttrib(VAO, 1);
+		glVertexArrayAttribFormat(VAO, 1, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3));
+		glVertexArrayAttribBinding(VAO, 1, 0);
+		// normal
+		glEnableVertexArrayAttrib(VAO, 2);
+		glVertexArrayAttribFormat(VAO, 2, 3, GL_FLOAT, GL_TRUE, sizeof(glm::vec3) + sizeof(glm::vec3));
+		glVertexArrayAttribBinding(VAO, 2, 0);
 
 	}
 
@@ -56,7 +175,6 @@ private:
 
 public:
 	ModelTesterLevel() {
-		loadMaterials();
 		loadModels();
 		loadLights();
 	}
