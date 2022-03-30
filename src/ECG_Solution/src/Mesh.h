@@ -3,7 +3,7 @@
 #include "EBO.h"
 #include "VBO.h"
 #include "Material.h"
-
+#include <bullet/btBulletCollisionCommon.h>
 
 // class for meshes containing vertices(
 class Mesh
@@ -67,6 +67,8 @@ public:
 	Material* getMaterial();
 	int getIndicesSize();
 	void BindVAO();
+	int getVerticeAmount();
+	btScalar* getVerticeCoordinates();
 
 	~Mesh() { Release(); }
 };
