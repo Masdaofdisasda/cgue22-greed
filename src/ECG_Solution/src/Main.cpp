@@ -19,6 +19,7 @@
 #include "GLFWApp.h"
 #include "Debugger.h"
 #include "Level.h"
+#include "BulletDebugDrawer.h"
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <assimp/cimport.h>
@@ -86,7 +87,7 @@ int main(int argc, char** argv)
 			if (key == GLFW_KEY_S)
 				positioner.movement_.backward_ = press;
 			if (key == GLFW_KEY_A)
-				positioner.movement_.left_ = press; 
+				positioner.movement_.left_ = press;
 			if (key == GLFW_KEY_D)
 				positioner.movement_.right_ = press;
 			if (key == GLFW_KEY_1)
@@ -133,6 +134,18 @@ int main(int argc, char** argv)
 				else {
 					print("bloom on");
 					globalState.bloom_ = true;
+				}
+			}
+			if (key == GLFW_KEY_F4 && action == GLFW_PRESS)
+			{
+				if (globalState.debugDrawPhysics)
+				{
+					print("physics debugging off");
+					globalState.debugDrawPhysics = false;
+				}
+				else {
+					print("physics debugging on");
+					globalState.debugDrawPhysics = true;
 				}
 			}
 		});
@@ -201,17 +214,21 @@ int main(int argc, char** argv)
 	models.push_back(&groundPlane);
 
 	//Bullet Initialization
+	printf("Initializing bullet physics...\n");
 	btDbvtBroadphase* broadphase = new btDbvtBroadphase();
 	btDefaultCollisionConfiguration* collision_configuration = new btDefaultCollisionConfiguration();
 	btCollisionDispatcher* dispatcher = new btCollisionDispatcher(collision_configuration);
 	btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
 	btDiscreteDynamicsWorld* dynamics_world = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collision_configuration);
 	dynamics_world->setGravity(btVector3(0, -10, 0));
+	BulletDebugDrawer* bulletDebugDrawer = new BulletDebugDrawer();
+	bulletDebugDrawer->setDebugMode(btIDebugDraw::DBG_DrawWireframe);
+	dynamics_world->setDebugDrawer(bulletDebugDrawer);
 
 	//btCollisionShape* collider = getHullShapeFromMesh(&coin1);
 	btVector3* boxSize = new btVector3(1.0, 0.25, 1.0);
 	btCollisionShape* collider = new btBoxShape(*boxSize);
-	btRigidBody fallingCoin = makeRigidbody(btQuaternion(btVector3(1,0,0), 0), btVector3(0.0, 0.0, 0.0), collider, 1);
+	btRigidBody fallingCoin = makeRigidbody(btQuaternion(btVector3(1, 0, 0), 0), btVector3(0.0, 0.0, 0.0), collider, 1);
 
 	btVector3* boxSize2 = new btVector3(20, 0.0, 20.0);
 	btCollisionShape* collider2 = new btBoxShape(*boxSize2);
@@ -226,8 +243,8 @@ int main(int argc, char** argv)
 
 	double timeStamp = glfwGetTime();
 	float deltaSeconds = 0.0f;
-	FPSCounter fpsCounter = FPSCounter(); 
-	
+	FPSCounter fpsCounter = FPSCounter();
+
 	glfwSetInputMode(GLFWapp.getWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
 	//---------------------------------- RENDER LOOP ----------------------------------//
@@ -248,7 +265,7 @@ int main(int argc, char** argv)
 		glfwSetWindowTitle(GLFWapp.getWindow(), title.c_str());
 
 		// variable window size
-		glViewport(0, 0, globalState.width, globalState.height); 
+		glViewport(0, 0, globalState.width, globalState.height);
 		GLFWapp.updateWindow();
 
 		// calculate physics
@@ -272,10 +289,14 @@ int main(int argc, char** argv)
 		const glm::mat4 view = camera.getViewMatrix();
 		perframeData.ViewProj = projection * view;
 		perframeData.ViewProjSkybox = projection * glm::mat4(glm::mat3(view)); // remove translation
-		perframeData.viewPos = glm::vec4(camera.getPosition(),1.0f);
+		perframeData.viewPos = glm::vec4(camera.getPosition(), 1.0f);
 
 		// actual draw call
 		renderer.Draw(models);
+		if (globalState.debugDrawPhysics) {
+			dynamics_world->debugDrawWorld();
+			bulletDebugDrawer->draw();
+		}
 
 		// swap buffers
 		GLFWapp.swapBuffers();
@@ -306,9 +327,9 @@ static btConvexHullShape* getHullShapeFromMesh(Mesh* mesh) {
 	for (int i = 0; i < verticeAmount; i++)
 	{
 		btScalar x = coordinates[i * 3];
-		btScalar y = coordinates[i * 3+1];
-		btScalar z = coordinates[i*3+2];
-		shape->addPoint(btVector3(x,y,z));
+		btScalar y = coordinates[i * 3 + 1];
+		btScalar z = coordinates[i * 3 + 2];
+		shape->addPoint(btVector3(x, y, z));
 	}
 
 	return shape;
