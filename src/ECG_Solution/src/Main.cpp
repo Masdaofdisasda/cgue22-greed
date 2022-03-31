@@ -228,7 +228,7 @@ int main(int argc, char** argv)
 	//btCollisionShape* collider = getHullShapeFromMesh(&coin1);
 	btVector3* boxSize = new btVector3(1.0, 0.25, 1.0);
 	btCollisionShape* collider = new btBoxShape(*boxSize);
-	btRigidBody fallingCoin = makeRigidbody(btQuaternion(btVector3(1, 0, 0), 0), btVector3(0.0, 0.0, 0.0), collider, 1);
+	btRigidBody fallingCoin = makeRigidbody(btQuaternion(btVector3(1, 0, 0), 45), btVector3(0.0, 0.0, 0.0), collider, 1);
 
 	btVector3* boxSize2 = new btVector3(20, 0.0, 20.0);
 	btCollisionShape* collider2 = new btBoxShape(*boxSize2);
@@ -339,7 +339,9 @@ static btRigidBody makeRigidbody(btQuaternion rot, btVector3 pos, btCollisionSha
 
 	btTransform* startTransform = new btTransform(rot, pos);
 	btMotionState* motionSate = new btDefaultMotionState(*startTransform);
-	return btRigidBody(mass, motionSate, col);
+	btVector3 inertia;
+	col->calculateLocalInertia(mass, inertia);
+	return btRigidBody(mass, motionSate, col, inertia);
 }
 
 static void print(string s) {

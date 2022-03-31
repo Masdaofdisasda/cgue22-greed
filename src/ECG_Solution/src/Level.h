@@ -79,9 +79,10 @@ private:
 
 		std::cout << "done loading scene... " << std::endl;
 
-		if (!scene) // check if the scene was actually loaded
+		if (!scene || scene->mMeshes == nullptr) // check if the scene was actually loaded
 		{
 			std::cerr << "ERROR: Couldn't load scene" << std::endl;
+			return;
 		}
 
 		uint32_t globalVertexOffset = 0;
