@@ -37,7 +37,7 @@ void Texture::load(const char* texPath, int texUnit)
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 		glTextureSubImage2D(tex_ID, 0, 0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, img);
 		glBindTextures(0, 1, &tex_ID);
-
+		delete img;
 	}
 	else
 	{
@@ -46,6 +46,36 @@ void Texture::load(const char* texPath, int texUnit)
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 
+}
+
+GLuint Texture::loadTexture(const char* texPath)
+{
+	GLuint handle = 0;
+	// generate texture
+	glCreateTextures(GL_TEXTURE_2D, 1, &handle);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	int w, h, comp;
+	const uint8_t* img = stbi_load(texPath, &w, &h, &comp, 3);
+
+	if (img > 0)
+	{
+		glTextureStorage2D(handle, 1, GL_RGB8, w, h);
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		glTextureSubImage2D(handle, 0, 0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, img);
+		glBindTextures(0, 1, &handle);
+		delete img;
+	}
+	else
+	{
+		std::cout << "could not load texture" << texPath << std::endl;
+	}
+	glBindTexture(GL_TEXTURE_2D, 0);
+	return handle;
 }
 
 int Texture::getNumMipMapLevels2D(int w, int h)

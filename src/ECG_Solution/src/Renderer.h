@@ -6,6 +6,7 @@
 #include "LightSource.h"
 #include "UBO.h"
 #include "Framebuffer.h"
+#include "Level.h"
 
 class Renderer
 {
@@ -13,7 +14,8 @@ public:
 	Renderer(GlobalState& state, PerFrameData& pfdata, LightSources lights);
 	~Renderer();
 
-	void Draw(std::vector <Mesh*> models);
+	//void Draw(std::vector <Mesh*> models);
+	void Draw(const Level* level);
 	void swapLuminance();
 
 	GlobalState static loadSettings(GlobalState state);

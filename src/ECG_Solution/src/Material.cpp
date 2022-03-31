@@ -1,19 +1,13 @@
 #include "Material.h"
 
 
-Material::Material(const char* texPath)
-{
-	textures.emplace_back(Texture());
-	textures.emplace_back(Texture());
-	textures.emplace_back(Texture());
-	textures.emplace_back(Texture());
-	textures.emplace_back(Texture());
+Material::Material(const char* texPath) {
 
-	textures[0].load(append(texPath, "/albedo.jpg"));
-	textures[1].load(append(texPath, "/normal.jpg"));
-	textures[2].load(append(texPath, "/metal.jpg"));
-	textures[3].load(append(texPath, "/rough.jpg"));
-	textures[4].load(append(texPath, "/ao.jpg"));
+albedo = Texture::loadTexture(append(texPath, "/albedo.jpg"));
+normal = Texture::loadTexture(append(texPath, "/normal.jpg"));
+metal = Texture::loadTexture(append(texPath, "/metal.jpg"));
+rough = Texture::loadTexture(append(texPath, "/rough.jpg"));
+ao = Texture::loadTexture(append(texPath, "/ao.jpg"));
 }
 
 

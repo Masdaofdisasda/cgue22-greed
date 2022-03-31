@@ -109,7 +109,7 @@ void Renderer::prepareFramebuffers() {
 
 }
 
-void Renderer::Draw(std::vector <Mesh*> models)
+void Renderer::Draw(const Level* level)
 {
 	
 	glClearNamedFramebufferfv(framebuffer.getHandle(), GL_COLOR, 0, &(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)[0]));
@@ -131,12 +131,11 @@ void Renderer::Draw(std::vector <Mesh*> models)
 		glDepthFunc(GL_LESS);
 
 		// draw models
+		glEnable(GL_CULL_FACE);
 		PBRShader.Use();
-		for (auto& model : models)
-		{
-			PBRShader.uploadIBL(&IBL);
-			PBRShader.Draw(*model);
-		}
+		PBRShader.uploadIBL(&IBL);
+		level->Draw();
+		glDisable(GL_CULL_FACE);
 
 	framebuffer.unbind(); 
 	glGenerateTextureMipmap(framebuffer.getTextureColor().getHandle());

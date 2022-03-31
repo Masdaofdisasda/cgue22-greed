@@ -90,24 +90,25 @@ void Program::Draw(Mesh& mesh)
 
 	// bind textures 
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, mesh.getMaterial()->getAlbedo()->getHandle());
+	glBindTexture(GL_TEXTURE_2D, mesh.getMaterial()->getAlbedo());
 
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, mesh.getMaterial()->getNormalmap()->getHandle());
+	glBindTexture(GL_TEXTURE_2D, mesh.getMaterial()->getNormalmap());
 
 	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, mesh.getMaterial()->getMetallic()->getHandle());
+	glBindTexture(GL_TEXTURE_2D, mesh.getMaterial()->getMetallic());
 
 	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_2D, mesh.getMaterial()->getRoughness()->getHandle());
+	glBindTexture(GL_TEXTURE_2D, mesh.getMaterial()->getRoughness());
 
 	glActiveTexture(GL_TEXTURE4);
-		glBindTexture(GL_TEXTURE_2D, mesh.getMaterial()->getAOmap()->getHandle());
+	glBindTexture(GL_TEXTURE_2D, mesh.getMaterial()->getAOmap());
 
 	// draw mesh
 	mesh.BindVAO();
 	glDrawElements(GL_TRIANGLES, mesh.getIndicesSize(), GL_UNSIGNED_INT, 0);
 }
+
 
 void Program::DrawSkybox(Mesh& mesh)
 {

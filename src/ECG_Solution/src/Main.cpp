@@ -172,14 +172,18 @@ int main(int argc, char** argv)
 	print("initialize scene and render loop...");
 
 	// load models and textures
-	LevelInterface* level = new ModelTesterLevel();
-	Renderer renderer(globalState, perframeData, level->getLights());
+	print("loading level...");
+	Level level("assets/Bistro_v5_2/BistroInterior.fbx"); // https://developer.nvidia.com/orca/amazon-lumberyard-bistro
+	print("intializing renderer...");
+	Renderer renderer(globalState, perframeData, level.getLights());
 
 	//-------------------------WIP------------------------------------------//
+	print("loading material...");
 	Material gold("assets/textures/coin");
 	Material rock("assets/textures/rockground");
 	Material wood("assets/textures/wood");
 
+	print("loading models...");
 	Mesh coin1 = Mesh("assets/models/coin.obj", &wood);
 	coin1.setMatrix(glm::vec3(1.0f, -1.0f, -5.0f), 10.0f, glm::vec3(1.0f, -1.0f, 0.0f), glm::vec3(0.5));
 	Mesh coin2 = Mesh("assets/models/coin.obj", &rock);
@@ -232,7 +236,8 @@ int main(int argc, char** argv)
 		perframeData.viewPos = glm::vec4(camera.getPosition(),1.0f);
 
 		// actual draw call
-		renderer.Draw(models);
+		//renderer.Draw(models);
+		renderer.Draw(&level);
 
 		// swap buffers
 		GLFWapp.swapBuffers();

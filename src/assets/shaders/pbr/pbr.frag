@@ -40,6 +40,7 @@ layout(std140, binding = 0) uniform PerFrameData
 	mat4 ViewProjSkybox;
 };
 
+
 // light source data in uniform blocks
 // MAXLIGHTS gets replaced at runtime
 layout (std140, binding = 1) uniform dLightUBlock {
