@@ -5,7 +5,7 @@ Level::Level(const char* scenePath) {
 	// 1. load fbx file into assimps internal data structures and apply various preprocessing to the data
 	std::cout << "load scene... (this could take a while)" << std::endl;
 	Assimp::Importer importer;
-	const aiScene* scene = importer.ReadFile("assets/Bistro_v5_2/BistroInterior.fbx",
+	const aiScene* scene = importer.ReadFile(scenePath,
 		aiProcess_Triangulate |
 		aiProcess_GenSmoothNormals |
 		aiProcess_SplitLargeMeshes |
@@ -34,13 +34,10 @@ Level::Level(const char* scenePath) {
 	// 2. iterate through the scene and create a mesh object for every aimesh in the scene
 	for (size_t i = 0; i < scene->mNumMeshes; i++)
 	{
-		std::cout << "load mesh " << i * 100 / scene->mNumMeshes << "%" << std::endl;
 		const aiMesh* mesh = scene->mMeshes[i];
 		meshes.push_back(extractMesh(mesh));
 
 	}
-
-	std::vector<std::string> files;
 
 	// load materials
 	for (unsigned int m = 0; m < scene->mNumMaterials; m++)
@@ -49,7 +46,7 @@ Level::Level(const char* scenePath) {
 
 		printf("Material [%s] %u\n", mm->GetName().C_Str(), m);
 
-		Material mat = loadMaterials(mm, files);
+		Material mat = loadMaterials(mm);
 		materials.push_back(mat);
 	}
 	//load transformation matrices
@@ -61,7 +58,7 @@ Level::Level(const char* scenePath) {
 	{
 		drawData draw;
 		draw.meshIndex = (uint32_t)i;
-		draw.materialIndex = 0;
+		draw.materialIndex = meshes[i].materialIndex;
 		draw.transformIndex = 0;
 		models.push_back(draw);
 
@@ -83,6 +80,7 @@ MeshObj Level::extractMesh(const aiMesh* mesh)
 	m.indexOffset = globalIndexOffset;
 	m.vertexOffset = globalVertexOffset;
 	m.vertexCount = mesh->mNumVertices;
+	m.materialIndex = mesh->mMaterialIndex;
 
 	// extract vertices from the aimesh
 	for (size_t j = 0; j < mesh->mNumVertices; j++)
@@ -147,40 +145,23 @@ void Level::calculateBoundingBoxes() {
 	}
 }
 
-Material Level::loadMaterials(const aiMaterial* M, std::vector<std::string>& files)
+Material Level::loadMaterials(const aiMaterial* M)
 {
 
-	return Material("assets/textures/coin");
 	aiString Path;
 
-	if (aiGetMaterialTexture(M, aiTextureType_DIFFUSE, 0, &Path) == AI_SUCCESS)
+	if (aiGetMaterialTexture(M, aiTextureType_BASE_COLOR, 0, &Path) == AI_SUCCESS)
 	{
 		const std::string albedoMap = std::string(Path.C_Str());
 		std::cout << albedoMap << std::endl;
 	}
-	if (aiGetMaterialTexture(M, aiTextureType_NORMALS, 0, &Path) == AI_SUCCESS)
-	{
-		const std::string normal = std::string(Path.C_Str());
-		std::cout << normal << std::endl;
-	}
+	/* all other materials should be :
+	if (aiGetMaterialTexture(M, aiTextureType_NORMAL_CAMERA, 0, &Path) == AI_SUCCESS)
 	if (aiGetMaterialTexture(M, aiTextureType_METALNESS, 0, &Path) == AI_SUCCESS)
-	{
-		const std::string metal = std::string(Path.C_Str());
-		std::cout << metal << std::endl;
-	}
 	if (aiGetMaterialTexture(M, aiTextureType_DIFFUSE_ROUGHNESS, 0, &Path) == AI_SUCCESS)
-	{
-		const std::string rough = std::string(Path.C_Str());
-		std::cout << rough << std::endl;
-	}
-	if (aiGetMaterialTexture(M, aiTextureType_AMBIENT_OCCLUSION, 0, &Path) == AI_SUCCESS)
-	{
-		const std::string ao = std::string(Path.C_Str());
-		std::cout << ao << std::endl;
-	}
+	if (aiGetMaterialTexture(M, aiTextureType_AMBIENT_OCCLUSION, 0, &Path) == AI_SUCCESS) */
 
-	// TODO load textures from path
-
+	return Material(Path.C_Str(), M->GetName().C_Str());
 }
 
 void Level::setupVertexBuffers()
@@ -267,10 +248,11 @@ void Level::Draw() const {
 	glBindVertexArray(VAO);
 
 
-	for (auto i = 0; i < models.size(); i++)
+	for (auto i = 1; i < models.size(); i++)
 	{
 		if (boundMaterial != models[i].materialIndex)
 		{
+			boundMaterial = models[i].materialIndex;
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, materials[models[i].materialIndex].getAlbedo());
 
@@ -289,11 +271,10 @@ void Level::Draw() const {
 
 		GLsizei count = meshes[models[i].meshIndex].indexCount;
 		GLint baseindex = meshes[models[i].meshIndex].indexOffset;
-		GLint basevertex = meshes[models[i].meshIndex].vertexOffset;
 
 
 		glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, (void*)(sizeof(GLint) * baseindex));
 	}
 
-	//glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+	//glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0); // for debugging
 }

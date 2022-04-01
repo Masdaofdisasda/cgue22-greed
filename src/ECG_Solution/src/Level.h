@@ -28,6 +28,7 @@ struct MeshObj		// mesh object
 	uint32_t vertexOffset;		// start of mesh in vector vertices
 	uint32_t indexCount;		// number of indices to render
 	uint32_t vertexCount;		// number of vertices to render
+	uint32_t materialIndex;		// associated material
 };
 
 struct DrawElementsIndirectCommand		// TODO
@@ -76,7 +77,7 @@ private:
 
 	MeshObj extractMesh(const aiMesh* mesh);
 	void calculateBoundingBoxes();
-	Material Level::loadMaterials(const aiMaterial* M, std::vector<std::string>& files);
+	Material Level::loadMaterials(const aiMaterial* M);
 	void setupVertexBuffers();
 	void setupDrawBuffers();
 	void loadLights();

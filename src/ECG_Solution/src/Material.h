@@ -11,6 +11,7 @@ class Material
 {
 public:
 	Material(const char* texPath);
+	Material(const char* texPath, const char* name);
 	~Material() { Release(); };
 
 	GLuint getAlbedo() const { return albedo; }
@@ -20,6 +21,7 @@ public:
 	GLuint getAOmap() const { return ao; }
 
 private:
+	std::string id;
 
 	GLuint albedo = 0;
 	GLuint normal = 0;
