@@ -13,7 +13,9 @@ Renderer::Renderer(GlobalState& state, PerFrameData& pfdata, LightSources lights
 	perframesetBuffer.fillBuffer(perframsets);
 
 	prepareFramebuffers(); // for hdr rendering
-	IBL.loadHDR("assets/textures/cubemap/cellar.pic"); //load global enviroment cubemaps
+	std::cout << "load enviroment map and process it.." << std::endl;
+	IBL.loadHDR("assets/textures/cubemap/cellar.pic");
+	std::cout << "load skybox and process it.." << std::endl;
 	skyTex.loadHDR("assets/textures/cubemap/cloudy.hdr");
 }
 
@@ -28,10 +30,10 @@ GlobalState Renderer::loadSettings(GlobalState state)
 	state.height = reader.GetInteger("window", "height", 800);
 	state.refresh_rate = reader.GetInteger("window", "refresh_rate", 60);
 	state.fullscreen_ = reader.GetBoolean("window", "fullscreen", false);
-	state.window_title = reader.Get("window", "title", "ECG 2021");
+	state.window_title = reader.Get("window", "title", "Greed");
 	state.fov = reader.GetReal("camera", "fov", 60.0f);
 	state.Znear = reader.GetReal("camera", "near", 0.1f);
-	state.Zfar = reader.GetReal("camera", "far", 100.0f);
+	state.Zfar = reader.GetReal("camera", "far", 1000.0f);
 
 	state.exposure_ = reader.GetReal("image", "exposure", 0.9f);
 	state.maxWhite_ = reader.GetReal("image", "maxWhite", 1.07f);
@@ -109,7 +111,7 @@ void Renderer::prepareFramebuffers() {
 
 }
 
-void Renderer::Draw(const Level* level)
+void Renderer::Draw(Level* level)
 {
 	
 	glClearNamedFramebufferfv(framebuffer.getHandle(), GL_COLOR, 0, &(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)[0]));
@@ -134,7 +136,8 @@ void Renderer::Draw(const Level* level)
 		glEnable(GL_CULL_FACE);
 		PBRShader.Use();
 		PBRShader.uploadIBL(&IBL);
-		level->Draw();
+		//level->Draw();
+		level->DrawGraph();
 		glDisable(GL_CULL_FACE);
 
 	framebuffer.unbind(); 

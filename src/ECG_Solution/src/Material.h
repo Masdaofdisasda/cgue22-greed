@@ -20,6 +20,8 @@ public:
 	GLuint getRoughness() const { return rough; }
 	GLuint getAOmap() const { return ao; }
 
+	void clear();
+
 private:
 	std::string id;
 

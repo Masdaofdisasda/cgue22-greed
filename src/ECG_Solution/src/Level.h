@@ -18,12 +18,13 @@ Level data can be read from a file.
 struct drawData		// data for drawing
 {
 	uint32_t meshIndex;			// specify mesh in vector meshes
-	uint32_t materialIndex;		// specify material in vector ?
+	uint32_t materialIndex;		// specify material in vector materials
 	uint32_t transformIndex;	// specify model tranformation in vector ?
 };
 
 struct MeshObj		// mesh object
 {
+	const char* name;			// name of the mesh, for debugging
 	uint32_t indexOffset;		// start of mesh in vector indices
 	uint32_t vertexOffset;		// start of mesh in vector vertices
 	uint32_t indexCount;		// number of indices to render
@@ -49,19 +50,27 @@ struct BoundingBox		// might be used for frustum culling
 	BoundingBox(const glm::vec3 & min, const glm::vec3 & max) : min_(glm::min(min, max)), max_(glm::max(min, max)) {}
 };
 
+struct Hierarchy
+{
+	Hierarchy* parent;						// parent node
+	std::vector <Hierarchy> children;		// children nodes
+	std::vector<uint32_t> modelIndices;		// models in this node
+
+	glm::mat4 localTransform;				// local transformation matrix
+};
 
 //---------------------------------------------------------------------------------------------------------------//
 class Level {
 private:
 	uint32_t globalVertexOffset = 0;
 	uint32_t globalIndexOffset = 0;
+	uint32_t boundMaterial = -1;
 
 	GLuint VAO = 0; // vertex layouts
 	GLuint VBO = 0; // vertices
 	GLuint EBO = 0; // elements
 	GLuint IBO = 0; // indirect commands
 	GLuint matrixSSBO = 0; // tranformations
-	GLuint materialSSBO = 0; // textures
 
 	// mesh data - a loaded scene is entirely contained in these data structures
 	std::vector <MeshObj> meshes;			// contains mesh offsets for glDraw 
@@ -72,21 +81,28 @@ private:
 	std::vector <Material> materials;		// contains all needed textures
 	std::vector <BoundingBox> boxes;		// contains all bounding boxes of the meshes
 	std::vector<DrawElementsIndirectCommand> drawCommands_; //TODO
+	Hierarchy sceneGraph;
 
 	LightSources lights;
 
 	MeshObj extractMesh(const aiMesh* mesh);
 	void calculateBoundingBoxes();
 	Material Level::loadMaterials(const aiMaterial* M);
+	void traverseTree(aiNode* n, Hierarchy* parent, Hierarchy* child);
 	void setupVertexBuffers();
 	void setupDrawBuffers();
-	void loadLights();
+	void loadLights(const aiScene* scene);
+	glm::mat4 toGlmMat4(const aiMatrix4x4& mat);
+	void drawTraverse(const Hierarchy* node, glm::mat4 globalTransform);
+
+	void Release();
 	
 public:
 	Level(const char* scenePath);
-	~Level() {}
+	~Level() { Release(); }
 
 	void Draw() const;
+	void DrawGraph();
 
 	LightSources getLights() { return lights; }
 

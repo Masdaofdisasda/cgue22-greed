@@ -15,7 +15,7 @@ public:
 	~Renderer();
 
 	//void Draw(std::vector <Mesh*> models);
-	void Draw(const Level* level);
+	void Draw(Level* level);
 	void swapLuminance();
 
 	GlobalState static loadSettings(GlobalState state);

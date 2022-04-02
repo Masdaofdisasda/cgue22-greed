@@ -42,3 +42,12 @@ const char* Material::append(const char* texPath, char* texType)
 
 	return strcat(c, texType);
 }
+
+void Material::clear()
+{
+	glDeleteTextures(1, &albedo);
+	glDeleteTextures(1, &normal);
+	glDeleteTextures(1, &metal);
+	glDeleteTextures(1, &rough);
+	glDeleteTextures(1, &ao);
+}
