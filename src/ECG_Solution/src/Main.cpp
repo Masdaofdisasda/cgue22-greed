@@ -176,7 +176,7 @@ int main(int argc, char** argv)
 	//Level level("assets/Bistro_v5_2/BistroInterior.fbx"); // https://developer.nvidia.com/orca/amazon-lumberyard-bistro
 	Level level("assets/test.fbx"); 
 	print("intializing renderer...");
-	Renderer renderer(globalState, perframeData, level.getLights());
+	Renderer renderer(globalState, perframeData, *level.getLights());
 
 
 	glViewport(0, 0, globalState.width, globalState.height);

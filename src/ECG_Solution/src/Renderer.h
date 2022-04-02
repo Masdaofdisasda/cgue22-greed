@@ -11,7 +11,7 @@
 class Renderer
 {
 public:
-	Renderer(GlobalState& state, PerFrameData& pfdata, LightSources lights);
+	Renderer(GlobalState& state, PerFrameData& pfdata, LightSources& sources);
 	~Renderer();
 
 	//void Draw(std::vector <Mesh*> models);

@@ -49,14 +49,12 @@ Level::Level(const char* scenePath) {
 		Material mat = loadMaterials(mm);
 		materials.push_back(mat);
 	}
-	//load transformation matrices
-	transforms.push_back(glm::mat4(1));
 
 
 	// 4. create a model for drawing for every loaded mesh
 	for (size_t i = 0; i < meshes.size(); i++)
 	{
-		drawData draw;
+		Model draw;
 		draw.meshIndex = (uint32_t)i;
 		draw.materialIndex = meshes[i].materialIndex;
 		draw.transformIndex = 0;
@@ -83,11 +81,13 @@ Level::Level(const char* scenePath) {
 	// 8. load lights sources 
 	std::cout << "loading lights..." << std::endl;
 	loadLights(scene); //TODO
+
+	std::cout << std::endl;
 }
 
-MeshObj Level::extractMesh(const aiMesh* mesh)
+subMesh Level::extractMesh(const aiMesh* mesh)
 {
-	MeshObj m;
+	subMesh m;
 	m.name = mesh->mName.C_Str();
 	m.indexOffset = globalIndexOffset;
 	m.vertexOffset = globalVertexOffset;
@@ -241,8 +241,6 @@ void Level::setupDrawBuffers()
 		icmd.baseVertex_ = meshes[models[i].meshIndex].vertexOffset;
 		icmd.baseInstance_ = models[i].materialIndex + (uint32_t(i) << 16);
 		drawCommands_.push_back(icmd);
-
-		matrices.push_back(transforms[models[i].transformIndex]);
 	}
 
 	glCreateBuffers(1, &IBO);
@@ -281,14 +279,14 @@ void Level::loadLights(const aiScene* scene) {
 			const aiVector3D pos = light->mPosition;
 			const aiColor3D col = light->mColorDiffuse;
 
-			glm::vec4 direction = glm::vec4(pos.x, pos.y, pos.z, 1.0f);
+			glm::vec4 position = glm::vec4(pos.x, pos.y, pos.z, 1.0f);
 			glm::vec4 intensity = glm::vec4(col.r, col.g, col.b, 1.0f);
 
-			lights.point.push_back(PositionalLight{ direction, intensity });
+			lights.point.push_back(PositionalLight{ position, intensity });
 		}
 	}
 
-	/* directional light
+	/*directional light
 	lights.directional.push_back(DirectionalLight{
 		glm::vec4(0.0f, 1.0f, 0.0f ,1.0f),		// direction
 		glm::vec4(0.44f, 0.73f, 0.88f ,1.0f), });		// intensity 

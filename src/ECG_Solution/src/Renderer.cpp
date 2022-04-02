@@ -1,11 +1,11 @@
 #include "Renderer.h"
 
-Renderer::Renderer(GlobalState& state, PerFrameData& pfdata, LightSources lights)
+Renderer::Renderer(GlobalState& state, PerFrameData& pfdata, LightSources& sources)
 {
 	// initialize Renderer
 	globalState = &state; // link global variables
 	perframeData = &pfdata; // link per frame data
-	this->lights = lights; // set lights and lightcounts for shaders
+	lights = sources; // set lights and lightcounts for shaders
 	buildShaderPrograms(); // build shader programs
 	setRenderSettings();	// set effect settings 
 	fillLightsources(); // binds lights to binding points in shader

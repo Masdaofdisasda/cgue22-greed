@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 #include <functional>
-#include "Mesh.h"
+#include "Material.h"
 #include "LightSource.h"
 #include "Camera.h"
 #include <assimp/Importer.hpp>      // C++ importer interface
@@ -15,14 +15,14 @@ Helps with seperating different scenes with different models, lights, cameras an
 Level data can be read from a file.
 */
 
-struct drawData		// data for drawing
+struct Model		// data for drawing
 {
 	uint32_t meshIndex;			// specify mesh in vector meshes
 	uint32_t materialIndex;		// specify material in vector materials
 	uint32_t transformIndex;	// specify model tranformation in vector ?
 };
 
-struct MeshObj		// mesh object
+struct subMesh		// mesh object
 {
 	const char* name;			// name of the mesh, for debugging
 	uint32_t indexOffset;		// start of mesh in vector indices
@@ -50,7 +50,7 @@ struct BoundingBox		// might be used for frustum culling
 	BoundingBox(const glm::vec3 & min, const glm::vec3 & max) : min_(glm::min(min, max)), max_(glm::max(min, max)) {}
 };
 
-struct Hierarchy
+struct Hierarchy		// implements a simple scene graph for transformations
 {
 	Hierarchy* parent;						// parent node
 	std::vector <Hierarchy> children;		// children nodes
@@ -73,11 +73,10 @@ private:
 	GLuint matrixSSBO = 0; // tranformations
 
 	// mesh data - a loaded scene is entirely contained in these data structures
-	std::vector <MeshObj> meshes;			// contains mesh offsets for glDraw 
-	std::vector <drawData> models;			// describes a single model
+	std::vector <subMesh> meshes;			// contains mesh offsets for glDraw 
+	std::vector <Model> models;			// describes a single model
 	std::vector<float> vertices;			// contains a stream of vertices in (px,py,pz,ny,ny,nz,u,v)-form
 	std::vector <GLuint> indices;			// contains the indices that make triangles
-	std::vector <glm::mat4> transforms;		// contains all tranformation matrices
 	std::vector <Material> materials;		// contains all needed textures
 	std::vector <BoundingBox> boxes;		// contains all bounding boxes of the meshes
 	std::vector<DrawElementsIndirectCommand> drawCommands_; //TODO
@@ -85,7 +84,7 @@ private:
 
 	LightSources lights;
 
-	MeshObj extractMesh(const aiMesh* mesh);
+	subMesh extractMesh(const aiMesh* mesh);
 	void calculateBoundingBoxes();
 	Material Level::loadMaterials(const aiMaterial* M);
 	void traverseTree(aiNode* n, Hierarchy* parent, Hierarchy* child);
@@ -104,7 +103,7 @@ public:
 	void Draw() const;
 	void DrawGraph();
 
-	LightSources getLights() { return lights; }
+	LightSources* getLights() { return &lights; }
 
 	std::vector <DirectionalLight> getDirectionalLights() { return lights.directional; }
 	std::vector <PositionalLight> getPointLights() { return lights.point; }
