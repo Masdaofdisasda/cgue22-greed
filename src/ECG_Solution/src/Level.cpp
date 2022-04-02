@@ -286,19 +286,6 @@ void Level::loadLights(const aiScene* scene) {
 		}
 	}
 
-	/*directional light
-	lights.directional.push_back(DirectionalLight{
-		glm::vec4(0.0f, 1.0f, 0.0f ,1.0f),		// direction
-		glm::vec4(0.44f, 0.73f, 0.88f ,1.0f), });		// intensity 
-	lights.directional.push_back(DirectionalLight{
-		glm::vec4(0.0f, -1.0f, 0.0f ,1.0f),		// direction
-		glm::vec4(0.92f, 0.47f, 0.26f ,1.0f), });		// intensity 
-
-	// positional light
-	lights.point.push_back(PositionalLight{
-		glm::vec4(0.0f,  0.0f,  0.0f ,1.0f),		// position
-		glm::vec4(1.0f, 1.0f, 1.0f ,1.0f) });		// intensity*/
-
 }
 
 void Level::Draw() const {
