@@ -197,21 +197,6 @@ int main(int argc, char** argv)
 	Renderer renderer(globalState, perframeData, *level.getLights());
 
 
-	Mesh coin1 = Mesh("assets/models/coin.obj", &wood);
-	coin1.setMatrix(glm::vec3(1.0f, -1.0f, -5.0f), 10.0f, glm::vec3(1.0f, -1.0f, 0.0f), glm::vec3(0.5));
-	Mesh coin2 = Mesh("assets/models/coin.obj", &rock);
-	coin2.setMatrix(glm::vec3(0.0f, 0.0f, -7.0f), 90.0f, glm::vec3(-1.0f, .0f, 0.0f), glm::vec3(0.5));
-	Mesh coin3 = Mesh("assets/models/coin.obj", &gold);
-	coin3.setMatrix(glm::vec3(-1.0f, 1.0f, -5.0f), 45.0f, glm::vec3(1.0f, 0.0f, 1.0f), glm::vec3(0.5));
-	Mesh groundPlane = Mesh("assets/models/plane.obj", &rock);
-	groundPlane.setMatrix(glm::vec3(0.0f, -5.0f, 0.0f), 1.0f, glm::vec3(1.0f, 0.0f, 1.0f), glm::vec3(20.0f, 1.0f, 20.0f));
-
-	std::vector <Mesh*> models;
-	models.push_back(&coin1);
-	models.push_back(&coin2);
-	models.push_back(&coin3);
-	models.push_back(&groundPlane);
-
 	//Bullet Initialization
 	printf("Initializing bullet physics...\n");
 	btDbvtBroadphase* broadphase = new btDbvtBroadphase();
@@ -268,6 +253,7 @@ int main(int argc, char** argv)
 		GLFWapp.updateWindow();
 
 		// calculate physics
+		/*
 		dynamics_world->stepSimulation(deltaSeconds);
 
 		glm::vec3 pos = btToGlmVector(fallingCoin.getCenterOfMassTransform().getOrigin());
@@ -280,7 +266,7 @@ int main(int argc, char** argv)
 		float deg2 = (float)(staticPlane.getOrientation().getAngle() * 180 / PI);
 		glm::vec3 axis2 = btToGlmVector(staticPlane.getOrientation().getAxis());
 		glm::vec3 scale2 = glm::vec3(20.0f, 1.0f, 20.0f);
-		models[3]->setMatrix(pos2, deg2, axis2, scale2);
+		models[3]->setMatrix(pos2, deg2, axis2, scale2);*/
 
 		// calculate and set per Frame matrices
 		const float ratio = globalState.width / (float)globalState.height;
