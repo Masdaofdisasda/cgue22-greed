@@ -260,4 +260,19 @@ void Mesh::reverseIndices()
 	std::reverse(indices.begin(), indices.end());
 }
 
+int Mesh::getVerticeAmount() {
+	return vertices.size();
+}
 
+btScalar* Mesh::getVerticeCoordinates() {
+	int amountOfVertices = getVerticeAmount();
+	btScalar* coordinates = new btScalar[amountOfVertices*3];
+	for (int i = 0; i < amountOfVertices; i++) {
+		glm::vec3 pos = vertices[i].position;
+		coordinates[i * 3] = btScalar(pos.x);
+		coordinates[i * 3 + 1] = btScalar(pos.y);
+		coordinates[i * 3 + 2] = btScalar(pos.z);
+	}
+
+	return coordinates;
+}
