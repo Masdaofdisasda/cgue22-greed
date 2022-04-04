@@ -9,6 +9,8 @@ layout(std140, binding = 0) uniform PerFrameData
 	vec4 viewPos;
 	mat4 ViewProj;
 	mat4 ViewProjSkybox;
+	vec4 bloom;
+    vec4 normalMap;
 };
 
 layout(std430, binding = 4) restrict readonly buffer Matrices

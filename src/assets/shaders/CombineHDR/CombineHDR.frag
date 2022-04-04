@@ -9,9 +9,13 @@ layout(binding = 0) uniform sampler2D texScene;
 layout(binding = 1) uniform sampler2D texLuminance;
 layout(binding = 2) uniform sampler2D texBloom;
 
-layout(std140, binding = 4) uniform PerFrameSettings
+layout(std140, binding = 0) uniform PerFrameData
 {
+	vec4 viewPos;
+	mat4 ViewProj;
+	mat4 ViewProjSkybox;
 	vec4 bloom;
+    vec4 normalMap;
 };
 
 // Extended Reinhard tone mapping operator

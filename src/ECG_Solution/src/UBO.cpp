@@ -34,17 +34,3 @@ void UBO::Update(PerFrameData pfbuffer)
 {
 	glNamedBufferSubData(ubo_ID, 0, sizeof(PerFrameData), &pfbuffer);
 }
-
-// Per Frame Render Settings
-void UBO::fillBuffer(PerFrameSettings pfsetbuffer)
-{
-	glBindBuffer(GL_UNIFORM_BUFFER, ubo_ID);
-	glNamedBufferStorage(ubo_ID, sizeof(PerFrameSettings), nullptr, GL_DYNAMIC_STORAGE_BIT);
-	glBindBufferRange(GL_UNIFORM_BUFFER, 4, ubo_ID, 0, sizeof(PerFrameSettings));
-	Update(pfsetbuffer);
-}
-
-void UBO::Update(PerFrameSettings pfsetbuffer)
-{
-	glNamedBufferSubData(ubo_ID, 0, sizeof(PerFrameSettings), &pfsetbuffer);
-}

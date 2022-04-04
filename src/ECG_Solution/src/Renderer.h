@@ -23,7 +23,6 @@ private:
 	// Render Settings
 	GlobalState* globalState;
 	PerFrameData* perframeData;	// viewproj, viewpos,...
-	PerFrameSettings perframsets; // effect settings
 	UBO perframeBuffer;	
 	UBO perframesetBuffer;
 

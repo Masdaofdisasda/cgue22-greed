@@ -41,14 +41,9 @@ struct PerFrameData
 	glm::vec4 viewPos;
 	glm::mat4 ViewProj;
 	glm::mat4 ViewProjSkybox;
-};
-
-struct PerFrameSettings
-{
 	glm::vec4 bloom;
+	glm::vec4 normalMap;
 };
-
-
 
 
 #define EXIT_WITH_ERROR(err) \

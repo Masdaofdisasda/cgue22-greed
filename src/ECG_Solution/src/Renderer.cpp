@@ -10,7 +10,6 @@ Renderer::Renderer(GlobalState& state, PerFrameData& pfdata, LightSources& sourc
 	setRenderSettings();	// set effect settings 
 	fillLightsources(); // binds lights to binding points in shader
 	perframeBuffer.fillBuffer(pfdata); // load UBO to shader;
-	perframesetBuffer.fillBuffer(perframsets);
 
 	prepareFramebuffers(); // for hdr rendering
 	std::cout << "load enviroment map and process it.." << std::endl;
@@ -59,8 +58,10 @@ void Renderer::fillLightsources()
 
 void Renderer::setRenderSettings()
 {
-	perframsets.bloom = glm::vec4(globalState->exposure_, globalState->maxWhite_, 
+	perframeData->bloom = glm::vec4(globalState->exposure_, globalState->maxWhite_,
 		globalState->bloomStrength_,globalState->adaptationSpeed_);
+
+	perframeData->normalMap = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
 void Renderer::buildShaderPrograms()
@@ -118,7 +119,6 @@ void Renderer::Draw(Level* level)
 	glClearNamedFramebufferfi(framebuffer.getHandle(), GL_DEPTH_STENCIL, 0, 1.0f, 0);
 
 	perframeBuffer.Update(*perframeData);
-	perframesetBuffer.Update(perframsets);
 
 
 	// 1. pass - render scene to framebuffer

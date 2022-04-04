@@ -148,6 +148,18 @@ int main(int argc, char** argv)
 					globalState.debugDrawPhysics = true;
 				}
 			}
+			if (key == GLFW_KEY_F5 && action == GLFW_PRESS)
+			{
+				if (perframeData.normalMap.x > 0.0f)
+				{
+					print("normal mapping off");
+					perframeData.normalMap.x *= -1.0f;
+				}
+				else {
+					print("normal mapping on");
+					perframeData.normalMap.x *= -1.0f;
+				}
+			}
 		});
 	glfwSetMouseButtonCallback(GLFWapp.getWindow(),
 		[](auto* window, int button, int action, int mods)
