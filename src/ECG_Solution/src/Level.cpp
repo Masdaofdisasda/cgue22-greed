@@ -278,10 +278,9 @@ void Level::loadLights(const aiScene* scene) {
 			lights.directional.push_back(DirectionalLight{direction, intensity});
 		}
 
-		if (type == aiLightSource_POINT) // (wrong position)
+		if (type == aiLightSource_POINT)
 		{
 			const aiLight* light = scene->mLights[i];
-			const aiVector3D pos = light->mPosition;
 			const aiColor3D col = light->mColorDiffuse;
 
 			glm::vec4 p = glm::vec4(1);
@@ -296,7 +295,6 @@ void Level::loadLights(const aiScene* scene) {
 			}
 
 			glm::vec4 position = glm::vec4(p.x, p.y, p.z, 1.0f);
-			//glm::vec4 position = glm::vec4(pos.x, pos.y, pos.z, 1.0f);
 			glm::vec4 intensity = glm::vec4(col.r, col.g, col.b, 1.0f);
 
 			lights.point.push_back(PositionalLight{ position, intensity });
@@ -305,48 +303,6 @@ void Level::loadLights(const aiScene* scene) {
 
 }
 
-void Level::Draw() const {
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, matrixSSBO);
-	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, IBO);	//TODO make buffer useful
-
-	uint32_t boundMaterial = -1;
-
-
-	// draw mesh
-	glBindVertexArray(VAO);
-
-
-	for (auto i = 0; i < models.size(); i++)
-	{
-		if (boundMaterial != models[i].materialIndex)
-		{
-			boundMaterial = models[i].materialIndex;
-
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, materials[models[i].materialIndex].getAlbedo());
-
-			glActiveTexture(GL_TEXTURE1);
-			glBindTexture(GL_TEXTURE_2D, materials[models[i].materialIndex].getNormalmap());
-
-			glActiveTexture(GL_TEXTURE2);
-			glBindTexture(GL_TEXTURE_2D, materials[models[i].materialIndex].getMetallic());
-
-			glActiveTexture(GL_TEXTURE3);
-			glBindTexture(GL_TEXTURE_2D, materials[models[i].materialIndex].getRoughness());
-
-			glActiveTexture(GL_TEXTURE4);
-			glBindTexture(GL_TEXTURE_2D, materials[models[i].materialIndex].getAOmap());
-		}
-
-		GLsizei count = meshes[models[i].meshIndex].indexCount;
-		GLint baseindex = meshes[models[i].meshIndex].indexOffset;
-
-
-		glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, (void*)(sizeof(GLint) * baseindex));
-	}
-
-	//glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0); // for debugging
-}
 
 void Level::DrawGraph() {
 	//TODO make buffer useful

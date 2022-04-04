@@ -1,6 +1,6 @@
 //Maya ASCII 2022 scene
 //Name: test.ma
-//Last modified: Mon, Apr 04, 2022 05:54:17 PM
+//Last modified: Mon, Apr 04, 2022 11:31:57 PM
 //Codeset: UTF-8
 requires maya "2022";
 requires -nodeType "StingrayPBS" "shaderFXPlugin" "1.0";
@@ -12,11 +12,11 @@ fileInfo "product" "Maya 2022";
 fileInfo "version" "2022";
 fileInfo "cutIdentifier" "202110272215-ad32f8f1e6";
 fileInfo "osv" "Mac OS X 10.16";
-fileInfo "UUID" "711D9F07-8A41-449C-E3B0-AB81901D6BC8";
+fileInfo "UUID" "94545401-4B4D-EE8C-776C-C2A15C68A7D8";
 createNode transform -s -n "persp";
 	rename -uid "E185DEBC-8447-2BA3-7820-3E806F15F436";
 	setAttr ".v" no;
-	setAttr ".t" -type "double3" 0.60898676756596748 6.5781205567306511 13.069976511363588 ;
+	setAttr ".t" -type "double3" 0.68548148037110923 7.3408645971823709 14.754520893986271 ;
 	setAttr ".r" -type "double3" -24.338352729625541 -717.39999999983638 1.9898951340792861e-16 ;
 createNode camera -s -n "perspShape" -p "persp";
 	rename -uid "5DA43D49-0B4D-6116-C136-C4A93BBD8C45";
@@ -25,7 +25,7 @@ createNode camera -s -n "perspShape" -p "persp";
 	setAttr ".ncp" 0.001;
 	setAttr ".fcp" 100;
 	setAttr ".fd" 0.05;
-	setAttr ".coi" 14.02321308386975;
+	setAttr ".coi" 15.873975005176053;
 	setAttr ".ow" 0.1;
 	setAttr ".imn" -type "string" "persp";
 	setAttr ".den" -type "string" "persp_depth";
@@ -3835,7 +3835,7 @@ createNode StingrayPBS -n "Gold_1";
 createNode shadingEngine -n "StingrayPBS1SG";
 	rename -uid "65A77975-494B-1E63-1DCA-BCB34BACB03E";
 	setAttr ".ihi" 0;
-	setAttr -s 6 ".dsm";
+	setAttr -s 5 ".dsm";
 	setAttr ".ro" yes;
 createNode materialInfo -n "materialInfo1";
 	rename -uid "EA1C35DC-8647-0908-0C9D-9AB8130B1AD0";
@@ -4178,7 +4178,7 @@ createNode lightItem -n "Lava__LEItem";
 createNode lightItem -n "testLight__LEItem";
 	rename -uid "D211DA4C-B242-A260-9C4A-D09A0D7D95E2";
 createNode nodeGraphEditorInfo -n "hyperShadePrimaryNodeEditorSavedTabsInfo";
-	rename -uid "1A601BBA-0748-1D6B-D861-F2A3AB621FB4";
+	rename -uid "045163E8-F640-D66C-A9B9-9896FC63D2E0";
 	setAttr ".tgi[0].tn" -type "string" "Untitled_1";
 	setAttr ".tgi[0].vl" -type "double2" -1026.1904354133321 -851.85633579779369 ;
 	setAttr ".tgi[0].vh" -type "double2" 1404.7618489416843 1105.4277542931993 ;

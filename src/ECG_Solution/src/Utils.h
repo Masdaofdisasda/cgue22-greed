@@ -42,6 +42,7 @@ struct PerFrameData
 	glm::mat4 ViewProj;
 	glm::mat4 ViewProjSkybox;
 	glm::vec4 bloom;
+	glm::vec4 deltaTime;
 	glm::vec4 normalMap;
 };
 

@@ -108,7 +108,7 @@ void Renderer::prepareFramebuffers() {
 	glGenTextures(1, &luminance1x1);
 	glTextureView(luminance1x1, GL_TEXTURE_2D, luminance.getTextureColor().getHandle(), GL_R16F, 6, 1, 0, 1);
 
-	glTextureSubImage2D(luminance1.getHandle(), 0, 0, 0, 1, 1, GL_RGBA, GL_FLOAT, &(brightPixel)[0]);
+	glTextureSubImage2D(luminance0.getHandle(), 0, 0, 0, 1, 1, GL_RGBA, GL_FLOAT, &(glm::vec4(glm::vec3(50.0f), 1.0f))[0]);
 
 }
 
@@ -136,7 +136,6 @@ void Renderer::Draw(Level* level)
 		glEnable(GL_CULL_FACE);
 		PBRShader.Use();
 		PBRShader.uploadIBL(&IBL);
-		//level->Draw();
 		level->DrawGraph();
 		glDisable(GL_CULL_FACE);
 
@@ -157,15 +156,9 @@ void Renderer::Draw(Level* level)
 	// 3. pass - compute light adaption (OpenGL memory model requires these memory barriers: https://www.khronos.org/opengl/wiki/Memory_Model )
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 	lightAdapt.Use();
-#if 0
-	// Either way is possible. In this case, all access modes will be GL_READ_WRITE
-	const GLuint imageTextures[] = { luminances[0]->getHandle(), luminance1x1, luminances[1]->getHandle() };
-	glBindImageTextures(0, 3, imageTextures);
-#else
 	glBindImageTexture(0, luminances[0]->getHandle(), 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA16F);
 	glBindImageTexture(1, luminance1x1, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA16F);
 	glBindImageTexture(2, luminances[1]->getHandle(), 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA16F);
-#endif
 	glDispatchCompute(1, 1, 1);
 	glMemoryBarrier(GL_TEXTURE_FETCH_BARRIER_BIT);
 
@@ -175,23 +168,23 @@ void Renderer::Draw(Level* level)
 		glBindTextureUnit(0, framebuffer.getTextureColor().getHandle());
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 	brightPass.unbind();
-	glBlitNamedFramebuffer(brightPass.getHandle(), bloom2.getHandle(), 0, 0, 256, 256, 0, 0, 256, 256, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+	glBlitNamedFramebuffer(brightPass.getHandle(), bloom1.getHandle(), 0, 0, 256, 256, 0, 0, 256, 256, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
 	// 5. pass - blur bright spots using ping pong buffers and a seperate blur in x and y direction
-	for (int i = 0; i != 4; i++)
+	for (int i = 0; i < 4; i++)
 	{
 		// blur x
-		bloom1.bind();
+		bloom0.bind();
 			BlurX.Use();
-			glBindTextureUnit(0, bloom2.getTextureColor().getHandle());
-			glDrawArrays(GL_TRIANGLES, 0, 6);
-		bloom1.unbind();
-		// blur y
-		bloom2.bind();
-			BlurY.Use();
 			glBindTextureUnit(0, bloom1.getTextureColor().getHandle());
 			glDrawArrays(GL_TRIANGLES, 0, 6);
-		bloom2.unbind();
+		bloom0.unbind();
+		// blur y
+		bloom1.bind();
+			BlurY.Use();
+			glBindTextureUnit(0, bloom0.getTextureColor().getHandle());
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+		bloom1.unbind();
 	}
 
 	// 6. pass - combine framebuffer with blurred image 
@@ -203,7 +196,7 @@ void Renderer::Draw(Level* level)
 		glBindTextureUnit(0, framebuffer.getTextureColor().getHandle());
 		//glBindTextureUnit(1, luminances[1]->getHandle()); //TODO
 		glBindTextureUnit(1, luminance1x1);
-		glBindTextureUnit(2, bloom2.getTextureColor().getHandle());
+		glBindTextureUnit(2, bloom1.getTextureColor().getHandle());
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 	}
 	else
@@ -212,7 +205,7 @@ void Renderer::Draw(Level* level)
 	}
 }
 
-void Renderer::swapLuminance()// swap current and adapter luminances
+void Renderer::swapLuminance()
 {
 	std::swap(luminances[0], luminances[1]);
 }

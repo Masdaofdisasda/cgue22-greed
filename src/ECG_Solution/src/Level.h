@@ -101,7 +101,6 @@ public:
 	Level(const char* scenePath);
 	~Level() { Release(); }
 
-	void Draw() const;
 	void DrawGraph();
 
 	LightSources* getLights() { return &lights; }

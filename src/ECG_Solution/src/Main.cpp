@@ -287,6 +287,7 @@ int main(int argc, char** argv)
 		perframeData.ViewProj = projection * view;
 		perframeData.ViewProjSkybox = projection * glm::mat4(glm::mat3(view)); // remove translation
 		perframeData.viewPos = glm::vec4(camera.getPosition(), 1.0f);
+		perframeData.deltaTime.x = deltaSeconds;
 
 		// actual draw call
 		renderer.Draw(&level);

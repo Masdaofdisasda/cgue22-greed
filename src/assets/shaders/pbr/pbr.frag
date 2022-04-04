@@ -53,6 +53,7 @@ layout(std140, binding = 0) uniform PerFrameData
 	mat4 ViewProj;
 	mat4 ViewProjSkybox;
 	vec4 bloom;
+	vec4 deltaTime;
     vec4 normalMap;
 };
 

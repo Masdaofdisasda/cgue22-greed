@@ -2,23 +2,28 @@
 // https://google.github.io/filament/Filament.md.html#mjx-eqn-adaptation
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
-layout(rgba16f, binding = 0) uniform readonly  image2D imgLuminancePrev;
-layout(rgba16f, binding = 1) uniform readonly  image2D imgLuminanceCurr;
-layout(rgba16f, binding = 2) uniform writeonly image2D imgLuminanceAdapted;
+layout(rgba16f, binding = 0) uniform readonly  image2D imgAdaptedL;
+layout(rgba16f, binding = 1) uniform readonly  image2D imgCurrentL;
+layout(rgba16f, binding = 2) uniform writeonly image2D imgOutput;
 
-layout(std140, binding = 4) uniform PerFrameSettings
+layout(std140, binding = 0) uniform PerFrameData
 {
+	vec4 viewPos;
+	mat4 ViewProj;
+	mat4 ViewProjSkybox;
 	vec4 bloom;
+	vec4 deltaTime;
+    vec4 normalMap;
 };
 
 void main()
 {
 	float adaptationSpeed = bloom.w;
 
-   float lumPrev = imageLoad(imgLuminancePrev, ivec2(0, 0)).x;
-   float lumCurr = imageLoad(imgLuminanceCurr, ivec2(0, 0)).x;
+   float adaptedL = imageLoad(imgAdaptedL, ivec2(0, 0)).x;
+   float currentL = imageLoad(imgCurrentL, ivec2(0, 0)).x;
+   
+   float newAdaptation = adaptedL + (currentL - adaptedL) * (1.0 - exp(-deltaTime.x * adaptationSpeed));
 
-   float newAdaptation = lumPrev + (lumCurr - lumPrev) * (1.0 - pow(0.98, 30.0 * adaptationSpeed));
-
-	imageStore(imgLuminanceAdapted, ivec2(0, 0), vec4(vec3(newAdaptation), 1.0));
+	imageStore(imgOutput, ivec2(0, 0), vec4(vec3(newAdaptation), 1.0));
 }
