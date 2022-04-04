@@ -52,6 +52,7 @@ struct BoundingBox		// might be used for frustum culling
 
 struct Hierarchy		// implements a simple scene graph for transformations
 {
+	const char* name;
 	Hierarchy* parent;						// parent node
 	std::vector <Hierarchy> children;		// children nodes
 	std::vector<uint32_t> modelIndices;		// models in this node

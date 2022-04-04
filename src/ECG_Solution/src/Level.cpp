@@ -68,6 +68,7 @@ Level::Level(const char* scenePath) {
 	std::cout << "build scene hierarchy..." << std::endl;
 	aiNode* n = scene->mRootNode;
 	Hierarchy child;
+	sceneGraph.name = "root";
 	sceneGraph.parent = nullptr;
 	sceneGraph.children.push_back(child);
 	sceneGraph.localTransform = glm::mat4(1);
@@ -99,9 +100,9 @@ subMesh Level::extractMesh(const aiMesh* mesh)
 	// extract vertices from the aimesh
 	for (size_t j = 0; j < mesh->mNumVertices; j++)
 	{
-		const aiVector3D p = mesh->HasPositions() ? mesh->mVertices[j] : aiVector3D();
-		const aiVector3D n = mesh->HasNormals() ? mesh->mNormals[j] : aiVector3D();
-		const aiVector3D t = mesh->HasTextureCoords(0) ? mesh->mTextureCoords[0][j] : aiVector3D();
+		const aiVector3D p = mesh->HasPositions() ? mesh->mVertices[j] : aiVector3D(0.0f);
+		const aiVector3D n = mesh->HasNormals() ? mesh->mNormals[j] : aiVector3D(0.0f,1.0f,0.0f);
+		const aiVector3D t = mesh->HasTextureCoords(0) ? mesh->mTextureCoords[0][j] : aiVector3D(0.5f,0.5f,0.0f);
 
 		vertices.push_back(p.x);
 		vertices.push_back(p.y);
@@ -177,6 +178,8 @@ Material Level::loadMaterials(const aiMaterial* M)
 
 void Level::traverseTree(aiNode* n, Hierarchy* parent, Hierarchy* node)
 {
+	node->name = n->mName.C_Str();
+
 	node->parent = parent;
 
 	for (unsigned int i = 0; i < n->mNumMeshes; i++)
@@ -281,7 +284,19 @@ void Level::loadLights(const aiScene* scene) {
 			const aiVector3D pos = light->mPosition;
 			const aiColor3D col = light->mColorDiffuse;
 
-			glm::vec4 position = glm::vec4(pos.x, pos.y, pos.z, 1.0f);
+			glm::vec4 p = glm::vec4(1);
+			for (size_t i = 0; i < sceneGraph.children[0].children.size(); i++)
+			{
+				if (strcmp(sceneGraph.children[0].children[i].name, "pointLight1") == 0) {
+					p = sceneGraph.localTransform *
+						sceneGraph.children[0].localTransform *
+						sceneGraph.children[0].children[i].localTransform *
+						p;
+				}
+			}
+
+			glm::vec4 position = glm::vec4(p.x, p.y, p.z, 1.0f);
+			//glm::vec4 position = glm::vec4(pos.x, pos.y, pos.z, 1.0f);
 			glm::vec4 intensity = glm::vec4(col.r, col.g, col.b, 1.0f);
 
 			lights.point.push_back(PositionalLight{ position, intensity });
