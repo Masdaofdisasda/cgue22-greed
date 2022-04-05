@@ -49,7 +49,6 @@ const double PI = 3.141592653589793238463;
 
 static btConvexHullShape* getHullShapeFromMesh(Mesh* mesh);
 static btRigidBody makeRigidbody(btQuaternion rot, btVector3 pos, btCollisionShape* col, btScalar mass);
-static void print(string s);
 static glm::vec3 btToGlmVector(btVector3 input);
 
 /* --------------------------------------------- */
@@ -58,7 +57,7 @@ static glm::vec3 btToGlmVector(btVector3 input);
 
 int main(int argc, char** argv)
 {
-	print("starting program...\n");
+	printf("Starting program...\n");
 
 	/* --------------------------------------------- */
 	// Load settings.ini
@@ -104,11 +103,11 @@ int main(int argc, char** argv)
 			{
 				if (globalState.fullscreen_)
 				{
-					print("fullscreen off");
+					printf("Fullscreen off");
 					globalState.fullscreen_ = false;
 				}
 				else {
-					print("fullscreen on");
+					printf("Fullscreen on");
 					globalState.fullscreen_ = true;
 				}
 			}
@@ -128,11 +127,11 @@ int main(int argc, char** argv)
 			{
 				if (globalState.bloom_)
 				{
-					print("bloom off");
+					printf("Bloom off");
 					globalState.bloom_ = false;
 				}
 				else {
-					print("bloom on");
+					printf("Bloom on");
 					globalState.bloom_ = true;
 				}
 			}
@@ -140,11 +139,11 @@ int main(int argc, char** argv)
 			{
 				if (globalState.debugDrawPhysics)
 				{
-					print("physics debugging off");
+					printf("Physics debugging off");
 					globalState.debugDrawPhysics = false;
 				}
 				else {
-					print("physics debugging on");
+					printf("Physics debugging on");
 					globalState.debugDrawPhysics = true;
 				}
 			}
@@ -170,15 +169,15 @@ int main(int argc, char** argv)
 	);
 
 	// load all OpenGL function pointers with GLEW
-	print("initializing GLEW...");
+	printf("Initializing GLEW...");
 	glewExperimental = GL_TRUE;
 	if (glewInit() != GLEW_OK)
-		EXIT_WITH_ERROR("failed to load GLEW");
+		EXIT_WITH_ERROR("Failed to load GLEW");
 
 	//part of the ECG magical framework
-	print("initialize framework...\n");
+	printf("Initializing framework...\n");
 	if (!initFramework())
-		EXIT_WITH_ERROR("failed to init framework");
+		EXIT_WITH_ERROR("Failed to init framework");
 
 	glEnable(GL_DEBUG_OUTPUT);
 	glDebugMessageCallback(Debugger::DebugCallbackDefault, 0);
@@ -187,7 +186,7 @@ int main(int argc, char** argv)
 	// Initialize scene and render loop
 	/* --------------------------------------------- */
 
-	print("initialize scene and render loop...");
+	printf("Initializing scene and render loop...");
 
 	// load models and textures
 	LevelInterface* level = new ModelTesterLevel();
@@ -199,7 +198,7 @@ int main(int argc, char** argv)
 	Material wood("assets/textures/wood");
 
 	Mesh coin1 = Mesh("assets/models/coin.obj", &wood);
-	coin1.setMatrix(glm::vec3(1.0f, -1.0f, -5.0f), 10.0f, glm::vec3(1.0f, -1.0f, 0.0f), glm::vec3(0.5));
+	coin1.setMatrix(glm::vec3(1.0f, -1.0f, -5.0f), 10.0f, glm::vec3(1.0f, -1.0f, 0.0f), glm::vec3(1));
 	Mesh coin2 = Mesh("assets/models/coin.obj", &rock);
 	coin2.setMatrix(glm::vec3(0.0f, 0.0f, -7.0f), 90.0f, glm::vec3(-1.0f, .0f, 0.0f), glm::vec3(0.5));
 	Mesh coin3 = Mesh("assets/models/coin.obj", &gold);
@@ -225,9 +224,7 @@ int main(int argc, char** argv)
 	bulletDebugDrawer->setDebugMode(btIDebugDraw::DBG_DrawWireframe);
 	dynamics_world->setDebugDrawer(bulletDebugDrawer);
 
-	//btCollisionShape* collider = getHullShapeFromMesh(&coin1);
-	btVector3* boxSize = new btVector3(1.0, 0.25, 1.0);
-	btCollisionShape* collider = new btBoxShape(*boxSize);
+	btCollisionShape* collider = getHullShapeFromMesh(&coin1);
 	btRigidBody fallingCoin = makeRigidbody(btQuaternion(btVector3(1, 0, 0), 45), btVector3(0.0, 0.0, 0.0), collider, 1);
 
 	btVector3* boxSize2 = new btVector3(20, 0.0, 20.0);
@@ -249,7 +246,7 @@ int main(int argc, char** argv)
 
 	//---------------------------------- RENDER LOOP ----------------------------------//
 
-	print("enter render loop...");
+	printf("Entering render loop...");
 	while (!glfwWindowShouldClose(GLFWapp.getWindow()))
 	{
 		fpsCounter.tick(deltaSeconds);
@@ -315,7 +312,7 @@ int main(int argc, char** argv)
 	/* --------------------------------------------- */
 
 
-	print("exit programm...");
+	printf("Exiting programm...");
 
 	return EXIT_SUCCESS;
 }
@@ -342,10 +339,6 @@ static btRigidBody makeRigidbody(btQuaternion rot, btVector3 pos, btCollisionSha
 	btVector3 inertia;
 	col->calculateLocalInertia(mass, inertia);
 	return btRigidBody(mass, motionSate, col, inertia);
-}
-
-static void print(string s) {
-	std::cout << s << std::endl;
 }
 
 static glm::vec3 btToGlmVector(btVector3 input) {
