@@ -1,19 +1,20 @@
 #include "Renderer.h"
 
-Renderer::Renderer(GlobalState& state, PerFrameData& pfdata, LightSources lights)
+Renderer::Renderer(GlobalState& state, PerFrameData& pfdata, LightSources& sources)
 {
 	// initialize Renderer
 	globalState = &state; // link global variables
 	perframeData = &pfdata; // link per frame data
-	this->lights = lights; // set lights and lightcounts for shaders
+	lights = sources; // set lights and lightcounts for shaders
 	buildShaderPrograms(); // build shader programs
 	setRenderSettings();	// set effect settings 
 	fillLightsources(); // binds lights to binding points in shader
 	perframeBuffer.fillBuffer(pfdata); // load UBO to shader;
-	perframesetBuffer.fillBuffer(perframsets);
 
 	prepareFramebuffers(); // for hdr rendering
-	IBL.loadHDR("assets/textures/cubemap/cellar.pic"); //load global enviroment cubemaps
+	std::cout << "load enviroment map and process it.." << std::endl;
+	IBL.loadHDR("assets/textures/cubemap/cellar.pic");
+	std::cout << "load skybox and process it.." << std::endl;
 	skyTex.loadHDR("assets/textures/cubemap/cloudy.hdr");
 }
 
@@ -28,10 +29,10 @@ GlobalState Renderer::loadSettings(GlobalState state)
 	state.height = reader.GetInteger("window", "height", 800);
 	state.refresh_rate = reader.GetInteger("window", "refresh_rate", 60);
 	state.fullscreen_ = reader.GetBoolean("window", "fullscreen", false);
-	state.window_title = reader.Get("window", "title", "ECG 2021");
+	state.window_title = reader.Get("window", "title", "Greed");
 	state.fov = reader.GetReal("camera", "fov", 60.0f);
 	state.Znear = reader.GetReal("camera", "near", 0.1f);
-	state.Zfar = reader.GetReal("camera", "far", 100.0f);
+	state.Zfar = reader.GetReal("camera", "far", 1000.0f);
 
 	state.exposure_ = reader.GetReal("image", "exposure", 0.9f);
 	state.maxWhite_ = reader.GetReal("image", "maxWhite", 1.07f);
@@ -57,8 +58,10 @@ void Renderer::fillLightsources()
 
 void Renderer::setRenderSettings()
 {
-	perframsets.bloom = glm::vec4(globalState->exposure_, globalState->maxWhite_, 
+	perframeData->bloom = glm::vec4(globalState->exposure_, globalState->maxWhite_,
 		globalState->bloomStrength_,globalState->adaptationSpeed_);
+
+	perframeData->normalMap = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
 void Renderer::buildShaderPrograms()
@@ -105,18 +108,17 @@ void Renderer::prepareFramebuffers() {
 	glGenTextures(1, &luminance1x1);
 	glTextureView(luminance1x1, GL_TEXTURE_2D, luminance.getTextureColor().getHandle(), GL_R16F, 6, 1, 0, 1);
 
-	glTextureSubImage2D(luminance1.getHandle(), 0, 0, 0, 1, 1, GL_RGBA, GL_FLOAT, &(brightPixel)[0]);
+	glTextureSubImage2D(luminance0.getHandle(), 0, 0, 0, 1, 1, GL_RGBA, GL_FLOAT, &(glm::vec4(glm::vec3(50.0f), 1.0f))[0]);
 
 }
 
-void Renderer::Draw(std::vector <Mesh*> models)
+void Renderer::Draw(Level* level)
 {
 	
 	glClearNamedFramebufferfv(framebuffer.getHandle(), GL_COLOR, 0, &(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)[0]));
 	glClearNamedFramebufferfi(framebuffer.getHandle(), GL_DEPTH_STENCIL, 0, 1.0f, 0);
 
 	perframeBuffer.Update(*perframeData);
-	perframesetBuffer.Update(perframsets);
 
 
 	// 1. pass - render scene to framebuffer
@@ -131,12 +133,11 @@ void Renderer::Draw(std::vector <Mesh*> models)
 		glDepthFunc(GL_LESS);
 
 		// draw models
+		glEnable(GL_CULL_FACE);
 		PBRShader.Use();
-		for (auto& model : models)
-		{
-			PBRShader.uploadIBL(&IBL);
-			PBRShader.Draw(*model);
-		}
+		PBRShader.uploadIBL(&IBL);
+		level->DrawGraph();
+		glDisable(GL_CULL_FACE);
 
 	framebuffer.unbind(); 
 	glGenerateTextureMipmap(framebuffer.getTextureColor().getHandle());
@@ -155,15 +156,9 @@ void Renderer::Draw(std::vector <Mesh*> models)
 	// 3. pass - compute light adaption (OpenGL memory model requires these memory barriers: https://www.khronos.org/opengl/wiki/Memory_Model )
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 	lightAdapt.Use();
-#if 0
-	// Either way is possible. In this case, all access modes will be GL_READ_WRITE
-	const GLuint imageTextures[] = { luminances[0]->getHandle(), luminance1x1, luminances[1]->getHandle() };
-	glBindImageTextures(0, 3, imageTextures);
-#else
 	glBindImageTexture(0, luminances[0]->getHandle(), 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA16F);
 	glBindImageTexture(1, luminance1x1, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA16F);
 	glBindImageTexture(2, luminances[1]->getHandle(), 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA16F);
-#endif
 	glDispatchCompute(1, 1, 1);
 	glMemoryBarrier(GL_TEXTURE_FETCH_BARRIER_BIT);
 
@@ -173,23 +168,23 @@ void Renderer::Draw(std::vector <Mesh*> models)
 		glBindTextureUnit(0, framebuffer.getTextureColor().getHandle());
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 	brightPass.unbind();
-	glBlitNamedFramebuffer(brightPass.getHandle(), bloom2.getHandle(), 0, 0, 256, 256, 0, 0, 256, 256, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+	glBlitNamedFramebuffer(brightPass.getHandle(), bloom1.getHandle(), 0, 0, 256, 256, 0, 0, 256, 256, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
 	// 5. pass - blur bright spots using ping pong buffers and a seperate blur in x and y direction
-	for (int i = 0; i != 4; i++)
+	for (int i = 0; i < 4; i++)
 	{
 		// blur x
-		bloom1.bind();
+		bloom0.bind();
 			BlurX.Use();
-			glBindTextureUnit(0, bloom2.getTextureColor().getHandle());
-			glDrawArrays(GL_TRIANGLES, 0, 6);
-		bloom1.unbind();
-		// blur y
-		bloom2.bind();
-			BlurY.Use();
 			glBindTextureUnit(0, bloom1.getTextureColor().getHandle());
 			glDrawArrays(GL_TRIANGLES, 0, 6);
-		bloom2.unbind();
+		bloom0.unbind();
+		// blur y
+		bloom1.bind();
+			BlurY.Use();
+			glBindTextureUnit(0, bloom0.getTextureColor().getHandle());
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+		bloom1.unbind();
 	}
 
 	// 6. pass - combine framebuffer with blurred image 
@@ -201,7 +196,7 @@ void Renderer::Draw(std::vector <Mesh*> models)
 		glBindTextureUnit(0, framebuffer.getTextureColor().getHandle());
 		//glBindTextureUnit(1, luminances[1]->getHandle()); //TODO
 		glBindTextureUnit(1, luminance1x1);
-		glBindTextureUnit(2, bloom2.getTextureColor().getHandle());
+		glBindTextureUnit(2, bloom1.getTextureColor().getHandle());
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 	}
 	else
@@ -210,7 +205,7 @@ void Renderer::Draw(std::vector <Mesh*> models)
 	}
 }
 
-void Renderer::swapLuminance()// swap current and adapter luminances
+void Renderer::swapLuminance()
 {
 	std::swap(luminances[0], luminances[1]);
 }

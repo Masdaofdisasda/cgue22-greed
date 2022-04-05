@@ -11,38 +11,32 @@ class Material
 {
 public:
 	Material(const char* texPath);
+	Material(const char* texPath, const char* name);
 	~Material() { Release(); };
 
-	Texture* getAlbedo()
-	{
-		return &textures[0];
-	}
-	Texture* getNormalmap()
-	{
-		return &textures[1];
-	}
-	Texture* getMetallic()
-	{
-		return &textures[2];
-	}
-	Texture* getRoughness()
-	{
-		return &textures[3];
-	}
-	Texture* getAOmap()
-	{
-		return &textures[4];
-	}
+	GLuint getAlbedo() const { return albedo; }
+	GLuint getNormalmap() const { return normal; }
+	GLuint getMetallic() const { return metal; }
+	GLuint getRoughness() const { return rough; }
+	GLuint getAOmap() const { return ao; }
+
+	void clear();
 
 private:
-	
-	std::vector<Texture> textures;
+	std::string id;
+
+	GLuint albedo = 0;
+	GLuint normal = 0;
+	GLuint metal = 0;
+	GLuint rough = 0;
+	GLuint ao = 0;
 
 	//helper functions for easier loading
 	const char* append(const char* texPath, char* texType);
 
 	void Release()
 	{
+		// TODO delete textures
 	}
 
 };

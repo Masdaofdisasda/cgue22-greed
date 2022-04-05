@@ -6,7 +6,7 @@
 
 
 /*
- Main funtion of the game "Greed" by David Köppl and Nicolas Eder
+ Main funtion of the game "Greed" by David Kï¿½ppl and Nicolas Eder
  contains initialization, resource loading and render loop
 */
 
@@ -43,7 +43,7 @@ struct MouseState
 } mouseState;
 
 
-CameraPositioner_FirstPerson positioner(glm::vec3(0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+CameraPositioner_FirstPerson positioner(glm::vec3(0.0f, 0.0f, 10.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 Camera camera(positioner);
 const double PI = 3.141592653589793238463;
 
@@ -147,6 +147,18 @@ int main(int argc, char** argv)
 					globalState.debugDrawPhysics = true;
 				}
 			}
+			if (key == GLFW_KEY_F5 && action == GLFW_PRESS)
+			{
+				if (perframeData.normalMap.x > 0.0f)
+				{
+					printf("normal mapping off");
+					perframeData.normalMap.x *= -1.0f;
+				}
+				else {
+					printf("normal mapping on");
+					perframeData.normalMap.x *= -1.0f;
+				}
+			}
 		});
 	glfwSetMouseButtonCallback(GLFWapp.getWindow(),
 		[](auto* window, int button, int action, int mods)
@@ -188,10 +200,6 @@ int main(int argc, char** argv)
 
 	printf("Initializing scene and render loop...");
 
-	// load models and textures
-	LevelInterface* level = new ModelTesterLevel();
-	Renderer renderer(globalState, perframeData, level->getLights());
-
 	//-------------------------WIP------------------------------------------//
 	Material gold("assets/textures/coin");
 	Material rock("assets/textures/rockground");
@@ -211,6 +219,13 @@ int main(int argc, char** argv)
 	models.push_back(&coin2);
 	models.push_back(&coin3);
 	models.push_back(&groundPlane);
+
+	printf("Loading level...");
+	//Level level("assets/Bistro_v5_2/BistroInterior.fbx"); // https://developer.nvidia.com/orca/amazon-lumberyard-bistro
+	Level level("assets/test.fbx"); 
+	printf("Intializing renderer...");
+	Renderer renderer(globalState, perframeData, *level.getLights());
+
 
 	//Bullet Initialization
 	printf("Initializing bullet physics...\n");
@@ -266,6 +281,7 @@ int main(int argc, char** argv)
 		GLFWapp.updateWindow();
 
 		// calculate physics
+		/*
 		dynamics_world->stepSimulation(deltaSeconds);
 
 		glm::vec3 pos = btToGlmVector(fallingCoin.getCenterOfMassTransform().getOrigin());
@@ -278,7 +294,7 @@ int main(int argc, char** argv)
 		float deg2 = (float)(staticPlane.getOrientation().getAngle() * 180 / PI);
 		glm::vec3 axis2 = btToGlmVector(staticPlane.getOrientation().getAxis());
 		glm::vec3 scale2 = glm::vec3(20.0f, 1.0f, 20.0f);
-		models[3]->setMatrix(pos2, deg2, axis2, scale2);
+		models[3]->setMatrix(pos2, deg2, axis2, scale2);*/
 
 		// calculate and set per Frame matrices
 		const float ratio = globalState.width / (float)globalState.height;
@@ -287,9 +303,10 @@ int main(int argc, char** argv)
 		perframeData.ViewProj = projection * view;
 		perframeData.ViewProjSkybox = projection * glm::mat4(glm::mat3(view)); // remove translation
 		perframeData.viewPos = glm::vec4(camera.getPosition(), 1.0f);
+		perframeData.deltaTime.x = deltaSeconds;
 
 		// actual draw call
-		renderer.Draw(models);
+		renderer.Draw(&level);
 		if (globalState.debugDrawPhysics) {
 			dynamics_world->debugDrawWorld();
 			bulletDebugDrawer->draw();

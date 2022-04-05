@@ -1,5 +1,6 @@
 #version 460
 
+// in and out variables
 layout (location=0) out vec4 out_FragColor;
 
 in vec3 fNormal;
@@ -7,7 +8,6 @@ in vec3 fPosition;
 in vec2 fUV;
 
 // light sources
-// use vec4 instead vec3 for GLSL std140 data layout standard
 struct DirectionalLight
 {
 	vec4 direction;
@@ -15,12 +15,23 @@ struct DirectionalLight
 	vec4 intensity;
 };
 
+layout (std140, binding = 1) uniform dLightUBlock {
+ DirectionalLight dLights [ dMAXLIGHTS ]; // xMAXLIGHTS gets replaced at runtime
+};
+uniform uint dLightCount ;
+
 struct PositionalLight
 {
 	vec4 position;
     vec4 intensity;
 };
 
+layout (std140, binding = 2) uniform pLightUBlock {
+ PositionalLight pLights [ pMAXLIGHTS ];
+};
+uniform uint pLightCount ;
+
+// model textures and ibl cubemaps
 struct Material
 {
 	sampler2D albedo;
@@ -32,29 +43,21 @@ struct Material
     samplerCube prefilter;
     sampler2D brdfLut;
 };
+uniform Material material;
 
+
+// constant per frame data
 layout(std140, binding = 0) uniform PerFrameData
 {
 	vec4 viewPos;
 	mat4 ViewProj;
 	mat4 ViewProjSkybox;
+	vec4 bloom;
+	vec4 deltaTime;
+    vec4 normalMap;
 };
 
-// light source data in uniform blocks
-// MAXLIGHTS gets replaced at runtime
-layout (std140, binding = 1) uniform dLightUBlock {
- DirectionalLight dLights [ dMAXLIGHTS ];
-};
-uniform uint dLightCount ;
-
-layout (std140, binding = 2) uniform pLightUBlock {
- PositionalLight pLights [ pMAXLIGHTS ];
-};
-uniform uint pLightCount ;
-
-uniform Material material;
-
-//todo
+// Global variables
 vec3 albedo = pow(texture(material.albedo, fUV).rgb, vec3(2.2));
 float metallic = texture(material.metallic, fUV).r;
 float roughness = texture(material.roughness, fUV).r;
@@ -62,25 +65,41 @@ float ao = texture(material.ao,fUV).r;
 
 const float PI = 3.14159265359;
 
-vec3 Idirectional(DirectionalLight light, vec3 N, vec3 fPosition, vec3 V, vec3 F0);
-vec3 Ipoint(PositionalLight light, vec3 N, vec3 fPosition, vec3 V, vec3 F0);
-vec3 calculateLight();
 
-vec3 getNormalFromMap()
+// helper functions
+
+// http://www.thetenthplanet.de/archives/1180
+mat3 cotangentFrame( vec3 N, vec3 p, vec2 uv )
 {
-    vec3 tangentNormal = texture(material.normal, fUV).xyz * 2.0 - 1.0;
+	// get edge vectors of the pixel triangle
+	vec3 dp1 = dFdx( p );
+	vec3 dp2 = dFdy( p );
+	vec2 duv1 = dFdx( uv );
+	vec2 duv2 = dFdy( uv );
 
-    vec3 Q1  = dFdx(fPosition);
-    vec3 Q2  = dFdy(fPosition);
-    vec2 st1 = dFdx(fUV);
-    vec2 st2 = dFdy(fUV);
+	// solve the linear system
+	vec3 dp2perp = cross( dp2, N );
+	vec3 dp1perp = cross( N, dp1 );
+	vec3 T = dp2perp * duv1.x + dp1perp * duv2.x;
+	vec3 B = dp2perp * duv1.y + dp1perp * duv2.y;
 
-    vec3 N   = normalize(fNormal);
-    vec3 T  = normalize(Q1*st2.t - Q2*st1.t);
-    vec3 B  = -normalize(cross(N, T));
-    mat3 TBN = mat3(T, B, N);
+	// construct a scale-invariant frame
+	float invmax = inversesqrt( max( dot(T,T), dot(B,B) ) );
 
-    return normalize(TBN * tangentNormal);
+	// calculate handedness of the resulting cotangent frame
+	float w = (dot(cross(N, T), B) < 0.0) ? -1.0 : 1.0;
+
+	// adjust tangent if needed
+	T = T * w;
+
+	return mat3( T * invmax, B * invmax, N );
+}
+
+vec3 perturbNormal(vec3 n, vec3 v, vec3 normalSample, vec2 uv)
+{
+	vec3 map = normalize( 2.0 * normalSample - vec3(1.0) );
+	mat3 TBN = cotangentFrame(n, v, uv);
+	return normalize(TBN * map);
 }
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)
@@ -128,56 +147,6 @@ vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
     return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }   
 
-void main()
-{
-    vec3 light = calculateLight();
-    out_FragColor = vec4(light, 1.0);
-}
-
-vec3 calculateLight() {
-	
-    vec3 N = getNormalFromMap();
-	vec3 V = normalize(vec3(viewPos) - fPosition);
-    vec3 R = reflect(-V, N);
-    
-    // calculate reflectance at normal incidence; if dia-electric (like plastic) use F0 
-    // of 0.04 and if it's a metal, use the albedo color as F0 (metallic workflow)    
-    vec3 F0 = vec3(0.04); 
-    F0 = mix(F0, albedo, metallic);
-    vec3 F; // needs to be at the top, otherwise it will be "undefined"
-
-    // reflectance equation
-    vec3 Lo = vec3(0.0);
-
-	// add the directional light's contribution to the output
-	for(int i = 0; i < dLightCount; i++)
-	Lo += Idirectional(dLights[i], N, fPosition, V, F0);
-
-	// do the same for all point lights
-	for(int i = 0; i < pLightCount; i++)
-  	Lo += Ipoint(pLights[i], N, fPosition, V, F0);
-
-    // ambient lighting (we now use IBL as the ambient term)
-    F = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);    
-    vec3 kS = F;
-    vec3 kD = 1.0 - kS;
-    kD *= 1.0 - metallic;	  
-    
-    vec3 irradiance = texture(material.irradiance, N).rgb;
-    vec3 diffuse      = irradiance * albedo;
-
-    // sample both the pre-filter map and the BRDF lut and combine them together as per the Split-Sum approximation to get the IBL specular part.
-    const float MAX_REFLECTION_LOD = 4.0;
-    vec3 prefilteredColor = textureLod(material.prefilter, R,  roughness * MAX_REFLECTION_LOD).rgb;    
-    vec2 brdf  = texture(material.brdfLut, vec2(max(dot(N, V), 0.0), roughness)).rg;
-    vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
-    
-    vec3 ambient = (kD * diffuse + specular) * ao;
-    
-    vec3 color = ambient + Lo;
-
-    return color;
-}
 
 // calculate directional lights
 vec3 Idirectional(DirectionalLight light, vec3 N, vec3 fPosition, vec3 V, vec3 F0)
@@ -218,7 +187,7 @@ vec3 Idirectional(DirectionalLight light, vec3 N, vec3 fPosition, vec3 V, vec3 F
 // calculate postional lights
 vec3 Ipoint(PositionalLight light, vec3 N, vec3 fPosition, vec3 V, vec3 F0)
 {
-    // calculate per-light radiance
+        // calculate per-light radiance
         vec3 L = normalize(vec3(light.position) - fPosition);
         vec3 H = normalize(V + L);
         float distance = length(vec3(light.position) - fPosition);
@@ -249,6 +218,60 @@ vec3 Ipoint(PositionalLight light, vec3 N, vec3 fPosition, vec3 V, vec3 F0)
         float NdotL = max(dot(N, L), 0.0);        
 
         // add to outgoing radiance Lo
-        return (kD * albedo / PI + specular) * radiance * NdotL; // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
+        return (kD * albedo / PI + specular) * radiance * NdotL;
     
+}
+
+vec3 calculateLight() {
+	
+    vec3 N = normalize(fNormal);
+	vec3 V = normalize(vec3(viewPos) - fPosition);
+    if (normalMap.x > 0.0f) N = perturbNormal(normalize(fNormal), V, texture(material.normal, fUV).xyz, fUV);
+    vec3 R = reflect(-V, N);
+    
+    // calculate reflectance at normal incidence; if dia-electric (like plastic) use F0 
+    // of 0.04 and if it's a metal, use the albedo color as F0 (metallic workflow)    
+    vec3 F0 = vec3(0.04); 
+    F0 = mix(F0, albedo, metallic);
+    vec3 F; // needs to be at the top, otherwise it will be "undefined"
+
+    // reflectance equation
+    vec3 Lo = vec3(0.0);
+
+	// add the directional light's contribution to the output
+	for(int i = 0; i < dLightCount; i++)
+	Lo += Idirectional(dLights[i], N, fPosition, V, F0);
+
+	// do the same for all point lights
+	for(int i = 0; i < pLightCount; i++)
+  	Lo += Ipoint(pLights[i], N, fPosition, V, F0);
+
+    // ambient lighting (we now use IBL as the ambient term)
+    F = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);    
+    vec3 kS = F;
+    vec3 kD = 1.0 - kS;
+    kD *= 1.0 - metallic;	  
+    
+    vec3 irradiance = texture(material.irradiance, N).rgb;
+    vec3 diffuse      = irradiance * albedo;
+
+    // sample both the pre-filter map and the BRDF lut and combine them together as per the Split-Sum approximation to get the IBL specular part.
+    const float MAX_REFLECTION_LOD = 4.0;
+    vec3 prefilteredColor = textureLod(material.prefilter, R,  roughness * MAX_REFLECTION_LOD).rgb;    
+    vec2 brdf  = texture(material.brdfLut, vec2(max(dot(N, V), 0.0), roughness)).rg;
+    vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
+    
+    vec3 ambient = (kD * diffuse + specular) * ao;
+    
+    vec3 color = ambient + Lo;
+    
+    return color;
+}
+
+
+void main()
+{
+    vec3 light = calculateLight();
+    // Tonemapping is done in CombineHDR.frag
+    out_FragColor = vec4(light, 1.0);
 }

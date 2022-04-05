@@ -6,14 +6,16 @@
 #include "LightSource.h"
 #include "UBO.h"
 #include "Framebuffer.h"
+#include "Level.h"
 
 class Renderer
 {
 public:
-	Renderer(GlobalState& state, PerFrameData& pfdata, LightSources lights);
+	Renderer(GlobalState& state, PerFrameData& pfdata, LightSources& sources);
 	~Renderer();
 
-	void Draw(std::vector <Mesh*> models);
+	//void Draw(std::vector <Mesh*> models);
+	void Draw(Level* level);
 	void swapLuminance();
 
 	GlobalState static loadSettings(GlobalState state);
@@ -21,7 +23,6 @@ private:
 	// Render Settings
 	GlobalState* globalState;
 	PerFrameData* perframeData;	// viewproj, viewpos,...
-	PerFrameSettings perframsets; // effect settings
 	UBO perframeBuffer;	
 	UBO perframesetBuffer;
 
@@ -48,15 +49,15 @@ private:
 	// Framebuffers for HDR/Bloom
 	GLuint luminance1x1;
 	// Framebuffer size cant be changed after init eg. window reisizing not correctly working
-	Framebuffer framebuffer = Framebuffer(1920, 1080, GL_RGBA16F, GL_DEPTH_COMPONENT24);
-	Framebuffer luminance = Framebuffer(64, 64, GL_R16F, 0);
+	Framebuffer framebuffer = Framebuffer(1920, 1080, GL_RGBA16F, GL_DEPTH_COMPONENT24); // main render target for processing
+	Framebuffer luminance = Framebuffer(64, 64, GL_R16F, 0);		
 	Framebuffer brightPass = Framebuffer(256, 256, GL_RGBA16F, 0);
+	Framebuffer bloom0 = Framebuffer(256, 256, GL_RGBA16F, 0); 
 	Framebuffer bloom1 = Framebuffer(256, 256, GL_RGBA16F, 0);
-	Framebuffer bloom2 = Framebuffer(256, 256, GL_RGBA16F, 0);
+	Texture luminance0 = Texture(GL_TEXTURE_2D, 1, 1, GL_RGBA16F);
 	Texture luminance1 = Texture(GL_TEXTURE_2D, 1, 1, GL_RGBA16F);
-	Texture luminance2 = Texture(GL_TEXTURE_2D, 1, 1, GL_RGBA16F);
-	const Texture* luminances[2] = { &luminance1, &luminance2 };
-	const glm::vec4 brightPixel = glm::vec4(glm::vec3(50.0f), 1.0f);
+	const Texture* luminances[2] = { &luminance0, &luminance1 };
+	//const glm::vec4 brightPixel = glm::vec4(glm::vec3(50.0f), 1.0f);
 
 	void fillLightsources();
 	void buildShaderPrograms(); 

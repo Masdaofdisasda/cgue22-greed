@@ -109,7 +109,11 @@ Mesh::Mesh(const char* fileName, Material* mat)
 	unsigned int numNodeBuff;
 
 	
-	modelScene = importer.ReadFile(fileName, aiProcess_MakeLeftHanded | aiProcess_FlipWindingOrder | aiProcess_FlipUVs | aiProcess_PreTransformVertices |
+	modelScene = importer.ReadFile(fileName, 
+		aiProcess_MakeLeftHanded | 
+		aiProcess_FlipWindingOrder | 
+		aiProcess_FlipUVs | 
+		aiProcess_PreTransformVertices |
 		aiProcess_CalcTangentSpace |
 		aiProcess_GenSmoothNormals |
 		aiProcess_Triangulate |

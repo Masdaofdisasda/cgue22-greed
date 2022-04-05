@@ -26,6 +26,7 @@ public:
 	~Texture() { Release(); }
 
 	void load(const char* texPath, int texUnit = 0);
+	static GLuint loadTexture(const char* texPath);
 
 	
 	// ensure RAII compliance

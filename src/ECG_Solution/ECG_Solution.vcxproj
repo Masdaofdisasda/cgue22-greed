@@ -5,6 +5,7 @@
     <ClCompile Include="src\Debugger.cpp" />
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\Cubemap.cpp" />
+    <ClCompile Include="src\Level.cpp" />
     <ClCompile Include="src\Material.cpp" />
     <ClCompile Include="src\Program.cpp" />
     <ClCompile Include="src\Renderer.cpp" />
@@ -168,6 +169,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)external\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <AdditionalOptions>/DBT_USE_DOUBLE_PRECISION %(AdditionalOptions)</AdditionalOptions>
+      <LanguageStandard>stdcpp14</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
