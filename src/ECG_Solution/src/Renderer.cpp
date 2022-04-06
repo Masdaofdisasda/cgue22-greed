@@ -123,8 +123,6 @@ void Renderer::Draw(Level* level)
 	glClearNamedFramebufferfi(framebuffer.getHandle(), GL_DEPTH_STENCIL, 0, 1.0f, 0);
 
 	perframeBuffer.Update(*perframeData);
-	PBRShader.uploadIBL(IBL.getIrradianceID(), IBL.getPreFilterID(), IBL.getBdrfLutID(), IBL.getEnvironment());
-
 
 	// 1. pass - render scene to framebuffer
 	glEnable(GL_DEPTH_TEST);
