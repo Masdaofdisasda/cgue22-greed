@@ -87,9 +87,9 @@ private:
 	std::vector <Material> materials;		// contains all needed textures
 	std::vector <BoundingBox> boxes;		// contains all bounding boxes of the meshes
 	std::vector<DrawElementsIndirectCommand> drawCommands_; //TODO
-	Hierarchy sceneGraph;
-	Hierarchy* rigidOjects;
-	Hierarchy* staticObjects;
+	Hierarchy sceneGraph;					// saves scene hierarchy and transformations
+	Hierarchy* rigid;						// parent node of all rigid meshes (ground, walls, ...)
+	Hierarchy* dynamic;						// parent node of all dynamic meshes (items, ...)
 
 	LightSources lights;
 
@@ -111,8 +111,9 @@ public:
 
 	void DrawGraph();
 
+	Hierarchy* getRigidNodes() { return rigid; }
+	Hierarchy* getDynamicNodes() { return dynamic; }
 	LightSources* getLights() { return &lights; }
-
 	std::vector <DirectionalLight> getDirectionalLights() { return lights.directional; }
 	std::vector <PositionalLight> getPointLights() { return lights.point; }
 };

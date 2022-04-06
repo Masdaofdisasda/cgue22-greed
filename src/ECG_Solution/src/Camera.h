@@ -55,7 +55,7 @@ class CameraPositioner_FirstPerson final : public CameraPositionerInterface
 		float acceleration_ = 150.0f;
 		float damping_ = 0.2f; // changes deceleration speed
 		float maxSpeed_ = 10.0f; // clamps movement
-		float fastCoef_ = .1f; // l-shift mode uses this
+		float fastCoef_ = 5.0f; // l-shift mode uses this
 
 
 

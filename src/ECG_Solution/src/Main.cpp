@@ -37,7 +37,7 @@ struct MouseState
 } mouseState;
 
 
-CameraPositioner_FirstPerson positioner(glm::vec3(0.0f, 0.0f, 10.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+CameraPositioner_FirstPerson positioner(glm::vec3(0.0f, 1.85f, 70.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 Camera camera(positioner);
 
 //static btConvexHullShape* getHullShapeFromMesh(Mesh* mesh);

@@ -75,7 +75,17 @@ Level::Level(const char* scenePath) {
 	sceneGraph.localTranslate = glm::vec3();
 	sceneGraph.localRotation = glm::quat();
 	sceneGraph.localScale = glm::vec3(1);
-	traverseTree(n, &sceneGraph, &sceneGraph.children[0]);
+	traverseTree(n, &sceneGraph, &sceneGraph.children[0]); 
+	for (size_t i = 0; i < sceneGraph.children[0].children.size(); i++)
+	{
+		if (strcmp(sceneGraph.children[0].children[i].name, "Rigid") == 0) {
+			rigid = &sceneGraph.children[0].children[i];
+		}
+		if (strcmp(sceneGraph.children[0].children[i].name, "Dynamic") == 0) {
+			dynamic = &sceneGraph.children[0].children[i];
+		}
+	}
+
 
 	// 6. setup buffers for vertex and indices data
 	std::cout << "setup buffers..." << std::endl;
@@ -329,12 +339,13 @@ void Level::drawTraverse(const Hierarchy* node, glm::mat4 globalTransform)
 		{
 			boundMaterial = models[modelIndex].materialIndex;
 
+			const Material& mat = materials[models[modelIndex].materialIndex];
 			const GLuint textures[] = {
-				materials[models[modelIndex].materialIndex].getAlbedo(),
-				materials[models[modelIndex].materialIndex].getNormalmap(),
-				materials[models[modelIndex].materialIndex].getMetallic(),
-				materials[models[modelIndex].materialIndex].getRoughness(),
-				materials[models[modelIndex].materialIndex].getAOmap() };
+				mat.getAlbedo(),
+				mat.getNormalmap(),
+				mat.getMetallic(),
+				mat.getRoughness(),
+				mat.getAOmap() };
 			glBindTextures(0, 5, textures);
 		}
 

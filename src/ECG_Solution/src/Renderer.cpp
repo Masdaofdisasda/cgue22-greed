@@ -135,7 +135,7 @@ void Renderer::Draw(Level* level)
 		glDepthMask(true);
 
 		// draw models
-		glEnable(GL_CULL_FACE);
+		//glEnable(GL_CULL_FACE);
 		PBRShader.Use();
 		level->DrawGraph();
 		glDisable(GL_CULL_FACE);
