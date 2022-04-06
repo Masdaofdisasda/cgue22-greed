@@ -17,7 +17,7 @@ Renderer::Renderer(GlobalState& state, PerFrameData& pfdata, LightSources& sourc
 	std::cout << "load skybox and process it.." << std::endl;
 	skyTex.loadHDR("assets/textures/cubemap/cloudy.hdr");
 	glCreateVertexArrays(1, &emptyVAO);
-	PBRShader.uploadIBL(IBL.getIrradianceID(),IBL.getPreFilterID(), IBL.getBdrfLutID(), IBL.getEnvironment());
+	PBRShader.uploadIBL(IBL.getIrradianceID(),IBL.getPreFilterID(), IBL.getBdrfLutID(), skyTex.getEnvironment());
 }
 
 GlobalState Renderer::loadSettings(GlobalState state)
@@ -130,7 +130,6 @@ void Renderer::Draw(Level* level)
 		skyboxShader.Use();
 		glDepthMask(false);
 		glBindVertexArray(emptyVAO);
-		skyboxShader.setMat4("model", glm::mat4(0));
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 		glDepthMask(true);
 

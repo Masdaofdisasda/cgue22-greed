@@ -14,7 +14,6 @@ public:
 	Renderer(GlobalState& state, PerFrameData& pfdata, LightSources& sources);
 	~Renderer();
 
-	//void Draw(std::vector <Mesh*> models);
 	void Draw(Level* level);
 	void swapLuminance();
 
@@ -39,7 +38,7 @@ private:
 	Program BlurX;			// gauss blur in x direction
 	Program BlurY;			// gauss blur in y direction
 	Program CombineHDR;		// combines blur with render fbo, tone mapping
-	Program lightAdapt;		// controls exposure changes
+	Program lightAdapt;		// calculates luminance changes
 
 	// global Textures
 	Cubemap IBL;

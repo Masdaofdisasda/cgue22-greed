@@ -61,26 +61,18 @@ Program::Program()
 
 void Program::Use()
 {
-	// activate shader programm 
 	glUseProgram(program_ID);
 }
 
-
-void Program::uploadIBL(GLuint Irradiance, GLuint PreFilter, GLuint BdrfLut, GLuint Enviroment)
+void Program::uploadIBL(GLuint Irradiance, GLuint PreFilter, GLuint BdrfLut, GLuint Enviroment) const
 {
 	const GLuint textures[] = {
 				Irradiance,
 				PreFilter,
 				BdrfLut,
 				Enviroment };
-	//glBindTextures(5, 4, textures);
-
-	glBindTextureUnit(5, Irradiance);
-	glBindTextureUnit(6, PreFilter);
-	glBindTextureUnit(7, BdrfLut);
-	glBindTextureUnit(8, Enviroment);
+	glBindTextures(5, 4, textures);
 }
-
 
 void Program::getUniformLocations()
 {

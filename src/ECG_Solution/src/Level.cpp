@@ -200,6 +200,7 @@ void Level::traverseTree(aiNode* n, Hierarchy* parent, Hierarchy* node)
 	}
 
 	glm::decompose(toGlmMat4(n->mTransformation), node->localScale, node->localRotation, node->localTranslate, glm::vec3(), glm::vec4());
+	node->localRotation = glm::conjugate(node->localRotation);
 
 	for (size_t i = 0; i < n->mNumChildren; i++)
 	{

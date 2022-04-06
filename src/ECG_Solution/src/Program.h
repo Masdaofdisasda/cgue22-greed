@@ -41,7 +41,7 @@ public:
 
 	void Use();
 
-	void uploadIBL(GLuint Irradiance, GLuint PreFilter, GLuint BdrfLut, GLuint Enviroment);
+	void uploadIBL (GLuint Irradiance, GLuint PreFilter, GLuint BdrfLut, GLuint Enviroment) const;
 
 	// ensure RAII compliance
 	Program(const Program&) = delete;
