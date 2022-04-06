@@ -4,7 +4,7 @@ layout(std140, binding = 0) uniform PerFrameData
 {
 	vec4 viewPos;
 	mat4 ViewProj;
-	mat4 ViewProjSkybox;
+	mat4 lavaLevel;
 	vec4 bloom;
 	vec4 deltaTime;
     vec4 normalMap;

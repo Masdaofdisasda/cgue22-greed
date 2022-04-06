@@ -218,6 +218,8 @@ int main(int argc, char** argv)
 	);
 	//---------------------------------- /testing ----------------------------------//
 
+	glm::vec3 lavaPosition = glm::vec3(0.0f, -20.0f, 0.0f); // TODO
+
 	glViewport(0, 0, globalState.width, globalState.height);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
@@ -256,7 +258,8 @@ int main(int argc, char** argv)
 		const glm::mat4 projection = glm::perspective(glm::radians(globalState.fov), ratio, globalState.Znear, globalState.Zfar);
 		const glm::mat4 view = camera.getViewMatrix();
 		perframeData.ViewProj = projection * view;
-		perframeData.ViewProjSkybox = projection * glm::mat4(glm::mat3(view)); // remove translation
+		lavaPosition.y += deltaSeconds * 1.0f;
+		perframeData.lavaLevel = glm::translate(lavaPosition);
 		perframeData.viewPos = glm::vec4(camera.getPosition(), 1.0f);
 		perframeData.deltaTime.x = deltaSeconds;
 

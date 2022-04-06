@@ -6,5 +6,6 @@ layout (location = 0) in vec2 uv;
 
 void main()
 {
-    FragColor = vec4(0.710f,0.200f, 0.180f, 1.0f);
+    //FragColor = vec4(normalize(vec3(0.710,0.200, 0.180)), 1.0); // same color as lava light source
+    FragColor = vec4(1.0,0.0, 0.0, 1.0);
 };

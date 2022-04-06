@@ -134,13 +134,13 @@ void Renderer::Draw(Level* level)
 		skyboxShader.Use();
 		glDepthMask(false);
 		glBindVertexArray(emptyVAO);
-		//glDrawArrays(GL_TRIANGLES, 0, 36);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
 		glDepthMask(true);
 
 		// draw models
 		//glEnable(GL_CULL_FACE);
 		PBRShader.Use();
-		//level->DrawGraph();
+		level->DrawGraph();
 		glDisable(GL_CULL_FACE);
 
 		lavaFloor.Use();

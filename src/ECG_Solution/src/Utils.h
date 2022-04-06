@@ -41,7 +41,7 @@ struct PerFrameData
 {
 	glm::vec4 viewPos;
 	glm::mat4 ViewProj;
-	glm::mat4 ViewProjSkybox;
+	glm::mat4 lavaLevel;
 	glm::vec4 bloom;
 	glm::vec4 deltaTime;
 	glm::vec4 normalMap;
