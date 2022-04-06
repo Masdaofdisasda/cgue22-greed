@@ -2,7 +2,6 @@
 #include <bullet/btBulletCollisionCommon.h>
 #include <bullet/btBulletDynamicsCommon.h>
 #include "BulletDebugDrawer.h"
-#include "Mesh.h"
 
 /// <summary>
 /// A struct linking the physics and the graphics representation of an object in the game

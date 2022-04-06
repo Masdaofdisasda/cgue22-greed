@@ -2,7 +2,6 @@
 
 #include "Utils.h"
 #include "Shader.h"
-#include "Mesh.h"
 #include "Cubemap.h"
 #include "Level.h"
 
@@ -46,9 +45,6 @@ public:
 	void setSkyboxTextures();
 	void uploadIBL(Cubemap* ibl);
 	void uploadSkybox(Cubemap* skybox);
-
-	void Draw(Mesh& mesh); // draws triangles
-	void DrawSkybox(Mesh& mesh); // draws triangles
 
 	// ensure RAII compliance
 	Program(const Program&) = delete;

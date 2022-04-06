@@ -7,6 +7,7 @@
     <ClCompile Include="src\Cubemap.cpp" />
     <ClCompile Include="src\Level.cpp" />
     <ClCompile Include="src\Material.cpp" />
+    <ClCompile Include="src\Physics.cpp" />
     <ClCompile Include="src\Program.cpp" />
     <ClCompile Include="src\Renderer.cpp" />
     <ClCompile Include="src\Texture.cpp" />
@@ -24,11 +25,11 @@
     <ClInclude Include="src\GLFWApp.h" />
     <ClInclude Include="src\Level.h" />
     <ClInclude Include="src\Material.h" />
+    <ClInclude Include="src\Physics.h" />
     <ClInclude Include="src\Program.h" />
     <ClInclude Include="src\Renderer.h" />
     <ClInclude Include="src\Texture.h" />
     <ClInclude Include="src\LightSource.h" />
-    <ClInclude Include="src\Mesh.h" />
     <ClInclude Include="src\EBO.h" />
     <ClInclude Include="src\INIReader.h" />
     <ClCompile Include="src\Main.cpp" />

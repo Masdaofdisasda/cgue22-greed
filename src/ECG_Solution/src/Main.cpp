@@ -19,10 +19,6 @@
 #include "GLFWApp.h"
 #include "Debugger.h"
 #include "Level.h"
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
-#include <assimp/cimport.h>
-#include <assimp/version.h>
 #include "Physics.h"
 
 /* --------------------------------------------- */
@@ -44,7 +40,7 @@ struct MouseState
 CameraPositioner_FirstPerson positioner(glm::vec3(0.0f, 0.0f, 10.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 Camera camera(positioner);
 
-static btConvexHullShape* getHullShapeFromMesh(Mesh* mesh);
+//static btConvexHullShape* getHullShapeFromMesh(Mesh* mesh);
 static btRigidBody makeRigidbody(btQuaternion rot, btVector3 pos, btCollisionShape* col, btScalar mass);
 static glm::vec3 btToGlmVector(btVector3 input);
 

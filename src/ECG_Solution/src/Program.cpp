@@ -81,41 +81,7 @@ void Program::setTextures()
 // for skybox shader
 void Program::setSkyboxTextures()
 {
-	setInt("environment", 0);
-}
-
-void Program::Draw(Mesh& mesh)
-{
-	setMat4("model", mesh.model);
-
-	// bind textures 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, mesh.getMaterial()->getAlbedo());
-
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, mesh.getMaterial()->getNormalmap());
-
-	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, mesh.getMaterial()->getMetallic());
-
-	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_2D, mesh.getMaterial()->getRoughness());
-
-	glActiveTexture(GL_TEXTURE4);
-	glBindTexture(GL_TEXTURE_2D, mesh.getMaterial()->getAOmap());
-
-	// draw mesh
-	mesh.BindVAO();
-	glDrawElements(GL_TRIANGLES, mesh.getIndicesSize(), GL_UNSIGNED_INT, 0);
-}
-
-
-void Program::DrawSkybox(Mesh& mesh)
-{
-	setMat4("model", glm::mat4(0));
-
-	mesh.BindVAO();
-	glDrawArrays(GL_TRIANGLES, 0, 36);
+	setInt("environment", 8);
 }
 
 void Program::uploadIBL(Cubemap* ibl)
@@ -129,7 +95,7 @@ void Program::uploadIBL(Cubemap* ibl)
 
 void Program::uploadSkybox(Cubemap* skybox)
 {
-	glActiveTexture(GL_TEXTURE0);
+	glActiveTexture(GL_TEXTURE8);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, skybox->getEnvironment());
 }
 
