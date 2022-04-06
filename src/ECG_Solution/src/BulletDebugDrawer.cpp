@@ -13,6 +13,9 @@ BulletDebugDrawer::BulletDebugDrawer(){
 }
 
 void BulletDebugDrawer::draw() {
+	if (vertices.empty())
+		return;
+
 	// setup
 	glBindVertexArray(vao_ID);
 

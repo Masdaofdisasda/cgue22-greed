@@ -6,7 +6,7 @@
 
 
 /*
- Main funtion of the game "Greed" by David Köppl and Nicolas Eder
+ Main funtion of the game "Greed" by David Kï¿½ppl and Nicolas Eder
  contains initialization, resource loading and render loop
 */
 
@@ -19,13 +19,11 @@
 #include "GLFWApp.h"
 #include "Debugger.h"
 #include "Level.h"
-#include "BulletDebugDrawer.h"
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <assimp/cimport.h>
 #include <assimp/version.h>
-#include <bullet/btBulletCollisionCommon.h>
-#include <bullet/btBulletDynamicsCommon.h>
+#include "Physics.h"
 
 /* --------------------------------------------- */
 // Global variables
@@ -45,11 +43,9 @@ struct MouseState
 
 CameraPositioner_FirstPerson positioner(glm::vec3(0.0f, 0.0f, 10.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 Camera camera(positioner);
-const double PI = 3.141592653589793238463;
 
 static btConvexHullShape* getHullShapeFromMesh(Mesh* mesh);
 static btRigidBody makeRigidbody(btQuaternion rot, btVector3 pos, btCollisionShape* col, btScalar mass);
-static void print(string s);
 static glm::vec3 btToGlmVector(btVector3 input);
 
 /* --------------------------------------------- */
@@ -58,7 +54,7 @@ static glm::vec3 btToGlmVector(btVector3 input);
 
 int main(int argc, char** argv)
 {
-	print("starting program...\n");
+	printf("Starting program...\n");
 
 	/* --------------------------------------------- */
 	// Load settings.ini
@@ -104,11 +100,11 @@ int main(int argc, char** argv)
 			{
 				if (globalState.fullscreen_)
 				{
-					print("fullscreen off");
+					printf("Fullscreen off");
 					globalState.fullscreen_ = false;
 				}
 				else {
-					print("fullscreen on");
+					printf("Fullscreen on");
 					globalState.fullscreen_ = true;
 				}
 			}
@@ -128,11 +124,11 @@ int main(int argc, char** argv)
 			{
 				if (globalState.bloom_)
 				{
-					print("bloom off");
+					printf("Bloom off");
 					globalState.bloom_ = false;
 				}
 				else {
-					print("bloom on");
+					printf("Bloom on");
 					globalState.bloom_ = true;
 				}
 			}
@@ -140,11 +136,11 @@ int main(int argc, char** argv)
 			{
 				if (globalState.debugDrawPhysics)
 				{
-					print("physics debugging off");
+					printf("Physics debugging off");
 					globalState.debugDrawPhysics = false;
 				}
 				else {
-					print("physics debugging on");
+					printf("Physics debugging on");
 					globalState.debugDrawPhysics = true;
 				}
 			}
@@ -152,11 +148,11 @@ int main(int argc, char** argv)
 			{
 				if (perframeData.normalMap.x > 0.0f)
 				{
-					print("normal mapping off");
+					printf("normal mapping off");
 					perframeData.normalMap.x *= -1.0f;
 				}
 				else {
-					print("normal mapping on");
+					printf("normal mapping on");
 					perframeData.normalMap.x *= -1.0f;
 				}
 			}
@@ -182,15 +178,15 @@ int main(int argc, char** argv)
 	);
 
 	// load all OpenGL function pointers with GLEW
-	print("initializing GLEW...");
+	printf("Initializing GLEW...");
 	glewExperimental = GL_TRUE;
 	if (glewInit() != GLEW_OK)
-		EXIT_WITH_ERROR("failed to load GLEW");
+		EXIT_WITH_ERROR("Failed to load GLEW");
 
 	//part of the ECG magical framework
-	print("initialize framework...\n");
+	printf("Initializing framework...\n");
 	if (!initFramework())
-		EXIT_WITH_ERROR("failed to init framework");
+		EXIT_WITH_ERROR("Failed to init framework");
 
 	glEnable(GL_DEBUG_OUTPUT);
 	glDebugMessageCallback(Debugger::DebugCallbackDefault, 0);
@@ -199,40 +195,33 @@ int main(int argc, char** argv)
 	// Initialize scene and render loop
 	/* --------------------------------------------- */
 
-	print("initialize scene and render loop...");
+	printf("Initializing scene and render loop...");
 
-	// load models and textures
-	print("loading level...");
+	printf("Loading level...");
 	//Level level("assets/Bistro_v5_2/BistroInterior.fbx"); // https://developer.nvidia.com/orca/amazon-lumberyard-bistro
 	Level level("assets/test.fbx"); 
-	print("intializing renderer...");
+	printf("Intializing renderer...");
 	Renderer renderer(globalState, perframeData, *level.getLights());
 
-
-	//Bullet Initialization
-	printf("Initializing bullet physics...\n");
-	btDbvtBroadphase* broadphase = new btDbvtBroadphase();
-	btDefaultCollisionConfiguration* collision_configuration = new btDefaultCollisionConfiguration();
-	btCollisionDispatcher* dispatcher = new btCollisionDispatcher(collision_configuration);
-	btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
-	btDiscreteDynamicsWorld* dynamics_world = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collision_configuration);
-	dynamics_world->setGravity(btVector3(0, -10, 0));
-	BulletDebugDrawer* bulletDebugDrawer = new BulletDebugDrawer();
-	bulletDebugDrawer->setDebugMode(btIDebugDraw::DBG_DrawWireframe);
-	dynamics_world->setDebugDrawer(bulletDebugDrawer);
-
-	//btCollisionShape* collider = getHullShapeFromMesh(&coin1);
-	btVector3* boxSize = new btVector3(1.0, 0.25, 1.0);
-	btCollisionShape* collider = new btBoxShape(*boxSize);
-	btRigidBody fallingCoin = makeRigidbody(btQuaternion(btVector3(1, 0, 0), 45), btVector3(0.0, 0.0, 0.0), collider, 1);
-
-	btVector3* boxSize2 = new btVector3(20, 0.0, 20.0);
-	btCollisionShape* collider2 = new btBoxShape(*boxSize2);
-	btRigidBody staticPlane = makeRigidbody(btQuaternion(0.0, 0.0, 0.0), btVector3(0.0, -10.0, 0.0), collider2, 0);
-
-	dynamics_world->addRigidBody(&fallingCoin);
-	dynamics_world->addRigidBody(&staticPlane);
-	//-------------------------/WIP------------------------------------------//
+	//Physics Initialization
+	printf("Initializing physics...\n");
+	Physics physics;
+	//---------------------------------- testing ----------------------------------//
+	btBoxShape* col = new btBoxShape(btVector3(0.5, 0.5, 0.5));
+	physics.createPhysicsObject(
+		btVector3(0, 5, 0),
+		col,
+		btQuaternion(btVector3(1, 0, 0), btScalar(45)),
+		Physics::ObjectMode::Dynamic
+	);
+	btBoxShape* col2 = new btBoxShape(btVector3(5, 0.1, 5));
+	physics.createPhysicsObject(
+		btVector3(0, -5, 0),
+		col2,
+		btQuaternion(btVector3(0, 1, 0), btScalar(0)),
+		Physics::ObjectMode::Static
+	);
+	//---------------------------------- /testing ----------------------------------//
 
 	glViewport(0, 0, globalState.width, globalState.height);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -245,7 +234,7 @@ int main(int argc, char** argv)
 
 	//---------------------------------- RENDER LOOP ----------------------------------//
 
-	print("enter render loop...");
+	printf("Entering render loop...");
 	while (!glfwWindowShouldClose(GLFWapp.getWindow()))
 	{
 		fpsCounter.tick(deltaSeconds);
@@ -265,20 +254,7 @@ int main(int argc, char** argv)
 		GLFWapp.updateWindow();
 
 		// calculate physics
-		/*
-		dynamics_world->stepSimulation(deltaSeconds);
-
-		glm::vec3 pos = btToGlmVector(fallingCoin.getCenterOfMassTransform().getOrigin());
-		float deg = (float)(fallingCoin.getOrientation().getAngle() * 180 / PI);
-		glm::vec3 axis = btToGlmVector(fallingCoin.getOrientation().getAxis());
-		glm::vec3 scale = glm::vec3(0.5);
-		models[0]->setMatrix(pos, deg, axis, scale);
-
-		glm::vec3 pos2 = btToGlmVector(staticPlane.getCenterOfMassTransform().getOrigin());
-		float deg2 = (float)(staticPlane.getOrientation().getAngle() * 180 / PI);
-		glm::vec3 axis2 = btToGlmVector(staticPlane.getOrientation().getAxis());
-		glm::vec3 scale2 = glm::vec3(20.0f, 1.0f, 20.0f);
-		models[3]->setMatrix(pos2, deg2, axis2, scale2);*/
+		physics.simulateOneStep(deltaSeconds);
 
 		// calculate and set per Frame matrices
 		const float ratio = globalState.width / (float)globalState.height;
@@ -291,10 +267,8 @@ int main(int argc, char** argv)
 
 		// actual draw call
 		renderer.Draw(&level);
-		if (globalState.debugDrawPhysics) {
-			dynamics_world->debugDrawWorld();
-			bulletDebugDrawer->draw();
-		}
+		if (globalState.debugDrawPhysics)
+			physics.debugDraw();
 
 		// swap buffers
 		GLFWapp.swapBuffers();
@@ -313,39 +287,8 @@ int main(int argc, char** argv)
 	/* --------------------------------------------- */
 
 
-	print("exit programm...");
+	printf("Exiting programm...");
 
 	return EXIT_SUCCESS;
 }
 
-static btConvexHullShape* getHullShapeFromMesh(Mesh* mesh) {
-	btConvexHullShape* shape = new btConvexHullShape();
-	btScalar* coordinates = (*mesh).getVerticeCoordinates();
-	int verticeAmount = (*mesh).getVerticeAmount();
-	for (int i = 0; i < verticeAmount; i++)
-	{
-		btScalar x = coordinates[i * 3];
-		btScalar y = coordinates[i * 3 + 1];
-		btScalar z = coordinates[i * 3 + 2];
-		shape->addPoint(btVector3(x, y, z));
-	}
-
-	return shape;
-}
-
-static btRigidBody makeRigidbody(btQuaternion rot, btVector3 pos, btCollisionShape* col, btScalar mass) {
-
-	btTransform* startTransform = new btTransform(rot, pos);
-	btMotionState* motionSate = new btDefaultMotionState(*startTransform);
-	btVector3 inertia;
-	col->calculateLocalInertia(mass, inertia);
-	return btRigidBody(mass, motionSate, col, inertia);
-}
-
-static void print(string s) {
-	std::cout << s << std::endl;
-}
-
-static glm::vec3 btToGlmVector(btVector3 input) {
-	return glm::vec3((float)input.getX(), (float)input.getY(), (float)input.getZ());
-}

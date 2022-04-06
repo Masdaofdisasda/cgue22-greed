@@ -13,6 +13,7 @@
 #include <GLFW\glfw3.h>
 #include <glm\gtc\matrix_transform.hpp>
 #include <glm\glm.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
 
 struct GlobalState
 {
@@ -29,7 +30,7 @@ struct GlobalState
 	bool focus_ = true;
 	bool request_focus_ = true;
 	bool request_unfocus_ = false;
-	bool debugDrawPhysics = false;
+	bool debugDrawPhysics = true;
 	float exposure_ = 0.9f;
 	float maxWhite_ = 1.07f;
 	float bloomStrength_ = 0.2f;
@@ -118,3 +119,23 @@ void destroyFramework();
  * @return a loaded DSS image
  */
 DDSImage loadDDS(const char* file);
+
+glm::vec3 translationFromTransform(glm::mat4 transform) {
+	glm::vec3 scale;
+	glm::quat rotation;
+	glm::vec3 translation;
+	glm::vec3 skew;
+	glm::vec4 perspective;
+	glm::decompose(transform, scale, rotation, translation, skew, perspective);
+	return translation;
+}
+
+glm::quat rotationFromTransform(glm::mat4 transform) {
+	glm::vec3 scale;
+	glm::quat rotation;
+	glm::vec3 translation;
+	glm::vec3 skew;
+	glm::vec4 perspective;
+	glm::decompose(transform, scale, rotation, translation, skew, perspective);
+	return rotation;
+}
