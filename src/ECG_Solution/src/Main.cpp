@@ -206,6 +206,22 @@ int main(int argc, char** argv)
 	//Physics Initialization
 	printf("Initializing physics...\n");
 	Physics physics;
+	//---------------------------------- testing ----------------------------------//
+	btBoxShape* col = new btBoxShape(btVector3(0.5, 0.5, 0.5));
+	physics.createPhysicsObject(
+		btVector3(0, 5, 0),
+		col,
+		btQuaternion(btVector3(1, 0, 0), btScalar(45)),
+		Physics::ObjectMode::Dynamic
+	);
+	btBoxShape* col2 = new btBoxShape(btVector3(5, 0.1, 5));
+	physics.createPhysicsObject(
+		btVector3(0, -5, 0),
+		col2,
+		btQuaternion(btVector3(0, 1, 0), btScalar(0)),
+		Physics::ObjectMode::Static
+	);
+	//---------------------------------- /testing ----------------------------------//
 
 	glViewport(0, 0, globalState.width, globalState.height);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
