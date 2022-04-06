@@ -39,6 +39,7 @@ private:
 	Program BlurY;			// gauss blur in y direction
 	Program CombineHDR;		// combines blur with render fbo, tone mapping
 	Program lightAdapt;		// calculates luminance changes
+	Program lavaFloor;		// renders a giant orange triangle
 
 	// global Textures
 	Cubemap IBL;

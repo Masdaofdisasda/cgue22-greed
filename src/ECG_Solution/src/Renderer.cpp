@@ -100,6 +100,10 @@ void Renderer::buildShaderPrograms()
 	Shader lightAdaptComp("assets/shaders/lightAdaption/lightAdaption.comp");
 	lightAdapt.buildFrom(lightAdaptComp);
 
+	Shader lavaFloorVert("assets/shaders/lavaFloor/lavaFloor.vert");
+	Shader lavaFloorFrag("assets/shaders/lavaFloor/lavaFloor.frag");
+	lavaFloor.buildFrom(lavaFloorVert, lavaFloorFrag);
+
 	PBRShader.Use();
 }
 
@@ -130,14 +134,17 @@ void Renderer::Draw(Level* level)
 		skyboxShader.Use();
 		glDepthMask(false);
 		glBindVertexArray(emptyVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
+		//glDrawArrays(GL_TRIANGLES, 0, 36);
 		glDepthMask(true);
 
 		// draw models
 		//glEnable(GL_CULL_FACE);
 		PBRShader.Use();
-		level->DrawGraph();
+		//level->DrawGraph();
 		glDisable(GL_CULL_FACE);
+
+		lavaFloor.Use();
+		glDrawArrays(GL_TRIANGLES, 0, 3);
 
 	framebuffer.unbind(); 
 	glGenerateTextureMipmap(framebuffer.getTextureColor().getHandle());
