@@ -1,4 +1,4 @@
-#version 460
+#version 460 core
 
 layout (location = 0) out vec4 FragColor;
 
@@ -17,7 +17,7 @@ uniform samplerCube environment;
 
 void main()
 {
-   vec3 color = textureLod(environment, vec3(fPosition), 0.0).xyz;
+	vec3 color = textureLod(environment, vec3(fPosition), 0.0).xyz;
     
     FragColor = vec4(color, 1.0);
-}
+};

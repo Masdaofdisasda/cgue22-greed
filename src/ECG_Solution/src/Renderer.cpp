@@ -11,11 +11,12 @@ Renderer::Renderer(GlobalState& state, PerFrameData& pfdata, LightSources& sourc
 	fillLightsources(); // binds lights to binding points in shader
 	perframeBuffer.fillBuffer(pfdata); // load UBO to shader;
 
-	prepareFramebuffers(); // for hdr rendering
+	prepareFramebuffers(); // for hdr rendering and tonemapping
 	std::cout << "load enviroment map and process it.." << std::endl;
 	IBL.loadHDR("assets/textures/cubemap/cellar.pic");
 	std::cout << "load skybox and process it.." << std::endl;
 	skyTex.loadHDR("assets/textures/cubemap/cloudy.hdr");
+	glCreateVertexArrays(1, &emptyVAO);
 }
 
 GlobalState Renderer::loadSettings(GlobalState state)
@@ -106,10 +107,10 @@ void Renderer::buildShaderPrograms()
 void Renderer::prepareFramebuffers() {
 
 	glGenTextures(1, &luminance1x1);
-	glTextureView(luminance1x1, GL_TEXTURE_2D, luminance.getTextureColor().getHandle(), GL_R16F, 6, 1, 0, 1);
+	glTextureView(luminance1x1, GL_TEXTURE_2D, luminance.getTextureColor().getHandle(), GL_RGBA16F, 6, 1, 0, 1);
 
-	glTextureSubImage2D(luminance0.getHandle(), 0, 0, 0, 1, 1, GL_RGBA, GL_FLOAT, &(glm::vec4(glm::vec3(50.0f), 1.0f))[0]);
-
+	const glm::vec4 startingLuminance(glm::vec3(0.0f), 1.0f);
+	glTextureSubImage2D(luminance0.getHandle(), 0, 0, 0, 1, 1, GL_RGBA, GL_FLOAT, &startingLuminance[0]);
 }
 
 void Renderer::Draw(Level* level)
@@ -127,9 +128,12 @@ void Renderer::Draw(Level* level)
 
 		// draw skybox (background)    
 		skyboxShader.Use();
-		skyboxShader.uploadSkybox(&skyTex);
+		skyboxShader.uploadSkybox(&IBL);
+		//skyboxShader.uploadSkybox(&skyTex); //breaks hdr at the moment
 		glDepthFunc(GL_LEQUAL);
-		skyboxShader.DrawSkybox(skyBox);
+		glBindVertexArray(emptyVAO);
+		skyboxShader.setMat4("model", glm::mat4(0));
+		glDrawArrays(GL_TRIANGLES, 0, 36);
 		glDepthFunc(GL_LESS);
 
 		// draw models
@@ -194,8 +198,8 @@ void Renderer::Draw(Level* level)
 	{
 		CombineHDR.Use();
 		glBindTextureUnit(0, framebuffer.getTextureColor().getHandle());
-		//glBindTextureUnit(1, luminances[1]->getHandle()); //TODO
-		glBindTextureUnit(1, luminance1x1);
+		glBindTextureUnit(1, luminances[1]->getHandle()); //TODO
+		//glBindTextureUnit(1, luminance1x1);
 		glBindTextureUnit(2, bloom1.getTextureColor().getHandle());
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 	}

@@ -1,4 +1,5 @@
 #include "Level.h"
+#include <glm/gtx/matrix_decompose.hpp> 
 
 Level::Level(const char* scenePath) {
 
@@ -71,7 +72,9 @@ Level::Level(const char* scenePath) {
 	sceneGraph.name = "root";
 	sceneGraph.parent = nullptr;
 	sceneGraph.children.push_back(child);
-	sceneGraph.localTransform = glm::mat4(1);
+	sceneGraph.localTranslate = glm::vec3();
+	sceneGraph.localRotation = glm::quat();
+	sceneGraph.localScale = glm::vec3(1);
 	traverseTree(n, &sceneGraph, &sceneGraph.children[0]);
 
 	// 6. setup buffers for vertex and indices data
@@ -170,8 +173,7 @@ Material Level::loadMaterials(const aiMaterial* M)
 		const std::string albedoMap = std::string(Path.C_Str());
 	}
 
-	//	all other materials can be found with:
-	//	aiTextureType_NORMAL_CAMERA, aiTextureType_METALNESS, aiTextureType_DIFFUSE_ROUGHNESS, aiTextureType_AMBIENT_OCCLUSION
+	//	all other materials can be found with: aiTextureType_NORMAL_CAMERA/_METALNESS/_DIFFUSE_ROUGHNESS/_AMBIENT_OCCLUSION
 
 	return Material(Path.C_Str(), M->GetName().C_Str());
 }
@@ -187,7 +189,7 @@ void Level::traverseTree(aiNode* n, Hierarchy* parent, Hierarchy* node)
 		node->modelIndices.push_back(n->mMeshes[i]);
 	}
 
-	node->localTransform = toGlmMat4(n->mTransformation);
+	glm::decompose(toGlmMat4(n->mTransformation), node->localScale, node->localRotation, node->localTranslate, glm::vec3(), glm::vec4());
 
 	for (size_t i = 0; i < n->mNumChildren; i++)
 	{
@@ -287,9 +289,9 @@ void Level::loadLights(const aiScene* scene) {
 			for (size_t i = 0; i < sceneGraph.children[0].children.size(); i++)
 			{
 				if (strcmp(sceneGraph.children[0].children[i].name, "pointLight1") == 0) {
-					p = sceneGraph.localTransform *
-						sceneGraph.children[0].localTransform *
-						sceneGraph.children[0].children[i].localTransform *
+					p = sceneGraph.getNodeMatrix() *
+						sceneGraph.children[0].getNodeMatrix() *
+						sceneGraph.children[0].children[i].getNodeMatrix() *
 						p;
 				}
 			}
@@ -317,7 +319,7 @@ void Level::DrawGraph() {
 
 void Level::drawTraverse(const Hierarchy* node, glm::mat4 globalTransform)
 {
-	glm::mat4 modelMatrix = node->localTransform * globalTransform;
+	glm::mat4 modelMatrix = node->getNodeMatrix() * globalTransform;
 
 	for (size_t i = 0; i < node->modelIndices.size(); i++)
 	{
@@ -327,20 +329,13 @@ void Level::drawTraverse(const Hierarchy* node, glm::mat4 globalTransform)
 		{
 			boundMaterial = models[modelIndex].materialIndex;
 
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, materials[models[modelIndex].materialIndex].getAlbedo());
-
-			glActiveTexture(GL_TEXTURE1);
-			glBindTexture(GL_TEXTURE_2D, materials[models[modelIndex].materialIndex].getNormalmap());
-
-			glActiveTexture(GL_TEXTURE2);
-			glBindTexture(GL_TEXTURE_2D, materials[models[modelIndex].materialIndex].getMetallic());
-
-			glActiveTexture(GL_TEXTURE3);
-			glBindTexture(GL_TEXTURE_2D, materials[models[modelIndex].materialIndex].getRoughness());
-
-			glActiveTexture(GL_TEXTURE4);
-			glBindTexture(GL_TEXTURE_2D, materials[models[modelIndex].materialIndex].getAOmap());
+			const GLuint textures[] = {
+				materials[models[modelIndex].materialIndex].getAlbedo(),
+				materials[models[modelIndex].materialIndex].getNormalmap(),
+				materials[models[modelIndex].materialIndex].getMetallic(),
+				materials[models[modelIndex].materialIndex].getRoughness(),
+				materials[models[modelIndex].materialIndex].getAOmap() };
+			glBindTextures(0, 5, textures);
 		}
 
 		glNamedBufferSubData(matrixSSBO, 0, sizeof(glm::mat4), &modelMatrix[0][0]);

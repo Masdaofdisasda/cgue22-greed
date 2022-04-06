@@ -57,7 +57,12 @@ struct Hierarchy		// implements a simple scene graph for transformations
 	std::vector <Hierarchy> children;		// children nodes
 	std::vector<uint32_t> modelIndices;		// models in this node
 
-	glm::mat4 localTransform;				// local transformation matrix
+	glm::vec3 localTranslate;				// local transformation
+	glm::quat localRotation;
+	glm::vec3 localScale;
+
+	//returns TRS "model matrix" of the node
+	glm::mat4 getNodeMatrix() const { return glm::translate(localTranslate) * glm::toMat4(localRotation) * glm::scale(localScale); }
 };
 
 //---------------------------------------------------------------------------------------------------------------//
@@ -82,6 +87,8 @@ private:
 	std::vector <BoundingBox> boxes;		// contains all bounding boxes of the meshes
 	std::vector<DrawElementsIndirectCommand> drawCommands_; //TODO
 	Hierarchy sceneGraph;
+	Hierarchy* rigidOjects;
+	Hierarchy* staticObjects;
 
 	LightSources lights;
 

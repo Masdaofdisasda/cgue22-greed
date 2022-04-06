@@ -1,5 +1,6 @@
 #version 460 core
 // https://google.github.io/filament/Filament.md.html#mjx-eqn-adaptation
+// Sumanta Pattanaik00 et al. 2000. Time-Dependent Visual Adaptation For Fast Realistic Image Display. SIGGRAPH '00 Proceedings of the 27th annual conference on Computer graphics and interactive techniques, 47-54.
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
 layout(rgba16f, binding = 0) uniform readonly  image2D imgAdaptedL;

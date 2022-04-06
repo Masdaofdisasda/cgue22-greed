@@ -115,17 +115,16 @@ void Program::DrawSkybox(Mesh& mesh)
 	setMat4("model", glm::mat4(0));
 
 	mesh.BindVAO();
-	glDrawElements(GL_TRIANGLES, mesh.getIndicesSize(), GL_UNSIGNED_INT, 0);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
 }
 
 void Program::uploadIBL(Cubemap* ibl)
 {
-	glActiveTexture(GL_TEXTURE5);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, ibl->getIrradianceID());
-	glActiveTexture(GL_TEXTURE6);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, ibl->getPreFilterID());
-	glActiveTexture(GL_TEXTURE7);
-	glBindTexture(GL_TEXTURE_2D, ibl->getBdrfLutID());
+	const GLuint textures[] = {
+				ibl->getIrradianceID(),
+				ibl->getPreFilterID(),
+				ibl->getBdrfLutID()};
+	glBindTextures(5, 3, textures);
 }
 
 void Program::uploadSkybox(Cubemap* skybox)
