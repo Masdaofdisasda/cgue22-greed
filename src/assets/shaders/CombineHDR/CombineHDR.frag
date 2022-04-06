@@ -5,9 +5,9 @@ layout(location = 0) in vec2 uv;
 
 layout(location = 0) out vec4 outColor;
 
-layout(binding = 0) uniform sampler2D texScene;
-layout(binding = 1) uniform sampler2D texLuminance;
-layout(binding = 2) uniform sampler2D texBloom;
+layout(binding = 9) uniform sampler2D texScene;
+layout(binding = 10) uniform sampler2D texLuminance;
+layout(binding = 11) uniform sampler2D texBloom;
 
 layout(std140, binding = 0) uniform PerFrameData
 {

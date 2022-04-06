@@ -6,6 +6,7 @@ layout(std140, binding = 0) uniform PerFrameData
 	mat4 ViewProj;
 	mat4 ViewProjSkybox;
 	vec4 bloom;
+	vec4 deltaTime;
     vec4 normalMap;
 };
 
@@ -42,9 +43,7 @@ void main()
 {
 	int idx = indices[gl_VertexID];
 
-	vec4 clipPos = ViewProjSkybox * vec4(pos[idx], 1.0);
-
-	gl_Position = clipPos.xyww;
+	gl_Position = ViewProj * vec4(500.0*pos[idx], 1.0);
 	
 	fPosition = pos[idx].xyz;
 }

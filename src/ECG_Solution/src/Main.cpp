@@ -194,8 +194,7 @@ int main(int argc, char** argv)
 	printf("Initializing scene and render loop...");
 
 	printf("Loading level...");
-	//Level level("assets/Bistro_v5_2/BistroInterior.fbx"); // https://developer.nvidia.com/orca/amazon-lumberyard-bistro
-	Level level("assets/test.fbx"); 
+	Level level("assets/demo.fbx"); 
 	printf("Intializing renderer...");
 	Renderer renderer(globalState, perframeData, *level.getLights());
 

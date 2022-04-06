@@ -65,39 +65,22 @@ void Program::Use()
 	glUseProgram(program_ID);
 }
 
-// for PBR shading
-void Program::setTextures()
-{
-	setInt("material.albedo", 0);
-	setInt("material.normal", 1);
-	setInt("material.metallic", 2);
-	setInt("material.roughness", 3);
-	setInt("material.ao", 4);
-	setInt("material.irradiance", 5);
-	setInt("material.prefilter", 6);
-	setInt("material.brdfLut", 7);
-}
 
-// for skybox shader
-void Program::setSkyboxTextures()
-{
-	setInt("environment", 8);
-}
-
-void Program::uploadIBL(Cubemap* ibl)
+void Program::uploadIBL(GLuint Irradiance, GLuint PreFilter, GLuint BdrfLut, GLuint Enviroment)
 {
 	const GLuint textures[] = {
-				ibl->getIrradianceID(),
-				ibl->getPreFilterID(),
-				ibl->getBdrfLutID()};
-	glBindTextures(5, 3, textures);
+				Irradiance,
+				PreFilter,
+				BdrfLut,
+				Enviroment };
+	//glBindTextures(5, 4, textures);
+
+	glBindTextureUnit(5, Irradiance);
+	glBindTextureUnit(6, PreFilter);
+	glBindTextureUnit(7, BdrfLut);
+	glBindTextureUnit(8, Enviroment);
 }
 
-void Program::uploadSkybox(Cubemap* skybox)
-{
-	glActiveTexture(GL_TEXTURE8);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, skybox->getEnvironment());
-}
 
 void Program::getUniformLocations()
 {

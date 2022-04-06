@@ -32,18 +32,15 @@ layout (std140, binding = 2) uniform pLightUBlock {
 uniform uint pLightCount ;
 
 // model textures and ibl cubemaps
-struct Material
-{
-	sampler2D albedo;
-	sampler2D normal;
-    sampler2D metallic;
-    sampler2D roughness;
-    sampler2D ao;
-    samplerCube irradiance;
-    samplerCube prefilter;
-    sampler2D brdfLut;
-};
-uniform Material material;
+layout (binding = 0) uniform sampler2D albedoTex;
+layout (binding = 1) uniform sampler2D normalTex;
+layout (binding = 2) uniform sampler2D metallicTex;
+layout (binding = 3) uniform sampler2D roughnessTex;
+layout (binding = 4) uniform sampler2D aoTex;
+
+layout (binding = 5) uniform samplerCube irradianceTex;
+layout (binding = 6) uniform samplerCube prefilterTex;
+layout (binding = 7) uniform sampler2D brdfLutTex;
 
 
 // constant per frame data
@@ -58,10 +55,10 @@ layout(std140, binding = 0) uniform PerFrameData
 };
 
 // Global variables
-vec3 albedo = pow(texture(material.albedo, fUV).rgb, vec3(2.2));
-float metallic = texture(material.metallic, fUV).r;
-float roughness = texture(material.roughness, fUV).r;
-float ao = texture(material.ao,fUV).r;
+vec3 albedo = pow(texture(albedoTex, fUV).rgb, vec3(2.2));
+float metallic = texture(metallicTex, fUV).r;
+float roughness = texture(roughnessTex, fUV).r;
+float ao = texture(aoTex,fUV).r;
 
 const float PI = 3.14159265359;
 
@@ -226,7 +223,7 @@ vec3 calculateLight() {
 	
     vec3 N = normalize(fNormal);
 	vec3 V = normalize(vec3(viewPos) - fPosition);
-    if (normalMap.x > 0.0f) N = perturbNormal(normalize(fNormal), V, texture(material.normal, fUV).xyz, fUV);
+    if (normalMap.x > 0.0f) N = perturbNormal(normalize(fNormal), V, texture(normalTex, fUV).xyz, fUV);
     vec3 R = reflect(-V, N);
     
     // calculate reflectance at normal incidence; if dia-electric (like plastic) use F0 
@@ -252,13 +249,13 @@ vec3 calculateLight() {
     vec3 kD = 1.0 - kS;
     kD *= 1.0 - metallic;	  
     
-    vec3 irradiance = texture(material.irradiance, N).rgb;
+    vec3 irradiance = texture(irradianceTex, N).rgb;
     vec3 diffuse      = irradiance * albedo;
 
     // sample both the pre-filter map and the BRDF lut and combine them together as per the Split-Sum approximation to get the IBL specular part.
     const float MAX_REFLECTION_LOD = 4.0;
-    vec3 prefilteredColor = textureLod(material.prefilter, R,  roughness * MAX_REFLECTION_LOD).rgb;    
-    vec2 brdf  = texture(material.brdfLut, vec2(max(dot(N, V), 0.0), roughness)).rg;
+    vec3 prefilteredColor = textureLod(prefilterTex, R,  roughness * MAX_REFLECTION_LOD).rgb;    
+    vec2 brdf  = texture(brdfLutTex, vec2(max(dot(N, V), 0.0), roughness)).rg;
     vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
     
     vec3 ambient = (kD * diffuse + specular) * ao;
@@ -274,4 +271,5 @@ void main()
     vec3 light = calculateLight();
     // Tonemapping is done in CombineHDR.frag
     out_FragColor = vec4(light, 1.0);
+    //out_FragColor = vec4(N,1.0);
 }

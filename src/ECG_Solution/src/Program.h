@@ -41,10 +41,7 @@ public:
 
 	void Use();
 
-	void setTextures();
-	void setSkyboxTextures();
-	void uploadIBL(Cubemap* ibl);
-	void uploadSkybox(Cubemap* skybox);
+	void uploadIBL(GLuint Irradiance, GLuint PreFilter, GLuint BdrfLut, GLuint Enviroment);
 
 	// ensure RAII compliance
 	Program(const Program&) = delete;
