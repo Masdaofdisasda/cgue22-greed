@@ -218,7 +218,7 @@ int main(int argc, char** argv)
 	);
 	//---------------------------------- /testing ----------------------------------//
 
-	glm::vec3 lavaPosition = glm::vec3(0.0f, -20.0f, 0.0f); // TODO
+	glm::vec3 lavaPosition = glm::vec3(0.0f, -50.0f, 0.0f); // TODO
 
 	glViewport(0, 0, globalState.width, globalState.height);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);

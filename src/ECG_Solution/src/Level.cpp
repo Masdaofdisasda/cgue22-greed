@@ -38,8 +38,8 @@ Level::Level(const char* scenePath) {
 	{
 		const aiMesh* mesh = scene->mMeshes[i];
 		meshes.push_back(extractMesh(mesh));
-
 	}
+	calculateBoundingBoxes();
 
 	// 3. load materials
 	std::cout << "loading materials..." << std::endl;
