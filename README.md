@@ -32,10 +32,14 @@ and various other settings. If you want to load your own levels or modify the ga
 ### Main.cpp
 Let's go through the important steps of the main render loop. When you start Greed a global state is initiated and loaded with your settings. The window
 for the game is created with a GLFWapp object. This Objects holds the window pointer and swaps the buffers, but most importantly it makes main.cpp cleaner.
+
+
 Next various callbacks for registering keyboard and mouse input are defined. The first part of the game is loaded by creating a level object, which 
 loads a .fbx file containing the level geometry. Then a Renderer is created. The Renderer manages the main render loop and includes the postprocessing.
 After that the physics engine is intitalized. Before the render loop starts a FPS counter is created. The counter will average the frames per second during
 the render loop. 
+
+
 Now the interesting part: the main render loop. We update the FPS counter and the time delta. Then we resize the window, if the size was changed. The 
 phsyics simulation does its thing and the perframeData gets filled with the view-projection matrix, camera position and other common varaibles which are constant
 over i single render iteration. Then we draw our scene and swap buffers. After the loop there are only a few clean up calls.
@@ -44,12 +48,16 @@ over i single render iteration. Then we draw our scene and swap buffers. After t
 The main purpose of this class is to load and manage level data. To do that it needs various structs and a loader library. We choose to use Assimp. 
 What happens if you call the Level constructor with a file path is that it loads the file (if it exists) and saves the fbx data in an aiScene. Why did we 
 use fbx files specificly, you may ask. That's because we wanted to design our level in Autodesk Maya and export it with textures and a scene graph.
+
+
 With Assimmp's scene we can poplate our level. For the meshes we go through each mesh assimp has found and extract its vertices and indices. To save 
 on cycle time we decided to use one giant vertex and one giant index array. This way we only need to bind a single vao and use it for the majority of the
 draw calls. To draw a single mesh from our data, we need to tell OpenGL where in our mesh starts and how many triangles it needs to draw. Thats why we have
 our subMesh struct. It keeps track of the index and vertex offsets. After loading all the meshes, we are going to load all materials. For that we just iterate
 through all the materials in our assimp scene and add them to the materials vector. A Material is basicly a wrapper for multiply textures. A single Material
-constsits of five textures, or to be precise five texture handles. You need to manually delete those textures handles if you don't need them. Now we are ready
+constsits of five textures, or to be precise five texture handles. You need to manually delete those textures handles if you don't need them.
+
+Now we are ready
 to create some models. A model is a collection of indices for rendering a mesh. For our game models could be replace by meshes, but we keep them 
 seperate to be able to use instancing. If we want to draw models, we need to have model matrices, thats where the scene graph is needed. It creates
 a hierachy of nodes, each containing models to draw or just matrices. The scene graph is build recursiveley from the scene graph assimp provides. To save
@@ -59,11 +67,15 @@ and index data and load the lightsources.
 ### Renderer.h
 This class owns the shaders and does the important draw calls. When a rendere is created it needs to have a view into the global state. It will compile
 a few shader programms and setup some settings in the perframeData struct for rendering. After that the light soruces are bound to their uniforms and a few
-preperations needed for the framebuffers in the draw loop are made. If we call the draw function in the main loop, the renderer will clear the main
+preperations needed for the framebuffers in the draw loop are made.
+
+If we call the draw function in the main loop, the renderer will clear the main
 framebuffer which we'll render to and update some data. Then the Rendering starts with the first pass. Here we render our skybox and then our scene 
 into the framebuffer. In the second pass we convert the image to luminace using a rough estimation of the human light sensitivity. In the third pass 
 we use a compute shader and three single texel textures (this texel holds the average luminance of our rendered image) to simulate the light adaption
-of the human vision. The forth pass filter bright spots from our image. Those bright spots get blurred by switching between a vertical blur shader and a
+of the human vision.
+
+The forth pass filter bright spots from our image. Those bright spots get blurred by switching between a vertical blur shader and a
 horizontal blur shader. If the bloom flag is set, the sixth pass will combine our rendered immage with the blurred highlights and apply tonemapping to 
 the image. After that the luminance textures need to be switched.
 
@@ -93,6 +105,8 @@ every frame so our newly calulate value because the average in the next cycle.
 
 ## Creating a Level - Guidlines
 In theory assimp can load any fbx file, but for our game engine we decided on a few prerequisites:
+
+
 * the Maya projects is located in the assets folder
 * a texture is located in assets/texture/(texture_name)/(albedo/normal/metal/rough/ao).jpg
 * in Maya only directional and pointlights should be added and only on the root node
