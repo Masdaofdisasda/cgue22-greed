@@ -1,6 +1,8 @@
 #include "Level.h"
 #include <glm/gtx/matrix_decompose.hpp> 
 
+/// @brief loads an fbx file from the given path and converts it to useable data structures
+/// @param scenePath location of the fbx file, expected to be in "assets"
 Level::Level(const char* scenePath) {
 
 	// 1. load fbx file into assimps internal data structures and apply various preprocessing to the data
@@ -78,10 +80,10 @@ Level::Level(const char* scenePath) {
 	traverseTree(n, &sceneGraph, &sceneGraph.children[0]); 
 	for (size_t i = 0; i < sceneGraph.children[0].children.size(); i++)
 	{
-		if (strcmp(sceneGraph.children[0].children[i].name, "Rigid") == 0) {
+		if (sceneGraph.children[0].children[i].name.compare("Rigid") == 0) {
 			rigid = &sceneGraph.children[0].children[i];
 		}
-		if (strcmp(sceneGraph.children[0].children[i].name, "Dynamic") == 0) {
+		if (sceneGraph.children[0].children[i].name.compare("Dynamic") == 0) {
 			dynamic = &sceneGraph.children[0].children[i];
 		}
 	}
@@ -101,6 +103,9 @@ Level::Level(const char* scenePath) {
 	std::cout << std::endl;
 }
 
+/// @brief extracts position, normal and uvs with the correlating indices from an assimp mesh
+/// @param mesh is a single meshm with a unique material
+/// @return a mesh but in usable structures for drawing it
 subMesh Level::extractMesh(const aiMesh* mesh)
 {
 	subMesh m;
@@ -151,6 +156,7 @@ subMesh Level::extractMesh(const aiMesh* mesh)
 	return m;
 }
 
+/// @brief finds the maximum and minimum vertex positions of all meshes, which should define the bounds
 void Level::calculateBoundingBoxes() {
 	boxes.clear();
 
@@ -173,6 +179,9 @@ void Level::calculateBoundingBoxes() {
 	}
 }
 
+/// @brief loads all materials (textures) from the material assimp provides
+/// @param M is a single material and should contain 5 aiTextureTypes, only one of them is needed for loading the textures
+/// @return a material object containing opengl handles to the fives loaded textures
 Material Level::loadMaterials(const aiMaterial* M)
 {
 
@@ -188,9 +197,14 @@ Material Level::loadMaterials(const aiMaterial* M)
 	return Material(Path.C_Str(), M->GetName().C_Str());
 }
 
+/// @brief recursive function that builds a scenegraph with hierarchical transformation, similiar to assimps scene
+/// @param n is an assimp node that holds transformations, nodes or meshes
+/// @param parent is the parent node of the currently created node, mainly used for debugging
+/// @param node is the current node from the view of the parent node
 void Level::traverseTree(aiNode* n, Hierarchy* parent, Hierarchy* node)
 {
-	node->name = n->mName.C_Str();
+	const char* c = n->mName.C_Str();
+	node->name = c;
 
 	node->parent = parent;
 
@@ -212,6 +226,10 @@ void Level::traverseTree(aiNode* n, Hierarchy* parent, Hierarchy* node)
 
 }
 
+
+/// @brief simple helper function for converting the assimp 4x4 matrices to 4x4 glm matrices
+/// @param mat is a 4x4 matrix from assimp
+/// @return a 4x4 matrix in glm format
 glm::mat4 Level::toGlmMat4(const aiMatrix4x4& mat)
 {
 	glm::mat4 result;
@@ -222,6 +240,7 @@ glm::mat4 Level::toGlmMat4(const aiMatrix4x4& mat)
 	return result;
 }
 
+/// @brief Creates and fills vertex and index buffers and sets up the "big" vao which will suffice to render all meshes
 void Level::setupVertexBuffers()
 {
 	glCreateBuffers(1, &VBO);
@@ -246,6 +265,7 @@ void Level::setupVertexBuffers()
 	glVertexArrayAttribBinding(VAO, 2, 0);
 }
 
+/// @brief sets up indirect command and shader storage buffers for efficient und reduced render calls
 void Level::setupDrawBuffers()
 {
 	std::vector<glm::mat4> matrices;
@@ -273,6 +293,8 @@ void Level::setupDrawBuffers()
 
 }
 
+/// @brief loads all directional and positional lights in the assimp scene, corrects position for positional lights by traversing the tree
+/// @param scene is the scene containing the lights and root node
 void Level::loadLights(const aiScene* scene) {
 
 	for (size_t i = 0; i < scene->mNumLights; i++)
@@ -299,7 +321,7 @@ void Level::loadLights(const aiScene* scene) {
 			glm::vec4 p = glm::vec4(1);
 			for (size_t i = 0; i < sceneGraph.children[0].children.size(); i++)
 			{
-				if (strcmp(sceneGraph.children[0].children[i].name, "pointLight1") == 0) {
+				if (sceneGraph.children[0].children[i].name.compare("pointLight1") == 0) {
 					p = sceneGraph.getNodeMatrix() *
 						sceneGraph.children[0].getNodeMatrix() *
 						sceneGraph.children[0].children[i].getNodeMatrix() *
@@ -316,7 +338,7 @@ void Level::loadLights(const aiScene* scene) {
 
 }
 
-
+/// @brief sets up indirect render calls, binds the data and calls the actual draw routine
 void Level::DrawGraph() {
 	//TODO make buffer useful
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, matrixSSBO);
@@ -327,7 +349,9 @@ void Level::DrawGraph() {
 	drawTraverse(&sceneGraph, glm::mat4(1));
 }
 
-
+/// @brief recursiveley travels the tree and renders any models it finds (which is rather unoptimized)
+/// @param node the travers and check for models
+/// @param globalTransform the summed tranformation matrices of all parent nodes
 void Level::drawTraverse(const Hierarchy* node, glm::mat4 globalTransform)
 {
 	glm::mat4 modelMatrix = node->getNodeMatrix() * globalTransform;
@@ -356,6 +380,8 @@ void Level::drawTraverse(const Hierarchy* node, glm::mat4 globalTransform)
 		GLint baseindex = meshes[models[modelIndex].meshIndex].indexOffset;
 
 		glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, (void*)(sizeof(GLint) * baseindex));
+
+		//std::cout << node->name << std::endl;
 	}
 
 	for (size_t i = 0; i < node->children.size(); i++)
@@ -364,6 +390,8 @@ void Level::drawTraverse(const Hierarchy* node, glm::mat4 globalTransform)
 	}
 }
 
+
+/// @brief cleans up all buffers and textures 
 void Level::Release()
 {
 	glDeleteVertexArrays(1, &VAO);

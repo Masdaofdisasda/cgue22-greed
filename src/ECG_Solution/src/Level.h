@@ -8,12 +8,7 @@
 #include <assimp/scene.h>           // Output data structure
 #include <assimp/postprocess.h>     // Post processing flags
 
-/*
-Class for all Level classes.
-Helps with seperating different scenes with different models, lights, cameras and controls.
-Level data can be read from a file.
-*/
-
+/// @brief is a collection of data that is needed for drawing a mesh, can be used for instancing
 struct Model		// data for drawing
 {
 	uint32_t meshIndex;			// specify mesh in vector meshes
@@ -51,7 +46,7 @@ struct BoundingBox		// might be used for frustum culling
 
 struct Hierarchy		// implements a simple scene graph for transformations
 {
-	const char* name;
+	std::string name;
 	Hierarchy* parent;						// parent node
 	std::vector <Hierarchy> children;		// children nodes
 	std::vector<uint32_t> modelIndices;		// models in this node
