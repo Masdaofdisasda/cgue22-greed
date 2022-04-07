@@ -68,7 +68,37 @@ horizontal blur shader. If the bloom flag is set, the sixth pass will combine ou
 the image. After that the luminance textures need to be switched.
 
 ### Shader
-todo
+The game engine can load and compile different shaders by creating a Shader object and linking one to five shaders to a shader program. Here is a short
+overview our shaders and what they do:
+
+#### PBRShader
+Implements a physical based rendering scheme and is based on the code from learnopengl.com . Besides vertex data it also has access to light sources.
+For our needs we only used directional and positional lights, which need to be specified before loading the shader, as the variables xMAXLIGHTS get 
+replaced when loading the shader code. Normal mapping also takes place here, by using an algorithm that is based on the paper of Blinn's pertubed normals.
+For every light source the radiance is then calculated using the Cook-Torrance BRDF... todo
+
+#### skyboxShader
+Simple objects like boxes don't need actual vertices to be rendered. Instead we can hardcode the mesh in the shader and call the glDraw function with
+the number of indices the box has. then we read the glVertexID and hand output the correct vertex position. The rest is simple cubemap sampling.
+
+#### CombineHDR
+This Shader composes a bloom effect ontop of an image and applies tonemapping. Again we need to render a texture to a fullscreen quad which is so
+simple we don't need actual geometry. We use the VertexID to output a set of uv coordinates, which is a trick a lot of the other postprocessing shader
+use. The tone mapping uses the Reinhard 2 algorithm and has variables that can be set in the settings.ini, like exposure or bloom strength.
+
+#### lightAdapt
+We wanted to create a smooth transition between light changes and simulate the human vision. To achieve that three 1 texel framebuffers are needed, the first one contains our average luminance, the second one the actual luminance of the current frame and last one is our target. We use an 
+exponential smoothing filter to calculate our target luminance from the first two luminances. The first and the last framebuffers are then swapped
+every frame so our newly calulate value because the average in the next cycle.
 
 ## Creating a Level - Guidlines
-todo
+In theory assimp can load any fbx file, but for our game engine we decided on a few prerequisites:
+* the Maya projects is located in the assets folder
+* a texture is located in assets/texture/(texture_name)/(albedo/normal/metal/rough/ao).jpg
+* in Maya only directional and pointlights should be added and only on the root node
+* meshes should be parented in rigid and dynamic
+* every mesh must have a material
+* a material is based on the PBSstingray shader, and needs to have every textures except the emissive, associatet with it
+* a material must have the same name as the (texture_name) folder and can only use textures in that folder
+* when exporting to fbx, triangulate the mesh, and split vertex normals. Uncheck everything besides lights and keep the scale factor at 1.0. Save as binary
+
