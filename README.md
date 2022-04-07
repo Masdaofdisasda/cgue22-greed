@@ -5,6 +5,7 @@
 * [What is Greed](#what-is-greed)
 * [Setup and requirements](#setup-and-requirements)
 * [Graphics Pipeline](#graphics-pipeline)
+* [Engine Features](#engine-features)
 
 ## What is Greed
 Greed is a first person platformer written in C++ with OpenGL. It showcases what is possible with modern OpenGl and a few months time. 
@@ -115,4 +116,64 @@ In theory assimp can load any fbx file, but for our game engine we decided on a 
 * a material is based on the PBSstingray shader, and needs to have every textures except the emissive, associatet with it
 * a material must have the same name as the (texture_name) folder and can only use textures in that folder
 * when exporting to fbx, triangulate the mesh, and split vertex normals. Uncheck everything besides lights and keep the scale factor at 1.0. Save as binary
+
+## Engine Features
+### Gameplay
+#### 3D Geometry
+Geometry can be loaded from fbx files with our Level class
+
+#### 60 FPS and Framerate Indipendence
+Our render is able to draw more than 1000000 triangles at about 800 fps on our machines. For every animation and physics simulation the delta time is used
+
+#### Win/Lose Condition
+If you manage to reach the top of the cave, you win, but if the rising lava catches up to you, you get fried.
+
+#### Intuitive Camera & Controls
+For this game we didn't want to create a player model and decided it would be the best to use a quaternion based first person camera.
+Movement is mapped to the standard WASD scheme: 
+* WASD - move player horizontally
+* Space - jump
+* Mouse - rotate camera
+* LMB - pickup object
+
+#### Ilumination Model
+To light our scene we used a physically based rendering approach which is implemented in assets/shaders/pbr.
+
+#### Textures
+Every loaded model has to have a set of five textures, describing it's material. In the render loop at least nine textures are used, five of the are 
+the material of the model three are for image based lighting and one is for the skybox.
+
+#### Moving Objects
+In our fbx file we use seperate groups for static and dynamic objects. Dynamic objects can move through the scene and are part of the physics simulation. additionally there is the lava triangle which rises from the bottom to the top as implemented in the lavaFloor shaders
+
+#### Adjustable Parameters
+Screen size, fullscreen mode, refresh rate and exposure aswell as other settings can be set in assets/settings.ini
+
+#### Physics
+With the bullet library we have implemented collision detection and pressure plates.
+
+#### View Frustum Culling
+todo
+
+#### HUD
+todo
+
+### Graphics & Effects
+#### Shadows
+todo
+
+#### Fluid Simulation / Subdivision Surface
+maybe do
+
+#### Procedural Textures
+todo
+
+#### Normal Mapping
+Every model has a normal map which is calulated in the PBRShader. For an explaination look at the shader section.
+
+#### kd-Tree
+todo
+
+#### Post Processing
+In the Renderer class we implemented a pipeline for HDR rendering, blooming and tonemapping. For details look at the Renderer section.
 
