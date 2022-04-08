@@ -16,7 +16,7 @@ layout(std140, binding = 0) uniform PerFrameData
 
 layout(std430, binding = 4) restrict readonly buffer Matrices
 {
-	mat4 modelMatrix;
+	mat4 modelMatrix[];
 };
 
 out vec3 fNormal;
@@ -26,7 +26,7 @@ out flat uint matIdx;
 
 void main()
 {
-	mat4 model = modelMatrix;
+	mat4 model = modelMatrix[gl_BaseInstance];
 	gl_Position = ViewProj * model * vec4(vPosition, 1.0);
 	fUV = vUV;
 	fPosition = vec3(model * vec4(vPosition, 1.0));

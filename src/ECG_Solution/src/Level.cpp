@@ -52,6 +52,9 @@ Level::Level(const char* scenePath) {
 
 		Material mat = loadMaterials(mm);
 		materials.push_back(mat);
+		RenderItem item;
+		item.material = mm->GetName().C_Str();
+		renderQueue.push_back(item);
 	}
 
 
@@ -266,29 +269,15 @@ void Level::setupVertexBuffers()
 /// @brief sets up indirect command and shader storage buffers for efficient und reduced render calls
 void Level::setupDrawBuffers()
 {
-	std::vector<glm::mat4> matrices;
-	// setup buffers for drawing commands
-	for (auto i = 0; i < models.size(); i++)
-	{
-		DrawElementsIndirectCommand icmd;
-		icmd.count_ = 1;
-		icmd.instanceCount_ = 1;
-		icmd.firstIndex_ = meshes[models[i].meshIndex].indexOffset;
-		icmd.baseVertex_ = meshes[models[i].meshIndex].vertexOffset;
-		icmd.baseInstance_ = models[i].materialIndex + (uint32_t(i) << 16);
-		drawCommands_.push_back(icmd);
-	}
 
 	glCreateBuffers(1, &IBO);
-	glNamedBufferStorage(IBO, drawCommands_.size() * sizeof(DrawElementsIndirectCommand), nullptr, GL_DYNAMIC_STORAGE_BIT);
-	glNamedBufferSubData(IBO, 0, drawCommands_.size() * sizeof(DrawElementsIndirectCommand), drawCommands_.data());
+	glNamedBufferStorage(IBO, models.size() * sizeof(DrawElementsIndirectCommand), nullptr, GL_DYNAMIC_STORAGE_BIT);
 
 	glCreateBuffers(1, &matrixSSBO);
-	//glNamedBufferStorage(matrixSSBO, matrices.size() * sizeof(glm::mat4), nullptr, GL_DYNAMIC_STORAGE_BIT);
-	//glNamedBufferSubData(matrixSSBO, 0, matrices.size() * sizeof(glm::mat4), matrices.data());
-	glNamedBufferStorage(matrixSSBO, sizeof(glm::mat4), nullptr, GL_DYNAMIC_STORAGE_BIT);
-	glNamedBufferSubData(matrixSSBO, 0, sizeof(glm::mat4), &glm::mat4(1)[0][0]);
+	glNamedBufferStorage(matrixSSBO, models.size() * sizeof(glm::mat4), nullptr, GL_DYNAMIC_STORAGE_BIT);
 
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, matrixSSBO);
+	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, IBO);
 }
 
 /// @brief loads all directional and positional lights in the assimp scene, corrects position for positional lights by traversing the tree
@@ -338,57 +327,69 @@ void Level::loadLights(const aiScene* scene) {
 
 /// @brief sets up indirect render calls, binds the data and calls the actual draw routine
 void Level::DrawGraph() {
-	//TODO make buffer useful
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, matrixSSBO);
-	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, IBO);
+
+	buildRenderQueue(&sceneGraph, glm::mat4(1));
+
 
 	// draw mesh
 	glBindVertexArray(VAO);
-	drawTraverse(&sceneGraph, glm::mat4(1));
+
+	for (size_t i = 0; i < renderQueue.size(); i++)
+	{
+		glNamedBufferSubData(matrixSSBO, 0, sizeof(glm::mat4) * renderQueue[i].modelMatrices.size(), renderQueue[i].modelMatrices.data());
+
+		glNamedBufferSubData(IBO, 0, renderQueue[i].commands.size() * sizeof(DrawElementsIndirectCommand), renderQueue[i].commands.data());
+		
+		const GLuint textures[] = {materials[i].getAlbedo(), materials[i].getNormalmap(), materials[i].getMetallic(), materials[i].getRoughness(), materials[i].getAOmap() };
+
+		glBindTextures(0, 5, textures);
+		glMultiDrawArraysIndirect(GL_TRIANGLES, nullptr, renderQueue[i].commands.size(), 0);
+	}
+
+	resetQueue();
 }
 
-/// @brief recursiveley travels the tree and renders any models it finds (which is rather unoptimized)
-/// @param node the travers and check for models
+/// @brief recursiveley travels the tree and adds any models it finds, according to its material, to the render queue
+/// @param node that gets checked for models
 /// @param globalTransform the summed tranformation matrices of all parent nodes
-void Level::drawTraverse(const Hierarchy* node, glm::mat4 globalTransform)
-{
-	//glm::mat4 modelMatrix = node->getNodeMatrix() * globalTransform;
-	glm::mat4 modelMatrix =  globalTransform * node->getNodeMatrix();
+void Level::buildRenderQueue(const Hierarchy* node, glm::mat4 globalTransform) {
 
+
+	glm::mat4 nodeMatrix = globalTransform * node->getNodeMatrix();
 	for (size_t i = 0; i < node->modelIndices.size(); i++)
 	{
 		uint32_t modelIndex = node->modelIndices[i];
+		uint32_t materialIndex = models[modelIndex].materialIndex;
+		uint32_t count = meshes[models[modelIndex].meshIndex].indexCount;
+		uint32_t firstIndex = meshes[models[modelIndex].meshIndex].indexOffset;
+		uint32_t baseInstance = renderQueue[materialIndex].modelMatrices.size();
 
-		if (boundMaterial != models[modelIndex].materialIndex)
-		{
-			boundMaterial = models[modelIndex].materialIndex;
+		DrawElementsIndirectCommand cmd= DrawElementsIndirectCommand{
+			count,
+			1,
+			firstIndex,
+			baseInstance };
 
-			const Material& mat = materials[models[modelIndex].materialIndex];
-			const GLuint textures[] = {
-				mat.getAlbedo(),
-				mat.getNormalmap(),
-				mat.getMetallic(),
-				mat.getRoughness(),
-				mat.getAOmap() };
-			glBindTextures(0, 5, textures);
-		}
-
-		glNamedBufferSubData(matrixSSBO, 0, sizeof(glm::mat4), &modelMatrix[0][0]);
-
-		GLsizei count = meshes[models[modelIndex].meshIndex].indexCount;
-		GLint baseindex = meshes[models[modelIndex].meshIndex].indexOffset;
-
-		glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, (void*)(sizeof(GLint) * baseindex));
-
-		//std::cout << node->name << std::endl;
+		renderQueue[materialIndex].commands.push_back(cmd);
+		renderQueue[materialIndex].modelMatrices.push_back(nodeMatrix);
 	}
+	
 
 	for (size_t i = 0; i < node->children.size(); i++)
 	{
-		drawTraverse(&node->children[i], modelMatrix);
+		buildRenderQueue(&node->children[i], nodeMatrix);
 	}
 }
 
+/// @brief removes all render commands and model matrices of the render queue
+void Level::resetQueue()
+{
+	for (size_t i = 0; i < renderQueue.size(); i++)
+	{
+		renderQueue[i].commands.clear();
+		renderQueue[i].modelMatrices.clear();
+	}
+}
 
 /// @brief cleans up all buffers and textures
 void Level::Release()

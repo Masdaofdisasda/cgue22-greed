@@ -13,7 +13,6 @@ struct Model
 {
 	uint32_t meshIndex;			// specify mesh in vector meshes
 	uint32_t materialIndex;		// specify material in vector materials
-	uint32_t transformIndex;	// specify model tranformation in vector ?
 };
 
 /// @brief describes the position of a mesh in an index and vertex array 
@@ -30,11 +29,10 @@ struct subMesh
 /// @brief deascribes one indirect command for GlDraw_Indrect calls
 struct DrawElementsIndirectCommand		// TODO
 {
-	GLuint count_;
-	GLuint instanceCount_;
-	GLuint firstIndex_;
-	GLuint baseVertex_;
-	GLuint baseInstance_;
+	uint32_t count_;
+	uint32_t instanceCount_;
+	uint32_t first_;
+	uint32_t baseInstance_;
 };
 
 /// @brief describes the bounding box of a mesh, can be used for frustum culling or physics simlution
@@ -51,7 +49,7 @@ struct BoundingBox
 struct Hierarchy
 {
 	std::string name;
-	Hierarchy* parent;						// parent node
+	Hierarchy* parent = nullptr;			// parent node
 	std::vector <Hierarchy> children;		// children nodes
 	std::vector<uint32_t> modelIndices;		// models in this node
 
@@ -62,10 +60,16 @@ struct Hierarchy
 	/// return TRS "model matrix" of the node
 	glm::mat4 getNodeMatrix() const { return glm::translate(localTranslate) * glm::toMat4(localRotation) * glm::scale(localScale); }
 
-	//glm::mat4 getNodeMatrix() const { return glm::scale(localScale) * glm::toMat4(localRotation) * glm::translate(localTranslate); }
-
 	/// @brief set TRS "model matrix" of the node
 	void setNodeMatrix(glm::mat4 M) { glm::decompose(M , localScale, localRotation, localTranslate, glm::vec3(), glm::vec4());}
+};
+
+/// @brief contains a list of draw commands and matching model matrices for models of the same material
+struct RenderItem
+{
+	std::string material;
+	std::vector<DrawElementsIndirectCommand> commands;
+	std::vector<glm::mat4> modelMatrices;
 };
 
 //---------------------------------------------------------------------------------------------------------------//
@@ -91,7 +95,7 @@ private:
 	std::vector <GLuint> indices;			// contains the indices that make triangles
 	std::vector <Material> materials;		// contains all needed textures
 	std::vector <BoundingBox> boxes;		// contains all bounding boxes of the meshes
-	std::vector<DrawElementsIndirectCommand> drawCommands_; //TODO
+	std::vector<RenderItem> renderQueue;	// contains for every material render commands and matrices
 	Hierarchy sceneGraph;					// saves scene hierarchy and transformations
 	Hierarchy* rigid;						// parent node of all rigid meshes (ground, walls, ...)
 	Hierarchy* dynamic;						// parent node of all dynamic meshes (items, ...)
@@ -106,8 +110,10 @@ private:
 	void setupDrawBuffers();
 	void loadLights(const aiScene* scene);
 	glm::mat4 toGlmMat4(const aiMatrix4x4& mat);
+	void buildRenderQueue(const Hierarchy* node, glm::mat4 globalTransform);
 	void drawTraverse(const Hierarchy* node, glm::mat4 globalTransform);
 
+	void resetQueue();
 	void Release();
 	
 public:
