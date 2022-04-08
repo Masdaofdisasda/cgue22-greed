@@ -40,7 +40,6 @@ Level::Level(const char* scenePath) {
 		const aiMesh* mesh = scene->mMeshes[i];
 		meshes.push_back(extractMesh(mesh));
 	}
-	calculateBoundingBoxes();
 
 	// 3. load materials
 	std::cout << "loading materials..." << std::endl;
@@ -64,7 +63,6 @@ Level::Level(const char* scenePath) {
 		Model draw;
 		draw.meshIndex = (uint32_t)i;
 		draw.materialIndex = meshes[i].materialIndex;
-		draw.transformIndex = 0;
 		models.push_back(draw);
 
 	}
@@ -72,23 +70,17 @@ Level::Level(const char* scenePath) {
 	// 5. build scene graph
 	std::cout << "build scene hierarchy..." << std::endl;
 	aiNode* n = scene->mRootNode;
-	Hierarchy child;
-	sceneGraph.name = "root";
-	sceneGraph.parent = nullptr;
-	sceneGraph.children.push_back(child);
-	sceneGraph.localTranslate = glm::vec3();
-	sceneGraph.localRotation = glm::quat();
-	sceneGraph.localScale = glm::vec3(1);
-	traverseTree(n, &sceneGraph, &sceneGraph.children[0]); 
-	for (size_t i = 0; i < sceneGraph.children[0].children.size(); i++)
+	traverseTree(n, nullptr, &sceneGraph); 
+	for (size_t i = 0; i < sceneGraph.children.size(); i++)
 	{
-		if (sceneGraph.children[0].children[i].name.compare("Rigid") == 0) {
-			rigid = &sceneGraph.children[0].children[i];
+		if (sceneGraph.children[i].name.compare("Rigid") == 0) {
+			rigid = &sceneGraph.children[i];
 		}
-		if (sceneGraph.children[0].children[i].name.compare("Dynamic") == 0) {
-			dynamic = &sceneGraph.children[0].children[i];
+		if (sceneGraph.children[i].name.compare("Dynamic") == 0) {
+			dynamic = &sceneGraph.children[i];
 		}
 	}
+	sceneGraph.nodeBounds = computeBoundsOfNode(sceneGraph.children, sceneGraph.modelBounds);
 
 	// 6. setup buffers for vertex and indices data
 	std::cout << "setup buffers..." << std::endl;
@@ -158,26 +150,50 @@ subMesh Level::extractMesh(const aiMesh* mesh)
 }
 
 /// @brief finds the maximum and minimum vertex positions of all meshes, which should define the bounds
-void Level::calculateBoundingBoxes() {
-	boxes.clear();
+BoundingBox Level::computeBoundsOfMesh(subMesh mesh) {
+	const auto numIndices = mesh.indexCount;
 
-	for (const auto& mesh : meshes)
+	glm::vec3 vmin(std::numeric_limits<float>::max());
+	glm::vec3 vmax(std::numeric_limits<float>::lowest());
+
+	for (auto i = 0; i != numIndices; i++)
 	{
-		const auto numIndices = mesh.indexCount;
+		//auto vtxOffset = indices[mesh.indexOffset + i] + mesh.vertexOffset;
+		//const float* vf = &vertices[vtxOffset];
 
-		glm::vec3 vmin(std::numeric_limits<float>::max());
-		glm::vec3 vmax(std::numeric_limits<float>::lowest());
+		auto vertexOffset = (mesh.vertexOffset + i) * 8;
+		const float* vf = &vertices[vertexOffset];
 
-		for (auto i = 0; i != numIndices; i++)
-		{
-			auto vtxOffset = indices[mesh.indexOffset + i] + mesh.vertexOffset;
-			const float* vf = &vertices[vtxOffset];
-			vmin = glm::min(vmin, glm::vec3(vf[0], vf[1], vf[2]));
-			vmax = glm::max(vmax, glm::vec3(vf[0], vf[1], vf[2]));
-		}
-
-		boxes.emplace_back(vmin, vmax);
+		vmin = glm::min(vmin, glm::vec3(vf[0], vf[1], vf[2]));
+		vmax = glm::max(vmax, glm::vec3(vf[0], vf[1], vf[2]));
 	}
+	return BoundingBox(vmin, vmax);
+}
+
+BoundingBox Level::computeBoundsOfNode(std::vector<Hierarchy> children, std::vector<BoundingBox> modelBounds)
+{
+	glm::vec3 vmin(std::numeric_limits<float>::max());
+	glm::vec3 vmax(std::numeric_limits<float>::lowest());
+
+	for (size_t i = 0; i < children.size(); i++)
+	{
+		glm::vec3 cmin = children[i].nodeBounds.min_;
+		glm::vec3 cmax = children[i].nodeBounds.max_;
+
+		vmin = glm::min(vmin, cmin);
+		vmax = glm::max(vmax, cmax);
+	}
+
+	for (size_t i = 0; i < modelBounds.size(); i++)
+	{
+		glm::vec3 cmin = modelBounds[i].min_;
+		glm::vec3 cmax = modelBounds[i].max_;
+
+		vmin = glm::min(vmin, cmin);
+		vmax = glm::max(vmax, cmax);
+	}
+
+	return BoundingBox(vmin, vmax);
 }
 
 /// @brief loads all materials (textures) from the material assimp provides
@@ -205,6 +221,8 @@ Material Level::loadMaterials(const aiMaterial* M)
 void Level::traverseTree(aiNode* n, Hierarchy* parent, Hierarchy* node)
 {
 	const char* c = n->mName.C_Str();
+	const glm::mat4 M = toGlmMat4(n->mTransformation);
+
 	node->name = c;
 
 	node->parent = parent;
@@ -212,9 +230,11 @@ void Level::traverseTree(aiNode* n, Hierarchy* parent, Hierarchy* node)
 	for (unsigned int i = 0; i < n->mNumMeshes; i++)
 	{
 		node->modelIndices.push_back(n->mMeshes[i]);
+		BoundingBox box = computeBoundsOfMesh(meshes[n->mMeshes[i]]);
+		node->modelBounds.push_back(BoundingBox(glm::vec4(box.min_, 1.0f) * M, glm::vec4(box.max_,1.0f) * M));
 	}
 
-	glm::decompose(toGlmMat4(n->mTransformation), node->localScale, node->localRotation, node->localTranslate, glm::vec3(), glm::vec4());
+	glm::decompose(M, node->localScale, node->localRotation, node->localTranslate, glm::vec3(), glm::vec4());
 	node->localRotation = glm::normalize(glm::conjugate(node->localRotation));
 
 	for (size_t i = 0; i < n->mNumChildren; i++)
@@ -224,7 +244,8 @@ void Level::traverseTree(aiNode* n, Hierarchy* parent, Hierarchy* node)
 		node->children.push_back(child);
 	}
 
-
+	BoundingBox box = computeBoundsOfNode(node->children, node->modelBounds);
+	node->nodeBounds = BoundingBox(glm::vec4(box.min_, 1.0f) * M, glm::vec4(box.max_, 1.0f) * M);
 }
 
 
@@ -308,10 +329,9 @@ void Level::loadLights(const aiScene* scene) {
 			glm::vec4 p = glm::vec4(1);
 			for (size_t i = 0; i < sceneGraph.children[0].children.size(); i++)
 			{
-				if (sceneGraph.children[0].children[i].name.compare("pointLight1") == 0) {
+				if (sceneGraph.children[i].name.compare("pointLight1") == 0) {
 					p = sceneGraph.getNodeMatrix() *
-						sceneGraph.children[0].getNodeMatrix() *
-						sceneGraph.children[0].children[i].getNodeMatrix() *
+						sceneGraph.children[i].getNodeMatrix() *
 						p;
 				}
 			}

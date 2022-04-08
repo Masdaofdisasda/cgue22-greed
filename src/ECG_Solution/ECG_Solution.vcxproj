@@ -21,6 +21,7 @@
     <ClInclude Include="src\Cubemap.h" />
     <ClInclude Include="src\Framebuffer.h" />
     <ClInclude Include="src\FPSCounter.h" />
+    <ClInclude Include="src\FrustumCuller.h" />
     <ClInclude Include="src\GLFWApp.h" />
     <ClInclude Include="src\Level.h" />
     <ClInclude Include="src\Material.h" />

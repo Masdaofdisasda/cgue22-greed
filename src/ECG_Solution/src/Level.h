@@ -57,6 +57,9 @@ struct Hierarchy
 	glm::quat localRotation;
 	glm::vec3 localScale;
 
+	BoundingBox nodeBounds;					// bounds of the nodes underlying children
+	std::vector<BoundingBox> modelBounds;	// bounds of the models;
+
 	/// return TRS "model matrix" of the node
 	glm::mat4 getNodeMatrix() const { return glm::translate(localTranslate) * glm::toMat4(localRotation) * glm::scale(localScale); }
 
@@ -103,7 +106,8 @@ private:
 	LightSources lights;
 
 	subMesh extractMesh(const aiMesh* mesh);
-	void calculateBoundingBoxes();
+	BoundingBox computeBoundsOfMesh(subMesh mesh);
+	BoundingBox computeBoundsOfNode(std::vector <Hierarchy> children, std::vector<BoundingBox> modelBounds);
 	Material Level::loadMaterials(const aiMaterial* M);
 	void traverseTree(aiNode* n, Hierarchy* parent, Hierarchy* child);
 	void setupVertexBuffers();
