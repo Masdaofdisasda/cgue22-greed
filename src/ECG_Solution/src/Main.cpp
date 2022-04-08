@@ -62,7 +62,7 @@ int main(int argc, char** argv)
 	assert(file.is_open());
 	file.close();
 
-	globalState = Renderer::loadSettings(globalState);
+	globalState = Renderer::loadSettings();
 
 	/* --------------------------------------------- */
 	// Init framework

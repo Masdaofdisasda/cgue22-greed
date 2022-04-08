@@ -1,5 +1,8 @@
 #include "Program.h"
 
+/// @brief build a shader program from shaders and check for compile errors
+/// all buildFrom() functions do the same thing but with more shaders
+/// @param a is a valid shader
 void Program::buildFrom(Shader& a)
 {
 	glAttachShader(program_ID, *a.getID());
@@ -8,7 +11,6 @@ void Program::buildFrom(Shader& a)
 	compileErrors();
 	getUniformLocations();
 }
-
 void Program::buildFrom(Shader& a, Shader& b)
 {
 	glAttachShader(program_ID, *a.getID());
@@ -53,17 +55,25 @@ void Program::buildFrom(Shader& a, Shader& b, Shader& c, Shader& d, Shader& e)
 
 }
 
+/// @brief creates an OpenGL handle, program needs to call some of the buildfrom()
+/// functions before Use(), otherwise the app may crash, this constructor makes
+/// member programs possible
 Program::Program()
 {
 	program_ID = glCreateProgram();
 }
 
-
+/// @brief makes this the currently active shader program, called before glDraw()
 void Program::Use()
 {
 	glUseProgram(program_ID);
 }
 
+/// @brief binds IBL textures to uniforms 5,6,7 and 8 (same order as the parameters)
+/// @param Irradiance is the texture handle for the irradiance map
+/// @param PreFilter is the texture handle for the prefilter map
+/// @param BdrfLut is the texture handle for the bdrflut map
+/// @param Enviroment  is the texture handle for the enviroment map
 void Program::uploadIBL(GLuint Irradiance, GLuint PreFilter, GLuint BdrfLut, GLuint Enviroment) const
 {
 	const GLuint textures[] = {
@@ -74,6 +84,7 @@ void Program::uploadIBL(GLuint Irradiance, GLuint PreFilter, GLuint BdrfLut, GLu
 	glBindTextures(5, 4, textures);
 }
 
+// TODO
 void Program::getUniformLocations()
 {
 
@@ -82,7 +93,7 @@ void Program::getUniformLocations()
 
 }
 
-
+// TODO
 void Program::bindLightBuffers(UBO* directional, UBO* positional)
 {
 	glBindBufferBase(GL_UNIFORM_BUFFER, 1, *directional->getID());
@@ -120,7 +131,7 @@ void Program::setMat4(const std::string& name, glm::mat4 value)
 	glUniformMatrix4fv(glGetUniformLocation(program_ID, name.c_str()), 1, GL_FALSE, &value[0][0]);
 }
 
-// check for compile errors
+/// @brief check for compile errors
 int Program::compileErrors()
 {
 	GLint succeded;
@@ -128,13 +139,11 @@ int Program::compileErrors()
 	glGetProgramiv(program_ID, GL_LINK_STATUS, &succeded);
 	if (succeded == GL_FALSE)
 	{
-
-		// get error
 		GLint logSize;
 		glGetProgramiv(program_ID, GL_INFO_LOG_LENGTH, &logSize);
 		GLchar* message = new char[logSize];
 		glGetProgramInfoLog(program_ID, logSize, nullptr, message);
-		EXIT_WITH_ERROR(message); // print error
+		EXIT_WITH_ERROR(message);
 		delete[] message;
 	}
 }

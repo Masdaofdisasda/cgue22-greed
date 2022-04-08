@@ -5,11 +5,9 @@
 #include "Cubemap.h"
 #include "Level.h"
 
-/* class for shader Programms
-* a program can consist of 1-5 shaders
-* contains handle to a shader programm and the main draw call
-*/
-
+/// @brief Program is a shader program compiled from 1 to 5 shaders
+/// contains a handle, builds and error checks the programm
+/// can set unfiform variables for a shader
 class Program
 {
 private:

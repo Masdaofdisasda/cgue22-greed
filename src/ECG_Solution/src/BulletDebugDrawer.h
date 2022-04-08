@@ -9,7 +9,7 @@ class BulletDebugDrawer : public btIDebugDraw
 private:
 	int m_debugMode = 0;
 	std::vector <glm::vec3> vertices;
-	Program* program;
+	Program program;
 	GLuint vbo_ID = 0;
 	GLuint vao_ID = 0;
 public:

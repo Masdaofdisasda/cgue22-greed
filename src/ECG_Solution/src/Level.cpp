@@ -390,7 +390,7 @@ void Level::drawTraverse(const Hierarchy* node, glm::mat4 globalTransform)
 }
 
 
-/// @brief cleans up all buffers and textures 
+/// @brief cleans up all buffers and textures
 void Level::Release()
 {
 	glDeleteVertexArrays(1, &VAO);

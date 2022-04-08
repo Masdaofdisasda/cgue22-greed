@@ -4,19 +4,20 @@
 #include "Material.h"
 #include "LightSource.h"
 #include "Camera.h"
-#include <assimp/Importer.hpp>      // C++ importer interface
-#include <assimp/scene.h>           // Output data structure
-#include <assimp/postprocess.h>     // Post processing flags
+#include <assimp/Importer.hpp>      
+#include <assimp/scene.h>           
+#include <assimp/postprocess.h>     
 
 /// @brief is a collection of data that is needed for drawing a mesh, can be used for instancing
-struct Model		// data for drawing
+struct Model
 {
 	uint32_t meshIndex;			// specify mesh in vector meshes
 	uint32_t materialIndex;		// specify material in vector materials
 	uint32_t transformIndex;	// specify model tranformation in vector ?
 };
 
-struct subMesh		// mesh object
+/// @brief describes the position of a mesh in an index and vertex array 
+struct subMesh
 {
 	const char* name;			// name of the mesh, for debugging
 	uint32_t indexOffset;		// start of mesh in vector indices
@@ -26,6 +27,7 @@ struct subMesh		// mesh object
 	uint32_t materialIndex;		// associated material
 };
 
+/// @brief deascribes one indirect command for GlDraw_Indrect calls
 struct DrawElementsIndirectCommand		// TODO
 {
 	GLuint count_;
@@ -35,7 +37,8 @@ struct DrawElementsIndirectCommand		// TODO
 	GLuint baseInstance_;
 };
 
-struct BoundingBox		// might be used for frustum culling
+/// @brief describes the bounding box of a mesh, can be used for frustum culling or physics simlution
+struct BoundingBox
 {
 	glm::vec3 min_;
 	glm::vec3 max_;
@@ -44,7 +47,8 @@ struct BoundingBox		// might be used for frustum culling
 	BoundingBox(const glm::vec3 & min, const glm::vec3 & max) : min_(glm::min(min, max)), max_(glm::max(min, max)) {}
 };
 
-struct Hierarchy		// implements a simple scene graph for transformations
+/// @brief implements a simple scene graph for hierarchical tranforamtions
+struct Hierarchy
 {
 	std::string name;
 	Hierarchy* parent;						// parent node
@@ -55,12 +59,16 @@ struct Hierarchy		// implements a simple scene graph for transformations
 	glm::quat localRotation;
 	glm::vec3 localScale;
 
-	//returns TRS "model matrix" of the node
+	/// return TRS "model matrix" of the node
 	glm::mat4 getNodeMatrix() const { return glm::translate(localTranslate) * glm::toMat4(localRotation) * glm::scale(localScale); }
+	/// @brief set TRS "model matrix" of the node
 	void setNodeMatrix(glm::mat4 M) { glm::decompose(M , localScale, localRotation, localTranslate, glm::vec3(), glm::vec4());}
 };
 
 //---------------------------------------------------------------------------------------------------------------//
+
+/// @brief Level is mainly a data structure for complex 3D scenes
+/// loads and manages geometry, textures and model matrices from some fbx file
 class Level {
 private:
 	uint32_t globalVertexOffset = 0;
@@ -75,7 +83,7 @@ private:
 
 	// mesh data - a loaded scene is entirely contained in these data structures
 	std::vector <subMesh> meshes;			// contains mesh offsets for glDraw 
-	std::vector <Model> models;			// describes a single model
+	std::vector <Model> models;				// describes a single model
 	std::vector<float> vertices;			// contains a stream of vertices in (px,py,pz,ny,ny,nz,u,v)-form
 	std::vector <GLuint> indices;			// contains the indices that make triangles
 	std::vector <Material> materials;		// contains all needed textures

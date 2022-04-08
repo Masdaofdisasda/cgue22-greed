@@ -1,13 +1,11 @@
 #pragma once
 #include "Utils.h"
 
-/* holds multiple Textures of an enviroment for Image Based Lighting
-*/
-
-class Cubemap
-{
+/// @brief loads and processes 4 different textures for image based lightning
+/// loads an equirectangular panorama HDR image and prepares it for the render pipeline
+/// for an actual implemention of a cubemap texture use Texture.h
+class Cubemap{
 private:
-	GLuint hdr_ID = 0; // rectangular image in hdri format (Texture)
 	GLuint env_ID = 0; // enviroment created from the hdri image (Cubemap)
 	GLuint irrad_ID = 0; // irradiance (Cubemap)
 	GLuint prefilt_ID = 0; // pre filtered (Cubemap)
@@ -15,12 +13,10 @@ private:
 
 	void Release()
 	{
-		glDeleteTextures(1, &hdr_ID);
 		glDeleteTextures(1, &env_ID);
 		glDeleteTextures(1, &irrad_ID);
 		glDeleteTextures(1, &prefilt_ID);
 		glDeleteTextures(1, &brdfLut_ID);
-		hdr_ID = 0;
 		env_ID = 0;
 		irrad_ID = 0;
 		prefilt_ID = 0;
@@ -42,9 +38,9 @@ public:
 	Cubemap(const Cubemap&) = delete;
 	Cubemap& operator=(const Cubemap&) = delete;
 
-	 Cubemap(Cubemap&& other) noexcept : hdr_ID(other.hdr_ID)
+	 Cubemap(Cubemap&& other) noexcept : env_ID(other.env_ID)
 	{
-		other.hdr_ID = 0; //Use the "null" ID for the old object.
+		other.env_ID = 0; //Use the "null" ID for the old object.
 	} 
 
 	Cubemap& operator=(Cubemap&& other)
@@ -54,7 +50,6 @@ public:
 		{
 			Release();
 			//obj_ is now 0.
-			std::swap(hdr_ID, other.hdr_ID);
 			std::swap(env_ID, other.env_ID);
 			std::swap(irrad_ID, other.irrad_ID);
 			std::swap(prefilt_ID, other.prefilt_ID);
@@ -62,7 +57,6 @@ public:
 		}
 	}
 
-	GLuint getHdr() const { return hdr_ID; }
 	GLuint getEnvironment()const { return env_ID; }
 	GLuint getIrradianceID() const { return irrad_ID; }
 	GLuint getPreFilterID()const { return prefilt_ID; }

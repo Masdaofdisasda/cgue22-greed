@@ -17,7 +17,7 @@ public:
 	void Draw(Level* level);
 	void swapLuminance();
 
-	GlobalState static loadSettings(GlobalState state);
+	GlobalState static loadSettings();
 private:
 	// Render Settings
 	GlobalState* globalState;

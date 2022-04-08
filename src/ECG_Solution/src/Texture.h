@@ -2,9 +2,8 @@
 
 #include "Utils.h"
 
-/* class for basic textures
-* holds a unique id, a path for comparison can be a texture or a cubemap
-*/
+/// @brief Texture is an OpenGL sampler2D or sampler3D aka Texture or Cubemap
+/// it can create textures from images or pset them up for framebuffers
 class Texture
 {
 private:
@@ -20,12 +19,9 @@ private:
 	int getNumMipMapLevels2D(int w, int h);
 
 public:
-	Texture();
-
 	Texture(GLenum type, int width, int height, GLenum internalFormat);
 	~Texture() { Release(); }
 
-	void load(const char* texPath, int texUnit = 0);
 	static GLuint loadTexture(const char* texPath);
 
 	

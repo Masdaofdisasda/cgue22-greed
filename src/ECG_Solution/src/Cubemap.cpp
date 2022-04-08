@@ -3,19 +3,26 @@
 #define STB_IMAGE_IMPLEMENTATION1
 #include <stb/stb_image.h>
 
+/// @brief initalize the handles, caution: using the cubemap without actually
+/// assigned textures breaks the program. this was only done to allow member
+/// cubemaps in Renderer.h
 Cubemap::Cubemap()
 {
-    glGenTextures(1, &hdr_ID);
     glGenTextures(1, &env_ID);
     glGenTextures(1, &irrad_ID);
     glGenTextures(1, &prefilt_ID);
     glGenTextures(1, &brdfLut_ID);
 }
 
-// loads an HDR image and processes it for IBL
 // https://learnopengl.com/PBR/IBL/Diffuse-irradiance
+
+/// @brief loads an hdr panorama image and generates an irradiance map, a filtered map
+/// and look up texture for the BDRF
+/// @param texPath is the location of the hdr image
 void Cubemap::loadHDR(const char* texPath)
 {
+    GLuint hdr_ID = 0;
+    glGenTextures(1, &hdr_ID);
 
     // pbr: setup framebuffer
     // ----------------------
@@ -231,6 +238,8 @@ void Cubemap::loadHDR(const char* texPath)
     renderQuad();
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    glDeleteTextures(1, &hdr_ID);
 }
 
 void Cubemap::renderCube()
@@ -336,6 +345,12 @@ void Cubemap::renderQuad()
     glBindVertexArray(0);
 }
 
+/// @brief an implementation of the glm::lookat() function, because this framework
+/// makes it impossible to use, same code as in the Camera class
+/// @param pos is the position aka eye or view of the camera
+/// @param target to "look at" from the position
+/// @param up is the up vetor of the world
+/// @return a view matrix according to the input vectors
 glm::mat4 Cubemap::glmlookAt2(glm::vec3 pos, glm::vec3 target, glm::vec3 up)
 {
     glm::vec3 zaxis = glm::normalize(pos - target);

@@ -1,7 +1,8 @@
 #include "Shader.h"
 
-
-// read shader source code from file and return it as string
+/// @brief load shader code from file
+/// @param file is the path to some shader file
+/// @return a string containing shader code
 std::string read_code_from(const char* file)
 {
 	std::ifstream ifs(file);
@@ -13,7 +14,9 @@ std::string read_code_from(const char* file)
 	return content;
 }
 
-// insert light stuct size if needed
+/// @brief replaces placeholder code with actual numbers
+/// @param code some shader code in string form with a light source array of size "xMAXLIGHTS"
+/// @return the same shader code but with array size set to the number of lights
 std::string Shader::insertLightcount(std::string code)
 {
 	std::string dReplace = "dMAXLIGHTS";
@@ -26,6 +29,10 @@ std::string Shader::insertLightcount(std::string code)
 	return code;
 }
 
+
+/// @brief find correct shader type based on file ending
+/// @param fileName is the path to some shader program
+/// @return suitable shader type in gl form
 GLenum Shader::GLShaderTypeFromFileName(const char* fileName)
 {
 	if (endsWith(fileName, ".vert"))
@@ -44,10 +51,16 @@ GLenum Shader::GLShaderTypeFromFileName(const char* fileName)
 	return 0;
 }
 
+/// @brief checks if the end of a filepath matches a file type
+/// @param s is the file path eg. "/assets/shader.vert"
+/// @param part is the file type eg. ".vert"
+/// @return 1 if the condition is true
 int Shader::endsWith(const char* s, const char* part) {
 	return (strstr(s, part) - s) == (strlen(s) - strlen(part));
 }
 
+/// @brief loads and compiles a shader from a file location
+/// @param fileName is the location of the shader file
 Shader::Shader(const char* fileName)
 {
 	hasLights = false;
@@ -65,6 +78,9 @@ Shader::Shader(const char* fileName)
 	compileErrors();
 }
 
+/// @brief loads and compiles a shader from a file location
+/// @param fileName is the location of the shader file
+/// @param lights is the number of lights (dir,point,spot)
 Shader::Shader(const char* fileName, glm::ivec3 lights)
 {
 	hasLights = true;
@@ -84,16 +100,16 @@ Shader::Shader(const char* fileName, glm::ivec3 lights)
 	compileErrors();
 }
 
-
+/// @brief set number of light sources to insert in some shader
+/// @param dir number of directional lights
+/// @param pos number of positional/point lights
 void Shader::setLightCounts(int dir, int pos)
 {
-	// sets light counts
 	dLights = std::to_string(dir);
 	pLights = std::to_string(pos);
 }
 
-
-// check for compile errors
+/// @brief check for shader compilation errors
 int Shader::compileErrors()
 {
 	GLint succeded;
@@ -101,12 +117,11 @@ int Shader::compileErrors()
 	glGetShaderiv(shader_ID, GL_COMPILE_STATUS, &succeded);
 	if (succeded == GL_FALSE)
 	{
-		// get error
 		GLint logSize;
 		glGetShaderiv(shader_ID, GL_INFO_LOG_LENGTH, &logSize);
 		GLchar* message = new char[logSize];
 		glGetShaderInfoLog(shader_ID, logSize, nullptr, message);
-		EXIT_WITH_ERROR(message); // print error
+		EXIT_WITH_ERROR(message);
 		delete[] message;
 	}
 }
