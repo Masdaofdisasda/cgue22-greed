@@ -96,8 +96,8 @@ void Program::getUniformLocations()
 // TODO
 void Program::bindLightBuffers(UBO* directional, UBO* positional)
 {
-	glBindBufferBase(GL_UNIFORM_BUFFER, 1, *directional->getID());
-	glBindBufferBase(GL_UNIFORM_BUFFER, 2, *positional->getID());
+	glBindBufferBase(GL_UNIFORM_BUFFER, 1, directional->getID());
+	glBindBufferBase(GL_UNIFORM_BUFFER, 2, positional->getID());
 }
 
 void Program::setuInt(const std::string& name, int value)

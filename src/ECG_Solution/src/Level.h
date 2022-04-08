@@ -61,6 +61,9 @@ struct Hierarchy
 
 	/// return TRS "model matrix" of the node
 	glm::mat4 getNodeMatrix() const { return glm::translate(localTranslate) * glm::toMat4(localRotation) * glm::scale(localScale); }
+
+	//glm::mat4 getNodeMatrix() const { return glm::scale(localScale) * glm::toMat4(localRotation) * glm::translate(localTranslate); }
+
 	/// @brief set TRS "model matrix" of the node
 	void setNodeMatrix(glm::mat4 M) { glm::decompose(M , localScale, localRotation, localTranslate, glm::vec3(), glm::vec4());}
 };

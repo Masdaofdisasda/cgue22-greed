@@ -87,7 +87,6 @@ Level::Level(const char* scenePath) {
 		}
 	}
 
-
 	// 6. setup buffers for vertex and indices data
 	std::cout << "setup buffers..." << std::endl;
 	setupVertexBuffers();
@@ -213,7 +212,7 @@ void Level::traverseTree(aiNode* n, Hierarchy* parent, Hierarchy* node)
 	}
 
 	glm::decompose(toGlmMat4(n->mTransformation), node->localScale, node->localRotation, node->localTranslate, glm::vec3(), glm::vec4());
-	node->localRotation = glm::conjugate(node->localRotation);
+	node->localRotation = glm::normalize(glm::conjugate(node->localRotation));
 
 	for (size_t i = 0; i < n->mNumChildren; i++)
 	{
@@ -288,7 +287,7 @@ void Level::setupDrawBuffers()
 	//glNamedBufferStorage(matrixSSBO, matrices.size() * sizeof(glm::mat4), nullptr, GL_DYNAMIC_STORAGE_BIT);
 	//glNamedBufferSubData(matrixSSBO, 0, matrices.size() * sizeof(glm::mat4), matrices.data());
 	glNamedBufferStorage(matrixSSBO, sizeof(glm::mat4), nullptr, GL_DYNAMIC_STORAGE_BIT);
-	 (matrixSSBO, 0, sizeof(glm::mat4), &glm::mat4(1)[0][0]);
+	glNamedBufferSubData(matrixSSBO, 0, sizeof(glm::mat4), &glm::mat4(1)[0][0]);
 
 }
 
@@ -353,7 +352,8 @@ void Level::DrawGraph() {
 /// @param globalTransform the summed tranformation matrices of all parent nodes
 void Level::drawTraverse(const Hierarchy* node, glm::mat4 globalTransform)
 {
-	glm::mat4 modelMatrix = node->getNodeMatrix() * globalTransform;
+	//glm::mat4 modelMatrix = node->getNodeMatrix() * globalTransform;
+	glm::mat4 modelMatrix =  globalTransform * node->getNodeMatrix();
 
 	for (size_t i = 0; i < node->modelIndices.size(); i++)
 	{

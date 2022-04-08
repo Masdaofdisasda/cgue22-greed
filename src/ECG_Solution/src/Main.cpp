@@ -180,7 +180,7 @@ int main(int argc, char** argv)
 	);
 
 	// load all OpenGL function pointers with GLEW
-	printf("Initializing GLEW...");
+	printf("Initializing GLEW...\n");
 	glewExperimental = GL_TRUE;
 	if (glewInit() != GLEW_OK)
 		EXIT_WITH_ERROR("Failed to load GLEW");
@@ -197,11 +197,11 @@ int main(int argc, char** argv)
 	// Initialize scene and render loop
 	/* --------------------------------------------- */
 
-	printf("Initializing scene and render loop...");
+	printf("Initializing scene and render loop...\n");
 
-	printf("Loading level...");
+	printf("Loading level...\n");
 	Level level("../../assets/demo.fbx"); 
-	printf("Intializing renderer...");
+	printf("Intializing renderer...\n");
 	Renderer renderer(globalState, perframeData, *level.getLights());
 
 	//Physics Initialization

@@ -6,7 +6,6 @@
 /// @param sources are the light sources of some level
 Renderer::Renderer(GlobalState& state, PerFrameData& pfdata, LightSources& sources)
 {
-	// initialize Renderer
 	globalState = &state; // link global variables
 	perframeData = &pfdata; // link per frame data
 	lights = sources; // set lights and lightcounts for shaders
@@ -29,10 +28,9 @@ Renderer::Renderer(GlobalState& state, PerFrameData& pfdata, LightSources& sourc
 GlobalState Renderer::loadSettings()
 {
 	GlobalState state;
-	// init reader for ini files
 	std::cout << "reading setting from settings.ini..." << std::endl;
 	INIReader reader("../../assets/settings.ini");
-	// load values from ini file
+
 	// first param: section [window], second param: property name, third param: default value
 	state.width = reader.GetInteger("window", "width", 800);
 	state.height = reader.GetInteger("window", "height", 800);

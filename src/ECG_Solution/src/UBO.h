@@ -47,5 +47,5 @@ class UBO
 			}
 		}
 		
-		GLuint* getID() {return &ubo_ID;}
+		GLuint getID() const {return ubo_ID;}
 };
