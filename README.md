@@ -25,7 +25,7 @@ You will have to jump through a parkour, which is more difficult, the more valua
 * DISK: 1 GB
 
 ### Setup
-If you clone the Project and open it in Visual Studio, make sure to set the working directory under properties->Debugging to %(SolutionDir). Next change the
+If you clone the Project and open it in Visual Studio, make sure to set the working directory under properties->Debugging to %(TargetDir). Next change the
 platform to x86, then be able to run Greed. If you want to change the settings, go to src/assets/settings.ini. There you can edit resolution, refresh rate, exposure,
 and various other settings. If you want to load your own levels or modify the game engine, keep reading.
 
