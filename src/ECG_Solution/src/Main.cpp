@@ -56,6 +56,12 @@ int main(int argc, char** argv)
 	// Load settings.ini
 	/* --------------------------------------------- */
 
+	std::ifstream file("../../assets/demo.fbx");
+	// if this assertion fails, and you cloned this project from Github,
+	// try setting your working directory of the debugger to "$(TargetDir)"
+	assert(file.is_open());
+	file.close();
+
 	globalState = Renderer::loadSettings(globalState);
 
 	/* --------------------------------------------- */
@@ -194,7 +200,7 @@ int main(int argc, char** argv)
 	printf("Initializing scene and render loop...");
 
 	printf("Loading level...");
-	Level level("assets/demo.fbx"); 
+	Level level("../../assets/demo.fbx"); 
 	printf("Intializing renderer...");
 	Renderer renderer(globalState, perframeData, *level.getLights());
 
@@ -286,7 +292,6 @@ int main(int argc, char** argv)
 
 
 	printf("Exiting programm...");
-
 	return EXIT_SUCCESS;
 }
 

@@ -13,9 +13,9 @@ Renderer::Renderer(GlobalState& state, PerFrameData& pfdata, LightSources& sourc
 
 	prepareFramebuffers(); // for hdr rendering and tonemapping
 	std::cout << "load enviroment map and process it.." << std::endl;
-	IBL.loadHDR("assets/textures/cubemap/cellar.pic");
+	IBL.loadHDR("../../assets/textures/cubemap/cellar.pic");
 	std::cout << "load skybox and process it.." << std::endl;
-	skyTex.loadHDR("assets/textures/cubemap/cloudy.hdr");
+	skyTex.loadHDR("../../assets/textures/cubemap/cloudy.hdr");
 	glCreateVertexArrays(1, &emptyVAO);
 	PBRShader.uploadIBL(IBL.getIrradianceID(),IBL.getPreFilterID(), IBL.getBdrfLutID(), IBL.getEnvironment());
 }
@@ -24,7 +24,7 @@ GlobalState Renderer::loadSettings(GlobalState state)
 {
 	// init reader for ini files
 	std::cout << "reading setting from settings.ini..." << std::endl;
-	INIReader reader("assets/settings.ini");
+	INIReader reader("../../assets/settings.ini");
 	// load values from ini file
 	// first param: section [window], second param: property name, third param: default value
 	state.width = reader.GetInteger("window", "width", 800);
@@ -69,39 +69,39 @@ void Renderer::setRenderSettings()
 void Renderer::buildShaderPrograms()
 {
 	// build shader programms
-	Shader pbrVert("assets/shaders/pbr/pbr.vert");
-	Shader pbrFrag("assets/shaders/pbr/pbr.frag", glm::ivec3(lights.directional.size(), lights.point.size(), 0));
+	Shader pbrVert("../../assets/shaders/pbr/pbr.vert");
+	Shader pbrFrag("../../assets/shaders/pbr/pbr.frag", glm::ivec3(lights.directional.size(), lights.point.size(), 0));
 	PBRShader.buildFrom(pbrVert, pbrFrag);
 	PBRShader.Use();
 
-	Shader skyboxVert("assets/shaders/skybox/skybox.vert");
-	Shader skyboxFrag("assets/shaders/skybox/skybox.frag");
+	Shader skyboxVert("../../assets/shaders/skybox/skybox.vert");
+	Shader skyboxFrag("../../assets/shaders/skybox/skybox.frag");
 	skyboxShader.buildFrom(skyboxVert, skyboxFrag);
 	skyboxShader.Use();
 
-	Shader BrightPassVert("assets/shaders/BrightPass/BrightPass.vert");
-	Shader BrightPassFrag("assets/shaders/BrightPass/BrightPass.frag");
+	Shader BrightPassVert("../../assets/shaders/BrightPass/BrightPass.vert");
+	Shader BrightPassFrag("../../assets/shaders/BrightPass/BrightPass.frag");
 	BrightPass.buildFrom(BrightPassVert, BrightPassFrag);
 
-	Shader CombineHDRVert("assets/shaders/CombineHDR/CombineHDR.vert");
-	Shader CombineHDRFrag("assets/shaders/CombineHDR/CombineHDR.frag");
+	Shader CombineHDRVert("../../assets/shaders/CombineHDR/CombineHDR.vert");
+	Shader CombineHDRFrag("../../assets/shaders/CombineHDR/CombineHDR.frag");
 	CombineHDR.buildFrom(CombineHDRVert, CombineHDRFrag);
 
-	Shader BlurVert("assets/shaders/Blur/Blur.vert");
-	Shader BlurXFrag("assets/shaders/Blur/BlurX.frag");
-	Shader BlurYFrag("assets/shaders/Blur/BlurY.frag");
+	Shader BlurVert("../../assets/shaders/Blur/Blur.vert");
+	Shader BlurXFrag("../../assets/shaders/Blur/BlurX.frag");
+	Shader BlurYFrag("../../assets/shaders/Blur/BlurY.frag");
 	BlurX.buildFrom(BlurVert, BlurXFrag);
 	BlurY.buildFrom(BlurVert, BlurYFrag);
 
-	Shader LuminanceVert("assets/shaders/toLuminance/toLuminance.vert");
-	Shader LuminanceFrag("assets/shaders/toLuminance/toLuminance.frag");
+	Shader LuminanceVert("../../assets/shaders/toLuminance/toLuminance.vert");
+	Shader LuminanceFrag("../../assets/shaders/toLuminance/toLuminance.frag");
 	ToLuminance.buildFrom(LuminanceVert, LuminanceFrag);
 
-	Shader lightAdaptComp("assets/shaders/lightAdaption/lightAdaption.comp");
+	Shader lightAdaptComp("../../assets/shaders/lightAdaption/lightAdaption.comp");
 	lightAdapt.buildFrom(lightAdaptComp);
 
-	Shader lavaFloorVert("assets/shaders/lavaFloor/lavaFloor.vert");
-	Shader lavaFloorFrag("assets/shaders/lavaFloor/lavaFloor.frag");
+	Shader lavaFloorVert("../../assets/shaders/lavaFloor/lavaFloor.vert");
+	Shader lavaFloorFrag("../../assets/shaders/lavaFloor/lavaFloor.frag");
 	lavaFloor.buildFrom(lavaFloorVert, lavaFloorFrag);
 
 	PBRShader.Use();

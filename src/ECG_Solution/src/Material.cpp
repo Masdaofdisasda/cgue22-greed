@@ -24,7 +24,7 @@ Material::Material(const char* texPath, const char* name) {
 	char* file = new char[path.length() + 1];
 	strcpy(file, path.c_str());
 	char c[100];
-	strcpy(c, "assets/");
+	strcpy(c, "../../assets/");
 	strcat(c, file);
 
 	albedo = Texture::loadTexture(append(c, "/albedo.jpg"));

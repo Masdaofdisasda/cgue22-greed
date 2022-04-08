@@ -4,8 +4,8 @@
 BulletDebugDrawer::BulletDebugDrawer(){
 	vertices = std::vector<glm::vec3>();
 
-	Shader* vertexShader = new Shader("assets/shaders/bulletDebug/bulletDebug.vert");
-	Shader* fragmentShader = new Shader("assets/shaders/bulletDebug/bulletDebug.frag");
+	Shader* vertexShader = new Shader("../../assets/shaders/bulletDebug/bulletDebug.vert");
+	Shader* fragmentShader = new Shader("../../assets/shaders/bulletDebug/bulletDebug.frag");
 	program = new Program();
 	program->buildFrom(*vertexShader, *fragmentShader);
 	glGenBuffers(1, &vbo_ID);

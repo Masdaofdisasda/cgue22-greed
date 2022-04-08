@@ -24,8 +24,7 @@ Level::Level(const char* scenePath) {
 	if (!scene)
 	{
 		std::cerr << "ERROR: Couldn't load scene" << std::endl;
-		std::cerr << "If you cloned this project from GitHub, see if your working directory is correct:" << std::endl;
-		std::cerr << "right click on solution->properties/debugging/working directory/$(SolutionDir)" << std::endl;
+		exit(EXIT_FAILURE);
 	}
 
 	globalVertexOffset = 0;
