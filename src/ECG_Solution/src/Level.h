@@ -102,6 +102,8 @@ private:
 
 	LightSources lights;
 
+	GlobalState* globalState;
+
 	subMesh extractMesh(const aiMesh* mesh);
 	BoundingBox computeBoundsOfMesh(subMesh mesh);
 	BoundingBox computeBoundsOfNode(std::vector <Hierarchy> children, std::vector<BoundingBox> modelBounds);
@@ -119,7 +121,7 @@ private:
 	void Release();
 	
 public:
-	Level(const char* scenePath);
+	Level(const char* scenePath, GlobalState& state);
 	~Level() { Release(); }
 
 	void DrawGraph();

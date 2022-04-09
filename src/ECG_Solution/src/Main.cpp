@@ -110,16 +110,15 @@ int main(int argc, char** argv)
 					globalState.fullscreen_ = true;
 				}
 			}
-			if (key == GLFW_KEY_F2 && action == GLFW_PRESS) //TODO
+			if (key == GLFW_KEY_F2 && action == GLFW_PRESS)
 			{
-				if (globalState.focus_)
+				if (globalState.cullDebug_)
 				{
-					globalState.request_focus_ = true;
+					globalState.cullDebug_ = false;
 				}
 				else
 				{
-
-					globalState.request_unfocus_ = true;
+					globalState.cullDebug_ = true;
 				}
 			}
 			if (key == GLFW_KEY_F3 && action == GLFW_PRESS)
@@ -200,7 +199,7 @@ int main(int argc, char** argv)
 	printf("Initializing scene and render loop...\n");
 
 	printf("Loading level...\n");
-	Level level("../../assets/demo.fbx"); 
+	Level level("../../assets/demo.fbx", globalState);
 	printf("Intializing renderer...\n");
 	Renderer renderer(globalState, perframeData, *level.getLights());
 

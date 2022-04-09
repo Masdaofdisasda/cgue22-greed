@@ -3,12 +3,7 @@
 
 /// @brief loads an fbx file from the given path and converts it to useable data structures
 /// @param scenePath location of the fbx file, expected to be in "assets"
-Level::Level(const char* scenePath) {
-
-	AABBviewer = std::unique_ptr<Program>(new Program);
-	Shader boundsVert("../../assets/shaders/boundsDebug/boundsDebug.vert");
-	Shader boundsFrag("../../assets/shaders/boundsDebug/boundsDebug.frag");
-	AABBviewer->buildFrom(boundsVert, boundsFrag);
+Level::Level(const char* scenePath, GlobalState& state) {
 
 	// 1. load fbx file into assimps internal data structures and apply various preprocessing to the data
 	std::cout << "load scene... (this could take a while)" << std::endl;
@@ -61,7 +56,7 @@ Level::Level(const char* scenePath) {
 		renderQueue.push_back(item);
 	}
 
-	// 5. build scene graph
+	// 5. build scene graph and calculate AABBs
 	std::cout << "build scene hierarchy..." << std::endl;
 	aiNode* n = scene->mRootNode;
 	traverseTree(n, nullptr, &sceneGraph); 
@@ -74,6 +69,7 @@ Level::Level(const char* scenePath) {
 			dynamic = &sceneGraph.children[i];
 		}
 	}
+	sceneGraph.nodeBounds = computeBoundsOfNode(sceneGraph.children, sceneGraph.modelBounds);
 	transformBoundingBoxes(&sceneGraph, glm::mat4(1));
 
 	// 6. setup buffers for vertex and indices data
@@ -86,6 +82,14 @@ Level::Level(const char* scenePath) {
 	// 8. load lights sources 
 	std::cout << "loading lights..." << std::endl;
 	loadLights(scene); //TODO
+
+	// 9 finalize
+	globalState = &state;
+
+	AABBviewer = std::unique_ptr<Program>(new Program);
+	Shader boundsVert("../../assets/shaders/boundsDebug/boundsDebug.vert");
+	Shader boundsFrag("../../assets/shaders/boundsDebug/boundsDebug.frag");
+	AABBviewer->buildFrom(boundsVert, boundsFrag);
 
 	std::cout << std::endl;
 }
@@ -380,7 +384,7 @@ void Level::DrawGraph() {
 		// todo: glMultiDrawElementsIndirect
 	}
 
-	if (true) // bounding box debug view
+	if (globalState->cullDebug_) // bounding box debug view
 	{
 		glDisable(GL_CULL_FACE);
 		glDisable(GL_DEPTH_TEST);

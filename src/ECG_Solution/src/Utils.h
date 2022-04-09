@@ -28,8 +28,8 @@ struct GlobalState
 
 	bool bloom_ = true;
 	bool focus_ = true;
-	bool request_focus_ = true;
-	bool request_unfocus_ = false;
+	bool cull_ = true;
+	bool cullDebug_ = false;
 	bool debugDrawPhysics = true;
 	float exposure_ = 0.9f;
 	float maxWhite_ = 1.07f;
