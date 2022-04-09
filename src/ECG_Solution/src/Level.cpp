@@ -209,10 +209,8 @@ Material Level::loadMaterials(const aiMaterial* M)
 /// @param node is the current node from the view of the parent node
 void Level::traverseTree(aiNode* n, Hierarchy* parent, Hierarchy* node)
 {
-	const char* c = n->mName.C_Str();
 	const glm::mat4 M = toGlmMat4(n->mTransformation);
-
-	node->name = c;
+	node->name = n->mName.C_Str();
 
 	node->parent = parent;
 
@@ -228,9 +226,12 @@ void Level::traverseTree(aiNode* n, Hierarchy* parent, Hierarchy* node)
 
 	for (size_t i = 0; i < n->mNumChildren; i++)
 	{
+		if (strcmp(n->mChildren[i]->mName.C_Str(),"Lights") != 0)
+		{
 		Hierarchy child;
 		traverseTree(n->mChildren[i], node, &child);
 		node->children.push_back(child);
+		}
 	}
 
 	BoundingBox box = computeBoundsOfNode(node->children, node->modelBounds);
@@ -255,7 +256,7 @@ glm::mat4 Level::toGlmMat4(const aiMatrix4x4& mat)
 void Level::setupVertexBuffers()
 {
 	glCreateBuffers(1, &VBO);
-	glNamedBufferStorage(VBO, globalVertexOffset * 5 * sizeof(float), vertices.data(), 0);
+	glNamedBufferStorage(VBO, vertices.size() * sizeof(float), vertices.data(), 0);
 	glCreateBuffers(1, &EBO);
 	glNamedBufferStorage(EBO, globalIndexOffset * sizeof(GLuint), indices.data(), 0);
 
@@ -314,14 +315,23 @@ void Level::loadLights(const aiScene* scene) {
 		{
 			const aiLight* light = scene->mLights[i];
 			const aiColor3D col = light->mColorDiffuse;
+			const aiString name = light->mName;
 
-			glm::vec4 p = glm::vec4(1);
-			for (size_t i = 0; i < sceneGraph.children[0].children.size(); i++)
+			aiVector3D p; //TODO
+			for (size_t i = 0; i < scene->mRootNode->mNumChildren; i++)
 			{
-				if (sceneGraph.children[i].name.compare("pointLight1") == 0) {
-					p = sceneGraph.getNodeMatrix() *
-						sceneGraph.children[i].getNodeMatrix() *
-						p;
+				if(strcmp(scene->mRootNode->mChildren[i]->mName.C_Str(), "lights") == 0)
+				{
+					for (size_t j = 0; j < scene->mRootNode->mChildren[i]->mNumChildren; j++)
+					{
+						if (strcmp(scene->mRootNode->mChildren[i]->mChildren[j]->mName.C_Str(), name.C_Str()) == 0)
+						{
+							p = scene->mRootNode->mTransformation *
+								scene->mRootNode->mChildren[i]->mTransformation *
+								scene->mRootNode->mChildren[i]->mChildren[j]->mTransformation * p;
+
+						}
+					}
 				}
 			}
 
@@ -372,11 +382,6 @@ void Level::buildRenderQueue(const Hierarchy* node, glm::mat4 globalTransform) {
 		uint32_t count = meshes[meshIndex].indexCount;
 		uint32_t firstIndex = meshes[meshIndex].indexOffset;
 		uint32_t baseInstance = renderQueue[materialIndex].modelMatrices.size();
-
-		if (materialIndex == 2)
-		{
-			std::cout << meshes[meshIndex].name << std::endl;
-		}
 
 		DrawElementsIndirectCommand cmd= DrawElementsIndirectCommand{
 			count,

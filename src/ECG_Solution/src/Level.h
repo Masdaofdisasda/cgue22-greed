@@ -20,7 +20,7 @@ struct subMesh
 };
 
 /// @brief deascribes one indirect command for GlDraw_Indrect calls
-struct DrawElementsIndirectCommand		// TODO
+struct DrawElementsIndirectCommand
 {
 	uint32_t count_;
 	uint32_t instanceCount_;
@@ -76,7 +76,6 @@ class Level {
 private:
 	uint32_t globalVertexOffset = 0;
 	uint32_t globalIndexOffset = 0;
-	uint32_t boundMaterial = -1;
 
 	GLuint VAO = 0; // vertex layouts
 	GLuint VBO = 0; // vertices

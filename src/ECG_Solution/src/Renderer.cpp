@@ -18,7 +18,7 @@ Renderer::Renderer(GlobalState& state, PerFrameData& pfdata, LightSources& sourc
 	std::cout << "load enviroment map and process it.." << std::endl;
 	IBL.loadHDR("../../assets/textures/cubemap/cellar.pic");
 	std::cout << "load skybox and process it.." << std::endl;
-	skyTex.loadHDR("../../assets/textures/cubemap/cloudy.hdr");
+	skyTex.loadHDR("../../assets/textures/cubemap/beach.hdr");
 	glCreateVertexArrays(1, &emptyVAO);
 	PBRShader.uploadIBL(IBL.getIrradianceID(),IBL.getPreFilterID(), IBL.getBdrfLutID(), IBL.getEnvironment());
 }
