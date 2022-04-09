@@ -228,6 +228,7 @@ int main(int argc, char** argv)
 
 	glViewport(0, 0, globalState.width, globalState.height);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glEnable(GL_CULL_FACE);
 
 	double timeStamp = glfwGetTime();
 	float deltaSeconds = 0.0f;

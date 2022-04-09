@@ -7,8 +7,8 @@ const float sqrt3div3 = 0.57735;
 
 const vec3 pos[3] = vec3[3](
 	vec3(-levelBounds, 0.0,  -levelBounds*sqrt3div3),
-	vec3(levelBounds, 0.0, -levelBounds*sqrt3div3),
-	vec3(0.0, 0.0, levelBounds * sqrt3div3)
+	vec3(0.0, 0.0, levelBounds * sqrt3div3),
+	vec3(levelBounds, 0.0, -levelBounds*sqrt3div3)
 );
 
 const vec2 uvs[3] = vec2[3](

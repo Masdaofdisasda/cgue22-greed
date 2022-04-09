@@ -6,19 +6,12 @@
 #include "Camera.h"
 #include <assimp/Importer.hpp>      
 #include <assimp/scene.h>           
-#include <assimp/postprocess.h>     
-
-/// @brief is a collection of data that is needed for drawing a mesh, can be used for instancing
-struct Model
-{
-	uint32_t meshIndex;			// specify mesh in vector meshes
-	uint32_t materialIndex;		// specify material in vector materials
-};
+#include <assimp/postprocess.h>
 
 /// @brief describes the position of a mesh in an index and vertex array 
 struct subMesh
 {
-	const char* name;			// name of the mesh, for debugging
+	std::string name;			// name of the mesh, for debugging
 	uint32_t indexOffset;		// start of mesh in vector indices
 	uint32_t vertexOffset;		// start of mesh in vector vertices
 	uint32_t indexCount;		// number of indices to render
@@ -77,7 +70,7 @@ struct RenderItem
 
 //---------------------------------------------------------------------------------------------------------------//
 
-/// @brief Level is mainly a data structure for complex 3D scenes
+/// @brief Level is primarily a data structure for complex 3D scenes
 /// loads and manages geometry, textures and model matrices from some fbx file
 class Level {
 private:
@@ -93,7 +86,6 @@ private:
 
 	// mesh data - a loaded scene is entirely contained in these data structures
 	std::vector <subMesh> meshes;			// contains mesh offsets for glDraw 
-	std::vector <Model> models;				// describes a single model
 	std::vector<float> vertices;			// contains a stream of vertices in (px,py,pz,ny,ny,nz,u,v)-form
 	std::vector <GLuint> indices;			// contains the indices that make triangles
 	std::vector <Material> materials;		// contains all needed textures
@@ -115,7 +107,6 @@ private:
 	void loadLights(const aiScene* scene);
 	glm::mat4 toGlmMat4(const aiMatrix4x4& mat);
 	void buildRenderQueue(const Hierarchy* node, glm::mat4 globalTransform);
-	void drawTraverse(const Hierarchy* node, glm::mat4 globalTransform);
 
 	void resetQueue();
 	void Release();

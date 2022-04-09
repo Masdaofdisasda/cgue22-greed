@@ -56,17 +56,6 @@ Level::Level(const char* scenePath) {
 		renderQueue.push_back(item);
 	}
 
-
-	// 4. create a model for drawing for every loaded mesh
-	for (size_t i = 0; i < meshes.size(); i++)
-	{
-		Model draw;
-		draw.meshIndex = (uint32_t)i;
-		draw.materialIndex = meshes[i].materialIndex;
-		models.push_back(draw);
-
-	}
-
 	// 5. build scene graph
 	std::cout << "build scene hierarchy..." << std::endl;
 	aiNode* n = scene->mRootNode;
@@ -87,7 +76,7 @@ Level::Level(const char* scenePath) {
 	setupVertexBuffers();
 
 	// 7. setup buffers for transform and drawcommands
-	setupDrawBuffers(); //TODO
+	setupDrawBuffers();
 
 	// 8. load lights sources 
 	std::cout << "loading lights..." << std::endl;
@@ -292,10 +281,10 @@ void Level::setupDrawBuffers()
 {
 
 	glCreateBuffers(1, &IBO);
-	glNamedBufferStorage(IBO, models.size() * sizeof(DrawElementsIndirectCommand), nullptr, GL_DYNAMIC_STORAGE_BIT);
+	glNamedBufferStorage(IBO, meshes.size() * sizeof(DrawElementsIndirectCommand), nullptr, GL_DYNAMIC_STORAGE_BIT);
 
 	glCreateBuffers(1, &matrixSSBO);
-	glNamedBufferStorage(matrixSSBO, models.size() * sizeof(glm::mat4), nullptr, GL_DYNAMIC_STORAGE_BIT);
+	glNamedBufferStorage(matrixSSBO, meshes.size() * sizeof(glm::mat4), nullptr, GL_DYNAMIC_STORAGE_BIT);
 
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, matrixSSBO);
 	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, IBO);
@@ -378,11 +367,16 @@ void Level::buildRenderQueue(const Hierarchy* node, glm::mat4 globalTransform) {
 	glm::mat4 nodeMatrix = globalTransform * node->getNodeMatrix();
 	for (size_t i = 0; i < node->modelIndices.size(); i++)
 	{
-		uint32_t modelIndex = node->modelIndices[i];
-		uint32_t materialIndex = models[modelIndex].materialIndex;
-		uint32_t count = meshes[models[modelIndex].meshIndex].indexCount;
-		uint32_t firstIndex = meshes[models[modelIndex].meshIndex].indexOffset;
+		uint32_t meshIndex = node->modelIndices[i];
+		uint32_t materialIndex = meshes[meshIndex].materialIndex;
+		uint32_t count = meshes[meshIndex].indexCount;
+		uint32_t firstIndex = meshes[meshIndex].indexOffset;
 		uint32_t baseInstance = renderQueue[materialIndex].modelMatrices.size();
+
+		if (materialIndex == 2)
+		{
+			std::cout << meshes[meshIndex].name << std::endl;
+		}
 
 		DrawElementsIndirectCommand cmd= DrawElementsIndirectCommand{
 			count,

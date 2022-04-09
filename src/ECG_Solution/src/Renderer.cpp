@@ -149,7 +149,6 @@ void Renderer::Draw(Level* level)
 		//glEnable(GL_CULL_FACE);
 		PBRShader.Use();
 		level->DrawGraph();
-		glDisable(GL_CULL_FACE);
 
 		lavaFloor.Use();
 		glDrawArrays(GL_TRIANGLES, 0, 3);
