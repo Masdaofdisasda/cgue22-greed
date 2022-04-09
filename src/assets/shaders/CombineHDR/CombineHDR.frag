@@ -38,7 +38,7 @@ void main()
 
 	float midGray = 0.5;
 
-	color *= exposure * midGray / (avgLuminance + 0.001);
+	color *= exposure * midGray / (max(avgLuminance,6.1e-5)); //use smallest float instead of 0
 	color = Reinhard2(color);
 	outColor = vec4(color + bloomStrength * bloom, 1.0);
 }

@@ -1,5 +1,6 @@
 #pragma once
-#include "Utils.h"
+#include <GL\glew.h>
+#include <glm\glm.hpp>
 #include "LightSource.h"
 #include <vector>
 

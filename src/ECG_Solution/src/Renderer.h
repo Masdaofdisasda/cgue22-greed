@@ -8,6 +8,8 @@
 #include "Framebuffer.h"
 #include "Level.h"
 
+#ifndef _RENDERER_
+#define _RENDERER_
 class Renderer
 {
 public:
@@ -63,5 +65,6 @@ private:
 	void prepareFramebuffers();
 	void setRenderSettings();
 };
+#endif
 
 

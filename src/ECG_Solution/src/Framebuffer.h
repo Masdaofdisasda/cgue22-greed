@@ -1,6 +1,5 @@
 #pragma once
 
-#include <GL\glew.h>
 #include "Texture.h"
 
 /// @brief Framebuffer is for offscreen rendering and contains a color or depth buffer

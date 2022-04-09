@@ -20,7 +20,7 @@ Renderer::Renderer(GlobalState& state, PerFrameData& pfdata, LightSources& sourc
 	std::cout << "load skybox and process it.." << std::endl;
 	skyTex.loadHDR("../../assets/textures/cubemap/beach.hdr");
 	glCreateVertexArrays(1, &emptyVAO);
-	PBRShader.uploadIBL(IBL.getIrradianceID(),IBL.getPreFilterID(), IBL.getBdrfLutID(), IBL.getEnvironment());
+	PBRShader.uploadIBL(IBL.getIrradianceID(),IBL.getPreFilterID(), IBL.getBdrfLutID(), skyTex.getEnvironment());
 }
 
 /// @brief loads settings from settings.ini, called in main

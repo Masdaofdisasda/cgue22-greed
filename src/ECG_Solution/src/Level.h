@@ -4,6 +4,7 @@
 #include "Material.h"
 #include "LightSource.h"
 #include "Camera.h"
+#include <glm/gtx/matrix_decompose.hpp> 
 #include <assimp/Importer.hpp>      
 #include <assimp/scene.h>           
 #include <assimp/postprocess.h>
@@ -70,6 +71,9 @@ struct RenderItem
 
 //---------------------------------------------------------------------------------------------------------------//
 
+#ifndef _LEVEL_
+#define _LEVEL_
+class Program;
 /// @brief Level is primarily a data structure for complex 3D scenes
 /// loads and manages geometry, textures and model matrices from some fbx file
 class Level {
@@ -94,6 +98,8 @@ private:
 	Hierarchy* rigid;						// parent node of all rigid meshes (ground, walls, ...)
 	Hierarchy* dynamic;						// parent node of all dynamic meshes (items, ...)
 
+	std::shared_ptr<Program> AABBviewer;
+
 	LightSources lights;
 
 	subMesh extractMesh(const aiMesh* mesh);
@@ -106,6 +112,8 @@ private:
 	void loadLights(const aiScene* scene);
 	glm::mat4 toGlmMat4(const aiMatrix4x4& mat);
 	void buildRenderQueue(const Hierarchy* node, glm::mat4 globalTransform);
+	void DrawAABBs(Hierarchy node);
+	void transformBoundingBoxes(Hierarchy* node, glm::mat4 globalTransform);
 
 	void resetQueue();
 	void Release();
@@ -122,3 +130,5 @@ public:
 	std::vector <DirectionalLight> getDirectionalLights() { return lights.directional; }
 	std::vector <PositionalLight> getPointLights() { return lights.point; }
 };
+
+#endif

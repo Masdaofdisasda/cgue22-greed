@@ -1,10 +1,12 @@
 #pragma once
-
 #include "Utils.h"
 #include "Shader.h"
 #include "Cubemap.h"
 #include "Level.h"
 
+#ifndef _PROGRAM_
+#define _PROGRAM_
+class Level;
 /// @brief Program is a shader program compiled from 1 to 5 shaders
 /// contains a handle, builds and error checks the programm
 /// can set unfiform variables for a shader
@@ -77,3 +79,4 @@ public:
 	int compileErrors();
 };
 
+#endif

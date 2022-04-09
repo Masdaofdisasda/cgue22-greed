@@ -1,9 +1,14 @@
 #include "Level.h"
-#include <glm/gtx/matrix_decompose.hpp> 
+#include "Program.h"
 
 /// @brief loads an fbx file from the given path and converts it to useable data structures
 /// @param scenePath location of the fbx file, expected to be in "assets"
 Level::Level(const char* scenePath) {
+
+	AABBviewer = std::unique_ptr<Program>(new Program);
+	Shader boundsVert("../../assets/shaders/boundsDebug/boundsDebug.vert");
+	Shader boundsFrag("../../assets/shaders/boundsDebug/boundsDebug.frag");
+	AABBviewer->buildFrom(boundsVert, boundsFrag);
 
 	// 1. load fbx file into assimps internal data structures and apply various preprocessing to the data
 	std::cout << "load scene... (this could take a while)" << std::endl;
@@ -69,7 +74,7 @@ Level::Level(const char* scenePath) {
 			dynamic = &sceneGraph.children[i];
 		}
 	}
-	sceneGraph.nodeBounds = computeBoundsOfNode(sceneGraph.children, sceneGraph.modelBounds);
+	transformBoundingBoxes(&sceneGraph, glm::mat4(1));
 
 	// 6. setup buffers for vertex and indices data
 	std::cout << "setup buffers..." << std::endl;
@@ -147,9 +152,6 @@ BoundingBox Level::computeBoundsOfMesh(subMesh mesh) {
 
 	for (auto i = 0; i != numIndices; i++)
 	{
-		//auto vtxOffset = indices[mesh.indexOffset + i] + mesh.vertexOffset;
-		//const float* vf = &vertices[vtxOffset];
-
 		auto vertexOffset = (mesh.vertexOffset + i) * 8;
 		const float* vf = &vertices[vertexOffset];
 
@@ -185,6 +187,20 @@ BoundingBox Level::computeBoundsOfNode(std::vector<Hierarchy> children, std::vec
 	return BoundingBox(vmin, vmax);
 }
 
+void Level::transformBoundingBoxes(Hierarchy* node, glm::mat4 globalTransform)
+{
+	BoundingBox bounds = node->nodeBounds;
+	glm::mat4 M = globalTransform * node->getNodeMatrix();
+	bounds.min_ = M * glm::vec4(bounds.min_, 1.0f);
+	bounds.max_ = M * glm::vec4(bounds.max_, 1.0f);
+	node->nodeBounds = BoundingBox(bounds.min_, bounds.max_);
+
+	for (size_t i = 0; i < node->children.size(); i++)
+	{
+		transformBoundingBoxes(&node->children[i], M);
+	}
+}
+
 /// @brief loads all materials (textures) from the material assimp provides
 /// @param M is a single material and should contain 5 aiTextureTypes, only one of them is needed for loading the textures
 /// @return a material object containing opengl handles to the fives loaded textures
@@ -217,8 +233,7 @@ void Level::traverseTree(aiNode* n, Hierarchy* parent, Hierarchy* node)
 	for (unsigned int i = 0; i < n->mNumMeshes; i++)
 	{
 		node->modelIndices.push_back(n->mMeshes[i]);
-		BoundingBox box = computeBoundsOfMesh(meshes[n->mMeshes[i]]);
-		node->modelBounds.push_back(BoundingBox(glm::vec4(box.min_, 1.0f) * M, glm::vec4(box.max_,1.0f) * M));
+		node->modelBounds.push_back(computeBoundsOfMesh(meshes[n->mMeshes[i]]));
 	}
 
 	glm::decompose(M, node->localScale, node->localRotation, node->localTranslate, glm::vec3(), glm::vec4());
@@ -234,8 +249,7 @@ void Level::traverseTree(aiNode* n, Hierarchy* parent, Hierarchy* node)
 		}
 	}
 
-	BoundingBox box = computeBoundsOfNode(node->children, node->modelBounds);
-	node->nodeBounds = BoundingBox(glm::vec4(box.min_, 1.0f) * M, glm::vec4(box.max_, 1.0f) * M);
+	node->nodeBounds = computeBoundsOfNode(node->children, node->modelBounds);
 }
 
 
@@ -363,6 +377,19 @@ void Level::DrawGraph() {
 
 		glBindTextures(0, 5, textures);
 		glMultiDrawArraysIndirect(GL_TRIANGLES, nullptr, renderQueue[i].commands.size(), 0);
+		// todo: glMultiDrawElementsIndirect
+	}
+
+	if (true) // bounding box debug view
+	{
+		glDisable(GL_CULL_FACE);
+		glDisable(GL_DEPTH_TEST);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		AABBviewer->Use();
+		DrawAABBs(sceneGraph);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glEnable(GL_DEPTH_TEST);
+		glEnable(GL_CULL_FACE);
 	}
 
 	resetQueue();
@@ -407,6 +434,20 @@ void Level::resetQueue()
 	{
 		renderQueue[i].commands.clear();
 		renderQueue[i].modelMatrices.clear();
+	}
+}
+
+void Level::DrawAABBs(Hierarchy node)
+{
+	BoundingBox bounds = node.nodeBounds;
+	AABBviewer->setVec3("min", node.nodeBounds.min_);
+	AABBviewer->setVec3("max", node.nodeBounds.max_);
+
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+
+	for (size_t i = 0; i < node.children.size(); i++)
+	{
+		DrawAABBs(node.children[i]);
 	}
 }
 
