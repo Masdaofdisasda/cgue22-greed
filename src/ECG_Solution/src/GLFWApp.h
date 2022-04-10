@@ -83,7 +83,9 @@ GLFWApp::GLFWApp(GlobalState& state)
 	}
 
 	glfwMakeContextCurrent(window_);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glfwSwapInterval(0);
+	glfwSwapBuffers(window_);
 }
 
 GLFWApp::~GLFWApp()

@@ -31,6 +31,8 @@ GLuint Texture::loadTexture(const char* texPath)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+	stbi_set_flip_vertically_on_load(true);
+
 	int w, h, comp;
 	const uint8_t* img = stbi_load(texPath, &w, &h, &comp, 3);
 

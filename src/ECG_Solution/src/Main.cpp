@@ -20,6 +20,7 @@
 #include "Debugger.h"
 #include "Level.h"
 #include "Physics.h"
+#include "LoadingScreen.h"
 
 /* --------------------------------------------- */
 // Global variables
@@ -192,6 +193,9 @@ int main(int argc, char** argv)
 	glEnable(GL_DEBUG_OUTPUT);
 	glDebugMessageCallback(Debugger::DebugCallbackDefault, 0);
 
+	LoadingScreen loadingScreen(&GLFWapp, globalState.width, globalState.height);
+	loadingScreen.DrawProgress();
+
 	/* --------------------------------------------- */
 	// Initialize scene and render loop
 	/* --------------------------------------------- */
@@ -200,8 +204,11 @@ int main(int argc, char** argv)
 
 	printf("Loading level...\n");
 	Level level("../../assets/demo.fbx", globalState);
+	loadingScreen.DrawProgress();
+
 	printf("Intializing renderer...\n");
 	Renderer renderer(globalState, perframeData, *level.getLights());
+	loadingScreen.DrawProgress();
 
 	//Physics Initialization
 	printf("Initializing physics...\n");
@@ -222,6 +229,7 @@ int main(int argc, char** argv)
 		Physics::ObjectMode::Static
 	);
 	//---------------------------------- /testing ----------------------------------//
+	loadingScreen.DrawProgress();
 
 	glm::vec3 lavaPosition = glm::vec3(0.0f, -50.0f, 0.0f); // TODO
 

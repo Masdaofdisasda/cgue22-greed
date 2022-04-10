@@ -24,6 +24,7 @@
     <ClInclude Include="src\FrustumCuller.h" />
     <ClInclude Include="src\GLFWApp.h" />
     <ClInclude Include="src\Level.h" />
+    <ClInclude Include="src\LoadingScreen.h" />
     <ClInclude Include="src\Material.h" />
     <ClInclude Include="src\Physics.h" />
     <ClInclude Include="src\Program.h" />
