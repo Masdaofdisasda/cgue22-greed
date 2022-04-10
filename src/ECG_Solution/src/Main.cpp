@@ -21,6 +21,7 @@
 #include "Level.h"
 #include "Physics.h"
 #include "LoadingScreen.h"
+#include <irrKlang/irrKlang.h>
 
 /* --------------------------------------------- */
 // Global variables
@@ -202,6 +203,10 @@ int main(int argc, char** argv)
 
 	printf("Initializing scene and render loop...\n");
 
+	printf("Intializing audio...\n"); 
+	irrklang::ISoundEngine* engine = irrklang::createIrrKlangDevice();
+	irrklang::ISound* snd = engine->play2D("../../assets/media/EQ07 Prc Fantasy Perc 060.wav", true);
+
 	printf("Loading level...\n");
 	Level level("../../assets/demo.fbx", globalState);
 	loadingScreen.DrawProgress();
@@ -236,6 +241,9 @@ int main(int argc, char** argv)
 	glViewport(0, 0, globalState.width, globalState.height);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glEnable(GL_CULL_FACE);
+
+	engine->stopAllSounds();
+	snd = engine->play2D("../../assets/media/EQ01 Gml Belalua Game 070 Fm.wav", true);
 
 	double timeStamp = glfwGetTime();
 	float deltaSeconds = 0.0f;
