@@ -104,11 +104,11 @@ int main(int argc, char** argv)
 			{
 				if (globalState.fullscreen_)
 				{
-					printf("Fullscreen off");
+					printf("Fullscreen off\n");
 					globalState.fullscreen_ = false;
 				}
 				else {
-					printf("Fullscreen on");
+					printf("Fullscreen on\n");
 					globalState.fullscreen_ = true;
 				}
 			}
@@ -116,10 +116,12 @@ int main(int argc, char** argv)
 			{
 				if (globalState.cullDebug_)
 				{
+					printf("AABBs invisible\n");
 					globalState.cullDebug_ = false;
 				}
 				else
 				{
+					printf("AABBs visible\n");
 					globalState.cullDebug_ = true;
 				}
 			}
@@ -127,11 +129,11 @@ int main(int argc, char** argv)
 			{
 				if (globalState.bloom_)
 				{
-					printf("Bloom off");
+					printf("Bloom off\n");
 					globalState.bloom_ = false;
 				}
 				else {
-					printf("Bloom on");
+					printf("Bloom on\n");
 					globalState.bloom_ = true;
 				}
 			}
@@ -139,11 +141,11 @@ int main(int argc, char** argv)
 			{
 				if (globalState.debugDrawPhysics)
 				{
-					printf("Physics debugging off");
+					printf("Physics debugging off\n");
 					globalState.debugDrawPhysics = false;
 				}
 				else {
-					printf("Physics debugging on");
+					printf("Physics debugging on\n");
 					globalState.debugDrawPhysics = true;
 				}
 			}
@@ -151,12 +153,36 @@ int main(int argc, char** argv)
 			{
 				if (perframeData.normalMap.x > 0.0f)
 				{
-					printf("normal mapping off");
+					printf("normal mapping off\n");
 					perframeData.normalMap.x *= -1.0f;
 				}
 				else {
-					printf("normal mapping on");
+					printf("normal mapping on\n");
 					perframeData.normalMap.x *= -1.0f;
+				}
+			}
+			if (key == GLFW_KEY_F6 && action == GLFW_PRESS)
+			{
+				if (globalState.freezeCull_)
+				{
+					printf("resume frustum culling\n");
+					globalState.freezeCull_ = false;
+				}
+				else {
+					printf("freeze frustum culling\n");
+					globalState.freezeCull_ = true;
+				}
+			}
+			if (key == GLFW_KEY_F8 && action == GLFW_PRESS)
+			{
+				if (globalState.cull_)
+				{
+					printf("frustum culling off\n");
+					globalState.cull_ = false;
+				}
+				else {
+					printf("frustum culling on\n");
+					globalState.cull_ = true;
 				}
 			}
 		});
@@ -208,7 +234,7 @@ int main(int argc, char** argv)
 	irrklang::ISound* snd = engine->play2D("../../assets/media/EQ07 Prc Fantasy Perc 060.wav", true);
 
 	printf("Loading level...\n");
-	Level level("../../assets/demo.fbx", globalState);
+	Level level("../../assets/demo.fbx", globalState, perframeData);
 	loadingScreen.DrawProgress();
 
 	printf("Intializing renderer...\n");
@@ -240,6 +266,7 @@ int main(int argc, char** argv)
 
 	glViewport(0, 0, globalState.width, globalState.height);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_CULL_FACE);
 
 	engine->stopAllSounds();

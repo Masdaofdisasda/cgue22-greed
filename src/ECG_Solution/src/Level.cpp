@@ -3,7 +3,7 @@
 
 /// @brief loads an fbx file from the given path and converts it to useable data structures
 /// @param scenePath location of the fbx file, expected to be in "assets"
-Level::Level(const char* scenePath, GlobalState& state) {
+Level::Level(const char* scenePath, GlobalState& state, PerFrameData& pfdata) {
 
 	// 1. load fbx file into assimps internal data structures and apply various preprocessing to the data
 	std::cout << "load scene... (this could take a while)" << std::endl;
@@ -40,6 +40,7 @@ Level::Level(const char* scenePath, GlobalState& state) {
 		const aiMesh* mesh = scene->mMeshes[i];
 		meshes.push_back(extractMesh(mesh));
 	}
+	ModelsLoaded = meshes.size();
 
 	// 3. load materials
 	std::cout << "loading materials..." << std::endl;
@@ -85,11 +86,16 @@ Level::Level(const char* scenePath, GlobalState& state) {
 
 	// 9 finalize
 	globalState = &state;
+	perframeData = &pfdata;
 
 	AABBviewer = std::unique_ptr<Program>(new Program);
-	Shader boundsVert("../../assets/shaders/boundsDebug/boundsDebug.vert");
-	Shader boundsFrag("../../assets/shaders/boundsDebug/boundsDebug.frag");
+	Shader boundsVert("../../assets/shaders/AABBviewer/AABBviewer.vert");
+	Shader boundsFrag("../../assets/shaders/AABBviewer/AABBviewer.frag");
 	AABBviewer->buildFrom(boundsVert, boundsFrag);
+
+	Frustumviewer = std::unique_ptr<Program>(new Program);
+	Shader FrustumVert("../../assets/shaders/AABBviewer/Frustumviewer.vert");
+	Frustumviewer->buildFrom(FrustumVert, boundsFrag);
 
 	std::cout << std::endl;
 }
@@ -365,8 +371,16 @@ void Level::loadLights(const aiScene* scene) {
 /// @brief sets up indirect render calls, binds the data and calls the actual draw routine
 void Level::DrawGraph() {
 
-	buildRenderQueue(&sceneGraph, glm::mat4(1));
+	// update view frustum
+	if (!globalState->freezeCull_)
+	{
+		cullViewProj = perframeData->ViewProj;
+		FrustumCulling::getFrustumPlanes(cullViewProj, frustumPlanes);
+		FrustumCulling::getFrustumCorners(cullViewProj, frustumCorners);
+	}
 
+	// flaten tree
+	buildRenderQueue(&sceneGraph, glm::mat4(1));
 
 	// draw mesh
 	glBindVertexArray(VAO);
@@ -387,13 +401,37 @@ void Level::DrawGraph() {
 	if (globalState->cullDebug_) // bounding box debug view
 	{
 		glDisable(GL_CULL_FACE);
-		glDisable(GL_DEPTH_TEST);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		//glDisable(GL_DEPTH_TEST);
+		glEnable(GL_BLEND);
 		AABBviewer->Use();
-		DrawAABBs(sceneGraph);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		glEnable(GL_DEPTH_TEST);
+		AABBviewer->setVec4("lineColor", glm::vec4(0.0f,1.0f,0.0f, .05f));
+			DrawAABBs(sceneGraph); // draw AABBs
+		Frustumviewer->Use();
+		Frustumviewer->setVec4("lineColor", glm::vec4(1.0f, 1.0f, 0.0f, .05f));
+		Frustumviewer->setVec3("corner0", frustumCorners[0]);
+		Frustumviewer->setVec3("corner1", frustumCorners[1]);
+		Frustumviewer->setVec3("corner2", frustumCorners[2]);
+		Frustumviewer->setVec3("corner3", frustumCorners[3]);
+		Frustumviewer->setVec3("corner4", frustumCorners[4]);
+		Frustumviewer->setVec3("corner5", frustumCorners[5]);
+		Frustumviewer->setVec3("corner6", frustumCorners[6]);
+		Frustumviewer->setVec3("corner7", frustumCorners[7]);
+			glDrawArrays(GL_TRIANGLES, 0, 36); // draw frustum
+		glDisable(GL_BLEND);
+		//glEnable(GL_DEPTH_TEST);
 		glEnable(GL_CULL_FACE);
+	}
+
+	// output frustum culling information for debugging every 2 seconds
+	if (globalState->cull_)
+	{
+		secondsSinceFlush += perframeData->deltaTime.x;
+		if (secondsSinceFlush >= 2)
+		{
+			std::cout << "Models Loaded: " << ModelsLoaded << ", Models rendered: " << ModelsVisible
+				<< ", Models culled: " << ModelsLoaded - ModelsVisible << "\n";
+			secondsSinceFlush = 0;
+		}
 	}
 
 	resetQueue();
@@ -404,6 +442,11 @@ void Level::DrawGraph() {
 /// @param globalTransform the summed tranformation matrices of all parent nodes
 void Level::buildRenderQueue(const Hierarchy* node, glm::mat4 globalTransform) {
 
+	if (globalState->cull_)
+	{
+		if (!FrustumCulling::isBoxInFrustum(frustumPlanes, frustumCorners, node->nodeBounds))
+			return;
+	}
 
 	glm::mat4 nodeMatrix = globalTransform * node->getNodeMatrix();
 	for (size_t i = 0; i < node->modelIndices.size(); i++)
@@ -422,6 +465,7 @@ void Level::buildRenderQueue(const Hierarchy* node, glm::mat4 globalTransform) {
 
 		renderQueue[materialIndex].commands.push_back(cmd);
 		renderQueue[materialIndex].modelMatrices.push_back(nodeMatrix);
+		ModelsVisible++;
 	}
 	
 
@@ -431,7 +475,7 @@ void Level::buildRenderQueue(const Hierarchy* node, glm::mat4 globalTransform) {
 	}
 }
 
-/// @brief removes all render commands and model matrices of the render queue
+/// @brief removes all render commands and model matrices of the render queue, should be done after each draw call
 void Level::resetQueue()
 {
 	for (size_t i = 0; i < renderQueue.size(); i++)
@@ -439,6 +483,8 @@ void Level::resetQueue()
 		renderQueue[i].commands.clear();
 		renderQueue[i].modelMatrices.clear();
 	}
+
+	ModelsVisible = 0;
 }
 
 void Level::DrawAABBs(Hierarchy node)

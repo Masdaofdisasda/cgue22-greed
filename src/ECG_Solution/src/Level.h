@@ -4,70 +4,13 @@
 #include "Material.h"
 #include "LightSource.h"
 #include "Camera.h"
+#include "LevelStructs.h"
+#include "FrustumCulling.h"
 #include <glm/gtx/matrix_decompose.hpp> 
 #include <assimp/Importer.hpp>      
 #include <assimp/scene.h>           
 #include <assimp/postprocess.h>
 
-/// @brief describes the position of a mesh in an index and vertex array 
-struct subMesh
-{
-	std::string name;			// name of the mesh, for debugging
-	uint32_t indexOffset;		// start of mesh in vector indices
-	uint32_t vertexOffset;		// start of mesh in vector vertices
-	uint32_t indexCount;		// number of indices to render
-	uint32_t vertexCount;		// number of vertices to render
-	uint32_t materialIndex;		// associated material
-};
-
-/// @brief deascribes one indirect command for GlDraw_Indrect calls
-struct DrawElementsIndirectCommand
-{
-	uint32_t count_;
-	uint32_t instanceCount_;
-	uint32_t first_;
-	uint32_t baseInstance_;
-};
-
-/// @brief describes the bounding box of a mesh, can be used for frustum culling or physics simlution
-struct BoundingBox
-{
-	glm::vec3 min_;
-	glm::vec3 max_;
-
-	BoundingBox() = default;
-	BoundingBox(const glm::vec3 & min, const glm::vec3 & max) : min_(glm::min(min, max)), max_(glm::max(min, max)) {}
-};
-
-/// @brief implements a simple scene graph for hierarchical tranforamtions
-struct Hierarchy
-{
-	std::string name;
-	Hierarchy* parent = nullptr;			// parent node
-	std::vector <Hierarchy> children;		// children nodes
-	std::vector<uint32_t> modelIndices;		// models in this node
-
-	glm::vec3 localTranslate;				// local transformation
-	glm::quat localRotation;
-	glm::vec3 localScale;
-
-	BoundingBox nodeBounds;					// bounds of the nodes underlying children
-	std::vector<BoundingBox> modelBounds;	// bounds of the models;
-
-	/// return TRS "model matrix" of the node
-	glm::mat4 getNodeMatrix() const { return glm::translate(localTranslate) * glm::toMat4(localRotation) * glm::scale(localScale); }
-
-	/// @brief set TRS "model matrix" of the node
-	void setNodeMatrix(glm::mat4 M) { glm::decompose(M , localScale, localRotation, localTranslate, glm::vec3(), glm::vec4());}
-};
-
-/// @brief contains a list of draw commands and matching model matrices for models of the same material
-struct RenderItem
-{
-	std::string material;
-	std::vector<DrawElementsIndirectCommand> commands;
-	std::vector<glm::mat4> modelMatrices;
-};
 
 //---------------------------------------------------------------------------------------------------------------//
 
@@ -98,11 +41,20 @@ private:
 	Hierarchy* rigid;						// parent node of all rigid meshes (ground, walls, ...)
 	Hierarchy* dynamic;						// parent node of all dynamic meshes (items, ...)
 
-	std::shared_ptr<Program> AABBviewer;
+	/// frustum culling
+	std::shared_ptr<Program> AABBviewer;	// shader for debugging AABBs, toggle with F2
+	std::shared_ptr<Program> Frustumviewer;	// shader for debugging AABBs, toggle with F2
+	glm::mat4 cullViewProj;
+	glm::vec4 frustumPlanes[6];
+	glm::vec4 frustumCorners[8];
+	uint32_t ModelsLoaded = 0;
+	uint32_t ModelsVisible = 0;
+	double secondsSinceFlush = 0;
 
 	LightSources lights;
 
 	GlobalState* globalState;
+	PerFrameData* perframeData;
 
 	subMesh extractMesh(const aiMesh* mesh);
 	BoundingBox computeBoundsOfMesh(subMesh mesh);
@@ -121,7 +73,7 @@ private:
 	void Release();
 	
 public:
-	Level(const char* scenePath, GlobalState& state);
+	Level(const char* scenePath, GlobalState& state, PerFrameData& pfdata);
 	~Level() { Release(); }
 
 	void DrawGraph();
