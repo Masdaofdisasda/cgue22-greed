@@ -1,5 +1,19 @@
 #include "Camera.h"
 
+void CameraPositioner_FirstPerson::setMovementState(KeyboardInputState input)
+{
+	movement_.forward_ = input.pressingW;
+	movement_.backward_ = input.pressingS;
+	movement_.left_ = input.pressingA;
+	movement_.right_ = input.pressingD;
+	movement_.up_ = input.pressing1;
+	movement_.down_ = input.pressing2;
+	movement_.fastSpeed_ = input.pressingShift;
+
+	if (input.pressingSpace)
+		setUpVector(glm::vec3(0.0f, 1.0f, 0.0f));
+}
+
 void CameraPositioner_FirstPerson::update(double deltaSeconds, const glm::vec2& mousePos, bool mousePressed) {
 	// gets called once per loop
 

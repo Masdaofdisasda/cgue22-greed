@@ -24,29 +24,24 @@
 #include <assimp/cimport.h>
 #include <assimp/version.h>
 #include "Physics.h"
+#include "PlayerController.h"
 
 /* --------------------------------------------- */
 // Global variables
 /* --------------------------------------------- */
 
 GlobalState globalState;
-
+KeyboardInputState keyboardInput;
 PerFrameData perframeData;
+MouseState mouseState;
 
-struct MouseState
-{
-	glm::vec2 pos = glm::vec2(0.0f);
-	bool pressedLeft = false;
-	bool pressedRight = false;
-} mouseState;
+CameraPositionerInterface* cameraPositioner;
+CameraPositioner_FirstPerson floatingPositioner(glm::vec3(0.0f, 0.0f, 10.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+CameraPositioner_Player playerCameraPositioner;
+Camera camera(*cameraPositioner);
 
-
-CameraPositioner_FirstPerson positioner(glm::vec3(0.0f, 0.0f, 10.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-Camera camera(positioner);
-
-static btConvexHullShape* getHullShapeFromMesh(Mesh* mesh);
-static btRigidBody makeRigidbody(btQuaternion rot, btVector3 pos, btCollisionShape* col, btScalar mass);
-static glm::vec3 btToGlmVector(btVector3 input);
+void registerInputCallbacks(GLFWApp& app);
+bool usingDebugCamera();
 
 /* --------------------------------------------- */
 // Main
@@ -66,116 +61,10 @@ int main(int argc, char** argv)
 	// Init framework
 	/* --------------------------------------------- */
 
-	//setup GLFW window
+	// setup GLFW window
+	printf("Initializing GLFW...");
 	GLFWApp GLFWapp(globalState);
-
-	// register input callbacks to window
-	glfwSetKeyCallback(GLFWapp.getWindow(),
-		[](GLFWwindow* window,
-			int key, int scancode, int action, int mods)
-		{
-			// Movement
-			const bool press = action != GLFW_RELEASE;
-			if (key == GLFW_KEY_ESCAPE)
-				glfwSetWindowShouldClose(window, GLFW_TRUE);
-			if (key == GLFW_KEY_W)
-				positioner.movement_.forward_ = press;
-			if (key == GLFW_KEY_S)
-				positioner.movement_.backward_ = press;
-			if (key == GLFW_KEY_A)
-				positioner.movement_.left_ = press;
-			if (key == GLFW_KEY_D)
-				positioner.movement_.right_ = press;
-			if (key == GLFW_KEY_1)
-				positioner.movement_.up_ = press;
-			if (key == GLFW_KEY_2)
-				positioner.movement_.down_ = press;
-			if (mods & GLFW_MOD_SHIFT)
-				positioner.movement_.fastSpeed_ = press;
-			if (key == GLFW_KEY_SPACE)
-				positioner.setUpVector(glm::vec3(0.0f, 1.0f, 0.0f));
-
-			// Debug & Effects
-			if (key == GLFW_KEY_F1 && action == GLFW_PRESS)
-			{
-				if (globalState.fullscreen_)
-				{
-					printf("Fullscreen off");
-					globalState.fullscreen_ = false;
-				}
-				else {
-					printf("Fullscreen on");
-					globalState.fullscreen_ = true;
-				}
-			}
-			if (key == GLFW_KEY_F2 && action == GLFW_PRESS) //TODO
-			{
-				if (globalState.focus_)
-				{
-					globalState.request_focus_ = true;
-				}
-				else
-				{
-
-					globalState.request_unfocus_ = true;
-				}
-			}
-			if (key == GLFW_KEY_F3 && action == GLFW_PRESS)
-			{
-				if (globalState.bloom_)
-				{
-					printf("Bloom off");
-					globalState.bloom_ = false;
-				}
-				else {
-					printf("Bloom on");
-					globalState.bloom_ = true;
-				}
-			}
-			if (key == GLFW_KEY_F4 && action == GLFW_PRESS)
-			{
-				if (globalState.debugDrawPhysics)
-				{
-					printf("Physics debugging off");
-					globalState.debugDrawPhysics = false;
-				}
-				else {
-					printf("Physics debugging on");
-					globalState.debugDrawPhysics = true;
-				}
-			}
-			if (key == GLFW_KEY_F5 && action == GLFW_PRESS)
-			{
-				if (perframeData.normalMap.x > 0.0f)
-				{
-					printf("normal mapping off");
-					perframeData.normalMap.x *= -1.0f;
-				}
-				else {
-					printf("normal mapping on");
-					perframeData.normalMap.x *= -1.0f;
-				}
-			}
-		});
-	glfwSetMouseButtonCallback(GLFWapp.getWindow(),
-		[](auto* window, int button, int action, int mods)
-		{
-			if (button == GLFW_MOUSE_BUTTON_LEFT)
-				mouseState.pressedLeft = action == GLFW_PRESS;
-
-			if (button == GLFW_MOUSE_BUTTON_RIGHT)
-				mouseState.pressedRight = action == GLFW_PRESS;
-
-		});
-	glfwSetCursorPosCallback(
-		GLFWapp.getWindow(), [](auto* window, double x, double y) {
-			int w, h;
-			glfwGetFramebufferSize(window, &w, &h);
-			mouseState.pos.x = static_cast<float>(x / w);
-			mouseState.pos.y = static_cast<float>(y / h);
-			//glfwSetCursorPos(window, 0, 0); // cursor disabled kind of fix
-		}
-	);
+	registerInputCallbacks(GLFWapp);
 
 	// load all OpenGL function pointers with GLEW
 	printf("Initializing GLEW...");
@@ -199,7 +88,7 @@ int main(int argc, char** argv)
 
 	printf("Loading level...");
 	//Level level("assets/Bistro_v5_2/BistroInterior.fbx"); // https://developer.nvidia.com/orca/amazon-lumberyard-bistro
-	Level level("assets/test.fbx"); 
+	Level level("assets/test.fbx");
 	printf("Intializing renderer...");
 	Renderer renderer(globalState, perframeData, *level.getLights());
 
@@ -216,12 +105,19 @@ int main(int argc, char** argv)
 	);
 	btBoxShape* col2 = new btBoxShape(btVector3(5, 0.1, 5));
 	physics.createPhysicsObject(
-		btVector3(0, -5, 0),
+		btVector3(0, -1, 0),
 		col2,
 		btQuaternion(btVector3(0, 1, 0), btScalar(0)),
 		Physics::ObjectMode::Static
 	);
 	//---------------------------------- /testing ----------------------------------//
+	// Setup camera
+	cameraPositioner = &playerCameraPositioner;
+	camera.setPositioner(cameraPositioner);
+	playerCameraPositioner.setPosition(glm::vec3(0, 10, 0));
+
+	// Setup player
+	PlayerController player(physics, playerCameraPositioner, glm::vec3(0, 1, 0));
 
 	glViewport(0, 0, globalState.width, globalState.height);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -239,9 +135,6 @@ int main(int argc, char** argv)
 	{
 		fpsCounter.tick(deltaSeconds);
 
-		//positioner.update(deltaSeconds, mouseState.pos, globalState.focus_);
-		positioner.update(deltaSeconds, mouseState.pos, mouseState.pressedLeft);
-
 		// fps counter
 		const double newTimeStamp = glfwGetTime();
 		deltaSeconds = static_cast<float>(newTimeStamp - timeStamp);
@@ -253,8 +146,18 @@ int main(int argc, char** argv)
 		glViewport(0, 0, globalState.width, globalState.height);
 		GLFWapp.updateWindow();
 
+		// movement
+		if (usingDebugCamera())
+			floatingPositioner.setMovementState(keyboardInput);
+		else
+			player.move(keyboardInput);
+
 		// calculate physics
 		physics.simulateOneStep(deltaSeconds);
+
+		// update camera
+		player.updateCameraPosition();
+		cameraPositioner->update(deltaSeconds, mouseState.pos, mouseState.pressedLeft);
 
 		// calculate and set per Frame matrices
 		const float ratio = globalState.width / (float)globalState.height;
@@ -292,3 +195,106 @@ int main(int argc, char** argv)
 	return EXIT_SUCCESS;
 }
 
+void registerInputCallbacks(GLFWApp& app) {
+	glfwSetKeyCallback(app.getWindow(),
+		[](GLFWwindow* window,
+			int key, int scancode, int action, int mods)
+		{
+			// Movement
+			const bool press = action != GLFW_RELEASE;
+			if (key == GLFW_KEY_W)
+				keyboardInput.pressingW = press;
+			if (key == GLFW_KEY_S)
+				keyboardInput.pressingS = press;
+			if (key == GLFW_KEY_A)
+				keyboardInput.pressingA = press;
+			if (key == GLFW_KEY_D)
+				keyboardInput.pressingD = press;
+			if (key == GLFW_KEY_1)
+				keyboardInput.pressing1 = press;
+			if (key == GLFW_KEY_2)
+				keyboardInput.pressing2 = press;
+			if (mods & GLFW_MOD_SHIFT)
+				keyboardInput.pressingShift = press;
+			if (key == GLFW_KEY_SPACE)
+				keyboardInput.pressingSpace = press;
+
+			// Window management, Debug, Effects
+			if (key == GLFW_KEY_ESCAPE)
+				glfwSetWindowShouldClose(window, GLFW_TRUE);
+			if (key == GLFW_KEY_F1 && action == GLFW_PRESS)
+			{
+				if (globalState.fullscreen_)
+					printf("Fullscreen off");
+				else
+					printf("Fullscreen on");
+
+				globalState.fullscreen_ = !globalState.fullscreen_;
+			}
+			if (key == GLFW_KEY_F2 && action == GLFW_PRESS) //TODO
+				globalState.request_focus_ = !globalState.request_focus_;
+			if (key == GLFW_KEY_F3 && action == GLFW_PRESS)
+			{
+				if (globalState.bloom_)
+					printf("Bloom off");
+				else
+					printf("Bloom on");
+
+				globalState.bloom_ = !globalState.bloom_;
+			}
+			if (key == GLFW_KEY_F4 && action == GLFW_PRESS)
+			{
+				if (globalState.debugDrawPhysics)
+					printf("Physics debugging off");
+				else
+					printf("Physics debugging on");
+
+				globalState.debugDrawPhysics = !globalState.debugDrawPhysics;
+			}
+			if (key == GLFW_KEY_F5 && action == GLFW_PRESS)
+			{
+				if (perframeData.normalMap.x > 0.0f)
+					printf("normal mapping off");
+				else
+					printf("normal mapping on");
+
+				perframeData.normalMap.x *= -1.0f;
+			}
+			if (key == GLFW_KEY_F6 && action == GLFW_PRESS) {
+				if (usingDebugCamera()) {
+					printf("Switch camera to player");
+					cameraPositioner = &playerCameraPositioner;
+					globalState.debugDrawPhysics = false;
+				}
+				else {
+					printf("Switch camera to debug camera");
+					cameraPositioner = &floatingPositioner;
+					globalState.debugDrawPhysics = true;
+				}
+				camera.setPositioner(cameraPositioner);
+			}
+		});
+	glfwSetMouseButtonCallback(app.getWindow(),
+		[](auto* window, int button, int action, int mods)
+		{
+			if (button == GLFW_MOUSE_BUTTON_LEFT)
+				mouseState.pressedLeft = action == GLFW_PRESS;
+
+			if (button == GLFW_MOUSE_BUTTON_RIGHT)
+				mouseState.pressedRight = action == GLFW_PRESS;
+
+		});
+	glfwSetCursorPosCallback(
+		app.getWindow(), [](auto* window, double x, double y) {
+			int w, h;
+			glfwGetFramebufferSize(window, &w, &h);
+			mouseState.pos.x = static_cast<float>(x / w);
+			mouseState.pos.y = static_cast<float>(y / h);
+			//glfwSetCursorPos(window, 0, 0); // cursor disabled kind of fix
+		}
+	);
+}
+
+bool usingDebugCamera() {
+	return cameraPositioner == &floatingPositioner;
+}
