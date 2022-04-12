@@ -29,7 +29,13 @@ x86/
 bld/
 [Bb]in/
 !src/bin/Debug/assimp-vc142-mtd.dll
+!src/bin/Debug/ikpFlac.dll
+!src/bin/Debug/ikpMP3.dll
+!src/bin/Debug/irrKlang.dll
 !src/bin/Release/assimp-vc142-mt.dll
+!src/bin/Release/ikpFlac.dll
+!src/bin/Release/ikpMP3.dll
+!src/bin/Release/irrKlang.dll
 [Oo]bj/
 [Oo]ut/
 [Ll]og/
