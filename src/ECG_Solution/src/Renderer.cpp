@@ -1,8 +1,11 @@
 #include "Renderer.h"
 
+/// @brief sets up shaders for rendering and post processing and also enviroment maps
+/// @param state is the global state of the program at runtime
+/// @param pfdata is per render cycle static data
+/// @param sources are the light sources of some level
 Renderer::Renderer(GlobalState& state, PerFrameData& pfdata, LightSources& sources)
 {
-	// initialize Renderer
 	globalState = &state; // link global variables
 	perframeData = &pfdata; // link per frame data
 	lights = sources; // set lights and lightcounts for shaders
@@ -11,19 +14,23 @@ Renderer::Renderer(GlobalState& state, PerFrameData& pfdata, LightSources& sourc
 	fillLightsources(); // binds lights to binding points in shader
 	perframeBuffer.fillBuffer(pfdata); // load UBO to shader;
 
-	prepareFramebuffers(); // for hdr rendering
+	prepareFramebuffers(); // for hdr rendering and tonemapping
 	std::cout << "load enviroment map and process it.." << std::endl;
-	IBL.loadHDR("assets/textures/cubemap/cellar.pic");
+	IBL.loadHDR("../../assets/textures/cubemap/cellar.pic");
 	std::cout << "load skybox and process it.." << std::endl;
-	skyTex.loadHDR("assets/textures/cubemap/cloudy.hdr");
+	skyTex.loadHDR("../../assets/textures/cubemap/beach.hdr");
+	glCreateVertexArrays(1, &emptyVAO);
+	PBRShader.uploadIBL(IBL.getIrradianceID(),IBL.getPreFilterID(), IBL.getBdrfLutID(), skyTex.getEnvironment());
 }
 
-GlobalState Renderer::loadSettings(GlobalState state)
+/// @brief loads settings from settings.ini, called in main
+/// @return a globalstate from settings.ini
+GlobalState Renderer::loadSettings()
 {
-	// init reader for ini files
+	GlobalState state;
 	std::cout << "reading setting from settings.ini..." << std::endl;
-	INIReader reader("assets/settings.ini");
-	// load values from ini file
+	INIReader reader("../../assets/settings.ini");
+
 	// first param: section [window], second param: property name, third param: default value
 	state.width = reader.GetInteger("window", "width", 800);
 	state.height = reader.GetInteger("window", "height", 800);
@@ -43,6 +50,7 @@ GlobalState Renderer::loadSettings(GlobalState state)
 
 }
 
+// TODO
 void Renderer::fillLightsources()
 {
 	// create Uniform Buffer Objects from light source struct vectors
@@ -56,6 +64,7 @@ void Renderer::fillLightsources()
 	PBRShader.setuInt("pLightCount", lights.point.size());
 }
 
+/// @brief initializes settings for post processing and rendering
 void Renderer::setRenderSettings()
 {
 	perframeData->bloom = glm::vec4(globalState->exposure_, globalState->maxWhite_,
@@ -64,54 +73,59 @@ void Renderer::setRenderSettings()
 	perframeData->normalMap = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
+/// @brief compiles all needed shaders for the render loop
 void Renderer::buildShaderPrograms()
 {
 	// build shader programms
-	Shader pbrVert("assets/shaders/pbr/pbr.vert");
-	Shader pbrFrag("assets/shaders/pbr/pbr.frag", glm::ivec3(lights.directional.size(), lights.point.size(), 0));
+	Shader pbrVert("../../assets/shaders/pbr/pbr.vert");
+	Shader pbrFrag("../../assets/shaders/pbr/pbr.frag", glm::ivec3(lights.directional.size(), lights.point.size(), 0));
 	PBRShader.buildFrom(pbrVert, pbrFrag);
 	PBRShader.Use();
-	PBRShader.setTextures();
 
-	Shader skyboxVert("assets/shaders/skybox/skybox.vert");
-	Shader skyboxFrag("assets/shaders/skybox/skybox.frag");
+	Shader skyboxVert("../../assets/shaders/skybox/skybox.vert");
+	Shader skyboxFrag("../../assets/shaders/skybox/skybox.frag");
 	skyboxShader.buildFrom(skyboxVert, skyboxFrag);
 	skyboxShader.Use();
-	skyboxShader.setSkyboxTextures();
 
-	Shader BrightPassVert("assets/shaders/BrightPass/BrightPass.vert");
-	Shader BrightPassFrag("assets/shaders/BrightPass/BrightPass.frag");
-	BrightPass.buildFrom(BrightPassVert, BrightPassFrag);
+	Shader fullScreenTriangleVert("../../assets/shaders/fullScreenTriangle.vert");
 
-	Shader CombineHDRVert("assets/shaders/CombineHDR/CombineHDR.vert");
-	Shader CombineHDRFrag("assets/shaders/CombineHDR/CombineHDR.frag");
-	CombineHDR.buildFrom(CombineHDRVert, CombineHDRFrag);
+	Shader BrightPassFrag("../../assets/shaders/BrightPass/BrightPass.frag");
+	BrightPass.buildFrom(fullScreenTriangleVert, BrightPassFrag);
 
-	Shader BlurVert("assets/shaders/Blur/Blur.vert");
-	Shader BlurXFrag("assets/shaders/Blur/BlurX.frag");
-	Shader BlurYFrag("assets/shaders/Blur/BlurY.frag");
-	BlurX.buildFrom(BlurVert, BlurXFrag);
-	BlurY.buildFrom(BlurVert, BlurYFrag);
+	Shader CombineHDRFrag("../../assets/shaders/CombineHDR/CombineHDR.frag");
+	CombineHDR.buildFrom(fullScreenTriangleVert, CombineHDRFrag);
 
-	Shader LuminanceVert("assets/shaders/toLuminance/toLuminance.vert");
-	Shader LuminanceFrag("assets/shaders/toLuminance/toLuminance.frag");
-	ToLuminance.buildFrom(LuminanceVert, LuminanceFrag);
+	Shader BlurXFrag("../../assets/shaders/Blur/BlurX.frag");
+	Shader BlurYFrag("../../assets/shaders/Blur/BlurY.frag");
+	BlurX.buildFrom(fullScreenTriangleVert, BlurXFrag);
+	BlurY.buildFrom(fullScreenTriangleVert, BlurYFrag);
 
-	Shader lightAdaptComp("assets/shaders/lightAdaption/lightAdaption.comp");
+	Shader LuminanceFrag("../../assets/shaders/toLuminance/toLuminance.frag");
+	ToLuminance.buildFrom(fullScreenTriangleVert, LuminanceFrag);
+
+	Shader lightAdaptComp("../../assets/shaders/lightAdaption/lightAdaption.comp");
 	lightAdapt.buildFrom(lightAdaptComp);
+
+	Shader lavaFloorVert("../../assets/shaders/lavaFloor/lavaFloor.vert");
+	Shader lavaFloorFrag("../../assets/shaders/lavaFloor/lavaFloor.frag");
+	lavaFloor.buildFrom(lavaFloorVert, lavaFloorFrag);
 
 	PBRShader.Use();
 }
 
+
+/// @brief sets OpenGL states before first draw call, which can't be done in header file
 void Renderer::prepareFramebuffers() {
 
 	glGenTextures(1, &luminance1x1);
-	glTextureView(luminance1x1, GL_TEXTURE_2D, luminance.getTextureColor().getHandle(), GL_R16F, 6, 1, 0, 1);
+	glTextureView(luminance1x1, GL_TEXTURE_2D, luminance.getTextureColor().getHandle(), GL_RGBA16F, 6, 1, 0, 1);
 
-	glTextureSubImage2D(luminance0.getHandle(), 0, 0, 0, 1, 1, GL_RGBA, GL_FLOAT, &(glm::vec4(glm::vec3(50.0f), 1.0f))[0]);
-
+	const glm::vec4 startingLuminance(glm::vec3(0.0f), 1.0f);
+	glTextureSubImage2D(luminance0.getHandle(), 0, 0, 0, 1, 1, GL_RGBA, GL_FLOAT, &startingLuminance[0]);
 }
 
+/// @brief implements the pipeline for HDR, tonemapping and shadows
+/// @param level is the geometry which should be drawn
 void Renderer::Draw(Level* level)
 {
 	
@@ -120,24 +134,24 @@ void Renderer::Draw(Level* level)
 
 	perframeBuffer.Update(*perframeData);
 
-
 	// 1. pass - render scene to framebuffer
 	glEnable(GL_DEPTH_TEST);
 	framebuffer.bind();
 
 		// draw skybox (background)    
 		skyboxShader.Use();
-		skyboxShader.uploadSkybox(&skyTex);
-		glDepthFunc(GL_LEQUAL);
-		skyboxShader.DrawSkybox(skyBox);
-		glDepthFunc(GL_LESS);
+		glDepthMask(false);
+		glBindVertexArray(emptyVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+		glDepthMask(true);
 
 		// draw models
-		glEnable(GL_CULL_FACE);
+		//glEnable(GL_CULL_FACE);
 		PBRShader.Use();
-		PBRShader.uploadIBL(&IBL);
 		level->DrawGraph();
-		glDisable(GL_CULL_FACE);
+
+		lavaFloor.Use();
+		glDrawArrays(GL_TRIANGLES, 0, 3);
 
 	framebuffer.unbind(); 
 	glGenerateTextureMipmap(framebuffer.getTextureColor().getHandle());
@@ -148,8 +162,8 @@ void Renderer::Draw(Level* level)
 	// 2. pass - downscale for addiational blur and convert framebuffer to luminance
 	luminance.bind();
 		ToLuminance.Use();
-		glBindTextureUnit(0, framebuffer.getTextureColor().getHandle());
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindTextureUnit(9, framebuffer.getTextureColor().getHandle());
+		glDrawArrays(GL_TRIANGLES, 0, 3);
 	luminance.unbind();
 	glGenerateTextureMipmap(luminance.getTextureColor().getHandle());
 
@@ -165,8 +179,8 @@ void Renderer::Draw(Level* level)
 	// 4. pass - filter bright spots from framebuffer
 	brightPass.bind();
 		BrightPass.Use();
-		glBindTextureUnit(0, framebuffer.getTextureColor().getHandle());
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindTextureUnit(9, framebuffer.getTextureColor().getHandle());
+		glDrawArrays(GL_TRIANGLES, 0, 3);
 	brightPass.unbind();
 	glBlitNamedFramebuffer(brightPass.getHandle(), bloom1.getHandle(), 0, 0, 256, 256, 0, 0, 256, 256, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
@@ -176,14 +190,14 @@ void Renderer::Draw(Level* level)
 		// blur x
 		bloom0.bind();
 			BlurX.Use();
-			glBindTextureUnit(0, bloom1.getTextureColor().getHandle());
-			glDrawArrays(GL_TRIANGLES, 0, 6);
+			glBindTextureUnit(9, bloom1.getTextureColor().getHandle());
+			glDrawArrays(GL_TRIANGLES, 0, 3);
 		bloom0.unbind();
 		// blur y
 		bloom1.bind();
 			BlurY.Use();
-			glBindTextureUnit(0, bloom0.getTextureColor().getHandle());
-			glDrawArrays(GL_TRIANGLES, 0, 6);
+			glBindTextureUnit(9, bloom0.getTextureColor().getHandle());
+			glDrawArrays(GL_TRIANGLES, 0, 3);
 		bloom1.unbind();
 	}
 
@@ -193,11 +207,10 @@ void Renderer::Draw(Level* level)
 	if (globalState->bloom_)
 	{
 		CombineHDR.Use();
-		glBindTextureUnit(0, framebuffer.getTextureColor().getHandle());
-		//glBindTextureUnit(1, luminances[1]->getHandle()); //TODO
-		glBindTextureUnit(1, luminance1x1);
-		glBindTextureUnit(2, bloom1.getTextureColor().getHandle());
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindTextureUnit(9, framebuffer.getTextureColor().getHandle());
+		glBindTextureUnit(10, luminances[1]->getHandle());
+		glBindTextureUnit(11, bloom1.getTextureColor().getHandle());
+		glDrawArrays(GL_TRIANGLES, 0, 3);
 	}
 	else
 	{
@@ -205,11 +218,13 @@ void Renderer::Draw(Level* level)
 	}
 }
 
+/// @brief swaps framebuffers for light adaption computation
 void Renderer::swapLuminance()
 {
 	std::swap(luminances[0], luminances[1]);
 }
 
+/// @brief frees resources
 Renderer::~Renderer()
 {
 	globalState = nullptr;

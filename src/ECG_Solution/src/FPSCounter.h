@@ -2,8 +2,7 @@
 #include <string>
 #include <assert.h>
 
-// handls the logic for frames per second calculation
-
+/// @brief handles the logic for frames per second calculation
 class FPSCounter
 {
 public:
@@ -13,10 +12,12 @@ public:
 		assert(avgIntervalSec > 0.0f);
 	}
 
-	// calculates average fps
+	/// @brief calculate average frames per second
+	/// @param deltaSeconds time since last frame
+	/// @return 
 	bool tick(
-		float deltaSeconds, bool frameRendered = true) {
-		if (frameRendered) numFrames_++;
+		float deltaSeconds) {
+		numFrames_++;
 		accumulatedTime_ += deltaSeconds; if (accumulatedTime_ < avgIntervalSec_)
 			return false;
 		currentFPS_ = static_cast<float>(

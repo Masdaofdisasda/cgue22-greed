@@ -1,15 +1,12 @@
 #pragma once
-#include "Utils.h"
 #include <fstream>
 #include "UBO.h"
 
 // read shader source code into char
 std::string read_code_from(const char* file);
 
-/* class for single shader
-* a shader can have a vert, frag, geom, tesc, tese or comp file type
-*/
-
+/// @brief Shader is some GLSL shader from some file location
+/// it contains a handle to the shader object and loads, compiles and checks for compilation error
 class Shader
 {
 public:

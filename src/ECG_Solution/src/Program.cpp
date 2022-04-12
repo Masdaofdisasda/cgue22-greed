@@ -1,5 +1,8 @@
 #include "Program.h"
 
+/// @brief build a shader program from shaders and check for compile errors
+/// all buildFrom() functions do the same thing but with more shaders
+/// @param a is a valid shader
 void Program::buildFrom(Shader& a)
 {
 	glAttachShader(program_ID, *a.getID());
@@ -8,7 +11,6 @@ void Program::buildFrom(Shader& a)
 	compileErrors();
 	getUniformLocations();
 }
-
 void Program::buildFrom(Shader& a, Shader& b)
 {
 	glAttachShader(program_ID, *a.getID());
@@ -53,87 +55,36 @@ void Program::buildFrom(Shader& a, Shader& b, Shader& c, Shader& d, Shader& e)
 
 }
 
+/// @brief creates an OpenGL handle, program needs to call some of the buildfrom()
+/// functions before Use(), otherwise the app may crash, this constructor makes
+/// member programs possible
 Program::Program()
 {
 	program_ID = glCreateProgram();
 }
 
-
+/// @brief makes this the currently active shader program, called before glDraw()
 void Program::Use()
 {
-	// activate shader programm 
 	glUseProgram(program_ID);
 }
 
-// for PBR shading
-void Program::setTextures()
+/// @brief binds IBL textures to uniforms 5,6,7 and 8 (same order as the parameters)
+/// @param Irradiance is the texture handle for the irradiance map
+/// @param PreFilter is the texture handle for the prefilter map
+/// @param BdrfLut is the texture handle for the bdrflut map
+/// @param Enviroment  is the texture handle for the enviroment map
+void Program::uploadIBL(GLuint Irradiance, GLuint PreFilter, GLuint BdrfLut, GLuint Enviroment) const
 {
-	setInt("material.albedo", 0);
-	setInt("material.normal", 1);
-	setInt("material.metallic", 2);
-	setInt("material.roughness", 3);
-	setInt("material.ao", 4);
-	setInt("material.irradiance", 5);
-	setInt("material.prefilter", 6);
-	setInt("material.brdfLut", 7);
+	const GLuint textures[] = {
+				Irradiance,
+				PreFilter,
+				BdrfLut,
+				Enviroment };
+	glBindTextures(5, 4, textures);
 }
 
-// for skybox shader
-void Program::setSkyboxTextures()
-{
-	setInt("environment", 0);
-}
-
-void Program::Draw(Mesh& mesh)
-{
-	setMat4("model", mesh.model);
-
-	// bind textures 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, mesh.getMaterial()->getAlbedo());
-
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, mesh.getMaterial()->getNormalmap());
-
-	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, mesh.getMaterial()->getMetallic());
-
-	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_2D, mesh.getMaterial()->getRoughness());
-
-	glActiveTexture(GL_TEXTURE4);
-	glBindTexture(GL_TEXTURE_2D, mesh.getMaterial()->getAOmap());
-
-	// draw mesh
-	mesh.BindVAO();
-	glDrawElements(GL_TRIANGLES, mesh.getIndicesSize(), GL_UNSIGNED_INT, 0);
-}
-
-
-void Program::DrawSkybox(Mesh& mesh)
-{
-	setMat4("model", glm::mat4(0));
-
-	mesh.BindVAO();
-	glDrawElements(GL_TRIANGLES, mesh.getIndicesSize(), GL_UNSIGNED_INT, 0);
-}
-
-void Program::uploadIBL(Cubemap* ibl)
-{
-	glActiveTexture(GL_TEXTURE5);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, ibl->getIrradianceID());
-	glActiveTexture(GL_TEXTURE6);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, ibl->getPreFilterID());
-	glActiveTexture(GL_TEXTURE7);
-	glBindTexture(GL_TEXTURE_2D, ibl->getBdrfLutID());
-}
-
-void Program::uploadSkybox(Cubemap* skybox)
-{
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, skybox->getEnvironment());
-}
-
+// TODO
 void Program::getUniformLocations()
 {
 
@@ -142,11 +93,11 @@ void Program::getUniformLocations()
 
 }
 
-
+// TODO
 void Program::bindLightBuffers(UBO* directional, UBO* positional)
 {
-	glBindBufferBase(GL_UNIFORM_BUFFER, 1, *directional->getID());
-	glBindBufferBase(GL_UNIFORM_BUFFER, 2, *positional->getID());
+	glBindBufferBase(GL_UNIFORM_BUFFER, 1, directional->getID());
+	glBindBufferBase(GL_UNIFORM_BUFFER, 2, positional->getID());
 }
 
 void Program::setuInt(const std::string& name, int value)
@@ -180,7 +131,7 @@ void Program::setMat4(const std::string& name, glm::mat4 value)
 	glUniformMatrix4fv(glGetUniformLocation(program_ID, name.c_str()), 1, GL_FALSE, &value[0][0]);
 }
 
-// check for compile errors
+/// @brief check for compile errors
 int Program::compileErrors()
 {
 	GLint succeded;
@@ -188,13 +139,11 @@ int Program::compileErrors()
 	glGetProgramiv(program_ID, GL_LINK_STATUS, &succeded);
 	if (succeded == GL_FALSE)
 	{
-
-		// get error
 		GLint logSize;
 		glGetProgramiv(program_ID, GL_INFO_LOG_LENGTH, &logSize);
 		GLchar* message = new char[logSize];
 		glGetProgramInfoLog(program_ID, logSize, nullptr, message);
-		EXIT_WITH_ERROR(message); // print error
+		EXIT_WITH_ERROR(message);
 		delete[] message;
 	}
 }

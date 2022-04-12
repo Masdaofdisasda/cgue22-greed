@@ -2,10 +2,7 @@
 #include "Utils.h"
 #include <GLFW/glfw3.h>
 
-/* class for GLFW window managment
-* handles most of the functions for glfw
-*/
-
+/// @brief GLFW window managemnt, handles most of the functions for glfw
 class GLFWApp
 {
 public:
@@ -13,6 +10,8 @@ public:
 	~GLFWApp();
 	GLFWwindow* getWindow() const { return window_; }
 	float getDeltaSeconds() const { return deltaSeconds_; }
+
+	/// @brief swaps back & front buffer and checks for errors
 	void swapBuffers()
 	{
 		glfwSwapBuffers(window_);
@@ -24,7 +23,7 @@ public:
 		timeStamp_ = newTimeStamp;
 	}
 
-	// should toggle between fullscreen and window mode
+	/// @brief should toggle between fullscreen and window mode
 	void updateWindow()
 	{
 		
@@ -84,7 +83,9 @@ GLFWApp::GLFWApp(GlobalState& state)
 	}
 
 	glfwMakeContextCurrent(window_);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glfwSwapInterval(0);
+	glfwSwapBuffers(window_);
 }
 
 GLFWApp::~GLFWApp()

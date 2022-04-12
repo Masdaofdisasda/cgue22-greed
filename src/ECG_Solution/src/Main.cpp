@@ -19,12 +19,10 @@
 #include "GLFWApp.h"
 #include "Debugger.h"
 #include "Level.h"
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
-#include <assimp/cimport.h>
-#include <assimp/version.h>
 #include "Physics.h"
 #include "PlayerController.h"
+#include "LoadingScreen.h"
+#include <irrKlang/irrKlang.h>
 
 /* --------------------------------------------- */
 // Global variables
@@ -36,7 +34,7 @@ PerFrameData perframeData;
 MouseState mouseState;
 
 CameraPositionerInterface* cameraPositioner;
-CameraPositioner_FirstPerson floatingPositioner(glm::vec3(0.0f, 0.0f, 10.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+CameraPositioner_FirstPerson floatingPositioner(glm::vec3(0.0f, 1.85f, 70.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 CameraPositioner_Player playerCameraPositioner;
 Camera camera(*cameraPositioner);
 
@@ -55,7 +53,13 @@ int main(int argc, char** argv)
 	// Load settings.ini
 	/* --------------------------------------------- */
 
-	globalState = Renderer::loadSettings(globalState);
+	std::ifstream file("../../assets/demo.fbx");
+	// if this assertion fails, and you cloned this project from Github,
+	// try setting your working directory of the debugger to "$(TargetDir)"
+	assert(file.is_open());
+	file.close();
+
+	globalState = Renderer::loadSettings();
 
 	/* --------------------------------------------- */
 	// Init framework
@@ -67,7 +71,7 @@ int main(int argc, char** argv)
 	registerInputCallbacks(GLFWapp);
 
 	// load all OpenGL function pointers with GLEW
-	printf("Initializing GLEW...");
+	printf("Initializing GLEW...\n");
 	glewExperimental = GL_TRUE;
 	if (glewInit() != GLEW_OK)
 		EXIT_WITH_ERROR("Failed to load GLEW");
@@ -80,17 +84,26 @@ int main(int argc, char** argv)
 	glEnable(GL_DEBUG_OUTPUT);
 	glDebugMessageCallback(Debugger::DebugCallbackDefault, 0);
 
+	LoadingScreen loadingScreen(&GLFWapp, globalState.width, globalState.height);
+	loadingScreen.DrawProgress();
+
 	/* --------------------------------------------- */
 	// Initialize scene and render loop
 	/* --------------------------------------------- */
 
-	printf("Initializing scene and render loop...");
+	printf("Initializing scene and render loop...\n");
 
-	printf("Loading level...");
-	//Level level("assets/Bistro_v5_2/BistroInterior.fbx"); // https://developer.nvidia.com/orca/amazon-lumberyard-bistro
-	Level level("assets/test.fbx");
-	printf("Intializing renderer...");
+	printf("Intializing audio...\n"); 
+	irrklang::ISoundEngine* engine = irrklang::createIrrKlangDevice();
+	irrklang::ISound* snd = engine->play2D("../../assets/media/EQ07 Prc Fantasy Perc 060.wav", true);
+
+	printf("Loading level...\n");
+	Level level("../../assets/demo.fbx", globalState);
+	loadingScreen.DrawProgress();
+
+	printf("Intializing renderer...\n");
 	Renderer renderer(globalState, perframeData, *level.getLights());
+	loadingScreen.DrawProgress();
 
 	//Physics Initialization
 	printf("Initializing physics...\n");
@@ -118,9 +131,17 @@ int main(int argc, char** argv)
 
 	// Setup player
 	PlayerController player(physics, playerCameraPositioner, glm::vec3(0, 1, 0));
+	
+	loadingScreen.DrawProgress();
+
+	glm::vec3 lavaPosition = glm::vec3(0.0f, -50.0f, 0.0f); // TODO
 
 	glViewport(0, 0, globalState.width, globalState.height);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glEnable(GL_CULL_FACE);
+
+	engine->stopAllSounds();
+	snd = engine->play2D("../../assets/media/EQ01 Gml Belalua Game 070 Fm.wav", true);
 
 	double timeStamp = glfwGetTime();
 	float deltaSeconds = 0.0f;
@@ -164,7 +185,8 @@ int main(int argc, char** argv)
 		const glm::mat4 projection = glm::perspective(glm::radians(globalState.fov), ratio, globalState.Znear, globalState.Zfar);
 		const glm::mat4 view = camera.getViewMatrix();
 		perframeData.ViewProj = projection * view;
-		perframeData.ViewProjSkybox = projection * glm::mat4(glm::mat3(view)); // remove translation
+		lavaPosition.y += deltaSeconds * 1.0f;
+		perframeData.lavaLevel = glm::translate(lavaPosition);
 		perframeData.viewPos = glm::vec4(camera.getPosition(), 1.0f);
 		perframeData.deltaTime.x = deltaSeconds;
 
@@ -191,7 +213,6 @@ int main(int argc, char** argv)
 
 
 	printf("Exiting programm...");
-
 	return EXIT_SUCCESS;
 }
 
@@ -231,8 +252,8 @@ void registerInputCallbacks(GLFWApp& app) {
 
 				globalState.fullscreen_ = !globalState.fullscreen_;
 			}
-			if (key == GLFW_KEY_F2 && action == GLFW_PRESS) //TODO
-				globalState.request_focus_ = !globalState.request_focus_;
+			if (key == GLFW_KEY_F2 && action == GLFW_PRESS)
+				globalState.cullDebug_ = !globalState.cullDebug_;
 			if (key == GLFW_KEY_F3 && action == GLFW_PRESS)
 			{
 				if (globalState.bloom_)

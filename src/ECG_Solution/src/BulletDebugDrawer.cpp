@@ -4,10 +4,10 @@
 BulletDebugDrawer::BulletDebugDrawer(){
 	vertices = std::vector<glm::vec3>();
 
-	Shader* vertexShader = new Shader("assets/shaders/bulletDebug/bulletDebug.vert");
-	Shader* fragmentShader = new Shader("assets/shaders/bulletDebug/bulletDebug.frag");
-	program = new Program();
-	program->buildFrom(*vertexShader, *fragmentShader);
+	Shader vertexShader("../../assets/shaders/bulletDebug/bulletDebug.vert");
+	Shader fragmentShader("../../assets/shaders/bulletDebug/bulletDebug.frag");
+	program;
+	program.buildFrom(vertexShader, fragmentShader);
 	glGenBuffers(1, &vbo_ID);
 	glGenVertexArrays(1, &vao_ID);
 }
@@ -28,7 +28,7 @@ void BulletDebugDrawer::draw() {
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	// draw
-	program->Use();
+	program.Use();
 	glDrawArrays(GL_LINES, 0, vertices.size());
 
 	// cleanup

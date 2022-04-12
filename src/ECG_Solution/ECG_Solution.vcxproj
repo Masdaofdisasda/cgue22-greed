@@ -10,10 +10,10 @@
     <ClCompile Include="src\Level.cpp" />
     <ClCompile Include="src\Material.cpp" />
     <ClCompile Include="src\PlayerCamera.cpp" />
+    <ClCompile Include="src\Physics.cpp" />
     <ClCompile Include="src\Program.cpp" />
     <ClCompile Include="src\Renderer.cpp" />
     <ClCompile Include="src\Texture.cpp" />
-    <ClCompile Include="src\Mesh.cpp" />
     <ClCompile Include="src\EBO.cpp" />
     <ClCompile Include="src\Shader.cpp" />
     <ClCompile Include="src\UBO.cpp" />
@@ -26,14 +26,16 @@
     <ClInclude Include="src\Cubemap.h" />
     <ClInclude Include="src\Framebuffer.h" />
     <ClInclude Include="src\FPSCounter.h" />
+    <ClInclude Include="src\FrustumCuller.h" />
     <ClInclude Include="src\GLFWApp.h" />
     <ClInclude Include="src\Level.h" />
+    <ClInclude Include="src\LoadingScreen.h" />
     <ClInclude Include="src\Material.h" />
+    <ClInclude Include="src\Physics.h" />
     <ClInclude Include="src\Program.h" />
     <ClInclude Include="src\Renderer.h" />
     <ClInclude Include="src\Texture.h" />
     <ClInclude Include="src\LightSource.h" />
-    <ClInclude Include="src\Mesh.h" />
     <ClInclude Include="src\EBO.h" />
     <ClInclude Include="src\INIReader.h" />
     <ClCompile Include="src\Main.cpp" />
@@ -180,7 +182,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)external\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glew32s.lib;glfw3.lib;ECG_Library_Debug.lib;BulletCollision_vs2010_debug.lib;BulletDynamics_vs2010_debug.lib;LinearMath_vs2010_debug.lib;assimp-vc142-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;glew32s.lib;glfw3.lib;ECG_Library_Debug.lib;BulletCollision_vs2010_debug.lib;BulletDynamics_vs2010_debug.lib;LinearMath_vs2010_debug.lib;assimp-vc142-mtd.lib;irrKlang.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>MSVCRTD;LIBCMT</IgnoreSpecificDefaultLibraries>
       <TargetMachine>MachineX86</TargetMachine>
       <AdditionalOptions>/FORCE:MULTIPLE %(AdditionalOptions)</AdditionalOptions>
@@ -223,7 +225,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>NO_BONUS;WIN32;_CRT_SECURE_NO_WARNINGS;GLEW_STATIC;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)external\includel\assimp;$(SolutionDir)external\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)external\include</AdditionalIncludeDirectories>
       <PreprocessToFile>false</PreprocessToFile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <LanguageStandard>
@@ -237,9 +239,8 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)external\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glew32s.lib;glfw3.lib;ECG_Library_Release.lib;BulletCollision_vs2010.lib;BulletDynamics_vs2010.lib;LinearMath_vs2010.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <IgnoreSpecificDefaultLibraries>
-      </IgnoreSpecificDefaultLibraries>
+      <AdditionalDependencies>opengl32.lib;glew32s.lib;glfw3.lib;ECG_Library_Release.lib;BulletCollision_vs2010.lib;BulletDynamics_vs2010.lib;LinearMath_vs2010.lib;assimp-vc142-mt.lib;irrKlang.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreSpecificDefaultLibraries>MSVCRTD;LIBCMT</IgnoreSpecificDefaultLibraries>
       <ForceFileOutput>
       </ForceFileOutput>
     </Link>

@@ -5,15 +5,15 @@ layout(location = 0) in vec2 uv;
 
 layout(location = 0) out vec4 outColor;
 
-layout(binding = 0) uniform sampler2D texScene;
-layout(binding = 1) uniform sampler2D texLuminance;
-layout(binding = 2) uniform sampler2D texBloom;
+layout(binding = 9) uniform sampler2D texScene;
+layout(binding = 10) uniform sampler2D texLuminance;
+layout(binding = 11) uniform sampler2D texBloom;
 
 layout(std140, binding = 0) uniform PerFrameData
 {
 	vec4 viewPos;
 	mat4 ViewProj;
-	mat4 ViewProjSkybox;
+	mat4 lavaLevel;
 	vec4 bloom;
 	vec4 deltaTime;
     vec4 normalMap;
@@ -38,7 +38,7 @@ void main()
 
 	float midGray = 0.5;
 
-	color *= exposure * midGray / (avgLuminance + 0.001);
+	color *= exposure * midGray / (max(avgLuminance,6.1e-5)); //use smallest float instead of 0
 	color = Reinhard2(color);
 	outColor = vec4(color + bloomStrength * bloom, 1.0);
 }

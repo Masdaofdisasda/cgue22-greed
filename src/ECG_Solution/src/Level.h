@@ -4,27 +4,15 @@
 #include "Material.h"
 #include "LightSource.h"
 #include "Camera.h"
-#include <assimp/Importer.hpp>      // C++ importer interface
-#include <assimp/scene.h>           // Output data structure
-#include <assimp/postprocess.h>     // Post processing flags
-#include <unordered_map>
+#include <glm/gtx/matrix_decompose.hpp> 
+#include <assimp/Importer.hpp>      
+#include <assimp/scene.h>           
+#include <assimp/postprocess.h>
 
-/*
-Class for all Level classes.
-Helps with seperating different scenes with different models, lights, cameras and controls.
-Level data can be read from a file.
-*/
-
-struct Model		// data for drawing
+/// @brief describes the position of a mesh in an index and vertex array 
+struct subMesh
 {
-	uint32_t meshIndex;			// specify mesh in vector meshes
-	uint32_t materialIndex;		// specify material in vector materials
-	uint32_t transformIndex;	// specify model tranformation in vector ?
-};
-
-struct subMesh		// mesh object
-{
-	const char* name;			// name of the mesh, for debugging
+	std::string name;			// name of the mesh, for debugging
 	uint32_t indexOffset;		// start of mesh in vector indices
 	uint32_t vertexOffset;		// start of mesh in vector vertices
 	uint32_t indexCount;		// number of indices to render
@@ -32,16 +20,17 @@ struct subMesh		// mesh object
 	uint32_t materialIndex;		// associated material
 };
 
-struct DrawElementsIndirectCommand		// TODO
+/// @brief deascribes one indirect command for GlDraw_Indrect calls
+struct DrawElementsIndirectCommand
 {
-	GLuint count_;
-	GLuint instanceCount_;
-	GLuint firstIndex_;
-	GLuint baseVertex_;
-	GLuint baseInstance_;
+	uint32_t count_;
+	uint32_t instanceCount_;
+	uint32_t first_;
+	uint32_t baseInstance_;
 };
 
-struct BoundingBox		// might be used for frustum culling
+/// @brief describes the bounding box of a mesh, can be used for frustum culling or physics simlution
+struct BoundingBox
 {
 	glm::vec3 min_;
 	glm::vec3 max_;
@@ -50,22 +39,47 @@ struct BoundingBox		// might be used for frustum culling
 	BoundingBox(const glm::vec3 & min, const glm::vec3 & max) : min_(glm::min(min, max)), max_(glm::max(min, max)) {}
 };
 
-struct Hierarchy		// implements a simple scene graph for transformations
+/// @brief implements a simple scene graph for hierarchical tranforamtions
+struct Hierarchy
 {
-	const char* name;
-	Hierarchy* parent;						// parent node
+	std::string name;
+	Hierarchy* parent = nullptr;			// parent node
 	std::vector <Hierarchy> children;		// children nodes
 	std::vector<uint32_t> modelIndices;		// models in this node
 
-	glm::mat4 localTransform;				// local transformation matrix
+	glm::vec3 localTranslate;				// local transformation
+	glm::quat localRotation;
+	glm::vec3 localScale;
+
+	BoundingBox nodeBounds;					// bounds of the nodes underlying children
+	std::vector<BoundingBox> modelBounds;	// bounds of the models;
+
+	/// return TRS "model matrix" of the node
+	glm::mat4 getNodeMatrix() const { return glm::translate(localTranslate) * glm::toMat4(localRotation) * glm::scale(localScale); }
+
+	/// @brief set TRS "model matrix" of the node
+	void setNodeMatrix(glm::mat4 M) { glm::decompose(M , localScale, localRotation, localTranslate, glm::vec3(), glm::vec4());}
+};
+
+/// @brief contains a list of draw commands and matching model matrices for models of the same material
+struct RenderItem
+{
+	std::string material;
+	std::vector<DrawElementsIndirectCommand> commands;
+	std::vector<glm::mat4> modelMatrices;
 };
 
 //---------------------------------------------------------------------------------------------------------------//
+
+#ifndef _LEVEL_
+#define _LEVEL_
+class Program;
+/// @brief Level is primarily a data structure for complex 3D scenes
+/// loads and manages geometry, textures and model matrices from some fbx file
 class Level {
 private:
 	uint32_t globalVertexOffset = 0;
 	uint32_t globalIndexOffset = 0;
-	uint32_t boundMaterial = -1;
 
 	GLuint VAO = 0; // vertex layouts
 	GLuint VBO = 0; // vertices
@@ -75,36 +89,48 @@ private:
 
 	// mesh data - a loaded scene is entirely contained in these data structures
 	std::vector <subMesh> meshes;			// contains mesh offsets for glDraw 
-	std::vector <Model> models;			// describes a single model
 	std::vector<float> vertices;			// contains a stream of vertices in (px,py,pz,ny,ny,nz,u,v)-form
 	std::vector <GLuint> indices;			// contains the indices that make triangles
 	std::vector <Material> materials;		// contains all needed textures
 	std::vector <BoundingBox> boxes;		// contains all bounding boxes of the meshes
-	std::vector<DrawElementsIndirectCommand> drawCommands_; //TODO
-	Hierarchy sceneGraph;
+	std::vector<RenderItem> renderQueue;	// contains for every material render commands and matrices
+	Hierarchy sceneGraph;					// saves scene hierarchy and transformations
+	Hierarchy* rigid;						// parent node of all rigid meshes (ground, walls, ...)
+	Hierarchy* dynamic;						// parent node of all dynamic meshes (items, ...)
+
+	std::shared_ptr<Program> AABBviewer;
 
 	LightSources lights;
 
+	GlobalState* globalState;
+
 	subMesh extractMesh(const aiMesh* mesh);
-	void calculateBoundingBoxes();
+	BoundingBox computeBoundsOfMesh(subMesh mesh);
+	BoundingBox computeBoundsOfNode(std::vector <Hierarchy> children, std::vector<BoundingBox> modelBounds);
 	Material Level::loadMaterials(const aiMaterial* M);
 	void traverseTree(aiNode* n, Hierarchy* parent, Hierarchy* child);
 	void setupVertexBuffers();
 	void setupDrawBuffers();
 	void loadLights(const aiScene* scene);
 	glm::mat4 toGlmMat4(const aiMatrix4x4& mat);
-	void drawTraverse(const Hierarchy* node, glm::mat4 globalTransform);
+	void buildRenderQueue(const Hierarchy* node, glm::mat4 globalTransform);
+	void DrawAABBs(Hierarchy node);
+	void transformBoundingBoxes(Hierarchy* node, glm::mat4 globalTransform);
 
+	void resetQueue();
 	void Release();
 	
 public:
-	Level(const char* scenePath);
+	Level(const char* scenePath, GlobalState& state);
 	~Level() { Release(); }
 
 	void DrawGraph();
 
+	Hierarchy* getRigidNodes() { return rigid; }
+	Hierarchy* getDynamicNodes() { return dynamic; }
 	LightSources* getLights() { return &lights; }
-
 	std::vector <DirectionalLight> getDirectionalLights() { return lights.directional; }
 	std::vector <PositionalLight> getPointLights() { return lights.point; }
 };
+
+#endif

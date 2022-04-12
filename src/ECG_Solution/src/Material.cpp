@@ -1,16 +1,10 @@
 #include "Material.h"
 
-// expects path to be "assets/textures/name"
-Material::Material(const char* texPath) {
-
-	albedo = Texture::loadTexture(append(texPath, "/albedo.jpg"));
-	normal = Texture::loadTexture(append(texPath, "/normal.jpg"));
-	metal = Texture::loadTexture(append(texPath, "/metal.jpg"));
-	rough = Texture::loadTexture(append(texPath, "/rough.jpg"));
-	ao = Texture::loadTexture(append(texPath, "/ao.jpg"));
-}
-
 // expects path to be "textures/rockground/albedo.jpg"
+
+/// @brief loads five textures from a texture folder
+/// @param texPath should be of the form "textures/(Material_1)/albedo.jpg"
+/// @param name the name of the material, eg. Material_1
 Material::Material(const char* texPath, const char* name) {
 
 	id = name;
@@ -20,11 +14,11 @@ Material::Material(const char* texPath, const char* name) {
 	size_t start = path.length() - 11;
 	path.erase(start, 11);
 
-	// append "assests/" to the start of the string
+	// append "../../assests/" to the start of the string
 	char* file = new char[path.length() + 1];
 	strcpy(file, path.c_str());
 	char c[100];
-	strcpy(c, "assets/");
+	strcpy(c, "../../assets/");
 	strcat(c, file);
 
 	albedo = Texture::loadTexture(append(c, "/albedo.jpg"));
@@ -34,7 +28,10 @@ Material::Material(const char* texPath, const char* name) {
 	ao = Texture::loadTexture(append(c, "/ao.jpg"));
 }
 
-
+/// @brief adds a subfolder to a given path
+/// @param texPath is the path to the root folder
+/// @param texType is the name of the image file in the root folder
+/// @return the path to the image file
 const char* Material::append(const char* texPath, char* texType)
 {
 	char c[100];
@@ -43,6 +40,7 @@ const char* Material::append(const char* texPath, char* texType)
 	return strcat(c, texType);
 }
 
+/// @brief explicitly deletes every texture in this material
 void Material::clear()
 {
 	glDeleteTextures(1, &albedo);

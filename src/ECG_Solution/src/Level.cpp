@@ -1,6 +1,9 @@
 #include "Level.h"
+#include "Program.h"
 
-Level::Level(const char* scenePath) {
+/// @brief loads an fbx file from the given path and converts it to useable data structures
+/// @param scenePath location of the fbx file, expected to be in "assets"
+Level::Level(const char* scenePath, GlobalState& state) {
 
 	// 1. load fbx file into assimps internal data structures and apply various preprocessing to the data
 	std::cout << "load scene... (this could take a while)" << std::endl;
@@ -21,8 +24,7 @@ Level::Level(const char* scenePath) {
 	if (!scene)
 	{
 		std::cerr << "ERROR: Couldn't load scene" << std::endl;
-		std::cerr << "If you cloned this project from GitHub, see if your working directory is correct:" << std::endl;
-		std::cerr << "right click on solution->properties/debugging/working directory/$(SolutionDir)" << std::endl;
+		exit(EXIT_FAILURE);
 	}
 
 	globalVertexOffset = 0;
@@ -37,7 +39,6 @@ Level::Level(const char* scenePath) {
 	{
 		const aiMesh* mesh = scene->mMeshes[i];
 		meshes.push_back(extractMesh(mesh));
-
 	}
 
 	// 3. load materials
@@ -50,44 +51,52 @@ Level::Level(const char* scenePath) {
 
 		Material mat = loadMaterials(mm);
 		materials.push_back(mat);
+		RenderItem item;
+		item.material = mm->GetName().C_Str();
+		renderQueue.push_back(item);
 	}
 
-
-	// 4. create a model for drawing for every loaded mesh
-	for (size_t i = 0; i < meshes.size(); i++)
-	{
-		Model draw;
-		draw.meshIndex = (uint32_t)i;
-		draw.materialIndex = meshes[i].materialIndex;
-		draw.transformIndex = 0;
-		models.push_back(draw);
-
-	}
-
-	// 5. build scene graph
+	// 5. build scene graph and calculate AABBs
 	std::cout << "build scene hierarchy..." << std::endl;
 	aiNode* n = scene->mRootNode;
-	Hierarchy child;
-	sceneGraph.name = "root";
-	sceneGraph.parent = nullptr;
-	sceneGraph.children.push_back(child);
-	sceneGraph.localTransform = glm::mat4(1);
-	traverseTree(n, &sceneGraph, &sceneGraph.children[0]);
+	traverseTree(n, nullptr, &sceneGraph); 
+	for (size_t i = 0; i < sceneGraph.children.size(); i++)
+	{
+		if (sceneGraph.children[i].name.compare("Rigid") == 0) {
+			rigid = &sceneGraph.children[i];
+		}
+		if (sceneGraph.children[i].name.compare("Dynamic") == 0) {
+			dynamic = &sceneGraph.children[i];
+		}
+	}
+	sceneGraph.nodeBounds = computeBoundsOfNode(sceneGraph.children, sceneGraph.modelBounds);
+	transformBoundingBoxes(&sceneGraph, glm::mat4(1));
 
 	// 6. setup buffers for vertex and indices data
 	std::cout << "setup buffers..." << std::endl;
 	setupVertexBuffers();
 
 	// 7. setup buffers for transform and drawcommands
-	setupDrawBuffers(); //TODO
+	setupDrawBuffers();
 
 	// 8. load lights sources 
 	std::cout << "loading lights..." << std::endl;
 	loadLights(scene); //TODO
 
+	// 9 finalize
+	globalState = &state;
+
+	AABBviewer = std::unique_ptr<Program>(new Program);
+	Shader boundsVert("../../assets/shaders/boundsDebug/boundsDebug.vert");
+	Shader boundsFrag("../../assets/shaders/boundsDebug/boundsDebug.frag");
+	AABBviewer->buildFrom(boundsVert, boundsFrag);
+
 	std::cout << std::endl;
 }
 
+/// @brief extracts position, normal and uvs with the correlating indices from an assimp mesh
+/// @param mesh is a single meshm with a unique material
+/// @return a mesh but in usable structures for drawing it
 subMesh Level::extractMesh(const aiMesh* mesh)
 {
 	subMesh m;
@@ -138,28 +147,67 @@ subMesh Level::extractMesh(const aiMesh* mesh)
 	return m;
 }
 
-void Level::calculateBoundingBoxes() {
-	boxes.clear();
+/// @brief finds the maximum and minimum vertex positions of all meshes, which should define the bounds
+BoundingBox Level::computeBoundsOfMesh(subMesh mesh) {
+	const auto numIndices = mesh.indexCount;
 
-	for (const auto& mesh : meshes)
+	glm::vec3 vmin(std::numeric_limits<float>::max());
+	glm::vec3 vmax(std::numeric_limits<float>::lowest());
+
+	for (auto i = 0; i != numIndices; i++)
 	{
-		const auto numIndices = mesh.indexCount;
+		auto vertexOffset = (mesh.vertexOffset + i) * 8;
+		const float* vf = &vertices[vertexOffset];
 
-		glm::vec3 vmin(std::numeric_limits<float>::max());
-		glm::vec3 vmax(std::numeric_limits<float>::lowest());
+		vmin = glm::min(vmin, glm::vec3(vf[0], vf[1], vf[2]));
+		vmax = glm::max(vmax, glm::vec3(vf[0], vf[1], vf[2]));
+	}
+	return BoundingBox(vmin, vmax);
+}
 
-		for (auto i = 0; i != numIndices; i++)
-		{
-			auto vtxOffset = indices[mesh.indexOffset + i] + mesh.vertexOffset;
-			const float* vf = &vertices[vtxOffset];
-			vmin = glm::min(vmin, glm::vec3(vf[0], vf[1], vf[2]));
-			vmax = glm::max(vmax, glm::vec3(vf[0], vf[1], vf[2]));
-		}
+BoundingBox Level::computeBoundsOfNode(std::vector<Hierarchy> children, std::vector<BoundingBox> modelBounds)
+{
+	glm::vec3 vmin(std::numeric_limits<float>::max());
+	glm::vec3 vmax(std::numeric_limits<float>::lowest());
 
-		boxes.emplace_back(vmin, vmax);
+	for (size_t i = 0; i < children.size(); i++)
+	{
+		glm::vec3 cmin = children[i].nodeBounds.min_;
+		glm::vec3 cmax = children[i].nodeBounds.max_;
+
+		vmin = glm::min(vmin, cmin);
+		vmax = glm::max(vmax, cmax);
+	}
+
+	for (size_t i = 0; i < modelBounds.size(); i++)
+	{
+		glm::vec3 cmin = modelBounds[i].min_;
+		glm::vec3 cmax = modelBounds[i].max_;
+
+		vmin = glm::min(vmin, cmin);
+		vmax = glm::max(vmax, cmax);
+	}
+
+	return BoundingBox(vmin, vmax);
+}
+
+void Level::transformBoundingBoxes(Hierarchy* node, glm::mat4 globalTransform)
+{
+	BoundingBox bounds = node->nodeBounds;
+	glm::mat4 M = globalTransform * node->getNodeMatrix();
+	bounds.min_ = M * glm::vec4(bounds.min_, 1.0f);
+	bounds.max_ = M * glm::vec4(bounds.max_, 1.0f);
+	node->nodeBounds = BoundingBox(bounds.min_, bounds.max_);
+
+	for (size_t i = 0; i < node->children.size(); i++)
+	{
+		transformBoundingBoxes(&node->children[i], M);
 	}
 }
 
+/// @brief loads all materials (textures) from the material assimp provides
+/// @param M is a single material and should contain 5 aiTextureTypes, only one of them is needed for loading the textures
+/// @return a material object containing opengl handles to the fives loaded textures
 Material Level::loadMaterials(const aiMaterial* M)
 {
 
@@ -170,14 +218,18 @@ Material Level::loadMaterials(const aiMaterial* M)
 		const std::string albedoMap = std::string(Path.C_Str());
 	}
 
-	//	all other materials can be found with:
-	//	aiTextureType_NORMAL_CAMERA, aiTextureType_METALNESS, aiTextureType_DIFFUSE_ROUGHNESS, aiTextureType_AMBIENT_OCCLUSION
+	//	all other materials can be found with: aiTextureType_NORMAL_CAMERA/_METALNESS/_DIFFUSE_ROUGHNESS/_AMBIENT_OCCLUSION
 
 	return Material(Path.C_Str(), M->GetName().C_Str());
 }
 
+/// @brief recursive function that builds a scenegraph with hierarchical transformation, similiar to assimps scene
+/// @param n is an assimp node that holds transformations, nodes or meshes
+/// @param parent is the parent node of the currently created node, mainly used for debugging
+/// @param node is the current node from the view of the parent node
 void Level::traverseTree(aiNode* n, Hierarchy* parent, Hierarchy* node)
 {
+	const glm::mat4 M = toGlmMat4(n->mTransformation);
 	node->name = n->mName.C_Str();
 
 	node->parent = parent;
@@ -185,20 +237,29 @@ void Level::traverseTree(aiNode* n, Hierarchy* parent, Hierarchy* node)
 	for (unsigned int i = 0; i < n->mNumMeshes; i++)
 	{
 		node->modelIndices.push_back(n->mMeshes[i]);
+		node->modelBounds.push_back(computeBoundsOfMesh(meshes[n->mMeshes[i]]));
 	}
 
-	node->localTransform = toGlmMat4(n->mTransformation);
+	glm::decompose(M, node->localScale, node->localRotation, node->localTranslate, glm::vec3(), glm::vec4());
+	node->localRotation = glm::normalize(glm::conjugate(node->localRotation));
 
 	for (size_t i = 0; i < n->mNumChildren; i++)
 	{
+		if (strcmp(n->mChildren[i]->mName.C_Str(),"Lights") != 0)
+		{
 		Hierarchy child;
 		traverseTree(n->mChildren[i], node, &child);
 		node->children.push_back(child);
+		}
 	}
 
-
+	node->nodeBounds = computeBoundsOfNode(node->children, node->modelBounds);
 }
 
+
+/// @brief simple helper function for converting the assimp 4x4 matrices to 4x4 glm matrices
+/// @param mat is a 4x4 matrix from assimp
+/// @return a 4x4 matrix in glm format
 glm::mat4 Level::toGlmMat4(const aiMatrix4x4& mat)
 {
 	glm::mat4 result;
@@ -209,10 +270,11 @@ glm::mat4 Level::toGlmMat4(const aiMatrix4x4& mat)
 	return result;
 }
 
+/// @brief Creates and fills vertex and index buffers and sets up the "big" vao which will suffice to render all meshes
 void Level::setupVertexBuffers()
 {
 	glCreateBuffers(1, &VBO);
-	glNamedBufferStorage(VBO, globalVertexOffset * 5 * sizeof(float), vertices.data(), 0);
+	glNamedBufferStorage(VBO, vertices.size() * sizeof(float), vertices.data(), 0);
 	glCreateBuffers(1, &EBO);
 	glNamedBufferStorage(EBO, globalIndexOffset * sizeof(GLuint), indices.data(), 0);
 
@@ -233,33 +295,22 @@ void Level::setupVertexBuffers()
 	glVertexArrayAttribBinding(VAO, 2, 0);
 }
 
+/// @brief sets up indirect command and shader storage buffers for efficient und reduced render calls
 void Level::setupDrawBuffers()
 {
-	std::vector<glm::mat4> matrices;
-	// setup buffers for drawing commands
-	for (auto i = 0; i < models.size(); i++)
-	{
-		DrawElementsIndirectCommand icmd;
-		icmd.count_ = 1;
-		icmd.instanceCount_ = 1;
-		icmd.firstIndex_ = meshes[models[i].meshIndex].indexOffset;
-		icmd.baseVertex_ = meshes[models[i].meshIndex].vertexOffset;
-		icmd.baseInstance_ = models[i].materialIndex + (uint32_t(i) << 16);
-		drawCommands_.push_back(icmd);
-	}
 
 	glCreateBuffers(1, &IBO);
-	glNamedBufferStorage(IBO, drawCommands_.size() * sizeof(DrawElementsIndirectCommand), nullptr, GL_DYNAMIC_STORAGE_BIT);
-	glNamedBufferSubData(IBO, 0, drawCommands_.size() * sizeof(DrawElementsIndirectCommand), drawCommands_.data());
+	glNamedBufferStorage(IBO, meshes.size() * sizeof(DrawElementsIndirectCommand), nullptr, GL_DYNAMIC_STORAGE_BIT);
 
 	glCreateBuffers(1, &matrixSSBO);
-	//glNamedBufferStorage(matrixSSBO, matrices.size() * sizeof(glm::mat4), nullptr, GL_DYNAMIC_STORAGE_BIT);
-	//glNamedBufferSubData(matrixSSBO, 0, matrices.size() * sizeof(glm::mat4), matrices.data());
-	glNamedBufferStorage(matrixSSBO, sizeof(glm::mat4), nullptr, GL_DYNAMIC_STORAGE_BIT);
-	 (matrixSSBO, 0, sizeof(glm::mat4), &glm::mat4(1)[0][0]);
+	glNamedBufferStorage(matrixSSBO, meshes.size() * sizeof(glm::mat4), nullptr, GL_DYNAMIC_STORAGE_BIT);
 
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, matrixSSBO);
+	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, IBO);
 }
 
+/// @brief loads all directional and positional lights in the assimp scene, corrects position for positional lights by traversing the tree
+/// @param scene is the scene containing the lights and root node
 void Level::loadLights(const aiScene* scene) {
 
 	for (size_t i = 0; i < scene->mNumLights; i++)
@@ -282,15 +333,23 @@ void Level::loadLights(const aiScene* scene) {
 		{
 			const aiLight* light = scene->mLights[i];
 			const aiColor3D col = light->mColorDiffuse;
+			const aiString name = light->mName;
 
-			glm::vec4 p = glm::vec4(1);
-			for (size_t i = 0; i < sceneGraph.children[0].children.size(); i++)
+			aiVector3D p; //TODO
+			for (size_t i = 0; i < scene->mRootNode->mNumChildren; i++)
 			{
-				if (strcmp(sceneGraph.children[0].children[i].name, "pointLight1") == 0) {
-					p = sceneGraph.localTransform *
-						sceneGraph.children[0].localTransform *
-						sceneGraph.children[0].children[i].localTransform *
-						p;
+				if(strcmp(scene->mRootNode->mChildren[i]->mName.C_Str(), "lights") == 0)
+				{
+					for (size_t j = 0; j < scene->mRootNode->mChildren[i]->mNumChildren; j++)
+					{
+						if (strcmp(scene->mRootNode->mChildren[i]->mChildren[j]->mName.C_Str(), name.C_Str()) == 0)
+						{
+							p = scene->mRootNode->mTransformation *
+								scene->mRootNode->mChildren[i]->mTransformation *
+								scene->mRootNode->mChildren[i]->mChildren[j]->mTransformation * p;
+
+						}
+					}
 				}
 			}
 
@@ -303,60 +362,100 @@ void Level::loadLights(const aiScene* scene) {
 
 }
 
-
+/// @brief sets up indirect render calls, binds the data and calls the actual draw routine
 void Level::DrawGraph() {
-	//TODO make buffer useful
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, matrixSSBO);
-	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, IBO);
+
+	buildRenderQueue(&sceneGraph, glm::mat4(1));
+
 
 	// draw mesh
 	glBindVertexArray(VAO);
-	drawTraverse(&sceneGraph, glm::mat4(1));
+
+	for (size_t i = 0; i < renderQueue.size(); i++)
+	{
+		glNamedBufferSubData(matrixSSBO, 0, sizeof(glm::mat4) * renderQueue[i].modelMatrices.size(), renderQueue[i].modelMatrices.data());
+
+		glNamedBufferSubData(IBO, 0, renderQueue[i].commands.size() * sizeof(DrawElementsIndirectCommand), renderQueue[i].commands.data());
+		
+		const GLuint textures[] = {materials[i].getAlbedo(), materials[i].getNormalmap(), materials[i].getMetallic(), materials[i].getRoughness(), materials[i].getAOmap() };
+
+		glBindTextures(0, 5, textures);
+		glMultiDrawArraysIndirect(GL_TRIANGLES, nullptr, renderQueue[i].commands.size(), 0);
+		// todo: glMultiDrawElementsIndirect
+	}
+
+	if (globalState->cullDebug_) // bounding box debug view
+	{
+		glDisable(GL_CULL_FACE);
+		glDisable(GL_DEPTH_TEST);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		AABBviewer->Use();
+		DrawAABBs(sceneGraph);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glEnable(GL_DEPTH_TEST);
+		glEnable(GL_CULL_FACE);
+	}
+
+	resetQueue();
 }
 
+/// @brief recursiveley travels the tree and adds any models it finds, according to its material, to the render queue
+/// @param node that gets checked for models
+/// @param globalTransform the summed tranformation matrices of all parent nodes
+void Level::buildRenderQueue(const Hierarchy* node, glm::mat4 globalTransform) {
 
-void Level::drawTraverse(const Hierarchy* node, glm::mat4 globalTransform)
-{
-	glm::mat4 modelMatrix = node->localTransform * globalTransform;
 
+	glm::mat4 nodeMatrix = globalTransform * node->getNodeMatrix();
 	for (size_t i = 0; i < node->modelIndices.size(); i++)
 	{
-		uint32_t modelIndex = node->modelIndices[i];
+		uint32_t meshIndex = node->modelIndices[i];
+		uint32_t materialIndex = meshes[meshIndex].materialIndex;
+		uint32_t count = meshes[meshIndex].indexCount;
+		uint32_t firstIndex = meshes[meshIndex].indexOffset;
+		uint32_t baseInstance = renderQueue[materialIndex].modelMatrices.size();
 
-		if (boundMaterial != models[modelIndex].materialIndex)
-		{
-			boundMaterial = models[modelIndex].materialIndex;
+		DrawElementsIndirectCommand cmd= DrawElementsIndirectCommand{
+			count,
+			1,
+			firstIndex,
+			baseInstance };
 
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, materials[models[modelIndex].materialIndex].getAlbedo());
-
-			glActiveTexture(GL_TEXTURE1);
-			glBindTexture(GL_TEXTURE_2D, materials[models[modelIndex].materialIndex].getNormalmap());
-
-			glActiveTexture(GL_TEXTURE2);
-			glBindTexture(GL_TEXTURE_2D, materials[models[modelIndex].materialIndex].getMetallic());
-
-			glActiveTexture(GL_TEXTURE3);
-			glBindTexture(GL_TEXTURE_2D, materials[models[modelIndex].materialIndex].getRoughness());
-
-			glActiveTexture(GL_TEXTURE4);
-			glBindTexture(GL_TEXTURE_2D, materials[models[modelIndex].materialIndex].getAOmap());
-		}
-
-		glNamedBufferSubData(matrixSSBO, 0, sizeof(glm::mat4), &modelMatrix[0][0]);
-
-		GLsizei count = meshes[models[modelIndex].meshIndex].indexCount;
-		GLint baseindex = meshes[models[modelIndex].meshIndex].indexOffset;
-
-		glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, (void*)(sizeof(GLint) * baseindex));
+		renderQueue[materialIndex].commands.push_back(cmd);
+		renderQueue[materialIndex].modelMatrices.push_back(nodeMatrix);
 	}
+	
 
 	for (size_t i = 0; i < node->children.size(); i++)
 	{
-		drawTraverse(&node->children[i], modelMatrix);
+		buildRenderQueue(&node->children[i], nodeMatrix);
 	}
 }
 
+/// @brief removes all render commands and model matrices of the render queue
+void Level::resetQueue()
+{
+	for (size_t i = 0; i < renderQueue.size(); i++)
+	{
+		renderQueue[i].commands.clear();
+		renderQueue[i].modelMatrices.clear();
+	}
+}
+
+void Level::DrawAABBs(Hierarchy node)
+{
+	BoundingBox bounds = node.nodeBounds;
+	AABBviewer->setVec3("min", node.nodeBounds.min_);
+	AABBviewer->setVec3("max", node.nodeBounds.max_);
+
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+
+	for (size_t i = 0; i < node.children.size(); i++)
+	{
+		DrawAABBs(node.children[i]);
+	}
+}
+
+/// @brief cleans up all buffers and textures
 void Level::Release()
 {
 	glDeleteVertexArrays(1, &VAO);

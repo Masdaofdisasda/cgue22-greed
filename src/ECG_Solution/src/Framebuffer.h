@@ -1,13 +1,8 @@
 #pragma once
 
-#include <GL\glew.h>
 #include "Texture.h"
-#include <memory>
 
-/* class for a Framebuffer
-* can contain color or depth buffer (or both)
-*/
-
+/// @brief Framebuffer is for offscreen rendering and contains a color or depth buffer
 class Framebuffer
 {
 public:
@@ -30,6 +25,11 @@ private:
 	std::unique_ptr<Texture> texDepth_;
 };
 
+/// @brief generate a new framebuffer and assigns needed textures
+/// @param width of the framebuffer
+/// @param height of the framebuffer
+/// @param formatColor is the color type eg. GL_RGBA16F
+/// @param formatDepth is the depth type eg. GL_DEPTH_COMPONENT24
 Framebuffer::Framebuffer(int width, int height, GLenum formatColor, GLenum formatDepth)
 	: width_(width)
 	, height_(height)
@@ -64,13 +64,18 @@ Framebuffer::~Framebuffer()
 	glDeleteFramebuffers(1, &handle_);
 }
 
+/// @brief binds the framebuffer, subsequent draw calls will be render to this framebuffer
+/// caution: the viewport is automaticly set to the framebuffer size, the viewport state
+/// prior to this call will be lost
 void Framebuffer::bind()
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, handle_);
 	glViewport(0, 0, width_, height_); // sets viewport according to size
 }
 
-void Framebuffer::unbind()	// viewport needs to be set manually after unbinding
+/// @brief unbinds framebuffer, subsequent draw calls can render on screen
+/// caution: the viewport needs to be set manually after unbinding!
+void Framebuffer::unbind()
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }

@@ -8,17 +8,18 @@
 #include "Framebuffer.h"
 #include "Level.h"
 
+#ifndef _RENDERER_
+#define _RENDERER_
 class Renderer
 {
 public:
 	Renderer(GlobalState& state, PerFrameData& pfdata, LightSources& sources);
 	~Renderer();
 
-	//void Draw(std::vector <Mesh*> models);
 	void Draw(Level* level);
 	void swapLuminance();
 
-	GlobalState static loadSettings(GlobalState state);
+	GlobalState static loadSettings();
 private:
 	// Render Settings
 	GlobalState* globalState;
@@ -39,30 +40,31 @@ private:
 	Program BlurX;			// gauss blur in x direction
 	Program BlurY;			// gauss blur in y direction
 	Program CombineHDR;		// combines blur with render fbo, tone mapping
-	Program lightAdapt;		// controls exposure changes
+	Program lightAdapt;		// calculates luminance changes
+	Program lavaFloor;		// renders a giant orange triangle
 
 	// global Textures
 	Cubemap IBL;
 	Cubemap skyTex;
-	Mesh skyBox = skyBox.Skybox();
+	GLuint emptyVAO;		// for skybox drawing
 
 	// Framebuffers for HDR/Bloom
 	GLuint luminance1x1;
 	// Framebuffer size cant be changed after init eg. window reisizing not correctly working
 	Framebuffer framebuffer = Framebuffer(1920, 1080, GL_RGBA16F, GL_DEPTH_COMPONENT24); // main render target for processing
-	Framebuffer luminance = Framebuffer(64, 64, GL_R16F, 0);		
+	Framebuffer luminance = Framebuffer(64, 64, GL_RGBA16F, 0);
 	Framebuffer brightPass = Framebuffer(256, 256, GL_RGBA16F, 0);
 	Framebuffer bloom0 = Framebuffer(256, 256, GL_RGBA16F, 0); 
 	Framebuffer bloom1 = Framebuffer(256, 256, GL_RGBA16F, 0);
 	Texture luminance0 = Texture(GL_TEXTURE_2D, 1, 1, GL_RGBA16F);
 	Texture luminance1 = Texture(GL_TEXTURE_2D, 1, 1, GL_RGBA16F);
 	const Texture* luminances[2] = { &luminance0, &luminance1 };
-	//const glm::vec4 brightPixel = glm::vec4(glm::vec3(50.0f), 1.0f);
 
 	void fillLightsources();
 	void buildShaderPrograms(); 
 	void prepareFramebuffers();
 	void setRenderSettings();
 };
+#endif
 
 

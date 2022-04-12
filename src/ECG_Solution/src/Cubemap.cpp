@@ -3,19 +3,26 @@
 #define STB_IMAGE_IMPLEMENTATION1
 #include <stb/stb_image.h>
 
+/// @brief initalize the handles, caution: using the cubemap without actually
+/// assigned textures breaks the program. this was only done to allow member
+/// cubemaps in Renderer.h
 Cubemap::Cubemap()
 {
-    glGenTextures(1, &hdr_ID);
     glGenTextures(1, &env_ID);
     glGenTextures(1, &irrad_ID);
     glGenTextures(1, &prefilt_ID);
     glGenTextures(1, &brdfLut_ID);
 }
 
-// loads an HDR image and processes it for IBL
 // https://learnopengl.com/PBR/IBL/Diffuse-irradiance
+
+/// @brief loads an hdr panorama image and generates an irradiance map, a filtered map
+/// and look up texture for the BDRF
+/// @param texPath is the location of the hdr image
 void Cubemap::loadHDR(const char* texPath)
 {
+    GLuint hdr_ID = 0;
+    glGenTextures(1, &hdr_ID);
 
     // pbr: setup framebuffer
     // ----------------------
@@ -80,8 +87,8 @@ void Cubemap::loadHDR(const char* texPath)
 
     // pbr: convert HDR equirectangular environment map to cubemap equivalent
     // ----------------------------------------------------------------------
-    Shader rect2cubeVert("assets/shaders/rectangelToCubemap/rectangleToCubemap.vert");
-    Shader rect2cubeFrag("assets/shaders/rectangelToCubemap/rectangleToCubemap.frag");
+    Shader rect2cubeVert("../../assets/shaders/rectangelToCubemap/rectangleToCubemap.vert");
+    Shader rect2cubeFrag("../../assets/shaders/rectangelToCubemap/rectangleToCubemap.frag");
     Program rectangleToCubemap;
     rectangleToCubemap.buildFrom(rect2cubeVert, rect2cubeFrag);
 
@@ -126,8 +133,8 @@ void Cubemap::loadHDR(const char* texPath)
 
     // pbr: solve diffuse integral by convolution to create an irradiance (cube)map.
     // -----------------------------------------------------------------------------
-    Shader irradianceVert("assets/shaders/irradiance/irradiance.vert");
-    Shader irradianceFrag("assets/shaders/irradiance/irradiance.frag");
+    Shader irradianceVert("../../assets/shaders/irradiance/irradiance.vert");
+    Shader irradianceFrag("../../assets/shaders/irradiance/irradiance.frag");
     Program irradiance;
     irradiance.buildFrom(irradianceVert, irradianceFrag);
 
@@ -166,8 +173,8 @@ void Cubemap::loadHDR(const char* texPath)
 
     // pbr: run a quasi monte-carlo simulation on the environment lighting to create a prefilter (cube)map.
     // ----------------------------------------------------------------------------------------------------
-    Shader preFilterVert("assets/shaders/preFilter/preFilter.vert");
-    Shader preFilterFrag("assets/shaders/preFilter/preFilter.frag");
+    Shader preFilterVert("../../assets/shaders/preFilter/preFilter.vert");
+    Shader preFilterFrag("../../assets/shaders/preFilter/preFilter.frag");
     Program preFilter;
     preFilter.buildFrom(preFilterVert, preFilterFrag);
 
@@ -220,8 +227,8 @@ void Cubemap::loadHDR(const char* texPath)
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, brdfLut_ID, 0);
 
-    Shader brdfLutVert("assets/shaders/brdfLut/brdfLut.vert");
-    Shader brdfLutFrag("assets/shaders/brdfLut/brdfLut.frag");
+    Shader brdfLutVert("../../assets/shaders/brdfLut/brdfLut.vert");
+    Shader brdfLutFrag("../../assets/shaders/brdfLut/brdfLut.frag");
     Program brdfLut;
     brdfLut.buildFrom(brdfLutVert, brdfLutFrag);
 
@@ -231,6 +238,8 @@ void Cubemap::loadHDR(const char* texPath)
     renderQuad();
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    glDeleteTextures(1, &hdr_ID);
 }
 
 void Cubemap::renderCube()
@@ -336,6 +345,12 @@ void Cubemap::renderQuad()
     glBindVertexArray(0);
 }
 
+/// @brief an implementation of the glm::lookat() function, because this framework
+/// makes it impossible to use, same code as in the Camera class
+/// @param pos is the position aka eye or view of the camera
+/// @param target to "look at" from the position
+/// @param up is the up vetor of the world
+/// @return a view matrix according to the input vectors
 glm::mat4 Cubemap::glmlookAt2(glm::vec3 pos, glm::vec3 target, glm::vec3 up)
 {
     glm::vec3 zaxis = glm::normalize(pos - target);

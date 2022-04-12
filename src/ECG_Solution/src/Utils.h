@@ -28,8 +28,8 @@ struct GlobalState
 
 	bool bloom_ = true;
 	bool focus_ = true;
-	bool request_focus_ = true;
-	bool request_unfocus_ = false;
+	bool cull_ = true;
+	bool cullDebug_ = false;
 	bool debugDrawPhysics = false;
 	float exposure_ = 0.9f;
 	float maxWhite_ = 1.07f;
@@ -61,7 +61,7 @@ struct PerFrameData
 {
 	glm::vec4 viewPos;
 	glm::mat4 ViewProj;
-	glm::mat4 ViewProjSkybox;
+	glm::mat4 lavaLevel;
 	glm::vec4 bloom;
 	glm::vec4 deltaTime;
 	glm::vec4 normalMap;

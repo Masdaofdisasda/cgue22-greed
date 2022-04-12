@@ -4,13 +4,13 @@
 #include "Texture.h"
 #include <vector>
 
-/* class for materials
-* every material holds a vector of 5 textures and can return handles to them
-*/
+/// @brief Material describes a material with five textures
+/// loads five textures from a path and manages their handles
+/// caution: this class is not RAII comliant, every created texure
+/// needs to be manually deleted by calling clear() 
 class Material
 {
 public:
-	Material(const char* texPath);
 	Material(const char* texPath, const char* name);
 	~Material() { Release(); };
 
@@ -36,7 +36,7 @@ private:
 
 	void Release()
 	{
-		// TODO delete textures
+		// do not delete textures here
 	}
 
 };

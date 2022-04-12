@@ -1,31 +1,43 @@
-#version 460
-
-// VAO Buffer data
-layout (location = 0) in vec3 vPosition; // vertex position
-layout (location = 1) in vec3 vNormal; // vertex normal
-layout (location = 2) in vec2 vUV; // vertex uv coordinate
+#version 460 core
 
 layout(std140, binding = 0) uniform PerFrameData
 {
 	vec4 viewPos;
 	mat4 ViewProj;
-	mat4 ViewProjSkybox;
+	mat4 lavaLevel;
 	vec4 bloom;
+	vec4 deltaTime;
     vec4 normalMap;
 };
 
-uniform mat4 model;
-
 out vec3 fPosition;
+
+const vec3 pos[8] = vec3[8](
+	vec3(-1.0,-1.0, 1.0),
+	vec3( 1.0,-1.0, 1.0),
+	vec3( 1.0, 1.0, 1.0),
+	vec3(-1.0, 1.0, 1.0),
+
+	vec3(-1.0,-1.0,-1.0),
+	vec3( 1.0,-1.0,-1.0),
+	vec3( 1.0, 1.0,-1.0),
+	vec3(-1.0, 1.0,-1.0)
+);
+
+const int indices[36] = int[36](
+	0,2,1,2,0,3,
+	1,6,5,6,1,2,
+	7,5,6,5,7,4,
+	4,3,0,3,4,7,
+	4,1,5,1,4,0,
+	3,6,2,6,3,7
+);
 
 void main()
 {
-	//gl_Position = ViewProjSkybox * model * vec4(vPosition, 1.0);
-	//fPosition = vec3(model * vec4(vPosition, 1.0));
+	int idx = indices[gl_VertexID];
 
-	fPosition = vPosition;
-
-	vec4 clipPos = ViewProjSkybox * vec4(fPosition, 1.0);
-
-	gl_Position = clipPos.xyww;
+	gl_Position = ViewProj * vec4(500.0*pos[idx], 1.0);
+	
+	fPosition = pos[idx].xyz;
 }

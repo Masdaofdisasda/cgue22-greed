@@ -18,7 +18,7 @@ Physics::Physics() {
 PhysicsObject& Physics::createPhysicsObject(Hierarchy* modelGraphics, std::vector<float> colliderVerticePositions, ObjectMode mode) {
 	float mass = getMassFromObjectMode(mode);
 	btCollisionShape* collider = getCollisionShapeFromMesh(colliderVerticePositions);
-	btRigidBody* rigidbody = makeRigidbody(modelGraphics->localTransform, collider, mass);
+	btRigidBody* rigidbody = makeRigidbody(modelGraphics->getNodeMatrix(), collider, mass);
 	if (mode == Physics::ObjectMode::Dynamic_NoRotation)
 		rigidbody->setAngularFactor(0);
 	return addPhysicsObject(rigidbody, modelGraphics);
@@ -60,7 +60,7 @@ void Physics::updateModelTransform(PhysicsObject* physicsObject) {
 	glm::mat4 T = glm::translate(glm::mat4(1), pos);
 	glm::mat4 R = glm::rotate(glm::mat4(1), glm::radians(deg), axis);
 	glm::mat4 S = glm::scale(glm::mat4(1), scale);
-	physicsObject->graphics->localTransform = T * R * S;
+	physicsObject->graphics->setNodeMatrix(T * R * S);
 }
 
 PhysicsObject& Physics::addPhysicsObject(btRigidBody* rigidbody, Hierarchy* modelGraphics) {

@@ -1,5 +1,6 @@
 #pragma once
-#include "Utils.h"
+#include <GL\glew.h>
+#include <glm\glm.hpp>
 #include "LightSource.h"
 #include <vector>
 
@@ -47,5 +48,5 @@ class UBO
 			}
 		}
 		
-		GLuint* getID() {return &ubo_ID;}
+		GLuint getID() const {return ubo_ID;}
 };
