@@ -68,139 +68,7 @@ int main(int argc, char** argv)
 	// setup GLFW window
 	printf("Initializing GLFW...");
 	GLFWApp GLFWapp(globalState);
-
-	// register input callbacks to window
-	glfwSetKeyCallback(GLFWapp.getWindow(),
-		[](GLFWwindow* window,
-			int key, int scancode, int action, int mods)
-		{
-			// Movement
-			const bool press = action != GLFW_RELEASE;
-			if (key == GLFW_KEY_ESCAPE)
-				glfwSetWindowShouldClose(window, GLFW_TRUE);
-			if (key == GLFW_KEY_W)
-				positioner.movement_.forward_ = press;
-			if (key == GLFW_KEY_S)
-				positioner.movement_.backward_ = press;
-			if (key == GLFW_KEY_A)
-				positioner.movement_.left_ = press;
-			if (key == GLFW_KEY_D)
-				positioner.movement_.right_ = press;
-			if (key == GLFW_KEY_1)
-				positioner.movement_.up_ = press;
-			if (key == GLFW_KEY_2)
-				positioner.movement_.down_ = press;
-			if (mods & GLFW_MOD_SHIFT)
-				positioner.movement_.fastSpeed_ = press;
-			if (key == GLFW_KEY_SPACE)
-				positioner.setUpVector(glm::vec3(0.0f, 1.0f, 0.0f));
-
-			// Debug & Effects
-			if (key == GLFW_KEY_F1 && action == GLFW_PRESS)
-			{
-				if (globalState.fullscreen_)
-				{
-					printf("Fullscreen off\n");
-					globalState.fullscreen_ = false;
-				}
-				else {
-					printf("Fullscreen on\n");
-					globalState.fullscreen_ = true;
-				}
-			}
-			if (key == GLFW_KEY_F2 && action == GLFW_PRESS)
-			{
-				if (globalState.cullDebug_)
-				{
-					printf("AABBs invisible\n");
-					globalState.cullDebug_ = false;
-				}
-				else
-				{
-					printf("AABBs visible\n");
-					globalState.cullDebug_ = true;
-				}
-			}
-			if (key == GLFW_KEY_F3 && action == GLFW_PRESS)
-			{
-				if (globalState.bloom_)
-				{
-					printf("Bloom off\n");
-					globalState.bloom_ = false;
-				}
-				else {
-					printf("Bloom on\n");
-					globalState.bloom_ = true;
-				}
-			}
-			if (key == GLFW_KEY_F4 && action == GLFW_PRESS)
-			{
-				if (globalState.debugDrawPhysics)
-				{
-					printf("Physics debugging off\n");
-					globalState.debugDrawPhysics = false;
-				}
-				else {
-					printf("Physics debugging on\n");
-					globalState.debugDrawPhysics = true;
-				}
-			}
-			if (key == GLFW_KEY_F5 && action == GLFW_PRESS)
-			{
-				if (perframeData.normalMap.x > 0.0f)
-				{
-					printf("normal mapping off\n");
-					perframeData.normalMap.x *= -1.0f;
-				}
-				else {
-					printf("normal mapping on\n");
-					perframeData.normalMap.x *= -1.0f;
-				}
-			}
-			if (key == GLFW_KEY_F6 && action == GLFW_PRESS)
-			{
-				if (globalState.freezeCull_)
-				{
-					printf("resume frustum culling\n");
-					globalState.freezeCull_ = false;
-				}
-				else {
-					printf("freeze frustum culling\n");
-					globalState.freezeCull_ = true;
-				}
-			}
-			if (key == GLFW_KEY_F8 && action == GLFW_PRESS)
-			{
-				if (globalState.cull_)
-				{
-					printf("frustum culling off\n");
-					globalState.cull_ = false;
-				}
-				else {
-					printf("frustum culling on\n");
-					globalState.cull_ = true;
-				}
-			}
-		});
-	glfwSetMouseButtonCallback(GLFWapp.getWindow(),
-		[](auto* window, int button, int action, int mods)
-		{
-			if (button == GLFW_MOUSE_BUTTON_LEFT)
-				mouseState.pressedLeft = action == GLFW_PRESS;
-
-			if (button == GLFW_MOUSE_BUTTON_RIGHT)
-				mouseState.pressedRight = action == GLFW_PRESS;
-
-		});
-	glfwSetCursorPosCallback(
-		GLFWapp.getWindow(), [](auto* window, double x, double y) {
-			int w, h;
-			glfwGetFramebufferSize(window, &w, &h);
-			mouseState.pos.x = static_cast<float>(x / w);
-			mouseState.pos.y = static_cast<float>(y / h);
-			//glfwSetCursorPos(window, 0, 0); // cursor disabled kind of fix
-		}
-	);
+	registerInputCallbacks(GLFWapp);
 
 	// load all OpenGL function pointers with GLEW
 	printf("Initializing GLEW...\n");
@@ -427,6 +295,30 @@ void registerInputCallbacks(GLFWApp& app) {
 					globalState.debugDrawPhysics = true;
 				}
 				camera.setPositioner(cameraPositioner);
+			}
+			if (key == GLFW_KEY_F7 && action == GLFW_PRESS)
+			{
+				if (globalState.freezeCull_)
+				{
+					printf("resume frustum culling\n");
+					globalState.freezeCull_ = false;
+				}
+				else {
+					printf("freeze frustum culling\n");
+					globalState.freezeCull_ = true;
+				}
+			}
+			if (key == GLFW_KEY_F8 && action == GLFW_PRESS)
+			{
+				if (globalState.cull_)
+				{
+					printf("frustum culling off\n");
+					globalState.cull_ = false;
+				}
+				else {
+					printf("frustum culling on\n");
+					globalState.cull_ = true;
+				}
 			}
 		});
 	glfwSetMouseButtonCallback(app.getWindow(),
