@@ -52,8 +52,8 @@ struct Hierarchy
 	glm::quat localRotation;
 	glm::vec3 localScale;
 
-	BoundingBox nodeBounds;					// bounds of the nodes underlying children
-	std::vector<BoundingBox> modelBounds;	// bounds of the models;
+	BoundingBox nodeBounds;					// pretransformed bounds
+	BoundingBox modelBounds;				// bounds in model space
 
 	/// return TRS "model matrix" of the node
 	glm::mat4 getNodeMatrix() const { return glm::translate(localTranslate) * glm::toMat4(localRotation) * glm::scale(localScale); }

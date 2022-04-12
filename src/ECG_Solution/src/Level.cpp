@@ -70,7 +70,6 @@ Level::Level(const char* scenePath, GlobalState& state, PerFrameData& pfdata) {
 			dynamic = &sceneGraph.children[i];
 		}
 	}
-	sceneGraph.nodeBounds = computeBoundsOfNode(sceneGraph.children, sceneGraph.modelBounds);
 	transformBoundingBoxes(&sceneGraph, glm::mat4(1));
 
 	// 6. setup buffers for vertex and indices data
@@ -171,43 +170,45 @@ BoundingBox Level::computeBoundsOfMesh(subMesh mesh) {
 	return BoundingBox(vmin, vmax);
 }
 
-BoundingBox Level::computeBoundsOfNode(std::vector<Hierarchy> children, std::vector<BoundingBox> modelBounds)
-{
-	glm::vec3 vmin(std::numeric_limits<float>::max());
-	glm::vec3 vmax(std::numeric_limits<float>::lowest());
-
-	for (size_t i = 0; i < children.size(); i++)
-	{
-		glm::vec3 cmin = children[i].nodeBounds.min_;
-		glm::vec3 cmax = children[i].nodeBounds.max_;
-
-		vmin = glm::min(vmin, cmin);
-		vmax = glm::max(vmax, cmax);
-	}
-
-	for (size_t i = 0; i < modelBounds.size(); i++)
-	{
-		glm::vec3 cmin = modelBounds[i].min_;
-		glm::vec3 cmax = modelBounds[i].max_;
-
-		vmin = glm::min(vmin, cmin);
-		vmax = glm::max(vmax, cmax);
-	}
-
-	return BoundingBox(vmin, vmax);
-}
-
 void Level::transformBoundingBoxes(Hierarchy* node, glm::mat4 globalTransform)
 {
-	BoundingBox bounds = node->nodeBounds;
+	boolean isLeaf = node->modelIndices.size() > 0;
 	glm::mat4 M = globalTransform * node->getNodeMatrix();
-	bounds.min_ = M * glm::vec4(bounds.min_, 1.0f);
-	bounds.max_ = M * glm::vec4(bounds.max_, 1.0f);
-	node->nodeBounds = BoundingBox(bounds.min_, bounds.max_);
 
+	if (isLeaf) // transform model bounds to world coordinates
+	{
+		BoundingBox bounds = node->modelBounds;
+		glm::mat4 M = globalTransform * node->getNodeMatrix();
+		bounds.min_ = M * glm::vec4(bounds.min_, 1.0f);
+		bounds.max_ = M * glm::vec4(bounds.max_, 1.0f);
+		node->nodeBounds = BoundingBox(bounds.min_, bounds.max_);
+	}
+
+	// tranform all child nodes bounds
 	for (size_t i = 0; i < node->children.size(); i++)
 	{
 		transformBoundingBoxes(&node->children[i], M);
+	}
+	
+	if (!isLeaf) // calculate the node bound from childrens bounds
+	{
+		glm::vec3 vmin(std::numeric_limits<float>::max());
+		glm::vec3 vmax(std::numeric_limits<float>::lowest());
+
+		for (size_t i = 0; i < node->children.size(); i++)
+		{
+			glm::vec3 cmin = node->children[i].nodeBounds.min_;
+			glm::vec3 cmax = node->children[i].nodeBounds.max_;
+
+			vmin = glm::min(vmin, cmin);
+			vmax = glm::max(vmax, cmax);
+		}
+
+		BoundingBox bounds = BoundingBox(vmin, vmax);
+		glm::mat4 M = globalTransform * node->getNodeMatrix();
+		bounds.min_ = M * glm::vec4(bounds.min_, 1.0f);
+		bounds.max_ = M * glm::vec4(bounds.max_, 1.0f);
+		node->nodeBounds = BoundingBox(bounds.min_, bounds.max_);
 	}
 }
 
@@ -235,31 +236,32 @@ Material Level::loadMaterials(const aiMaterial* M)
 /// @param node is the current node from the view of the parent node
 void Level::traverseTree(aiNode* n, Hierarchy* parent, Hierarchy* node)
 {
+	// set trivial node variables
 	const glm::mat4 M = toGlmMat4(n->mTransformation);
 	node->name = n->mName.C_Str();
-
 	node->parent = parent;
 
+	// add a all mesh indices to this node (assumes only 1 mesh per node) and calulate bounds in model space
 	for (unsigned int i = 0; i < n->mNumMeshes; i++)
 	{
 		node->modelIndices.push_back(n->mMeshes[i]);
-		node->modelBounds.push_back(computeBoundsOfMesh(meshes[n->mMeshes[i]]));
+		node->modelBounds = computeBoundsOfMesh(meshes[n->mMeshes[i]]);
 	}
 
+	// set translation, rotation and scale of this node
 	glm::decompose(M, node->localScale, node->localRotation, node->localTranslate, glm::vec3(), glm::vec4());
 	node->localRotation = glm::normalize(glm::conjugate(node->localRotation));
 
+	// travers child nodes
 	for (size_t i = 0; i < n->mNumChildren; i++)
 	{
-		if (strcmp(n->mChildren[i]->mName.C_Str(),"Lights") != 0)
+		if (strcmp(n->mChildren[i]->mName.C_Str(),"Lights") != 0) // exclude lights
 		{
 		Hierarchy child;
 		traverseTree(n->mChildren[i], node, &child);
 		node->children.push_back(child);
 		}
 	}
-
-	node->nodeBounds = computeBoundsOfNode(node->children, node->modelBounds);
 }
 
 
@@ -398,16 +400,16 @@ void Level::DrawGraph() {
 		// todo: glMultiDrawElementsIndirect
 	}
 
-	if (globalState->cullDebug_) // bounding box debug view
+	if (globalState->cullDebug_) // bounding box & frustum culling debug view
 	{
 		glDisable(GL_CULL_FACE);
-		//glDisable(GL_DEPTH_TEST);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		glEnable(GL_BLEND);
 		AABBviewer->Use();
-		AABBviewer->setVec4("lineColor", glm::vec4(0.0f,1.0f,0.0f, .05f));
+		AABBviewer->setVec4("lineColor", glm::vec4(0.0f,1.0f,0.0f, .1f));
 			DrawAABBs(sceneGraph); // draw AABBs
 		Frustumviewer->Use();
-		Frustumviewer->setVec4("lineColor", glm::vec4(1.0f, 1.0f, 0.0f, .05f));
+		Frustumviewer->setVec4("lineColor", glm::vec4(1.0f, 1.0f, 0.0f, .1f));
 		Frustumviewer->setVec3("corner0", frustumCorners[0]);
 		Frustumviewer->setVec3("corner1", frustumCorners[1]);
 		Frustumviewer->setVec3("corner2", frustumCorners[2]);
@@ -418,21 +420,23 @@ void Level::DrawGraph() {
 		Frustumviewer->setVec3("corner7", frustumCorners[7]);
 			glDrawArrays(GL_TRIANGLES, 0, 36); // draw frustum
 		glDisable(GL_BLEND);
-		//glEnable(GL_DEPTH_TEST);
 		glEnable(GL_CULL_FACE);
-	}
-
-	// output frustum culling information for debugging every 2 seconds
-	if (globalState->cull_)
-	{
-		secondsSinceFlush += perframeData->deltaTime.x;
-		if (secondsSinceFlush >= 2)
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		
+		// output frustum culling information for debugging every 2 seconds
+		if (globalState->cull_)
 		{
-			std::cout << "Models Loaded: " << ModelsLoaded << ", Models rendered: " << ModelsVisible
-				<< ", Models culled: " << ModelsLoaded - ModelsVisible << "\n";
-			secondsSinceFlush = 0;
+			secondsSinceFlush += perframeData->deltaTime.x;
+			if (secondsSinceFlush >= 2)
+			{
+				std::cout << "Models Loaded: " << ModelsLoaded << ", Models rendered: " << ModelsVisible
+					<< ", Models culled: " << ModelsLoaded - ModelsVisible << "\n";
+				secondsSinceFlush = 0;
+			}
 		}
 	}
+
+	
 
 	resetQueue();
 }

@@ -267,6 +267,7 @@ int main(int argc, char** argv)
 	glViewport(0, 0, globalState.width, globalState.height);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glLineWidth(2.0f);
 	glEnable(GL_CULL_FACE);
 
 	engine->stopAllSounds();

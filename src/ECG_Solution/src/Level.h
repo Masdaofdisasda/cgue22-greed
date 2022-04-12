@@ -58,7 +58,6 @@ private:
 
 	subMesh extractMesh(const aiMesh* mesh);
 	BoundingBox computeBoundsOfMesh(subMesh mesh);
-	BoundingBox computeBoundsOfNode(std::vector <Hierarchy> children, std::vector<BoundingBox> modelBounds);
 	Material Level::loadMaterials(const aiMaterial* M);
 	void traverseTree(aiNode* n, Hierarchy* parent, Hierarchy* child);
 	void setupVertexBuffers();
