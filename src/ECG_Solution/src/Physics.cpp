@@ -15,17 +15,21 @@ Physics::Physics() {
 	dynamics_world->setDebugDrawer(bulletDebugDrawer);
 }
 
-void Physics::createPhysicsObject(Hierarchy* modelGraphics, std::vector<float> colliderVerticePositions, ObjectMode mode) {
+PhysicsObject& Physics::createPhysicsObject(Hierarchy* modelGraphics, std::vector<float> colliderVerticePositions, ObjectMode mode) {
+	float mass = getMassFromObjectMode(mode);
 	btCollisionShape* collider = getCollisionShapeFromMesh(colliderVerticePositions);
-	float mass = mode;
 	btRigidBody* rigidbody = makeRigidbody(modelGraphics->getNodeMatrix(), collider, mass);
-	addPhysicsObject(rigidbody, modelGraphics);
+	if (mode == Physics::ObjectMode::Dynamic_NoRotation)
+		rigidbody->setAngularFactor(0);
+	return addPhysicsObject(rigidbody, modelGraphics);
 }
 
-void Physics::createPhysicsObject(btVector3 pos, btCollisionShape* col, btQuaternion rot, ObjectMode mode) {
-	float mass = mode;
+PhysicsObject& Physics::createPhysicsObject(btVector3 pos, btCollisionShape* col, btQuaternion rot, ObjectMode mode) {
+	float mass = getMassFromObjectMode(mode);
 	btRigidBody* rigidbody = makeRigidbody(pos, col, rot, mass);
-	addPhysicsObject(rigidbody, nullptr);
+	if (mode == Physics::ObjectMode::Dynamic_NoRotation)
+		rigidbody->setAngularFactor(0);
+	return addPhysicsObject(rigidbody, nullptr);
 }
 
 void Physics::simulateOneStep(float secondsBetweenFrames) {
@@ -59,7 +63,7 @@ void Physics::updateModelTransform(PhysicsObject* physicsObject) {
 	physicsObject->graphics->setNodeMatrix(T * R * S);
 }
 
-void Physics::addPhysicsObject(btRigidBody* rigidbody, Hierarchy* modelGraphics) {
+PhysicsObject& Physics::addPhysicsObject(btRigidBody* rigidbody, Hierarchy* modelGraphics) {
 	// add it to physics world
 	dynamics_world->addRigidBody(rigidbody);
 
@@ -68,6 +72,18 @@ void Physics::addPhysicsObject(btRigidBody* rigidbody, Hierarchy* modelGraphics)
 	physicsObject.graphics = modelGraphics;
 	physicsObject.rigidbody = rigidbody;
 	physicsObjects.push_back(physicsObject);
+
+	return physicsObjects.back();
+}
+
+glm::vec3 Physics::getObjectPosition(PhysicsObject* object) {
+	return btToGlm(object->rigidbody->getCenterOfMassTransform().getOrigin());
+}
+
+float Physics::getMassFromObjectMode(Physics::ObjectMode mode) {
+	if (mode == Physics::ObjectMode::Static)
+		return 0;
+	return 1;
 }
 
 /* --------------------------------------------- */
@@ -104,6 +120,10 @@ btRigidBody* Physics::makeRigidbody(glm::mat4 transform, btCollisionShape* col, 
 	btVector3 inertia;
 	col->calculateLocalInertia(mass, inertia);
 	return new btRigidBody(mass, motionSate, col, inertia);
+}
+
+btQuaternion* Physics::emptyQuaternion() {
+	return new btQuaternion(btVector3(0, 1, 0), btScalar(0));
 }
 
 /* --------------------------------------------- */

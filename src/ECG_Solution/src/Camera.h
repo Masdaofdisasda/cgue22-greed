@@ -13,6 +13,8 @@ public:
 	virtual ~CameraPositionerInterface() = default;
 	virtual glm::mat4 getViewMatrix() const = 0;
 	virtual glm::vec3 getPosition() const = 0;
+	virtual glm::quat getOrientation() const = 0;
+	virtual void update(double deltaSeconds, const glm::vec2& mousePos, bool mousePressed) = 0;
 };
 
 class Camera final
@@ -27,9 +29,14 @@ public:
 
 	glm::mat4 getViewMatrix() const { return positioner_->getViewMatrix(); }
 	glm::vec3 getPosition() const { return positioner_->getPosition(); }
+	glm::quat getOrientation() const { return positioner_->getOrientation(); }
+	void setPositioner(CameraPositionerInterface* newPositioner) {
+		positioner_ = newPositioner;
+	}
+
 
 private:
-	const CameraPositionerInterface* positioner_;
+	CameraPositionerInterface* positioner_;
 };
 
 /* Camera with first person view
@@ -66,7 +73,8 @@ class CameraPositioner_FirstPerson final : public CameraPositionerInterface
 			, cameraOrientation_(glmlookAt2(pos, target, up))
 			, up_(up)
 		{}
-		void update(double deltaSeconds, const glm::vec2& mousePos, bool mousePressed);
+		void setMovementState(KeyboardInputState input);
+		void update(double deltaSeconds, const glm::vec2& mousePos, bool mousePressed) override;
 		virtual glm::mat4 getViewMatrix() const override
 		{
 			const glm::mat4 t = glm::translate(glm::mat4(1.0f), -cameraPosition_);
@@ -81,6 +89,9 @@ class CameraPositioner_FirstPerson final : public CameraPositionerInterface
 		void resetMousePosition(const glm::vec2& p) { mousePos_ = p; };
 		void setUpVector(const glm::vec3& up);
 		inline void flookAt(const glm::vec3& pos, const glm::vec3& target, const glm::vec3& up);
+		glm::quat getOrientation() const override {
+			return cameraOrientation_;
+		}
 
 	private:
 		glm::vec2 mousePos_ = glm::vec2(0);
@@ -89,4 +100,31 @@ class CameraPositioner_FirstPerson final : public CameraPositionerInterface
 		glm::vec3 moveSpeed_ = glm::vec3(0.0f);
 		glm::vec3 up_ = glm::vec3(0.0f, 0.0f, 1.0f);
 
+};
+
+class CameraPositioner_Player final : public CameraPositionerInterface {
+public:
+	virtual glm::mat4 getViewMatrix() const override
+	{
+		const glm::mat4 t = glm::translate(glm::mat4(1.0f), -cameraPosition);
+		const glm::mat4 r = glm::mat4_cast(cameraOrientation);
+		return r * t;
+	};
+	virtual glm::vec3 getPosition() const override
+	{
+		return cameraPosition;
+	};
+	void setPosition(glm::vec3 pos);
+	void update(double deltaSeconds, const glm::vec2& mousePos, bool mousePressed) override;
+	glm::mat4 lookAt(glm::vec3 pos, glm::vec3 target, glm::vec3 up);
+	glm::quat getOrientation() const override {
+		return cameraOrientation;
+	}
+private:
+	glm::vec3 cameraPosition = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::quat cameraOrientation = glm::quat(glm::vec3(0));
+	glm::vec2 lastMousePos = glm::vec2(0);
+	float mouseSpeed = 4.0f;
+
+	glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 };

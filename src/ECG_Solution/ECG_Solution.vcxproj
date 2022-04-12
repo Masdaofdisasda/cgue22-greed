@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <ClCompile Include="src\PlayerController.cpp" />
     <ClCompile Include="src\BulletDebugDrawer.cpp" />
     <ClCompile Include="src\Debugger.cpp" />
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\Cubemap.cpp" />
     <ClCompile Include="src\Level.cpp" />
     <ClCompile Include="src\Material.cpp" />
+    <ClCompile Include="src\PlayerCamera.cpp" />
     <ClCompile Include="src\Physics.cpp" />
     <ClCompile Include="src\Program.cpp" />
     <ClCompile Include="src\Renderer.cpp" />
@@ -15,6 +17,7 @@
     <ClCompile Include="src\Shader.cpp" />
     <ClCompile Include="src\UBO.cpp" />
     <ClCompile Include="src\VBO.cpp" />
+    <ClInclude Include="src\PlayerController.h" />
     <ClInclude Include="src\BulletDebugDrawer.h" />
     <ClInclude Include="src\Debugger.h" />
     <ClInclude Include="src\Camera.h" />

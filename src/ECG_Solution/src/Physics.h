@@ -18,13 +18,14 @@ class Physics
 {
 public:
 	static const double PI;
+	static btQuaternion* emptyQuaternion();
 
 	/// <summary>
 	/// Static = never moves, not influenced by gravity,
 	/// dynamic objects collide with it, does not collide with other static objects
 	/// Dynamic = moves, is influenced by gravity, collides with everything
 	/// </summary>
-	enum ObjectMode { Static = 0, Dynamic = 1};
+	enum ObjectMode { Static, Dynamic, Dynamic_NoRotation};
 
 	Physics();
 
@@ -38,14 +39,22 @@ public:
 	/// The collision shape will be generated from the collider vertice positions
 	/// The object mode determines if the object will move at all
 	/// </summary>
-	void createPhysicsObject(Hierarchy* modelGraphics, std::vector<float> colliderVerticePositions, ObjectMode mode);
-	void createPhysicsObject(btVector3 pos, btCollisionShape* col, btQuaternion rot, ObjectMode mode);
+	PhysicsObject& createPhysicsObject(Hierarchy* modelGraphics, std::vector<float> colliderVerticePositions, ObjectMode mode);
+	PhysicsObject& createPhysicsObject(btVector3 pos, btCollisionShape* col, btQuaternion rot, ObjectMode mode);
 
 	/// <summary>
 	/// Simulates one timestep in the physics engine and updates the transformation of all physics objects.
 	/// </summary>
 	void simulateOneStep(float secondsBetweenFrames);
 
+	/// <summary>
+	/// Returns the current translation of the rigidbody in the object
+	/// </summary>
+	glm::vec3 getObjectPosition(PhysicsObject* object);
+
+	glm::vec3 btToGlm(btVector3 input);
+	btVector3 glmToBt(glm::vec3 input);
+	btQuaternion glmToBt(glm::quat input);
 private:
 	btDiscreteDynamicsWorld* dynamics_world;
 	BulletDebugDrawer* bulletDebugDrawer;
@@ -64,19 +73,17 @@ private:
 
 	btScalar* verticePosArrayToScalarArray(std::vector<float> verticePositionArray);
 
+	float Physics::getMassFromObjectMode(Physics::ObjectMode mode);
+
 	/// <summary>
 	/// Adds a rigidbody (created from the input parameters) to the physics world.
 	/// Also adds the rigidbody and the modelGraphics to a list to keep track of them.
 	/// </summary>
-	void addPhysicsObject(btRigidBody* rigidbody, Hierarchy* modelGraphics);
+	PhysicsObject& addPhysicsObject(btRigidBody* rigidbody, Hierarchy* modelGraphics);
 
 	/// <summary>
 	/// Sets the transformation matrix of the visual representation
 	/// to the current matrix of the physics representation
 	/// </summary>
 	void updateModelTransform(PhysicsObject* model);
-
-	glm::vec3 btToGlm(btVector3 input);
-	btVector3 glmToBt(glm::vec3 input);
-	btQuaternion glmToBt(glm::quat input);
 };

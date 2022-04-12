@@ -31,11 +31,31 @@ struct GlobalState
 	bool cull_ = true;
 	bool freezeCull_ = false;
 	bool cullDebug_ = false;
-	bool debugDrawPhysics = true;
+	bool debugDrawPhysics = false;
 	float exposure_ = 0.9f;
 	float maxWhite_ = 1.07f;
 	float bloomStrength_ = 0.2f;
 	float adaptationSpeed_ = 0.1f;
+};
+
+struct KeyboardInputState {
+	bool pressingW = false;
+	bool pressingS = false;
+	bool pressingA = false;
+	bool pressingD = false;
+	bool pressing1 = false;
+	bool pressing2 = false;
+	bool pressingShift = false;
+	bool pressingSpace = false;
+	bool pressingE = false;
+	bool pressingQ = false;
+};
+
+struct MouseState
+{
+	glm::vec2 pos = glm::vec2(0.0f);
+	bool pressedLeft = false;
+	bool pressedRight = false;
 };
 
 struct PerFrameData
