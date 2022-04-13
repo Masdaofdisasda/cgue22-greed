@@ -186,7 +186,7 @@ void Renderer::Draw(Level* level)
 	glTextureParameteri(framebuffer1.getTextureColor().getHandle(), GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
 	glDisable(GL_DEPTH_TEST);
-
+	
 	if (globalState->ssao_)
 	{
 		// SSAO

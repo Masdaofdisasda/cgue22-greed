@@ -21,55 +21,20 @@ Level::Level(const char* scenePath, GlobalState& state, PerFrameData& pfdata) {
 		aiProcess_ValidateDataStructure
 	);
 
-	if (!scene)
-	{
+	if (!&scene){
 		std::cerr << "ERROR: Couldn't load scene" << std::endl;
-		exit(EXIT_FAILURE);
-	}
-
-	globalVertexOffset = 0;
-	globalIndexOffset = 0;
-
-	meshes.reserve(scene->mNumMeshes);
-	boxes.reserve(scene->mNumMeshes);
+		exit(EXIT_FAILURE);}
 
 	// 2. iterate through the scene and create a mesh object for every aimesh in the scene
-	std::cout << "loading meshes..." << std::endl;
-	for (size_t i = 0; i < scene->mNumMeshes; i++)
-	{
-		const aiMesh* mesh = scene->mMeshes[i];
-		meshes.push_back(extractMesh(mesh));
-	}
-	ModelsLoaded = meshes.size();
-
+	loadMeshes(scene);
+	
 	// 3. load materials
 	std::cout << "loading materials..." << std::endl;
-	for (size_t m = 0; m < scene->mNumMaterials; m++)
-	{
-		aiMaterial* mm = scene->mMaterials[m];
-
-		printf("Material [%s] %u\n", mm->GetName().C_Str(), m+1);
-
-		Material mat = loadMaterials(mm);
-		materials.push_back(mat);
-		RenderItem item;
-		item.material = mm->GetName().C_Str();
-		renderQueue.push_back(item);
-	}
+	loadMaterials(scene);
 
 	// 5. build scene graph and calculate AABBs
 	std::cout << "build scene hierarchy..." << std::endl;
-	aiNode* n = scene->mRootNode;
-	traverseTree(n, nullptr, &sceneGraph); 
-	for (size_t i = 0; i < sceneGraph.children.size(); i++)
-	{
-		if (sceneGraph.children[i].name.compare("Rigid") == 0) {
-			rigid = &sceneGraph.children[i];
-		}
-		if (sceneGraph.children[i].name.compare("Dynamic") == 0) {
-			dynamic = &sceneGraph.children[i];
-		}
-	}
+	traverseTree(scene->mRootNode, nullptr, &sceneGraph);
 	transformBoundingBoxes(&sceneGraph, glm::mat4(1));
 
 	// 6. setup buffers for vertex and indices data
@@ -84,19 +49,28 @@ Level::Level(const char* scenePath, GlobalState& state, PerFrameData& pfdata) {
 	loadLights(scene); //TODO
 
 	// 9 finalize
+	loadShaders();
 	globalState = &state;
 	perframeData = &pfdata;
 
-	AABBviewer = std::unique_ptr<Program>(new Program);
-	Shader boundsVert("../../assets/shaders/AABBviewer/AABBviewer.vert");
-	Shader boundsFrag("../../assets/shaders/AABBviewer/AABBviewer.frag");
-	AABBviewer->buildFrom(boundsVert, boundsFrag);
-
-	Frustumviewer = std::unique_ptr<Program>(new Program);
-	Shader FrustumVert("../../assets/shaders/AABBviewer/Frustumviewer.vert");
-	Frustumviewer->buildFrom(FrustumVert, boundsFrag);
-
 	std::cout << std::endl;
+}
+
+void Level::loadMeshes(const aiScene* scene)
+{
+	globalVertexOffset = 0;
+	globalIndexOffset = 0;
+
+	meshes.reserve(scene->mNumMeshes);
+	boxes.reserve(scene->mNumMeshes);
+
+	std::cout << "loading meshes..." << std::endl;
+	for (size_t i = 0; i < scene->mNumMeshes; i++)
+	{
+		const aiMesh* mesh = scene->mMeshes[i];
+		meshes.push_back(extractMesh(mesh));
+	}
+	ModelsLoaded = meshes.size();
 }
 
 /// @brief extracts position, normal and uvs with the correlating indices from an assimp mesh
@@ -215,19 +189,29 @@ void Level::transformBoundingBoxes(Hierarchy* node, glm::mat4 globalTransform)
 /// @brief loads all materials (textures) from the material assimp provides
 /// @param M is a single material and should contain 5 aiTextureTypes, only one of them is needed for loading the textures
 /// @return a material object containing opengl handles to the fives loaded textures
-Material Level::loadMaterials(const aiMaterial* M)
+void Level::loadMaterials(const aiScene* scene)
 {
-
-	aiString Path;
-
-	if (aiGetMaterialTexture(M, aiTextureType_BASE_COLOR, 0, &Path) == AI_SUCCESS)
+	for (size_t m = 0; m < scene->mNumMaterials; m++)
 	{
-		const std::string albedoMap = std::string(Path.C_Str());
+		aiMaterial* mm = scene->mMaterials[m];
+
+		printf("Material [%s] %u\n", mm->GetName().C_Str(), m + 1);
+
+		aiString Path;
+
+		if (aiGetMaterialTexture(mm, aiTextureType_BASE_COLOR, 0, &Path) == AI_SUCCESS)
+		{
+			const std::string albedoMap = std::string(Path.C_Str());
+		}
+
+		//	all other materials can be found with: aiTextureType_NORMAL_CAMERA/_METALNESS/_DIFFUSE_ROUGHNESS/_AMBIENT_OCCLUSION
+
+		Material mat = Material(Path.C_Str(), mm->GetName().C_Str());
+		materials.push_back(mat);
+		RenderItem item;
+		item.material = mm->GetName().C_Str();
+		renderQueue.push_back(item);
 	}
-
-	//	all other materials can be found with: aiTextureType_NORMAL_CAMERA/_METALNESS/_DIFFUSE_ROUGHNESS/_AMBIENT_OCCLUSION
-
-	return Material(Path.C_Str(), M->GetName().C_Str());
 }
 
 /// @brief recursive function that builds a scenegraph with hierarchical transformation, similiar to assimps scene
@@ -370,6 +354,102 @@ void Level::loadLights(const aiScene* scene) {
 
 }
 
+void Level::loadShaders()
+{
+	AABBviewer = std::unique_ptr<Program>(new Program);
+	Shader boundsVert("../../assets/shaders/AABBviewer/AABBviewer.vert");
+	Shader boundsFrag("../../assets/shaders/AABBviewer/AABBviewer.frag");
+	AABBviewer->buildFrom(boundsVert, boundsFrag);
+
+	Frustumviewer = std::unique_ptr<Program>(new Program);
+	Shader FrustumVert("../../assets/shaders/AABBviewer/Frustumviewer.vert");
+	Frustumviewer->buildFrom(FrustumVert, boundsFrag);
+}
+
+std::vector<PhysicsMesh> Level::getRigid()
+{
+	Hierarchy* rigidNode = nullptr;
+	for (size_t i = 0; i < sceneGraph.children.size(); i++)
+	{
+		if (sceneGraph.children[i].name.compare("Rigid") == 0) {
+			rigidNode = &sceneGraph.children[i];
+		}
+	}
+	collectRigidPhysicMeshes(rigidNode, glm::mat4(1));
+	return rigid;
+}
+
+std::vector<PhysicsMesh> Level::getDynamic()
+{
+	Hierarchy* dynamicNode = nullptr;
+	for (size_t i = 0; i < sceneGraph.children.size(); i++)
+	{
+		if (sceneGraph.children[i].name.compare("Dynamic") == 0) {
+			dynamicNode = &sceneGraph.children[i];
+		}
+	}
+	collectDynamicPhysicMeshes(dynamicNode, glm::mat4(1));
+	return dynamic;
+}
+
+void Level::collectRigidPhysicMeshes(Hierarchy* node, glm::mat4 globalTransform)
+{
+	glm::mat4 nodeMatrix = globalTransform * node->getNodeMatrix();
+
+	for (uint32_t i = 0; i < node->modelIndices.size(); i++)
+	{
+		uint32_t modelindex = node->modelIndices[i];
+		uint32_t vtxOffset = meshes[modelindex].vertexOffset;
+		uint32_t vtxCount = meshes[modelindex].vertexCount;
+		PhysicsMesh phyMesh;
+		for (uint32_t i = 0; i < vtxCount; i++)
+		{
+			glm::vec3 position = glm::vec3(
+				vertices[vtxOffset + i * 8 + 0],
+				vertices[vtxOffset + i * 8 + 1],
+				vertices[vtxOffset + i * 8 + 2]);
+			phyMesh.vtxPositions.push_back(position);
+		}
+		phyMesh.modelMatrix = nodeMatrix;
+		phyMesh.node = nullptr;
+		rigid.push_back(phyMesh);
+	}
+
+	for (size_t i = 0; i < node->children.size(); i++)
+	{
+		collectRigidPhysicMeshes(&node->children[i], nodeMatrix);
+	}
+}
+
+void Level::collectDynamicPhysicMeshes(Hierarchy* node, glm::mat4 globalTransform)
+{
+	glm::mat4 nodeMatrix = globalTransform * node->getNodeMatrix();
+
+	for (uint32_t i = 0; i < node->modelIndices.size(); i++)
+	{
+		uint32_t modelindex = node->modelIndices[i];
+		uint32_t vtxOffset = meshes[modelindex].vertexOffset;
+		uint32_t vtxCount = meshes[modelindex].vertexCount;
+		PhysicsMesh phyMesh;
+		for (uint32_t i = 0; i < vtxCount; i++)
+		{
+			glm::vec3 position = glm::vec3(
+				vertices[vtxOffset + i * 8 + 0],
+				vertices[vtxOffset + i * 8 + 1],
+				vertices[vtxOffset + i * 8 + 2]);
+			phyMesh.vtxPositions.push_back(position);
+		}
+		phyMesh.modelMatrix = nodeMatrix;
+		phyMesh.node = std::make_shared<Hierarchy>(*node);
+		dynamic.push_back(phyMesh);
+	}
+
+	for (size_t i = 0; i < node->children.size(); i++)
+	{
+		collectDynamicPhysicMeshes(&node->children[i], nodeMatrix);
+	}
+}
+
 /// @brief sets up indirect render calls, binds the data and calls the actual draw routine
 void Level::DrawGraph() {
 
@@ -435,8 +515,6 @@ void Level::DrawGraph() {
 			}
 		}
 	}
-
-	
 
 	resetQueue();
 }

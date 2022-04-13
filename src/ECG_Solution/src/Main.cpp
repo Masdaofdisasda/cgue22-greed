@@ -122,6 +122,9 @@ int main(int argc, char** argv)
 		btQuaternion(btVector3(0, 1, 0), btScalar(0)),
 		Physics::ObjectMode::Static
 	);
+	// access to level meshes:
+	//level.getRigid();
+	//level.getDynamic();
 	//---------------------------------- /testing ----------------------------------//
 	// Setup camera
 	cameraPositioner = &playerCameraPositioner;
