@@ -148,7 +148,7 @@ int main(int argc, char** argv)
 	float deltaSeconds = 0.0f;
 	FPSCounter fpsCounter = FPSCounter();
 
-	glfwSetInputMode(GLFWapp.getWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+	glfwSetInputMode(GLFWapp.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	//---------------------------------- RENDER LOOP ----------------------------------//
 
@@ -286,11 +286,13 @@ void registerInputCallbacks(GLFWApp& app) {
 					printf("Switch camera to player");
 					cameraPositioner = &playerCameraPositioner;
 					globalState.debugDrawPhysics_ = false;
+					glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 				}
 				else {
 					printf("Switch camera to debug camera");
 					cameraPositioner = &floatingPositioner;
 					globalState.debugDrawPhysics_ = true;
+					glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 				}
 				globalState.usingDebugCamera_ = !globalState.usingDebugCamera_;
 				camera.setPositioner(cameraPositioner);
@@ -336,7 +338,6 @@ void registerInputCallbacks(GLFWApp& app) {
 			glfwGetFramebufferSize(window, &w, &h);
 			mouseState.pos.x = static_cast<float>(x / w);
 			mouseState.pos.y = static_cast<float>(y / h);
-			//glfwSetCursorPos(window, 0, 0); // cursor disabled kind of fix
 		}
 	);
 }
