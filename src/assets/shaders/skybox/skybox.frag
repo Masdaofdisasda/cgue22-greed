@@ -12,6 +12,8 @@ layout(std140, binding = 0) uniform PerFrameData
 	vec4 bloom;
 	vec4 deltaTime;
     vec4 normalMap;
+    vec4 ssao1;
+    vec4 ssao2;
 };
 
 layout (binding = 8) uniform samplerCube environmentTex;

@@ -42,6 +42,8 @@ private:
 	Program CombineHDR;		// combines blur with render fbo, tone mapping
 	Program lightAdapt;		// calculates luminance changes
 	Program lavaFloor;		// renders a giant orange triangle
+	Program SSAO;
+	Program CombineSSAO;
 
 	// global Textures
 	Cubemap IBL;
@@ -51,7 +53,8 @@ private:
 	// Framebuffers for HDR/Bloom
 	GLuint luminance1x1;
 	// Framebuffer size cant be changed after init eg. window reisizing not correctly working
-	Framebuffer framebuffer = Framebuffer(1920, 1080, GL_RGBA16F, GL_DEPTH_COMPONENT24); // main render target for processing
+	Framebuffer framebuffer1 = Framebuffer(1920, 1080, GL_RGBA16F, GL_DEPTH_COMPONENT24); // main render target for processing
+	Framebuffer framebuffer2 = Framebuffer(1920, 1080, GL_RGBA16F, GL_DEPTH_COMPONENT24); // main render target for processing
 	Framebuffer luminance = Framebuffer(64, 64, GL_RGBA16F, 0);
 	Framebuffer brightPass = Framebuffer(256, 256, GL_RGBA16F, 0);
 	Framebuffer bloom0 = Framebuffer(256, 256, GL_RGBA16F, 0); 
@@ -59,6 +62,11 @@ private:
 	Texture luminance0 = Texture(GL_TEXTURE_2D, 1, 1, GL_RGBA16F);
 	Texture luminance1 = Texture(GL_TEXTURE_2D, 1, 1, GL_RGBA16F);
 	const Texture* luminances[2] = { &luminance0, &luminance1 };
+
+	// Framebuffers for SSAO
+	Framebuffer ssao = Framebuffer(1024, 1024, GL_RGBA8, 0);
+	Framebuffer blur = Framebuffer(1024, 1024, GL_RGBA8, 0);
+	GLuint pattern;
 
 	void fillLightsources();
 	void buildShaderPrograms(); 

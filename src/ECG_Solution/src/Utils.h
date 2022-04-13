@@ -27,15 +27,22 @@ struct GlobalState
 	float Zfar = 1000.0;
 
 	bool bloom_ = true;
-	bool focus_ = true;
 	bool cull_ = true;
 	bool freezeCull_ = false;
+	bool ssao_ = true;
 	bool cullDebug_ = false;
 	bool debugDrawPhysics = false;
+	//bloom
 	float exposure_ = 0.9f;
 	float maxWhite_ = 1.07f;
 	float bloomStrength_ = 0.2f;
 	float adaptationSpeed_ = 0.1f;
+	//ssao
+	float scale_ = 1.0f;
+	float bias_ = 0.2f;
+	float radius = 0.2f;
+	float attScale = 1.0f;
+	float distScale = 0.5f;
 };
 
 struct KeyboardInputState {
@@ -58,14 +65,28 @@ struct MouseState
 	bool pressedRight = false;
 };
 
+/*files using this structure:
+Frustumviewer.vert
+AABBviwer.vert
+bulletDebug.vert
+combineHDR.frag
+lavafloor.vert
+lightadaption.comp
+pbr.vert/.frag
+skybox.vert/.frag
+SSAO.frag
+combineSSAO.frag
+*/
 struct PerFrameData
 {
-	glm::vec4 viewPos;
-	glm::mat4 ViewProj;
-	glm::mat4 lavaLevel;
-	glm::vec4 bloom;
-	glm::vec4 deltaTime;
-	glm::vec4 normalMap;
+	glm::vec4 viewPos;		// view/eye vector
+	glm::mat4 ViewProj;		// view projection matrix
+	glm::mat4 lavaLevel;	// lava translation matrix
+	glm::vec4 bloom;		// x = exposure, y = maxWhite, z = bloomStrength, w = adaptionSpeed
+	glm::vec4 deltaTime;	// x = deltaSeconds, y = ?, z = ?, w = ?
+	glm::vec4 normalMap;	// x = normalMapToogle, y = ?, z = ?, w = ?
+	glm::vec4 ssao1;		// x = scale,, y = bias, z = znear, w = zfar
+	glm::vec4 ssao2;		// x = radius, y = attscale, z = distscale, w = ?
 };
 
 

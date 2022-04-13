@@ -320,6 +320,18 @@ void registerInputCallbacks(GLFWApp& app) {
 					globalState.cull_ = true;
 				}
 			}
+			if (key == GLFW_KEY_F9 && action == GLFW_PRESS)
+			{
+				if (globalState.ssao_)
+				{
+					printf("SSAO off\n");
+					globalState.ssao_ = false;
+				}
+				else {
+					printf("SSAO on\n");
+					globalState.ssao_ = true;
+				}
+			}
 		});
 	glfwSetMouseButtonCallback(app.getWindow(),
 		[](auto* window, int button, int action, int mods)

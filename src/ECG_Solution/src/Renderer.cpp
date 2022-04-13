@@ -41,10 +41,17 @@ GlobalState Renderer::loadSettings()
 	state.Znear = reader.GetReal("camera", "near", 0.1f);
 	state.Zfar = reader.GetReal("camera", "far", 1000.0f);
 
+	state.bloom_ = reader.GetBoolean("image", "bloom", true);
 	state.exposure_ = reader.GetReal("image", "exposure", 0.9f);
 	state.maxWhite_ = reader.GetReal("image", "maxWhite", 1.07f);
 	state.bloomStrength_ = reader.GetReal("image", "bloomStrength", 0.2f);
 	state.adaptationSpeed_ = reader.GetReal("image", "lightAdaption", 0.1f);
+	state.ssao_ = reader.GetBoolean("image", "ssao", true);
+	state.scale_ = reader.GetReal("image", "scale", 1.0f);
+	state.bias_ = reader.GetReal("image", "bias", 0.2f);
+	state.radius = reader.GetReal("image", "radius", 0.2f);
+	state.attScale = reader.GetReal("image", "attScale", 1.0f);
+	state.distScale = reader.GetReal("image", "distScale", 0.5f);
 
 	return state;
 
@@ -67,10 +74,24 @@ void Renderer::fillLightsources()
 /// @brief initializes settings for post processing and rendering
 void Renderer::setRenderSettings()
 {
-	perframeData->bloom = glm::vec4(globalState->exposure_, globalState->maxWhite_,
-		globalState->bloomStrength_,globalState->adaptationSpeed_);
+	perframeData->bloom = glm::vec4(
+		globalState->exposure_,
+		globalState->maxWhite_,
+		globalState->bloomStrength_,
+		globalState->adaptationSpeed_);
 
 	perframeData->normalMap = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+
+	perframeData->ssao1 = glm::vec4(
+		globalState->scale_,
+		globalState->bias_,
+		globalState->Znear,
+		globalState->Zfar);
+	perframeData->ssao2 = glm::vec4(
+		globalState->radius,
+		globalState->attScale,
+		globalState->distScale,
+		1.0f);
 }
 
 /// @brief compiles all needed shaders for the render loop
@@ -110,6 +131,11 @@ void Renderer::buildShaderPrograms()
 	Shader lavaFloorFrag("../../assets/shaders/lavaFloor/lavaFloor.frag");
 	lavaFloor.buildFrom(lavaFloorVert, lavaFloorFrag);
 
+	Shader SSAOFrag("../../assets/shaders/SSAO/SSAO.frag");
+	Shader combineSSAOFrag("../../assets/shaders/SSAO/combineSSAO.frag");
+	SSAO.buildFrom(fullScreenTriangleVert, SSAOFrag);
+	CombineSSAO.buildFrom(fullScreenTriangleVert, combineSSAOFrag);
+
 	PBRShader.Use();
 }
 
@@ -122,6 +148,8 @@ void Renderer::prepareFramebuffers() {
 
 	const glm::vec4 startingLuminance(glm::vec3(0.0f), 1.0f);
 	glTextureSubImage2D(luminance0.getHandle(), 0, 0, 0, 1, 1, GL_RGBA, GL_FLOAT, &startingLuminance[0]);
+
+	pattern = Texture::loadTexture("../../assets/shaders/SSAO/pattern.bmp");
 }
 
 /// @brief implements the pipeline for HDR, tonemapping and shadows
@@ -129,14 +157,14 @@ void Renderer::prepareFramebuffers() {
 void Renderer::Draw(Level* level)
 {
 	
-	glClearNamedFramebufferfv(framebuffer.getHandle(), GL_COLOR, 0, &(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)[0]));
-	glClearNamedFramebufferfi(framebuffer.getHandle(), GL_DEPTH_STENCIL, 0, 1.0f, 0);
+	glClearNamedFramebufferfv(framebuffer1.getHandle(), GL_COLOR, 0, &(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)[0]));
+	glClearNamedFramebufferfi(framebuffer1.getHandle(), GL_DEPTH_STENCIL, 0, 1.0f, 0);
 
 	perframeBuffer.Update(*perframeData);
 
 	// 1. pass - render scene to framebuffer
 	glEnable(GL_DEPTH_TEST);
-	framebuffer.bind();
+	framebuffer1.bind();
 
 		// draw skybox (background)    
 		skyboxShader.Use();
@@ -146,75 +174,122 @@ void Renderer::Draw(Level* level)
 		glDepthMask(true);
 
 		// draw models
-		//glEnable(GL_CULL_FACE);
 		PBRShader.Use();
 		level->DrawGraph();
 
+		// draw lava
 		lavaFloor.Use();
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 
-	framebuffer.unbind(); 
-	glGenerateTextureMipmap(framebuffer.getTextureColor().getHandle());
-	glTextureParameteri(framebuffer.getTextureColor().getHandle(), GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	framebuffer1.unbind(); 
+	glGenerateTextureMipmap(framebuffer1.getTextureColor().getHandle());
+	glTextureParameteri(framebuffer1.getTextureColor().getHandle(), GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
 	glDisable(GL_DEPTH_TEST);
 
-	// 2. pass - downscale for addiational blur and convert framebuffer to luminance
-	luminance.bind();
-		ToLuminance.Use();
-		glBindTextureUnit(9, framebuffer.getTextureColor().getHandle());
-		glDrawArrays(GL_TRIANGLES, 0, 3);
-	luminance.unbind();
-	glGenerateTextureMipmap(luminance.getTextureColor().getHandle());
-
-	// 3. pass - compute light adaption (OpenGL memory model requires these memory barriers: https://www.khronos.org/opengl/wiki/Memory_Model )
-	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-	lightAdapt.Use();
-	glBindImageTexture(0, luminances[0]->getHandle(), 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA16F);
-	glBindImageTexture(1, luminance1x1, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA16F);
-	glBindImageTexture(2, luminances[1]->getHandle(), 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA16F);
-	glDispatchCompute(1, 1, 1);
-	glMemoryBarrier(GL_TEXTURE_FETCH_BARRIER_BIT);
-
-	// 4. pass - filter bright spots from framebuffer
-	brightPass.bind();
-		BrightPass.Use();
-		glBindTextureUnit(9, framebuffer.getTextureColor().getHandle());
-		glDrawArrays(GL_TRIANGLES, 0, 3);
-	brightPass.unbind();
-	glBlitNamedFramebuffer(brightPass.getHandle(), bloom1.getHandle(), 0, 0, 256, 256, 0, 0, 256, 256, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-
-	// 5. pass - blur bright spots using ping pong buffers and a seperate blur in x and y direction
-	for (int i = 0; i < 4; i++)
+	if (globalState->ssao_)
 	{
-		// blur x
-		bloom0.bind();
+		// SSAO
+		glClearNamedFramebufferfv(ssao.getHandle(), GL_COLOR, 0, &(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)[0]));
+		ssao.bind();
+		SSAO.Use();
+		glBindTextureUnit(9, framebuffer1.getTextureDepth().getHandle());
+		glBindTextureUnit(10, pattern);
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+		ssao.unbind();
+
+		// 2.1 Blur SSAO
+		// Blur X
+		blur.bind();
 			BlurX.Use();
-			glBindTextureUnit(9, bloom1.getTextureColor().getHandle());
+			glBindTextureUnit(9, ssao.getTextureColor().getHandle());
 			glDrawArrays(GL_TRIANGLES, 0, 3);
-		bloom0.unbind();
-		// blur y
-		bloom1.bind();
+		blur.unbind();
+		// Blur Y
+		ssao.bind();
 			BlurY.Use();
-			glBindTextureUnit(9, bloom0.getTextureColor().getHandle());
+			glBindTextureUnit(9, blur.getTextureColor().getHandle());
 			glDrawArrays(GL_TRIANGLES, 0, 3);
-		bloom1.unbind();
+		ssao.unbind();
+
+		glClearNamedFramebufferfv(framebuffer2.getHandle(), GL_COLOR, 0, &(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)[0]));
+
+		// 3. Combine SSAO and the rendered scene
+		glViewport(0, 0, globalState->width, globalState->height);
+
+
+		framebuffer2.bind();
+			CombineSSAO.Use();
+			glBindTextureUnit(9, framebuffer1.getTextureColor().getHandle());
+			glBindTextureUnit(10, ssao.getTextureColor().getHandle());
+			glDrawArrays(GL_TRIANGLES, 0, 3);
+		framebuffer2.unbind();
+	}
+	else
+	{
+		glBlitNamedFramebuffer(framebuffer1.getHandle(), framebuffer2.getHandle(), 0, 0, globalState->width, globalState->height,
+			0, 0, globalState->width, globalState->height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 	}
 
-	// 6. pass - combine framebuffer with blurred image 
-	glViewport(0, 0, globalState->width, globalState->height);
 
 	if (globalState->bloom_)
 	{
+
+		// 2. pass - downscale for addiational blur and convert framebuffer to luminance
+		luminance.bind();
+			ToLuminance.Use();
+			glBindTextureUnit(9, framebuffer2.getTextureColor().getHandle());
+			glDrawArrays(GL_TRIANGLES, 0, 3);
+		luminance.unbind();
+		glGenerateTextureMipmap(luminance.getTextureColor().getHandle());
+
+		// 3. pass - compute light adaption (OpenGL memory model requires these memory barriers: https://www.khronos.org/opengl/wiki/Memory_Model )
+		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+		lightAdapt.Use();
+		glBindImageTexture(0, luminances[0]->getHandle(), 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA16F);
+		glBindImageTexture(1, luminance1x1, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA16F);
+		glBindImageTexture(2, luminances[1]->getHandle(), 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA16F);
+		glDispatchCompute(1, 1, 1);
+		glMemoryBarrier(GL_TEXTURE_FETCH_BARRIER_BIT);
+
+		// 4. pass - filter bright spots from framebuffer
+		brightPass.bind();
+			BrightPass.Use();
+			glBindTextureUnit(9, framebuffer2.getTextureColor().getHandle());
+			glDrawArrays(GL_TRIANGLES, 0, 3);
+		brightPass.unbind();
+		glBlitNamedFramebuffer(brightPass.getHandle(), bloom1.getHandle(), 0, 0, 256, 256, 0, 0, 256, 256, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+
+		// 5. pass - blur bright spots using ping pong buffers and a seperate blur in x and y direction
+		for (int i = 0; i < 4; i++)
+		{
+			// blur x
+			bloom0.bind();
+				BlurX.Use();
+				glBindTextureUnit(9, bloom1.getTextureColor().getHandle());
+				glDrawArrays(GL_TRIANGLES, 0, 3);
+			bloom0.unbind();
+			// blur y
+			bloom1.bind();
+				BlurY.Use();
+				glBindTextureUnit(9, bloom0.getTextureColor().getHandle());
+				glDrawArrays(GL_TRIANGLES, 0, 3);
+			bloom1.unbind();
+		}
+
+		// 6. pass - combine framebuffer with blurred image 
+		glViewport(0, 0, globalState->width, globalState->height);
+
+
 		CombineHDR.Use();
-		glBindTextureUnit(9, framebuffer.getTextureColor().getHandle());
+		glBindTextureUnit(9, framebuffer2.getTextureColor().getHandle());
 		glBindTextureUnit(10, luminances[1]->getHandle());
 		glBindTextureUnit(11, bloom1.getTextureColor().getHandle());
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 	}
 	else
 	{
-		glBlitNamedFramebuffer(framebuffer.getHandle(), 0, 0, 0, globalState->width, globalState->height, 0, 0, globalState->width, globalState->height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+		glBlitNamedFramebuffer(framebuffer2.getHandle(), 0, 0, 0, globalState->width, globalState->height, 0, 0, globalState->width, globalState->height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 	}
 }
 
@@ -230,4 +305,5 @@ Renderer::~Renderer()
 	globalState = nullptr;
 	perframeData = nullptr;
 	glDeleteTextures(1, &luminance1x1);
+	glDeleteTextures(1, &pattern);
 }

@@ -25,6 +25,8 @@ layout(std140, binding = 0) uniform PerFrameData
 	vec4 bloom;
 	vec4 deltaTime;
     vec4 normalMap;
+    vec4 ssao1;
+    vec4 ssao2;
 };
 
 void main()
