@@ -73,7 +73,7 @@ struct RenderItem
 /// @brief contains single mesh for bullet physics simulation
 struct PhysicsMesh
 {
-	std::vector<glm::vec3> vtxPositions;		// all positions (x,y,z) in model space
+	std::vector<float> vtxPositions;		// all positions (x,y,z) in model space
 	glm::mat4 modelMatrix;						// model tranformation into world space
 	std::shared_ptr<Hierarchy> node;			// pointer to set node matrices, only for dynamic objects
 };

@@ -404,11 +404,9 @@ void Level::collectRigidPhysicMeshes(Hierarchy* node, glm::mat4 globalTransform)
 		PhysicsMesh phyMesh;
 		for (uint32_t i = 0; i < vtxCount; i++)
 		{
-			glm::vec3 position = glm::vec3(
-				vertices[vtxOffset + i * 8 + 0],
-				vertices[vtxOffset + i * 8 + 1],
-				vertices[vtxOffset + i * 8 + 2]);
-			phyMesh.vtxPositions.push_back(position);
+			phyMesh.vtxPositions.push_back(vertices[vtxOffset + i * 8 + 0]);
+			phyMesh.vtxPositions.push_back(vertices[vtxOffset + i * 8 + 1]);
+			phyMesh.vtxPositions.push_back(vertices[vtxOffset + i * 8 + 2]);
 		}
 		phyMesh.modelMatrix = nodeMatrix;
 		phyMesh.node = nullptr;
@@ -433,11 +431,9 @@ void Level::collectDynamicPhysicMeshes(Hierarchy* node, glm::mat4 globalTransfor
 		PhysicsMesh phyMesh;
 		for (uint32_t i = 0; i < vtxCount; i++)
 		{
-			glm::vec3 position = glm::vec3(
-				vertices[vtxOffset + i * 8 + 0],
-				vertices[vtxOffset + i * 8 + 1],
-				vertices[vtxOffset + i * 8 + 2]);
-			phyMesh.vtxPositions.push_back(position);
+			phyMesh.vtxPositions.push_back(vertices[vtxOffset + i * 8 + 0]);
+			phyMesh.vtxPositions.push_back(vertices[vtxOffset + i * 8 + 1]);
+			phyMesh.vtxPositions.push_back(vertices[vtxOffset + i * 8 + 2]);
 		}
 		phyMesh.modelMatrix = nodeMatrix;
 		phyMesh.node = std::make_shared<Hierarchy>(*node);
