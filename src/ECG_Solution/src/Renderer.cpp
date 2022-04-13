@@ -136,6 +136,10 @@ void Renderer::buildShaderPrograms()
 	SSAO.buildFrom(fullScreenTriangleVert, SSAOFrag);
 	CombineSSAO.buildFrom(fullScreenTriangleVert, combineSSAOFrag);
 
+	Shader renderImgVert("../../assets/shaders/fullScreenTriangle.vert");
+	Shader renderImgFrag("../../assets/shaders/fullScreenImage/fullScreenImage.frag");
+	renderImage.buildFrom(renderImgVert, renderImgFrag);
+
 	PBRShader.Use();
 }
 
@@ -150,6 +154,8 @@ void Renderer::prepareFramebuffers() {
 	glTextureSubImage2D(luminance0.getHandle(), 0, 0, 0, 1, 1, GL_RGBA, GL_FLOAT, &startingLuminance[0]);
 
 	pattern = Texture::loadTexture("../../assets/shaders/SSAO/pattern.bmp");
+
+	hud = Texture::loadTextureTransparent("../../assets/textures/loading/alpha HUD.png");
 }
 
 /// @brief implements the pipeline for HDR, tonemapping and shadows
@@ -291,6 +297,12 @@ void Renderer::Draw(Level* level)
 	{
 		glBlitNamedFramebuffer(framebuffer2.getHandle(), 0, 0, 0, globalState->width, globalState->height, 0, 0, globalState->width, globalState->height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 	}
+
+	renderImage.Use();
+	glEnable(GL_BLEND);
+	glBindTextureUnit(9, hud);
+	glDrawArrays(GL_TRIANGLES, 0, 3);
+	glDisable(GL_BLEND);
 }
 
 /// @brief swaps framebuffers for light adaption computation
@@ -306,4 +318,5 @@ Renderer::~Renderer()
 	perframeData = nullptr;
 	glDeleteTextures(1, &luminance1x1);
 	glDeleteTextures(1, &pattern);
+	glDeleteTextures(1, &hud);
 }

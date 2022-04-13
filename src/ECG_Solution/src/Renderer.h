@@ -44,6 +44,7 @@ private:
 	Program lavaFloor;		// renders a giant orange triangle
 	Program SSAO;
 	Program CombineSSAO;
+	Program renderImage;
 
 	// global Textures
 	Cubemap IBL;
@@ -67,6 +68,8 @@ private:
 	Framebuffer ssao = Framebuffer(1024, 1024, GL_RGBA8, 0);
 	Framebuffer blur = Framebuffer(1024, 1024, GL_RGBA8, 0);
 	GLuint pattern;
+
+	GLuint hud;
 
 	void fillLightsources();
 	void buildShaderPrograms(); 

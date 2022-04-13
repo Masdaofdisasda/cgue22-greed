@@ -52,6 +52,41 @@ GLuint Texture::loadTexture(const char* texPath)
 	return handle;
 }
 
+/// @brief loads a texture from image, used in Material.h
+/// @param texPath is the location of an image
+/// @return the created texture handle
+GLuint Texture::loadTextureTransparent(const char* texPath)
+{
+	GLuint handle = 0;
+	// generate texture
+	glCreateTextures(GL_TEXTURE_2D, 1, &handle);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	stbi_set_flip_vertically_on_load(true);
+
+	int w, h, comp;
+	const uint8_t* img = stbi_load(texPath, &w, &h, &comp, STBI_rgb_alpha);
+
+	if (img > 0)
+	{
+		glTextureStorage2D(handle, 1, GL_RGBA8, w, h);
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		glTextureSubImage2D(handle, 0, 0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, img);
+		glBindTextures(0, 1, &handle);
+		delete img;
+	}
+	else
+	{
+		std::cout << "could not load texture" << texPath << std::endl;
+	}
+	glBindTexture(GL_TEXTURE_2D, 0);
+	return handle;
+}
+
 /// @brief calculates mimap level for framebuffer textures
 /// @param w width of the texture
 /// @param h height of the texture

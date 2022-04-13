@@ -59,7 +59,6 @@ private:
 	void loadMeshes(const aiScene* scene);
 	subMesh extractMesh(const aiMesh* mesh);
 	BoundingBox computeBoundsOfMesh(subMesh mesh);
-	Material Level::loadMaterials(const aiMaterial* M);
 	void loadMaterials(const aiScene* scene);
 	void traverseTree(aiNode* n, Hierarchy* parent, Hierarchy* child);
 	void loadShaders();

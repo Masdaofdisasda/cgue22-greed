@@ -1,6 +1,6 @@
 //Maya ASCII 2022 scene
 //Name: demo.ma
-//Last modified: Wed, Apr 13, 2022 11:00:05 AM
+//Last modified: Wed, Apr 13, 2022 10:20:14 PM
 //Codeset: UTF-8
 requires maya "2022";
 requires -nodeType "StingrayPBS" "shaderFXPlugin" "1.0";
@@ -14,12 +14,12 @@ fileInfo "product" "Maya 2022";
 fileInfo "version" "2022";
 fileInfo "cutIdentifier" "202110272215-ad32f8f1e6";
 fileInfo "osv" "Mac OS X 10.16";
-fileInfo "UUID" "7C254247-5340-C45D-79AA-40996995DE65";
+fileInfo "UUID" "4323E612-2A4B-3C13-4658-628865A7F8DE";
 createNode transform -s -n "persp";
 	rename -uid "E185DEBC-8447-2BA3-7820-3E806F15F436";
 	setAttr ".v" no;
-	setAttr ".t" -type "double3" 125.85299015329429 61.047302245598495 54.412694701064076 ;
-	setAttr ".r" -type "double3" 335.99999999986176 -662.39999999997019 -5.935788787103849e-15 ;
+	setAttr ".t" -type "double3" -334.27425202400707 504.88011359015621 186.71305925953857 ;
+	setAttr ".r" -type "double3" 309.59999999986428 -781.59999999995796 -6.6871168893534357e-15 ;
 	setAttr ".rp" -type "double3" -4.4408920985006262e-16 0 -2.8421709430404007e-14 ;
 	setAttr ".rpt" -type "double3" -6.470287255805889e-13 -1.1777657029424711e-13 -9.5686552601907458e-13 ;
 createNode camera -s -n "perspShape" -p "persp";
@@ -27,7 +27,7 @@ createNode camera -s -n "perspShape" -p "persp";
 	setAttr -k off ".v" no;
 	setAttr ".fl" 34.999999999999979;
 	setAttr ".fcp" 100000;
-	setAttr ".coi" 128.49622541664593;
+	setAttr ".coi" 643.85257407199242;
 	setAttr ".imn" -type "string" "persp";
 	setAttr ".den" -type "string" "persp_depth";
 	setAttr ".man" -type "string" "persp_mask";
@@ -5595,7 +5595,7 @@ createNode polyCube -n "polyCube6";
 	setAttr ".d" 20;
 	setAttr ".cuv" 4;
 createNode nodeGraphEditorInfo -n "hyperShadePrimaryNodeEditorSavedTabsInfo";
-	rename -uid "883740DD-6F42-2FF5-7C0F-859B0791D692";
+	rename -uid "0D211790-DA48-872C-A008-F6841720F428";
 	setAttr ".tgi[0].tn" -type "string" "Untitled_1";
 	setAttr ".tgi[0].vl" -type "double2" -1027.4181656778121 -857.14282308306178 ;
 	setAttr ".tgi[0].vh" -type "double2" 1410.7514837788483 1105.9523370057836 ;
