@@ -32,6 +32,7 @@ struct GlobalState
 	bool ssao_ = true;
 	bool cullDebug_ = false;
 	bool debugDrawPhysics = false;
+	bool usingDebugCamera_ = false;
 	//bloom
 	float exposure_ = 0.9f;
 	float maxWhite_ = 1.07f;
