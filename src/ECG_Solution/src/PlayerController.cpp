@@ -15,10 +15,19 @@ PlayerController::PlayerController(Physics& physics, CameraPositioner_Player& ca
 void PlayerController::move(KeyboardInputState inputs)
 {
 	Movement* movement = inputToMovementState(inputs);
-	glm::vec3 movementDirection = movementStateToDirection(movement);
 
-	if (glm::length(movementDirection) > 0)
+	// running
+	glm::vec3 movementDirection = movementStateToDirection(movement);
+	bool accelerate = glm::length(movementDirection) > 0;
+	if (accelerate)
 		playerObject->rigidbody->applyCentralImpulse(playerSpeed * physics.glmToBt(movementDirection));
+	else
+		decelerateXZ();
+	enforceSpeedLimit();
+
+	// jumping
+	if (movement->jump)
+		playerObject->rigidbody->applyCentralImpulse(jumpStrength * btVector3(0, 1, 0));
 }
 
 void PlayerController::updateCameraPosition()
@@ -58,4 +67,40 @@ glm::vec3 PlayerController::movementStateToDirection(Movement* movement)
 	if (glm::length(result) > 0)
 		return glm::normalize(result);
 	return result;
+}
+
+void PlayerController::decelerateXZ()
+{
+	btVector3 velocity = playerObject->rigidbody->getLinearVelocity();
+	glm::vec2 xzVelocity = glm::vec2((float)velocity.getX(), (float)velocity.getZ());
+
+	bool playerIsStanding = glm::length(xzVelocity) <= 0;
+	if (playerIsStanding)
+		return;
+
+	float newXZMagnitude = glm::length(xzVelocity) / stopSpeed;
+	glm::vec2 newXZVelocity = glm::normalize(xzVelocity) * newXZMagnitude;
+	playerObject->rigidbody->setLinearVelocity(btVector3(
+		newXZVelocity.x,
+		velocity.getY(),
+		newXZVelocity.y
+	));
+}
+
+void PlayerController::enforceSpeedLimit()
+{
+	btVector3 velocity = playerObject->rigidbody->getLinearVelocity();
+	glm::vec2 xzVelocity = glm::vec2((float)velocity.getX(), (float)velocity.getZ());
+
+	bool playerIsStanding = glm::length(xzVelocity) <= 0;
+	bool speedIsTooHigh = glm::length(xzVelocity) > maxSpeed;
+	if (playerIsStanding || !speedIsTooHigh)
+		return;
+
+	glm::vec2 newXZVelocity = glm::normalize(xzVelocity) * maxSpeed;
+	playerObject->rigidbody->setLinearVelocity(btVector3(
+		newXZVelocity.x,
+		velocity.getY(),
+		newXZVelocity.y
+	));
 }

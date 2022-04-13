@@ -39,7 +39,6 @@ CameraPositioner_Player playerCameraPositioner;
 Camera camera(*cameraPositioner);
 
 void registerInputCallbacks(GLFWApp& app);
-bool usingDebugCamera();
 
 /* --------------------------------------------- */
 // Main
@@ -116,9 +115,9 @@ int main(int argc, char** argv)
 		btQuaternion(btVector3(1, 0, 0), btScalar(45)),
 		Physics::ObjectMode::Dynamic
 	);
-	btBoxShape* col2 = new btBoxShape(btVector3(5, 0.1, 5));
+	btBoxShape* col2 = new btBoxShape(btVector3(500, 0.1, 500));
 	physics.createPhysicsObject(
-		btVector3(0, -1, 0),
+		btVector3(0, 0, 0),
 		col2,
 		btQuaternion(btVector3(0, 1, 0), btScalar(0)),
 		Physics::ObjectMode::Static
@@ -130,7 +129,7 @@ int main(int argc, char** argv)
 	playerCameraPositioner.setPosition(glm::vec3(0, 10, 0));
 
 	// Setup player
-	PlayerController player(physics, playerCameraPositioner, glm::vec3(0, 1, 0));
+	PlayerController player(physics, playerCameraPositioner, glm::vec3(0, 2, 0));
 	
 	loadingScreen.DrawProgress();
 
@@ -168,7 +167,7 @@ int main(int argc, char** argv)
 		GLFWapp.updateWindow();
 
 		// movement
-		if (usingDebugCamera())
+		if (globalState.usingDebugCamera_)
 			floatingPositioner.setMovementState(keyboardInput);
 		else
 			player.move(keyboardInput);
@@ -192,7 +191,7 @@ int main(int argc, char** argv)
 
 		// actual draw call
 		renderer.Draw(&level);
-		if (globalState.debugDrawPhysics)
+		if (globalState.debugDrawPhysics_)
 			physics.debugDraw();
 
 		// swap buffers
@@ -218,8 +217,7 @@ int main(int argc, char** argv)
 
 void registerInputCallbacks(GLFWApp& app) {
 	glfwSetKeyCallback(app.getWindow(),
-		[](GLFWwindow* window,
-			int key, int scancode, int action, int mods)
+		[](GLFWwindow* window, int key, int scancode, int action, int mods)
 		{
 			// Movement
 			const bool press = action != GLFW_RELEASE;
@@ -265,12 +263,12 @@ void registerInputCallbacks(GLFWApp& app) {
 			}
 			if (key == GLFW_KEY_F4 && action == GLFW_PRESS)
 			{
-				if (globalState.debugDrawPhysics)
+				if (globalState.debugDrawPhysics_)
 					printf("Physics debugging off");
 				else
 					printf("Physics debugging on");
 
-				globalState.debugDrawPhysics = !globalState.debugDrawPhysics;
+				globalState.debugDrawPhysics_ = !globalState.debugDrawPhysics_;
 			}
 			if (key == GLFW_KEY_F5 && action == GLFW_PRESS)
 			{
@@ -282,16 +280,17 @@ void registerInputCallbacks(GLFWApp& app) {
 				perframeData.normalMap.x *= -1.0f;
 			}
 			if (key == GLFW_KEY_F6 && action == GLFW_PRESS) {
-				if (usingDebugCamera()) {
+				if (globalState.usingDebugCamera_) {
 					printf("Switch camera to player");
 					cameraPositioner = &playerCameraPositioner;
-					globalState.debugDrawPhysics = false;
+					globalState.debugDrawPhysics_ = false;
 				}
 				else {
 					printf("Switch camera to debug camera");
 					cameraPositioner = &floatingPositioner;
-					globalState.debugDrawPhysics = true;
+					globalState.debugDrawPhysics_ = true;
 				}
+				globalState.usingDebugCamera_ = !globalState.usingDebugCamera_;
 				camera.setPositioner(cameraPositioner);
 			}
 		});
@@ -314,8 +313,4 @@ void registerInputCallbacks(GLFWApp& app) {
 			//glfwSetCursorPos(window, 0, 0); // cursor disabled kind of fix
 		}
 	);
-}
-
-bool usingDebugCamera() {
-	return cameraPositioner == &floatingPositioner;
 }

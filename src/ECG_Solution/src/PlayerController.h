@@ -39,9 +39,14 @@ private:
 
 	// settings
 	glm::vec3 rigidbodyToCameraOffset = glm::vec3(0,1,0);
-	float playerSpeed = 0.01f;
+	float playerSpeed = 0.05f; // how fast the player accelerates
+	float jumpStrength = 0.1f; // how high the player can jump
+	float stopSpeed = 1.01f; // how fast the player decelerates when not giving input (x,z axis)
+	float maxSpeed = 15.0f; // how fast the player is allowed to run at max (x,z axis)
 
 	Movement* inputToMovementState(KeyboardInputState inputs);
 	glm::vec3 movementStateToDirection(Movement* movement);
+	void decelerateXZ();
+	void enforceSpeedLimit();
 };
 
