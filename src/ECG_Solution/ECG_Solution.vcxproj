@@ -24,9 +24,10 @@
     <ClInclude Include="src\Cubemap.h" />
     <ClInclude Include="src\Framebuffer.h" />
     <ClInclude Include="src\FPSCounter.h" />
-    <ClInclude Include="src\FrustumCuller.h" />
+    <ClInclude Include="src\FrustumCulling.h" />
     <ClInclude Include="src\GLFWApp.h" />
     <ClInclude Include="src\Level.h" />
+    <ClInclude Include="src\LevelStructs.h" />
     <ClInclude Include="src\LoadingScreen.h" />
     <ClInclude Include="src\Material.h" />
     <ClInclude Include="src\Physics.h" />

@@ -29,6 +29,7 @@ struct GlobalState
 	bool bloom_ = true;
 	bool focus_ = true;
 	bool cull_ = true;
+	bool freezeCull_ = false;
 	bool cullDebug_ = false;
 	bool debugDrawPhysics_ = false;
 	bool usingDebugCamera_ = false;

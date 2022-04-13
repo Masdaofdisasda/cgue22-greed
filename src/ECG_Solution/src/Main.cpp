@@ -97,7 +97,7 @@ int main(int argc, char** argv)
 	irrklang::ISound* snd = engine->play2D("../../assets/media/EQ07 Prc Fantasy Perc 060.wav", true);
 
 	printf("Loading level...\n");
-	Level level("../../assets/demo.fbx", globalState);
+	Level level("../../assets/demo.fbx", globalState, perframeData);
 	loadingScreen.DrawProgress();
 
 	printf("Intializing renderer...\n");
@@ -137,6 +137,8 @@ int main(int argc, char** argv)
 
 	glViewport(0, 0, globalState.width, globalState.height);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glLineWidth(2.0f);
 	glEnable(GL_CULL_FACE);
 
 	engine->stopAllSounds();
@@ -292,6 +294,30 @@ void registerInputCallbacks(GLFWApp& app) {
 				}
 				globalState.usingDebugCamera_ = !globalState.usingDebugCamera_;
 				camera.setPositioner(cameraPositioner);
+			}
+			if (key == GLFW_KEY_F7 && action == GLFW_PRESS)
+			{
+				if (globalState.freezeCull_)
+				{
+					printf("resume frustum culling\n");
+					globalState.freezeCull_ = false;
+				}
+				else {
+					printf("freeze frustum culling\n");
+					globalState.freezeCull_ = true;
+				}
+			}
+			if (key == GLFW_KEY_F8 && action == GLFW_PRESS)
+			{
+				if (globalState.cull_)
+				{
+					printf("frustum culling off\n");
+					globalState.cull_ = false;
+				}
+				else {
+					printf("frustum culling on\n");
+					globalState.cull_ = true;
+				}
 			}
 		});
 	glfwSetMouseButtonCallback(app.getWindow(),
