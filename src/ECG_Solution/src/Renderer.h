@@ -23,7 +23,6 @@ public:
 	static std::shared_ptr<GlobalState> state;
 private:
 	// Render Settings
-	//GlobalState* globalState;
 	PerFrameData* perframeData;	// viewproj, viewpos,...
 	UBO perframeBuffer;	
 	UBO perframesetBuffer;

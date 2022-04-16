@@ -87,8 +87,8 @@ void Cubemap::loadHDR(const char* texPath)
 
     // pbr: convert HDR equirectangular environment map to cubemap equivalent
     // ----------------------------------------------------------------------
-    Shader rect2cubeVert("../../assets/shaders/rectangelToCubemap/rectangleToCubemap.vert");
-    Shader rect2cubeFrag("../../assets/shaders/rectangelToCubemap/rectangleToCubemap.frag");
+    Shader rect2cubeVert("../../assets/shaders/IBL/rectangleToCubemap.vert");
+    Shader rect2cubeFrag("../../assets/shaders/IBL/rectangleToCubemap.frag");
     Program rectangleToCubemap;
     rectangleToCubemap.buildFrom(rect2cubeVert, rect2cubeFrag);
 
@@ -133,8 +133,8 @@ void Cubemap::loadHDR(const char* texPath)
 
     // pbr: solve diffuse integral by convolution to create an irradiance (cube)map.
     // -----------------------------------------------------------------------------
-    Shader irradianceVert("../../assets/shaders/irradiance/irradiance.vert");
-    Shader irradianceFrag("../../assets/shaders/irradiance/irradiance.frag");
+    Shader irradianceVert("../../assets/shaders/IBL/irradiance.vert");
+    Shader irradianceFrag("../../assets/shaders/IBL/irradiance.frag");
     Program irradiance;
     irradiance.buildFrom(irradianceVert, irradianceFrag);
 
@@ -173,8 +173,8 @@ void Cubemap::loadHDR(const char* texPath)
 
     // pbr: run a quasi monte-carlo simulation on the environment lighting to create a prefilter (cube)map.
     // ----------------------------------------------------------------------------------------------------
-    Shader preFilterVert("../../assets/shaders/preFilter/preFilter.vert");
-    Shader preFilterFrag("../../assets/shaders/preFilter/preFilter.frag");
+    Shader preFilterVert("../../assets/shaders/IBL/preFilter.vert");
+    Shader preFilterFrag("../../assets/shaders/IBL/preFilter.frag");
     Program preFilter;
     preFilter.buildFrom(preFilterVert, preFilterFrag);
 
@@ -227,8 +227,8 @@ void Cubemap::loadHDR(const char* texPath)
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, brdfLut_ID, 0);
 
-    Shader brdfLutVert("../../assets/shaders/brdfLut/brdfLut.vert");
-    Shader brdfLutFrag("../../assets/shaders/brdfLut/brdfLut.frag");
+    Shader brdfLutVert("../../assets/shaders/IBL/brdfLut.vert");
+    Shader brdfLutFrag("../../assets/shaders/IBL/brdfLut.frag");
     Program brdfLut;
     brdfLut.buildFrom(brdfLutVert, brdfLutFrag);
 

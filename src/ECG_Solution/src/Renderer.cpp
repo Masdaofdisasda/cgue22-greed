@@ -102,8 +102,8 @@ void Renderer::setRenderSettings()
 /// @brief compiles all needed shaders for the render loop
 void Renderer::buildShaderPrograms()
 {
-	Shader pbrVert("../../assets/shaders/pbr/pbr.vert");
-	Shader pbrFrag("../../assets/shaders/pbr/pbr.frag", glm::ivec3(lights.directional.size(), lights.point.size(), 0));
+	Shader pbrVert("../../assets/shaders/PBR/pbr.vert");
+	Shader pbrFrag("../../assets/shaders/PBR/pbr.frag", glm::ivec3(lights.directional.size(), lights.point.size(), 0));
 	PBRShader.buildFrom(pbrVert, pbrFrag);
 	PBRShader.Use();
 
@@ -114,21 +114,21 @@ void Renderer::buildShaderPrograms()
 
 	Shader fullScreenTriangleVert("../../assets/shaders/fullScreenTriangle.vert");
 
-	Shader BrightPassFrag("../../assets/shaders/BrightPass/BrightPass.frag");
+	Shader BrightPassFrag("../../assets/shaders/Bloom/BrightPass.frag");
 	BrightPass.buildFrom(fullScreenTriangleVert, BrightPassFrag);
 
-	Shader CombineHDRFrag("../../assets/shaders/CombineHDR/CombineHDR.frag");
+	Shader CombineHDRFrag("../../assets/shaders/Bloom/CombineHDR.frag");
 	CombineHDR.buildFrom(fullScreenTriangleVert, CombineHDRFrag);
 
-	Shader BlurXFrag("../../assets/shaders/Blur/BlurX.frag");
-	Shader BlurYFrag("../../assets/shaders/Blur/BlurY.frag");
+	Shader BlurXFrag("../../assets/shaders/Bloom/BlurX.frag");
+	Shader BlurYFrag("../../assets/shaders/Bloom/BlurY.frag");
 	BlurX.buildFrom(fullScreenTriangleVert, BlurXFrag);
 	BlurY.buildFrom(fullScreenTriangleVert, BlurYFrag);
 
-	Shader LuminanceFrag("../../assets/shaders/toLuminance/toLuminance.frag");
+	Shader LuminanceFrag("../../assets/shaders/Bloom/toLuminance.frag");
 	ToLuminance.buildFrom(fullScreenTriangleVert, LuminanceFrag);
 
-	Shader lightAdaptComp("../../assets/shaders/lightAdaption/lightAdaption.comp");
+	Shader lightAdaptComp("../../assets/shaders/Bloom/lightAdaption.comp");
 	lightAdapt.buildFrom(lightAdaptComp);
 
 	Shader lavaFloorVert("../../assets/shaders/lavaFloor/lavaFloor.vert");
