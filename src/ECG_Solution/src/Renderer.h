@@ -13,16 +13,17 @@
 class Renderer
 {
 public:
-	Renderer(GlobalState& state, PerFrameData& pfdata, LightSources& sources);
+	Renderer(PerFrameData& pfdata, LightSources& sources);
 	~Renderer();
 
 	void Draw(Level* level);
 	void swapLuminance();
 
 	GlobalState static loadSettings();
+	static std::shared_ptr<GlobalState> globalState;
 private:
 	// Render Settings
-	GlobalState* globalState;
+	//GlobalState* globalState;
 	PerFrameData* perframeData;	// viewproj, viewpos,...
 	UBO perframeBuffer;	
 	UBO perframesetBuffer;
@@ -33,17 +34,26 @@ private:
 	UBO positionalLights;
 
 	// Shader Programs
+	// Scene rendering
 	Program PBRShader;		// main illumination shader
 	Program skyboxShader;	// simple skybox shader
+	Program lavaFloor;		// renders a giant orange triangle
+	// Bloom/HDR
 	Program BrightPass;		// filter bright spots
 	Program ToLuminance;	// converts brightness
 	Program BlurX;			// gauss blur in x direction
 	Program BlurY;			// gauss blur in y direction
 	Program CombineHDR;		// combines blur with render fbo, tone mapping
 	Program lightAdapt;		// calculates luminance changes
-	Program lavaFloor;		// renders a giant orange triangle
+	// SSAO
 	Program SSAO;
 	Program CombineSSAO;
+	// Volumetric Light
+	Program DepthMap;
+	Program VolumetricLight;
+	Program downsampleVL;
+	Program upsampleVL;
+	// HUD
 	Program renderImage;
 
 	// global Textures
@@ -53,7 +63,7 @@ private:
 
 	// Framebuffers for HDR/Bloom
 	GLuint luminance1x1;
-	// Framebuffer size cant be changed after init eg. window reisizing not correctly working
+	// Framebuffer size cant be changed after init eg. window resizing not correctly working
 	Framebuffer framebuffer1 = Framebuffer(1920, 1080, GL_RGBA16F, GL_DEPTH_COMPONENT24); // main render target for processing
 	Framebuffer framebuffer2 = Framebuffer(1920, 1080, GL_RGBA16F, GL_DEPTH_COMPONENT24); // main render target for processing
 	Framebuffer luminance = Framebuffer(64, 64, GL_RGBA16F, 0);
@@ -69,12 +79,19 @@ private:
 	Framebuffer blur = Framebuffer(1024, 1024, GL_RGBA8, 0);
 	GLuint pattern;
 
+	// Framebuffers for light/shadow
+	Framebuffer depthMap = Framebuffer(2048*4, 2048*4, 0, GL_DEPTH_COMPONENT24);
+	Framebuffer blur0 = Framebuffer(1920/2, 1080/2, GL_RGBA8, 0);
+	Framebuffer blur1 = Framebuffer(1920 / 2, 1080 / 2, GL_RGBA8, 0);
+	Framebuffer depthHalfRes = Framebuffer(1920 / 2, 1080 / 2, 0, GL_DEPTH_COMPONENT24);
+
 	GLuint hud;
 
 	void fillLightsources();
 	void buildShaderPrograms(); 
 	void prepareFramebuffers();
 	void setRenderSettings();
+	glm::mat4 glmlookAt2(glm::vec3 pos, glm::vec3 target, glm::vec3 up);
 };
 #endif
 

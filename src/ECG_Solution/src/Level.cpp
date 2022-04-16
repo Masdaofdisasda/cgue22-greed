@@ -447,7 +447,7 @@ void Level::collectDynamicPhysicMeshes(Hierarchy* node, glm::mat4 globalTransfor
 }
 
 /// @brief sets up indirect render calls, binds the data and calls the actual draw routine
-void Level::DrawGraph() {
+void Level::DrawScene() {
 
 	// update view frustum
 	if (!globalState->freezeCull_)
@@ -458,6 +458,7 @@ void Level::DrawGraph() {
 	}
 
 	// flaten tree
+	resetQueue();
 	buildRenderQueue(&sceneGraph, glm::mat4(1));
 
 	// draw mesh
@@ -512,7 +513,30 @@ void Level::DrawGraph() {
 		}
 	}
 
+}
+
+void Level::DrawSceneFromLightSource()
+{
+	boolean cull = globalState->cull_;
+	globalState->cull_ = false;
+
+	// flaten tree
 	resetQueue();
+	buildRenderQueue(&sceneGraph, glm::mat4(1));
+
+	// draw mesh
+	glBindVertexArray(VAO);
+
+	for (size_t i = 0; i < renderQueue.size(); i++)
+	{
+		glNamedBufferSubData(matrixSSBO, 0, sizeof(glm::mat4) * renderQueue[i].modelMatrices.size(), renderQueue[i].modelMatrices.data());
+
+		glNamedBufferSubData(IBO, 0, renderQueue[i].commands.size() * sizeof(DrawElementsIndirectCommand), renderQueue[i].commands.data());
+
+		glMultiDrawArraysIndirect(GL_TRIANGLES, nullptr, renderQueue[i].commands.size(), 0);
+		// todo: glMultiDrawElementsIndirect
+	}
+	globalState->cull_ = cull;
 }
 
 /// @brief recursiveley travels the tree and adds any models it finds, according to its material, to the render queue
@@ -577,6 +601,19 @@ void Level::DrawAABBs(Hierarchy node)
 	{
 		DrawAABBs(node.children[i]);
 	}
+}
+
+
+std::vector<float> Level::getLevelBounds()
+{
+	std::vector<float> b;
+	b.push_back(sceneGraph.nodeBounds.min_.x);
+	b.push_back(sceneGraph.nodeBounds.min_.y);
+	b.push_back(sceneGraph.nodeBounds.min_.z);
+	b.push_back(sceneGraph.nodeBounds.max_.x);
+	b.push_back(sceneGraph.nodeBounds.max_.y);
+	b.push_back(sceneGraph.nodeBounds.max_.z);
+	return b;
 }
 
 /// @brief cleans up all buffers and textures

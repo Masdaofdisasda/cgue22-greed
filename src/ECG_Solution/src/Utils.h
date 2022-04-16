@@ -15,6 +15,8 @@
 #include <glm\glm.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
 
+#ifndef _GLOBAL_STRUCTS_
+#define _GLOBAL_STRUCTS_
 struct GlobalState
 {
 	int width = 800;
@@ -77,19 +79,24 @@ pbr.vert/.frag
 skybox.vert/.frag
 SSAO.frag
 combineSSAO.frag
+depthMap.frag/.vert
+VolumetricLight.frag
 */
 struct PerFrameData
 {
 	glm::vec4 viewPos;		// view/eye vector
 	glm::mat4 ViewProj;		// view projection matrix
 	glm::mat4 lavaLevel;	// lava translation matrix
+	glm::mat4 lightViewProj;// light matrix for shadowmapping
+	glm::mat4 viewInv;
+	glm::mat4 projInv;
 	glm::vec4 bloom;		// x = exposure, y = maxWhite, z = bloomStrength, w = adaptionSpeed
 	glm::vec4 deltaTime;	// x = deltaSeconds, y = ?, z = ?, w = ?
 	glm::vec4 normalMap;	// x = normalMapToogle, y = ?, z = ?, w = ?
 	glm::vec4 ssao1;		// x = scale,, y = bias, z = znear, w = zfar
 	glm::vec4 ssao2;		// x = radius, y = attscale, z = distscale, w = ?
 };
-
+#endif
 
 #define EXIT_WITH_ERROR(err) \
         { \

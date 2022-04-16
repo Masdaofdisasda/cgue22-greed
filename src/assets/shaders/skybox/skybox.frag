@@ -9,6 +9,9 @@ layout(std140, binding = 0) uniform PerFrameData
 	vec4 viewPos;
 	mat4 ViewProj;
 	mat4 lavaLevel;
+	mat4 lightViewProj;
+	mat4 viewInv;
+	mat4 projInv;
 	vec4 bloom;
 	vec4 deltaTime;
     vec4 normalMap;

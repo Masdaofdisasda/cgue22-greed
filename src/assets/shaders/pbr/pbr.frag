@@ -36,6 +36,9 @@ layout(std140, binding = 0) uniform PerFrameData
 	vec4 viewPos;
 	mat4 ViewProj;
 	mat4 lavaLevel;
+	mat4 lightViewProj;
+	mat4 viewInv;
+	mat4 projInv;
 	vec4 bloom;
 	vec4 deltaTime;
     vec4 normalMap;
@@ -254,7 +257,7 @@ vec3 calculateLight() {
 
     // sample both the pre-filter map and the BRDF lut and combine them together as per the Split-Sum approximation to get the IBL specular part.
     const float MAX_REFLECTION_LOD = 4.0;
-    vec3 prefilteredColor = textureLod(prefilterTex, R,  roughness * MAX_REFLECTION_LOD).rgb;    
+    vec3 prefilteredColor = textureLod(prefilterTex, R,  roughness * MAX_REFLECTION_LOD).rgb;
     vec2 brdf  = texture(brdfLutTex, vec2(max(dot(N, V), 0.0), roughness)).rg;
     vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
     
@@ -271,5 +274,4 @@ void main()
     vec3 light = calculateLight();
     // Tonemapping is done in CombineHDR.frag
     out_FragColor = vec4(light, 1.0);
-    //out_FragColor = vec4(N,1.0);
 }

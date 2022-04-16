@@ -4,9 +4,9 @@
 /// @param state is the global state of the program at runtime
 /// @param pfdata is per render cycle static data
 /// @param sources are the light sources of some level
-Renderer::Renderer(GlobalState& state, PerFrameData& pfdata, LightSources& sources)
+Renderer::Renderer(PerFrameData& pfdata, LightSources& sources)
 {
-	globalState = &state; // link global variables
+	assert(globalState != nullptr);
 	perframeData = &pfdata; // link per frame data
 	lights = sources; // set lights and lightcounts for shaders
 	buildShaderPrograms(); // build shader programs
@@ -57,6 +57,8 @@ GlobalState Renderer::loadSettings()
 
 }
 
+std::shared_ptr<GlobalState> Renderer::globalState = std::make_shared<GlobalState>(Renderer::loadSettings());
+
 // TODO
 void Renderer::fillLightsources()
 {
@@ -92,12 +94,13 @@ void Renderer::setRenderSettings()
 		globalState->attScale,
 		globalState->distScale,
 		1.0f);
+
+	
 }
 
 /// @brief compiles all needed shaders for the render loop
 void Renderer::buildShaderPrograms()
 {
-	// build shader programms
 	Shader pbrVert("../../assets/shaders/pbr/pbr.vert");
 	Shader pbrFrag("../../assets/shaders/pbr/pbr.frag", glm::ivec3(lights.directional.size(), lights.point.size(), 0));
 	PBRShader.buildFrom(pbrVert, pbrFrag);
@@ -140,6 +143,13 @@ void Renderer::buildShaderPrograms()
 	Shader renderImgFrag("../../assets/shaders/fullScreenImage/fullScreenImage.frag");
 	renderImage.buildFrom(renderImgVert, renderImgFrag);
 
+	Shader depthVert("../../assets/shaders/lightFX/depthMap.vert");
+	Shader depthFrag("../../assets/shaders/lightFX/depthMap.frag");
+	DepthMap.buildFrom(depthVert, depthFrag);
+
+	//Shader volightFrag("../../assets/shaders/depthMap/VolumetricLight.frag",glm::ivec3(lights.directional.size(), lights.point.size(), 0));
+	//VolumetricLight.buildFrom(fullScreenTriangleVert, volightFrag);
+
 	PBRShader.Use();
 }
 
@@ -166,10 +176,29 @@ void Renderer::Draw(Level* level)
 	glClearNamedFramebufferfv(framebuffer1.getHandle(), GL_COLOR, 0, &(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)[0]));
 	glClearNamedFramebufferfi(framebuffer1.getHandle(), GL_DEPTH_STENCIL, 0, 1.0f, 0);
 
+	glm::mat4 lightView = glmlookAt2(glm::vec3(0, 0, 0), glm::vec3(0.00001, -1, 0), glm::vec3(0, 1, 0));
+	std::vector<float> b = level->getLevelBounds();
+	glm::mat4 lightProj = glm::ortho(b[0], b[3], b[2], b[4], -b[5], -b[2]); // why does -100 fix this?
+	//glm::mat4 lightProj = glm::ortho(-157.1f, 148.7f, -25.0f, 150.0f, 151.0f, -125.0f);
+	perframeData->lightViewProj = lightProj * lightView;
+
 	perframeBuffer.Update(*perframeData);
 
-	// 1. pass - render scene to framebuffer
 	glEnable(GL_DEPTH_TEST);
+#if 0 // under construction
+	if (true) 
+	{
+		depthMap.bind();
+		glClearNamedFramebufferfi(depthMap.getHandle(), GL_DEPTH_STENCIL, 0, 1.0f, 0);
+		DepthMap.Use();
+		level->DrawSceneFromLightSource();
+		depthMap.unbind();
+		glBindTextureUnit(12, depthMap.getTextureDepth().getHandle());
+	}
+
+#endif // constructions ends
+
+	// 1. pass - render scene to framebuffer
 	framebuffer1.bind();
 
 		// draw skybox (background)    
@@ -181,7 +210,7 @@ void Renderer::Draw(Level* level)
 
 		// draw models
 		PBRShader.Use();
-		level->DrawGraph();
+		level->DrawScene();
 
 		// draw lava
 		lavaFloor.Use();
@@ -190,6 +219,7 @@ void Renderer::Draw(Level* level)
 	framebuffer1.unbind(); 
 	glGenerateTextureMipmap(framebuffer1.getTextureColor().getHandle());
 	glTextureParameteri(framebuffer1.getTextureColor().getHandle(), GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	
 
 	glDisable(GL_DEPTH_TEST);
 	
@@ -297,7 +327,7 @@ void Renderer::Draw(Level* level)
 	{
 		glBlitNamedFramebuffer(framebuffer2.getHandle(), 0, 0, 0, globalState->width, globalState->height, 0, 0, globalState->width, globalState->height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 	}
-
+	
 	renderImage.Use();
 	glEnable(GL_BLEND);
 	glBindTextureUnit(9, hud);
@@ -309,6 +339,37 @@ void Renderer::Draw(Level* level)
 void Renderer::swapLuminance()
 {
 	std::swap(luminances[0], luminances[1]);
+}
+
+
+/// @brief an implementation of the glm::lookat() function, because this framework
+/// makes it impossible to use, same code as in the Camera class
+/// @param pos is the position aka eye or view of the camera
+/// @param target to "look at" from the position
+/// @param up is the up vetor of the world
+/// @return a view matrix according to the input vectors
+glm::mat4 Renderer::glmlookAt2(glm::vec3 pos, glm::vec3 target, glm::vec3 up)
+{
+	glm::vec3 zaxis = glm::normalize(pos - target);
+	glm::vec3 xaxis = glm::normalize(glm::cross(glm::normalize(up), zaxis));
+	glm::vec3 yaxis = glm::cross(zaxis, xaxis);
+
+	glm::mat4 translation;
+	translation[3][0] = -pos.x;
+	translation[3][1] = -pos.y;
+	translation[3][2] = -pos.z;
+	glm::mat4 rotation;
+	rotation[0][0] = xaxis.x;
+	rotation[1][0] = xaxis.y;
+	rotation[2][0] = xaxis.z;
+	rotation[0][1] = yaxis.x;
+	rotation[1][1] = yaxis.y;
+	rotation[2][1] = yaxis.z;
+	rotation[0][2] = zaxis.x;
+	rotation[1][2] = zaxis.y;
+	rotation[2][2] = zaxis.z;
+
+	return rotation * translation;
 }
 
 /// @brief frees resources

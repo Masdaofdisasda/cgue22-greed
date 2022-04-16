@@ -80,10 +80,12 @@ public:
 	Level(const char* scenePath, GlobalState& state, PerFrameData& pfdata);
 	~Level() { Release(); }
 
-	void DrawGraph();
+	void DrawScene();
+	void DrawSceneFromLightSource();
 
 	std::vector<PhysicsMesh> getRigid();
 	std::vector<PhysicsMesh> getDynamic();
+	std::vector<float> getLevelBounds();
 	LightSources* getLights() { return &lights; }
 	std::vector <DirectionalLight> getDirectionalLights() { return lights.directional; }
 	std::vector <PositionalLight> getPointLights() { return lights.point; }

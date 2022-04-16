@@ -101,7 +101,7 @@ int main(int argc, char** argv)
 	loadingScreen.DrawProgress();
 
 	printf("Intializing renderer...\n");
-	Renderer renderer(globalState, perframeData, *level.getLights());
+	Renderer renderer(perframeData, *level.getLights());
 	loadingScreen.DrawProgress();
 
 	//Physics Initialization
@@ -192,6 +192,8 @@ int main(int argc, char** argv)
 		lavaPosition.y += deltaSeconds * 1.0f;
 		perframeData.lavaLevel = glm::translate(lavaPosition);
 		perframeData.viewPos = glm::vec4(camera.getPosition(), 1.0f);
+		perframeData.viewInv = glm::inverse(view);
+		perframeData.projInv = glm::inverse(projection);
 		perframeData.deltaTime.x = deltaSeconds;
 
 		// actual draw call
