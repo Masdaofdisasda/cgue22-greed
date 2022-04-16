@@ -46,6 +46,8 @@ struct GlobalState
 	float radius = 0.2f;
 	float attScale = 1.0f;
 	float distScale = 0.5f;
+	//lightFX
+	int shadowRes_ = 4;
 };
 
 struct KeyboardInputState {

@@ -20,7 +20,7 @@ public:
 	void swapLuminance();
 
 	GlobalState static loadSettings();
-	static std::shared_ptr<GlobalState> globalState;
+	static std::shared_ptr<GlobalState> state;
 private:
 	// Render Settings
 	//GlobalState* globalState;
@@ -64,8 +64,8 @@ private:
 	// Framebuffers for HDR/Bloom
 	GLuint luminance1x1;
 	// Framebuffer size cant be changed after init eg. window resizing not correctly working
-	Framebuffer framebuffer1 = Framebuffer(1920, 1080, GL_RGBA16F, GL_DEPTH_COMPONENT24); // main render target for processing
-	Framebuffer framebuffer2 = Framebuffer(1920, 1080, GL_RGBA16F, GL_DEPTH_COMPONENT24); // main render target for processing
+	Framebuffer framebuffer1 = Framebuffer(state->width, state->height, GL_RGBA16F, GL_DEPTH_COMPONENT24); // main render target for processing
+	Framebuffer framebuffer2 = Framebuffer(state->width, state->height, GL_RGBA16F, GL_DEPTH_COMPONENT24); // main render target for processing
 	Framebuffer luminance = Framebuffer(64, 64, GL_RGBA16F, 0);
 	Framebuffer brightPass = Framebuffer(256, 256, GL_RGBA16F, 0);
 	Framebuffer bloom0 = Framebuffer(256, 256, GL_RGBA16F, 0); 
@@ -80,10 +80,10 @@ private:
 	GLuint pattern;
 
 	// Framebuffers for light/shadow
-	Framebuffer depthMap = Framebuffer(2048*4, 2048*4, 0, GL_DEPTH_COMPONENT24);
-	Framebuffer blur0 = Framebuffer(1920/2, 1080/2, GL_RGBA8, 0);
-	Framebuffer blur1 = Framebuffer(1920 / 2, 1080 / 2, GL_RGBA8, 0);
-	Framebuffer depthHalfRes = Framebuffer(1920 / 2, 1080 / 2, 0, GL_DEPTH_COMPONENT24);
+	Framebuffer depthMap = Framebuffer(1024 * state->shadowRes_, 1024 * state->shadowRes_, 0, GL_DEPTH_COMPONENT24);
+	Framebuffer blur0 = Framebuffer(state->width / 2, state->height / 2, GL_RGBA8, 0);
+	Framebuffer blur1 = Framebuffer(state->width / 2, state->height / 2, GL_RGBA8, 0);
+	Framebuffer depthHalfRes = Framebuffer(state->width / 2, state->height / 2, 0, GL_DEPTH_COMPONENT24);
 
 	GLuint hud;
 

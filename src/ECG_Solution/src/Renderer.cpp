@@ -6,7 +6,7 @@
 /// @param sources are the light sources of some level
 Renderer::Renderer(PerFrameData& pfdata, LightSources& sources)
 {
-	assert(globalState != nullptr);
+	assert(Renderer::state != nullptr);
 	perframeData = &pfdata; // link per frame data
 	lights = sources; // set lights and lightcounts for shaders
 	buildShaderPrograms(); // build shader programs
@@ -52,12 +52,13 @@ GlobalState Renderer::loadSettings()
 	state.radius = reader.GetReal("image", "radius", 0.2f);
 	state.attScale = reader.GetReal("image", "attScale", 1.0f);
 	state.distScale = reader.GetReal("image", "distScale", 0.5f);
+	state.shadowRes_ = reader.GetInteger("image", "shadowRes", 4);
 
 	return state;
 
 }
 
-std::shared_ptr<GlobalState> Renderer::globalState = std::make_shared<GlobalState>(Renderer::loadSettings());
+std::shared_ptr<GlobalState> Renderer::state = std::make_shared<GlobalState>(Renderer::loadSettings());
 
 // TODO
 void Renderer::fillLightsources()
@@ -77,22 +78,22 @@ void Renderer::fillLightsources()
 void Renderer::setRenderSettings()
 {
 	perframeData->bloom = glm::vec4(
-		globalState->exposure_,
-		globalState->maxWhite_,
-		globalState->bloomStrength_,
-		globalState->adaptationSpeed_);
+		state->exposure_,
+		state->maxWhite_,
+		state->bloomStrength_,
+		state->adaptationSpeed_);
 
 	perframeData->normalMap = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
 	perframeData->ssao1 = glm::vec4(
-		globalState->scale_,
-		globalState->bias_,
-		globalState->Znear,
-		globalState->Zfar);
+		state->scale_,
+		state->bias_,
+		state->Znear,
+		state->Zfar);
 	perframeData->ssao2 = glm::vec4(
-		globalState->radius,
-		globalState->attScale,
-		globalState->distScale,
+		state->radius,
+		state->attScale,
+		state->distScale,
 		1.0f);
 
 	
@@ -223,7 +224,7 @@ void Renderer::Draw(Level* level)
 
 	glDisable(GL_DEPTH_TEST);
 	
-	if (globalState->ssao_)
+	if (state->ssao_)
 	{
 		// SSAO
 		glClearNamedFramebufferfv(ssao.getHandle(), GL_COLOR, 0, &(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)[0]));
@@ -251,7 +252,7 @@ void Renderer::Draw(Level* level)
 		glClearNamedFramebufferfv(framebuffer2.getHandle(), GL_COLOR, 0, &(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)[0]));
 
 		// 3. Combine SSAO and the rendered scene
-		glViewport(0, 0, globalState->width, globalState->height);
+		glViewport(0, 0, state->width, state->height);
 
 
 		framebuffer2.bind();
@@ -263,12 +264,12 @@ void Renderer::Draw(Level* level)
 	}
 	else
 	{
-		glBlitNamedFramebuffer(framebuffer1.getHandle(), framebuffer2.getHandle(), 0, 0, globalState->width, globalState->height,
-			0, 0, globalState->width, globalState->height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+		glBlitNamedFramebuffer(framebuffer1.getHandle(), framebuffer2.getHandle(), 0, 0, state->width, state->height,
+			0, 0, state->width, state->height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 	}
 
 
-	if (globalState->bloom_)
+	if (state->bloom_)
 	{
 
 		// 2. pass - downscale for addiational blur and convert framebuffer to luminance
@@ -314,7 +315,7 @@ void Renderer::Draw(Level* level)
 		}
 
 		// 6. pass - combine framebuffer with blurred image 
-		glViewport(0, 0, globalState->width, globalState->height);
+		glViewport(0, 0, state->width, state->height);
 
 
 		CombineHDR.Use();
@@ -325,7 +326,8 @@ void Renderer::Draw(Level* level)
 	}
 	else
 	{
-		glBlitNamedFramebuffer(framebuffer2.getHandle(), 0, 0, 0, globalState->width, globalState->height, 0, 0, globalState->width, globalState->height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+		glBlitNamedFramebuffer(framebuffer2.getHandle(), 0, 0, 0, state->width, state->height, 0, 0, 
+			state->width, state->height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 	}
 	
 	renderImage.Use();
@@ -375,7 +377,6 @@ glm::mat4 Renderer::glmlookAt2(glm::vec3 pos, glm::vec3 target, glm::vec3 up)
 /// @brief frees resources
 Renderer::~Renderer()
 {
-	globalState = nullptr;
 	perframeData = nullptr;
 	glDeleteTextures(1, &luminance1x1);
 	glDeleteTextures(1, &pattern);
