@@ -148,8 +148,8 @@ void Renderer::buildShaderPrograms()
 	Shader depthFrag("../../assets/shaders/lightFX/depthMap.frag");
 	DepthMap.buildFrom(depthVert, depthFrag);
 
-	//Shader volightFrag("../../assets/shaders/depthMap/VolumetricLight.frag",glm::ivec3(lights.directional.size(), lights.point.size(), 0));
-	//VolumetricLight.buildFrom(fullScreenTriangleVert, volightFrag);
+	Shader volightFrag("../../assets/shaders/lightFX/VolumetricLight.frag", glm::ivec3(lights.directional.size(), lights.point.size(), 0));
+	VolumetricLight.buildFrom(fullScreenTriangleVert, volightFrag);
 
 	PBRShader.Use();
 }
@@ -186,7 +186,7 @@ void Renderer::Draw(Level* level)
 	perframeBuffer.Update(*perframeData);
 
 	glEnable(GL_DEPTH_TEST);
-#if 0 // under construction
+#if 1 // under construction
 	if (true) 
 	{
 		depthMap.bind();

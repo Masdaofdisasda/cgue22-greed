@@ -32,7 +32,6 @@ struct DirectionalLight
 layout (std140, binding = 1) uniform dLightUBlock {
  DirectionalLight dLights [ dMAXLIGHTS ]; // xMAXLIGHTS gets replaced at runtime
 };
-uniform uint dLightCount ;
 
 struct PositionalLight
 {
@@ -43,7 +42,6 @@ struct PositionalLight
 layout (std140, binding = 2) uniform pLightUBlock {
  PositionalLight pLights [ pMAXLIGHTS ];
 };
-uniform uint pLightCount ;
 
 // https://github.com/metzzo/ezg17-transition
 
@@ -57,6 +55,7 @@ float dither_pattern[16] = float[16] (
 float bias = 0.1;
 float tau = 20000.0;
 float phi = 0.00001;
+int numSamples = 64;
 #define PI (0.31830988618379067153776752674503)
 
 vec3 world_pos_from_depth(float depth) {
@@ -117,7 +116,7 @@ float sample_fog(vec3 pos) {
 float volumetric_lighting_directional(vec3 frag_pos, DirectionalLight light) {
 
 	float dither_value = dither_pattern[ (int(gl_FragCoord.x) % 4)* 4 + (int(gl_FragCoord.y) % 4) ];
-	int num_samples = 10;
+	int num_samples = numSamples;
 	
 	vec4 end_pos_worldspace  = viewPos;
 	vec4 start_pos_worldspace = vec4(frag_pos, 1.0);
