@@ -48,13 +48,15 @@ private:
 	Program CombineHDR;		// combines blur with render fbo, tone mapping
 	Program lightAdapt;		// calculates luminance changes
 	// SSAO
-	Program SSAO;
-	Program CombineSSAO;
+	Program SSAO;			// calculates occlusion
+	Program CombineSSAO;	// combines ssao with render fbo
 	// Volumetric Light
-	Program DepthMap;
-	Program VolumetricLight;
-	Program downsampleVL;
-	Program upsampleVL;
+	Program DepthMap;		// samples depth from a directional light
+	Program VolumetricLight;// calculate light with raymarching
+	Program downsampleVL;	// downsamples depth buffer
+	Program upsampleVL;		// upsamples depth buffer
+	Program blurXVL;
+	Program blurYVL;
 	// HUD
 	Program renderImage;
 
@@ -68,6 +70,7 @@ private:
 	// Framebuffer size cant be changed after init eg. window resizing not correctly working
 	Framebuffer framebuffer1 = Framebuffer(state->width, state->height, GL_RGBA16F, GL_DEPTH_COMPONENT24); // main render target for processing
 	Framebuffer framebuffer2 = Framebuffer(state->width, state->height, GL_RGBA16F, GL_DEPTH_COMPONENT24); // main render target for processing
+	Framebuffer framebuffer3 = Framebuffer(state->width, state->height, GL_RGBA16F, GL_DEPTH_COMPONENT24); // main render target for processing
 	Framebuffer luminance = Framebuffer(64, 64, GL_RGBA16F, 0);
 	Framebuffer brightPass = Framebuffer(256, 256, GL_RGBA16F, 0);
 	Framebuffer bloom0 = Framebuffer(256, 256, GL_RGBA16F, 0); 

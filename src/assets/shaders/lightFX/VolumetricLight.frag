@@ -43,7 +43,7 @@ layout (std140, binding = 2) uniform pLightUBlock {
  PositionalLight pLights [ pMAXLIGHTS ];
 };
 
-// https://github.com/metzzo/ezg17-transition
+// code from: https://github.com/metzzo/ezg17-transition
 
 float time = deltaTime.x;
 float dither_pattern[16] = float[16] (

@@ -93,8 +93,8 @@ int main(int argc, char** argv)
 	printf("Initializing scene and render loop...\n");
 
 	printf("Intializing audio...\n"); 
-	//irrklang::ISoundEngine* engine = irrklang::createIrrKlangDevice();
-	//irrklang::ISound* snd = engine->play2D("../../assets/media/EQ07 Prc Fantasy Perc 060.wav", true);
+	irrklang::ISoundEngine* engine = irrklang::createIrrKlangDevice();
+	irrklang::ISound* snd = engine->play2D("../../assets/media/EQ07 Prc Fantasy Perc 060.wav", true);
 
 	printf("Loading level...\n");
 	Level level("../../assets/demo.fbx", state, perframeData);
@@ -144,8 +144,8 @@ int main(int argc, char** argv)
 	glLineWidth(2.0f);
 	glEnable(GL_CULL_FACE);
 
-	//engine->stopAllSounds();
-	//snd = engine->play2D("../../assets/media/EQ01 Gml Belalua Game 070 Fm.wav", true);
+	engine->stopAllSounds();
+	snd = engine->play2D("../../assets/media/EQ01 Gml Belalua Game 070 Fm.wav", true);
 
 	double timeStamp = glfwGetTime();
 	float deltaSeconds = 0.0f;

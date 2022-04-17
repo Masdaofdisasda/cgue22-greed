@@ -24,10 +24,17 @@ Renderer::Renderer(PerFrameData& pfdata, LightSources& sources)
 	fontRenderer.init("../../assets/fonts/Quasimoda/Quasimoda-Regular.otf", state->width, state->height);
 }
 
+std::shared_ptr<GlobalState> Renderer::getState()
+{
+	return state;
+}
 /// @brief loads settings from settings.ini, called in main
 /// @return a globalstate from settings.ini
 GlobalState Renderer::loadSettings()
 {
+	if (state == nullptr)
+	{
+
 	GlobalState state;
 	std::cout << "reading setting from settings.ini..." << std::endl;
 	INIReader reader("../../assets/settings.ini");
@@ -56,13 +63,10 @@ GlobalState Renderer::loadSettings()
 	state.shadowRes_ = reader.GetInteger("image", "shadowRes", 4);
 
 	return state;
+	}
 
 }
 
-std::shared_ptr<GlobalState> Renderer::getState()
-{
-	return state;
-}
 
 std::shared_ptr<GlobalState> Renderer::state = std::make_shared<GlobalState>(Renderer::loadSettings());
 
@@ -157,6 +161,14 @@ void Renderer::buildShaderPrograms()
 	Shader volightFrag("../../assets/shaders/lightFX/VolumetricLight.frag", glm::ivec3(lights.directional.size(), lights.point.size(), 0));
 	VolumetricLight.buildFrom(fullScreenTriangleVert, volightFrag);
 
+	Shader downVlVert("../../assets/shaders/lightFX/downVL.vert");
+	Shader downVlFrag("../../assets/shaders/lightFX/downVL.frag");
+	downsampleVL.buildFrom(downVlVert, downVlFrag);
+
+	Shader upVlVert("../../assets/shaders/lightFX/upVL.vert");
+	Shader upVlFrag("../../assets/shaders/lightFX/upVL.frag");
+	upsampleVL.buildFrom(upVlVert, upVlFrag);
+
 	PBRShader.Use();
 }
 
@@ -194,17 +206,13 @@ void Renderer::Draw(Level* level)
 	glEnable(GL_DEPTH_TEST);
 
 	// 1 - depth mapping
-#if 0 // under construction
-	if (true) 
-	{
-		depthMap.bind();
+#if 1 // under construction
+	depthMap.bind();
 		glClearNamedFramebufferfi(depthMap.getHandle(), GL_DEPTH_STENCIL, 0, 1.0f, 0);
 		DepthMap.Use();
 		level->DrawSceneFromLightSource();
-		depthMap.unbind();
-		glBindTextureUnit(12, depthMap.getTextureDepth().getHandle());
-	}
-
+	depthMap.unbind();
+	glBindTextureUnit(12, depthMap.getTextureDepth().getHandle());
 #endif // constructions ends
 
 	// 2 - render scene to framebuffer
@@ -228,9 +236,59 @@ void Renderer::Draw(Level* level)
 	framebuffer1.unbind(); 
 	glGenerateTextureMipmap(framebuffer1.getTextureColor().getHandle());
 	glTextureParameteri(framebuffer1.getTextureColor().getHandle(), GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	
 
 	glDisable(GL_DEPTH_TEST);
+
+	// Volumetric Light
+	// https://github.com/metzzo/ezg17-transition
+	if (false)
+	{
+		/*
+		// down sample scene using depth aware downsampling
+		downsampleVL.Use();
+		depthHalfRes.bind();
+		glClearNamedFramebufferfi(depthHalfRes.getHandle(), GL_DEPTH_STENCIL, 0, 1.0f, 0);
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+		depthHalfRes.unbind();
+		glBindTextureUnit(12, depthHalfRes.getTextureDepth().getHandle());
+		*/
+		// calculate volumetric lighting
+		VolumetricLight.Use();
+		blur0.bind();
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+		blur0.unbind();
+		glBindTextureUnit(12, blur0.getTextureColor().getHandle());
+
+
+		/*
+		// blur volumetric lighting vertically
+		// Blur X
+		blur1.bind();
+		BlurX.Use();
+		glBindTextureUnit(12, blur0.getTextureColor().getHandle());
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+		blur1.unbind();
+
+		// blur volumetric lighting horizontally
+		// Blur Y
+		blur0.bind();
+		BlurY.Use();
+		glBindTextureUnit(12, blur1.getTextureColor().getHandle());
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+		blur0.unbind();
+		glBindTextureUnit(12, blur0.getTextureColor().getHandle());
+		/*
+		// get volumetric lighting to full resolution using depth aware upsampling
+		upsampleVL.Use();
+		glBindTextureUnit(9, framebuffer1.getTextureColor().getHandle());
+		glBindTextureUnit(12, blur0.getTextureColor().getHandle());
+		framebuffer3.bind();
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+		framebuffer3.unbind();
+		glBindTextureUnit(12, framebuffer3.getTextureColor().getHandle());
+		*/
+	}
+
 	
 	// 3 - Apply SSAO
 	if (state->ssao_)
@@ -238,10 +296,10 @@ void Renderer::Draw(Level* level)
 		//3.1 - render scene with ssao pattern
 		glClearNamedFramebufferfv(ssao.getHandle(), GL_COLOR, 0, &(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)[0]));
 		ssao.bind();
-		SSAO.Use();
-		glBindTextureUnit(9, framebuffer1.getTextureDepth().getHandle());
-		glBindTextureUnit(10, pattern);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+			SSAO.Use();
+			glBindTextureUnit(9, framebuffer1.getTextureDepth().getHandle());
+			glBindTextureUnit(10, pattern);
+			glDrawArrays(GL_TRIANGLES, 0, 3);
 		ssao.unbind();
 
 		// 3.2 - blur SSAO image
