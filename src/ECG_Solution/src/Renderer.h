@@ -7,6 +7,7 @@
 #include "UBO.h"
 #include "Framebuffer.h"
 #include "Level.h"
+#include "FontRenderer.h"
 
 #ifndef _RENDERER_
 #define _RENDERER_
@@ -20,12 +21,14 @@ public:
 	void swapLuminance();
 
 	GlobalState static loadSettings();
+	std::shared_ptr<GlobalState> static getState();
 	static std::shared_ptr<GlobalState> state;
 private:
 	// Render Settings
 	PerFrameData* perframeData;	// viewproj, viewpos,...
 	UBO perframeBuffer;	
-	UBO perframesetBuffer;
+
+	FontRenderer fontRenderer;
 
 	// Illumination
 	LightSources lights;

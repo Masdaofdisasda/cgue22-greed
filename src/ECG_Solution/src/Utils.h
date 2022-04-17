@@ -48,6 +48,9 @@ struct GlobalState
 	float distScale = 0.5f;
 	//lightFX
 	int shadowRes_ = 4;
+	//game logic
+	bool won_ = false;
+	bool lost_ = false;
 };
 
 struct KeyboardInputState {

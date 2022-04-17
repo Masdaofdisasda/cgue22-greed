@@ -16,11 +16,12 @@ Renderer::Renderer(PerFrameData& pfdata, LightSources& sources)
 
 	prepareFramebuffers(); // for hdr rendering and tonemapping
 	std::cout << "load enviroment map and process it.." << std::endl;
-	IBL.loadHDR("../../assets/textures/cubemap/cellar.pic");
+	IBL.loadHDR("../../assets/textures/cubemap/env.hdr");
 	std::cout << "load skybox and process it.." << std::endl;
 	skyTex.loadHDR("../../assets/textures/cubemap/beach.hdr");
 	glCreateVertexArrays(1, &emptyVAO);
 	PBRShader.uploadIBL(IBL.getIrradianceID(),IBL.getPreFilterID(), IBL.getBdrfLutID(), skyTex.getEnvironment());
+	fontRenderer.init("../../assets/fonts/Quasimoda/Quasimoda-Regular.otf", state->width, state->height);
 }
 
 /// @brief loads settings from settings.ini, called in main
@@ -36,10 +37,10 @@ GlobalState Renderer::loadSettings()
 	state.height = reader.GetInteger("window", "height", 800);
 	state.refresh_rate = reader.GetInteger("window", "refresh_rate", 60);
 	state.fullscreen_ = reader.GetBoolean("window", "fullscreen", false);
-	state.window_title = reader.Get("window", "title", "Greed");
+	state.window_title = "Greed";
 	state.fov = reader.GetReal("camera", "fov", 60.0f);
-	state.Znear = reader.GetReal("camera", "near", 0.1f);
-	state.Zfar = reader.GetReal("camera", "far", 1000.0f);
+	state.Znear = 0.1f;
+	state.Zfar = 1000.0f;
 
 	state.bloom_ = reader.GetBoolean("image", "bloom", true);
 	state.exposure_ = reader.GetReal("image", "exposure", 0.9f);
@@ -56,6 +57,11 @@ GlobalState Renderer::loadSettings()
 
 	return state;
 
+}
+
+std::shared_ptr<GlobalState> Renderer::getState()
+{
+	return state;
 }
 
 std::shared_ptr<GlobalState> Renderer::state = std::make_shared<GlobalState>(Renderer::loadSettings());
@@ -141,7 +147,7 @@ void Renderer::buildShaderPrograms()
 	CombineSSAO.buildFrom(fullScreenTriangleVert, combineSSAOFrag);
 
 	Shader renderImgVert("../../assets/shaders/fullScreenTriangle.vert");
-	Shader renderImgFrag("../../assets/shaders/fullScreenImage/fullScreenImage.frag");
+	Shader renderImgFrag("../../assets/shaders/HUD/fullScreenImage.frag");
 	renderImage.buildFrom(renderImgVert, renderImgFrag);
 
 	Shader depthVert("../../assets/shaders/lightFX/depthMap.vert");
@@ -186,7 +192,9 @@ void Renderer::Draw(Level* level)
 	perframeBuffer.Update(*perframeData);
 
 	glEnable(GL_DEPTH_TEST);
-#if 1 // under construction
+
+	// 1 - depth mapping
+#if 0 // under construction
 	if (true) 
 	{
 		depthMap.bind();
@@ -199,21 +207,21 @@ void Renderer::Draw(Level* level)
 
 #endif // constructions ends
 
-	// 1. pass - render scene to framebuffer
+	// 2 - render scene to framebuffer
 	framebuffer1.bind();
 
-		// draw skybox (background)    
+		// 2.1 - draw skybox (background)    
 		skyboxShader.Use();
 		glDepthMask(false);
 		glBindVertexArray(emptyVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 		glDepthMask(true);
 
-		// draw models
+		// 2.2 - draw scene
 		PBRShader.Use();
 		level->DrawScene();
 
-		// draw lava
+		// 2.3 - draw lava
 		lavaFloor.Use();
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 
@@ -224,9 +232,10 @@ void Renderer::Draw(Level* level)
 
 	glDisable(GL_DEPTH_TEST);
 	
+	// 3 - Apply SSAO
 	if (state->ssao_)
 	{
-		// SSAO
+		//3.1 - render scene with ssao pattern
 		glClearNamedFramebufferfv(ssao.getHandle(), GL_COLOR, 0, &(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)[0]));
 		ssao.bind();
 		SSAO.Use();
@@ -235,7 +244,7 @@ void Renderer::Draw(Level* level)
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 		ssao.unbind();
 
-		// 2.1 Blur SSAO
+		// 3.2 - blur SSAO image
 		// Blur X
 		blur.bind();
 			BlurX.Use();
@@ -251,9 +260,8 @@ void Renderer::Draw(Level* level)
 
 		glClearNamedFramebufferfv(framebuffer2.getHandle(), GL_COLOR, 0, &(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)[0]));
 
-		// 3. Combine SSAO and the rendered scene
+		// 3.3 - combine SSAO with rendered scene
 		glViewport(0, 0, state->width, state->height);
-
 
 		framebuffer2.bind();
 			CombineSSAO.Use();
@@ -268,11 +276,11 @@ void Renderer::Draw(Level* level)
 			0, 0, state->width, state->height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 	}
 
-
+	// 4 - Apply Bloom
 	if (state->bloom_)
 	{
 
-		// 2. pass - downscale for addiational blur and convert framebuffer to luminance
+		// 4.1 - downscale for addiational blur and convert framebuffer to luminance
 		luminance.bind();
 			ToLuminance.Use();
 			glBindTextureUnit(9, framebuffer2.getTextureColor().getHandle());
@@ -280,7 +288,7 @@ void Renderer::Draw(Level* level)
 		luminance.unbind();
 		glGenerateTextureMipmap(luminance.getTextureColor().getHandle());
 
-		// 3. pass - compute light adaption (OpenGL memory model requires these memory barriers: https://www.khronos.org/opengl/wiki/Memory_Model )
+		// 4.2 - compute light adaption (OpenGL memory model requires these memory barriers: https://www.khronos.org/opengl/wiki/Memory_Model )
 		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 		lightAdapt.Use();
 		glBindImageTexture(0, luminances[0]->getHandle(), 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA16F);
@@ -289,7 +297,7 @@ void Renderer::Draw(Level* level)
 		glDispatchCompute(1, 1, 1);
 		glMemoryBarrier(GL_TEXTURE_FETCH_BARRIER_BIT);
 
-		// 4. pass - filter bright spots from framebuffer
+		// 4.3 - filter bright spots from framebuffer
 		brightPass.bind();
 			BrightPass.Use();
 			glBindTextureUnit(9, framebuffer2.getTextureColor().getHandle());
@@ -297,7 +305,7 @@ void Renderer::Draw(Level* level)
 		brightPass.unbind();
 		glBlitNamedFramebuffer(brightPass.getHandle(), bloom1.getHandle(), 0, 0, 256, 256, 0, 0, 256, 256, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
-		// 5. pass - blur bright spots using ping pong buffers and a seperate blur in x and y direction
+		// 4.4 - blur bright spots using ping pong buffers and a seperate blur in x and y direction
 		for (int i = 0; i < 4; i++)
 		{
 			// blur x
@@ -314,9 +322,8 @@ void Renderer::Draw(Level* level)
 			bloom1.unbind();
 		}
 
-		// 6. pass - combine framebuffer with blurred image 
+		// 4.5 - combine framebuffer with blurred image 
 		glViewport(0, 0, state->width, state->height);
-
 
 		CombineHDR.Use();
 		glBindTextureUnit(9, framebuffer2.getTextureColor().getHandle());
@@ -330,10 +337,22 @@ void Renderer::Draw(Level* level)
 			state->width, state->height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 	}
 	
+	// 5 - render HUD
 	renderImage.Use();
 	glEnable(GL_BLEND);
 	glBindTextureUnit(9, hud);
 	glDrawArrays(GL_TRIANGLES, 0, 3);
+	fontRenderer.print("PRE ALPHA FOOTAGE", state->width * 0.82f, state->height * 0.08f, .5f, glm::vec3(.5f, .5f, .5f));
+	fontRenderer.print("all content is subject to change", state->width * 0.78f, state->height * 0.05f, .5f, glm::vec3(.5f, .5f, .5f));
+
+	if (state->won_)
+	{
+		fontRenderer.print("You made it!", state->width * 0.36f, state->height * 0.48f, 2.0f, glm::vec3(.85f, .68f, .19f));
+	}
+	if (state->lost_)
+	{
+		fontRenderer.print("Smells like bacon", state->width * 0.33f, state->height * 0.48f, 2.0f, glm::vec3(.0f, .0f, .0f));
+	}
 	glDisable(GL_BLEND);
 }
 

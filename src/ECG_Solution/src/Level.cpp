@@ -3,7 +3,7 @@
 
 /// @brief loads an fbx file from the given path and converts it to useable data structures
 /// @param scenePath location of the fbx file, expected to be in "assets"
-Level::Level(const char* scenePath, GlobalState& state, PerFrameData& pfdata) {
+Level::Level(const char* scenePath, std::shared_ptr<GlobalState> state, PerFrameData& pfdata) {
 
 	// 1. load fbx file into assimps internal data structures and apply various preprocessing to the data
 	std::cout << "load scene... (this could take a while)" << std::endl;
@@ -50,7 +50,7 @@ Level::Level(const char* scenePath, GlobalState& state, PerFrameData& pfdata) {
 
 	// 9 finalize
 	loadShaders();
-	globalState = &state;
+	this->state = state;
 	perframeData = &pfdata;
 
 	std::cout << std::endl;
@@ -450,7 +450,7 @@ void Level::collectDynamicPhysicMeshes(Hierarchy* node, glm::mat4 globalTransfor
 void Level::DrawScene() {
 
 	// update view frustum
-	if (!globalState->freezeCull_)
+	if (!state->freezeCull_)
 	{
 		cullViewProj = perframeData->ViewProj;
 		FrustumCulling::getFrustumPlanes(cullViewProj, frustumPlanes);
@@ -477,7 +477,7 @@ void Level::DrawScene() {
 		// todo: glMultiDrawElementsIndirect
 	}
 
-	if (globalState->cullDebug_) // bounding box & frustum culling debug view
+	if (state->cullDebug_) // bounding box & frustum culling debug view
 	{
 		glDisable(GL_CULL_FACE);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -501,7 +501,7 @@ void Level::DrawScene() {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		
 		// output frustum culling information for debugging every 2 seconds
-		if (globalState->cull_)
+		if (state->cull_)
 		{
 			secondsSinceFlush += perframeData->deltaTime.x;
 			if (secondsSinceFlush >= 2)
@@ -517,8 +517,8 @@ void Level::DrawScene() {
 
 void Level::DrawSceneFromLightSource()
 {
-	boolean cull = globalState->cull_;
-	globalState->cull_ = false;
+	boolean cull = state->cull_;
+	state->cull_ = false;
 
 	// flaten tree
 	resetQueue();
@@ -536,7 +536,7 @@ void Level::DrawSceneFromLightSource()
 		glMultiDrawArraysIndirect(GL_TRIANGLES, nullptr, renderQueue[i].commands.size(), 0);
 		// todo: glMultiDrawElementsIndirect
 	}
-	globalState->cull_ = cull;
+	state->cull_ = cull;
 }
 
 /// @brief recursiveley travels the tree and adds any models it finds, according to its material, to the render queue
@@ -544,7 +544,7 @@ void Level::DrawSceneFromLightSource()
 /// @param globalTransform the summed tranformation matrices of all parent nodes
 void Level::buildRenderQueue(const Hierarchy* node, glm::mat4 globalTransform) {
 
-	if (globalState->cull_)
+	if (state->cull_)
 	{
 		if (!FrustumCulling::isBoxInFrustum(frustumPlanes, frustumCorners, node->nodeBounds))
 			return;

@@ -53,7 +53,7 @@ private:
 
 	LightSources lights;
 
-	GlobalState* globalState;
+	std::shared_ptr<GlobalState> state;
 	PerFrameData* perframeData;
 
 	void loadMeshes(const aiScene* scene);
@@ -77,7 +77,7 @@ private:
 	void Release();
 	
 public:
-	Level(const char* scenePath, GlobalState& state, PerFrameData& pfdata);
+	Level(const char* scenePath, std::shared_ptr<GlobalState> state, PerFrameData& pfdata);
 	~Level() { Release(); }
 
 	void DrawScene();

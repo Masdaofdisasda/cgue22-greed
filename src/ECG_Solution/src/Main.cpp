@@ -28,7 +28,7 @@
 // Global variables
 /* --------------------------------------------- */
 
-GlobalState globalState;
+std::shared_ptr<GlobalState> state;
 KeyboardInputState keyboardInput;
 PerFrameData perframeData;
 MouseState mouseState;
@@ -58,7 +58,7 @@ int main(int argc, char** argv)
 	assert(file.is_open());
 	file.close();
 
-	globalState = Renderer::loadSettings();
+	state = Renderer::getState();
 
 	/* --------------------------------------------- */
 	// Init framework
@@ -66,7 +66,7 @@ int main(int argc, char** argv)
 
 	// setup GLFW window
 	printf("Initializing GLFW...");
-	GLFWApp GLFWapp(globalState);
+	GLFWApp GLFWapp(state);
 	registerInputCallbacks(GLFWapp);
 
 	// load all OpenGL function pointers with GLEW
@@ -83,7 +83,7 @@ int main(int argc, char** argv)
 	glEnable(GL_DEBUG_OUTPUT);
 	glDebugMessageCallback(Debugger::DebugCallbackDefault, 0);
 
-	LoadingScreen loadingScreen(&GLFWapp, globalState.width, globalState.height);
+	LoadingScreen loadingScreen(&GLFWapp, state->width, state->height);
 	loadingScreen.DrawProgress();
 
 	/* --------------------------------------------- */
@@ -93,11 +93,11 @@ int main(int argc, char** argv)
 	printf("Initializing scene and render loop...\n");
 
 	printf("Intializing audio...\n"); 
-	irrklang::ISoundEngine* engine = irrklang::createIrrKlangDevice();
-	irrklang::ISound* snd = engine->play2D("../../assets/media/EQ07 Prc Fantasy Perc 060.wav", true);
+	//irrklang::ISoundEngine* engine = irrklang::createIrrKlangDevice();
+	//irrklang::ISound* snd = engine->play2D("../../assets/media/EQ07 Prc Fantasy Perc 060.wav", true);
 
 	printf("Loading level...\n");
-	Level level("../../assets/demo.fbx", globalState, perframeData);
+	Level level("../../assets/demo.fbx", state, perframeData);
 	loadingScreen.DrawProgress();
 
 	printf("Intializing renderer...\n");
@@ -138,14 +138,14 @@ int main(int argc, char** argv)
 
 	glm::vec3 lavaPosition = glm::vec3(0.0f, -50.0f, 0.0f); // TODO
 
-	glViewport(0, 0, globalState.width, globalState.height);
+	glViewport(0, 0, state->width, state->height);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glLineWidth(2.0f);
 	glEnable(GL_CULL_FACE);
 
-	engine->stopAllSounds();
-	snd = engine->play2D("../../assets/media/EQ01 Gml Belalua Game 070 Fm.wav", true);
+	//engine->stopAllSounds();
+	//snd = engine->play2D("../../assets/media/EQ01 Gml Belalua Game 070 Fm.wav", true);
 
 	double timeStamp = glfwGetTime();
 	float deltaSeconds = 0.0f;
@@ -164,15 +164,15 @@ int main(int argc, char** argv)
 		const double newTimeStamp = glfwGetTime();
 		deltaSeconds = static_cast<float>(newTimeStamp - timeStamp);
 		timeStamp = newTimeStamp;
-		std::string title = globalState.window_title + " " + fpsCounter.getFPS() + " fps";
+		std::string title = state->window_title + " " + fpsCounter.getFPS() + " fps";
 		glfwSetWindowTitle(GLFWapp.getWindow(), title.c_str());
 
 		// variable window size
-		glViewport(0, 0, globalState.width, globalState.height);
+		glViewport(0, 0, state->width, state->height);
 		GLFWapp.updateWindow();
 
 		// movement
-		if (globalState.usingDebugCamera_)
+		if (state->usingDebugCamera_)
 			floatingPositioner.setMovementState(keyboardInput);
 		else
 			player.move(keyboardInput);
@@ -184,9 +184,9 @@ int main(int argc, char** argv)
 		player.updateCameraPosition();
 		cameraPositioner->update(deltaSeconds, mouseState.pos, mouseState.pressedLeft);
 
-		// calculate and set per Frame matrices
-		const float ratio = globalState.width / (float)globalState.height;
-		const glm::mat4 projection = glm::perspective(glm::radians(globalState.fov), ratio, globalState.Znear, globalState.Zfar);
+		// calculate and set per frame matrices
+		const float ratio = state->width / (float)state->height;
+		const glm::mat4 projection = glm::perspective(glm::radians(state->fov), ratio, state->Znear, state->Zfar);
 		const glm::mat4 view = camera.getViewMatrix();
 		perframeData.ViewProj = projection * view;
 		lavaPosition.y += deltaSeconds * 1.0f;
@@ -195,10 +195,19 @@ int main(int argc, char** argv)
 		perframeData.viewInv = glm::inverse(view);
 		perframeData.projInv = glm::inverse(projection);
 		perframeData.deltaTime.x = deltaSeconds;
+		// simple game logic WIP
+		if (perframeData.viewPos.y > 127.0f)
+		{
+			state->won_ = true;
+		}
+		if (perframeData.viewPos.y < lavaPosition.y)
+		{
+			state->lost_ = true;
+		}
 
 		// actual draw call
 		renderer.Draw(&level);
-		if (globalState.debugDrawPhysics_)
+		if (state->debugDrawPhysics_)
 			physics.debugDraw();
 
 		// swap buffers
@@ -250,32 +259,32 @@ void registerInputCallbacks(GLFWApp& app) {
 				glfwSetWindowShouldClose(window, GLFW_TRUE);
 			if (key == GLFW_KEY_F1 && action == GLFW_PRESS)
 			{
-				if (globalState.fullscreen_)
-					printf("Fullscreen off");
+				if (state->fullscreen_)
+					printf("Fullscreen off\n");
 				else
-					printf("Fullscreen on");
+					printf("Fullscreen on\n");
 
-				globalState.fullscreen_ = !globalState.fullscreen_;
+				state->fullscreen_ = !state->fullscreen_;
 			}
 			if (key == GLFW_KEY_F2 && action == GLFW_PRESS)
-				globalState.cullDebug_ = !globalState.cullDebug_;
+				state->cullDebug_ = !state->cullDebug_;
 			if (key == GLFW_KEY_F3 && action == GLFW_PRESS)
 			{
-				if (globalState.bloom_)
-					printf("Bloom off");
+				if (state->bloom_)
+					printf("Bloom off\n");
 				else
-					printf("Bloom on");
+					printf("Bloom on\n");
 
-				globalState.bloom_ = !globalState.bloom_;
+				state->bloom_ = !state->bloom_;
 			}
 			if (key == GLFW_KEY_F4 && action == GLFW_PRESS)
 			{
-				if (globalState.debugDrawPhysics_)
+				if (state->debugDrawPhysics_)
 					printf("Physics debugging off");
 				else
 					printf("Physics debugging on");
 
-				globalState.debugDrawPhysics_ = !globalState.debugDrawPhysics_;
+				state->debugDrawPhysics_ = !state->debugDrawPhysics_;
 			}
 			if (key == GLFW_KEY_F5 && action == GLFW_PRESS)
 			{
@@ -287,55 +296,55 @@ void registerInputCallbacks(GLFWApp& app) {
 				perframeData.normalMap.x *= -1.0f;
 			}
 			if (key == GLFW_KEY_F6 && action == GLFW_PRESS) {
-				if (globalState.usingDebugCamera_) {
+				if (state->usingDebugCamera_) {
 					printf("Switch camera to player");
 					cameraPositioner = &playerCameraPositioner;
-					globalState.debugDrawPhysics_ = false;
+					state->debugDrawPhysics_ = false;
 					glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 				}
 				else {
 					printf("Switch camera to debug camera");
 					cameraPositioner = &floatingPositioner;
-					globalState.debugDrawPhysics_ = true;
+					state->debugDrawPhysics_ = true;
 					glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 				}
-				globalState.usingDebugCamera_ = !globalState.usingDebugCamera_;
+				state->usingDebugCamera_ = !state->usingDebugCamera_;
 				camera.setPositioner(cameraPositioner);
 			}
 			if (key == GLFW_KEY_F7 && action == GLFW_PRESS)
 			{
-				if (globalState.freezeCull_)
+				if (state->freezeCull_)
 				{
 					printf("resume frustum culling\n");
-					globalState.freezeCull_ = false;
+					state->freezeCull_ = false;
 				}
 				else {
 					printf("freeze frustum culling\n");
-					globalState.freezeCull_ = true;
+					state->freezeCull_ = true;
 				}
 			}
 			if (key == GLFW_KEY_F8 && action == GLFW_PRESS)
 			{
-				if (globalState.cull_)
+				if (state->cull_)
 				{
 					printf("frustum culling off\n");
-					globalState.cull_ = false;
+					state->cull_ = false;
 				}
 				else {
 					printf("frustum culling on\n");
-					globalState.cull_ = true;
+					state->cull_ = true;
 				}
 			}
 			if (key == GLFW_KEY_F9 && action == GLFW_PRESS)
 			{
-				if (globalState.ssao_)
+				if (state->ssao_)
 				{
 					printf("SSAO off\n");
-					globalState.ssao_ = false;
+					state->ssao_ = false;
 				}
 				else {
 					printf("SSAO on\n");
-					globalState.ssao_ = true;
+					state->ssao_ = true;
 				}
 			}
 		});
