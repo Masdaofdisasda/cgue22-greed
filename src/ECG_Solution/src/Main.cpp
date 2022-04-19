@@ -181,7 +181,7 @@ int main(int argc, char** argv)
 		physics.simulateOneStep(deltaSeconds);
 
 		// update camera
-		player.updateCameraPosition();
+		player.updateCameraPositioner();
 		cameraPositioner->update(deltaSeconds, mouseState.pos, mouseState.pressedLeft);
 
 		// calculate and set per frame matrices
