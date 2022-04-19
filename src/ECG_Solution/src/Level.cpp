@@ -357,12 +357,12 @@ void Level::loadLights(const aiScene* scene) {
 void Level::loadShaders()
 {
 	AABBviewer = std::unique_ptr<Program>(new Program);
-	Shader boundsVert("../../assets/shaders/Debug/AABBviewer.vert");
-	Shader boundsFrag("../../assets/shaders/Debug/AABBviewer.frag");
+	Shader boundsVert("../../assets/shaders/Testing/AABBviewer.vert");
+	Shader boundsFrag("../../assets/shaders/Testing/AABBviewer.frag");
 	AABBviewer->buildFrom(boundsVert, boundsFrag);
 
 	Frustumviewer = std::unique_ptr<Program>(new Program);
-	Shader FrustumVert("../../assets/shaders/Debug/Frustumviewer.vert");
+	Shader FrustumVert("../../assets/shaders/Testing/Frustumviewer.vert");
 	Frustumviewer->buildFrom(FrustumVert, boundsFrag);
 }
 
