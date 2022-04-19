@@ -1,7 +1,7 @@
 #include "PlayerController.h"
 
 PlayerController::PlayerController(Physics& physics, CameraPositioner_Player& camera, glm::vec3 startPosition)
-	: physics(physics), camera(camera)
+	: physics(physics), cameraPositioner(camera)
 {
 	btCollisionShape* collisionShape = new btCapsuleShape(0.5, 1);
 	playerObject = &physics.createPhysicsObject(
@@ -30,10 +30,10 @@ void PlayerController::move(KeyboardInputState inputs)
 		playerObject->rigidbody->applyCentralImpulse(jumpStrength * btVector3(0, 1, 0));
 }
 
-void PlayerController::updateCameraPosition()
+void PlayerController::updateCameraPositioner()
 {
 	glm::vec3 rbPosition = physics.getObjectPosition(playerObject);
-	camera.setPosition(rbPosition + rigidbodyToCameraOffset);
+	cameraPositioner.setPosition(rbPosition + rigidbodyToCameraOffset);
 }
 
 PlayerController::Movement* PlayerController::inputToMovementState(KeyboardInputState inputs)
@@ -50,7 +50,7 @@ PlayerController::Movement* PlayerController::inputToMovementState(KeyboardInput
 
 glm::vec3 PlayerController::movementStateToDirection(Movement* movement)
 {
-	const glm::mat4 v = glm::mat4_cast(camera.getOrientation());
+	const glm::mat4 v = glm::mat4_cast(cameraPositioner.getOrientation());
 	const glm::vec3 forward = -glm::vec3(v[0][2], 0, v[2][2]);
 	const glm::vec3 right = glm::vec3(v[0][0], 0, v[2][0]);
 

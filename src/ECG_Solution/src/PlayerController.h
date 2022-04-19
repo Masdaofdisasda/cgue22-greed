@@ -21,7 +21,7 @@ public:
 	/// <summary>
 	/// Sets the camera position to be on top of the player rigidbody
 	/// </summary>
-	void updateCameraPosition();
+	void updateCameraPositioner();
 
 private:
 	struct Movement
@@ -34,7 +34,7 @@ private:
 	};
 
 	Physics& physics;
-	CameraPositioner_Player& camera;
+	CameraPositioner_Player& cameraPositioner;
 	PhysicsObject* playerObject;
 
 	// settings
