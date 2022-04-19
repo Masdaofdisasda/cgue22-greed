@@ -141,8 +141,8 @@ void Renderer::buildShaderPrograms()
 	Shader lightAdaptComp("../../assets/shaders/Bloom/lightAdaption.comp");
 	lightAdapt.buildFrom(lightAdaptComp);
 
-	Shader lavaFloorVert("../../assets/shaders/lavaFloor/lavaFloor.vert");
-	Shader lavaFloorFrag("../../assets/shaders/lavaFloor/lavaFloor.frag");
+	Shader lavaFloorVert("../../assets/shaders/Lava/lavaFloor.vert");
+	Shader lavaFloorFrag("../../assets/shaders/Lava/lavaFloor.frag");
 	lavaFloor.buildFrom(lavaFloorVert, lavaFloorFrag);
 
 	Shader SSAOFrag("../../assets/shaders/SSAO/SSAO.frag");
@@ -232,6 +232,8 @@ void Renderer::Draw(Level* level)
 		// 2.3 - draw lava
 		lavaFloor.Use();
 		glDrawArrays(GL_TRIANGLES, 0, 3);
+		lavaSim.update(perframeData->deltaTime.x);
+		lavaSim.Draw();
 
 	framebuffer1.unbind(); 
 	glGenerateTextureMipmap(framebuffer1.getTextureColor().getHandle());

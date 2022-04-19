@@ -18,6 +18,7 @@
     <ClCompile Include="src\UBO.cpp" />
     <ClCompile Include="src\VBO.cpp" />
     <ClInclude Include="src\FontRenderer.h" />
+    <ClInclude Include="src\Lava.h" />
     <ClInclude Include="src\PlayerController.h" />
     <ClInclude Include="src\BulletDebugDrawer.h" />
     <ClInclude Include="src\Debugger.h" />
