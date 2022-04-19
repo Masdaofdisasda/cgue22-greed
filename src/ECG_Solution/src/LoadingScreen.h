@@ -44,7 +44,7 @@ LoadingScreen::LoadingScreen(GLFWApp* app, int width, int height)
 
 
 	Shader renderImgVert("../../assets/shaders/fullScreenTriangle.vert");
-	Shader renderImgFrag("../../assets/shaders/fullScreenImage/fullScreenImage.frag");
+	Shader renderImgFrag("../../assets/shaders/HUD/fullScreenImage.frag");
 	renderImage.buildFrom(renderImgVert, renderImgFrag);
 
 }

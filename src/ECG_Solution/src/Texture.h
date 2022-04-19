@@ -23,6 +23,7 @@ public:
 	~Texture() { Release(); }
 
 	static GLuint loadTexture(const char* texPath);
+	static GLuint loadTextureTransparent(const char* texPath);
 
 	
 	// ensure RAII compliance

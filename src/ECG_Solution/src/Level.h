@@ -38,8 +38,8 @@ private:
 	std::vector <BoundingBox> boxes;		// contains all bounding boxes of the meshes
 	std::vector<RenderItem> renderQueue;	// contains for every material render commands and matrices
 	Hierarchy sceneGraph;					// saves scene hierarchy and transformations
-	Hierarchy* rigid;						// parent node of all rigid meshes (ground, walls, ...)
-	Hierarchy* dynamic;						// parent node of all dynamic meshes (items, ...)
+	std::vector<PhysicsMesh> rigid;
+	std::vector<PhysicsMesh> dynamic;
 
 	/// frustum culling
 	std::shared_ptr<Program> AABBviewer;	// shader for debugging AABBs, toggle with F2
@@ -53,13 +53,15 @@ private:
 
 	LightSources lights;
 
-	GlobalState* globalState;
+	std::shared_ptr<GlobalState> state;
 	PerFrameData* perframeData;
 
+	void loadMeshes(const aiScene* scene);
 	subMesh extractMesh(const aiMesh* mesh);
 	BoundingBox computeBoundsOfMesh(subMesh mesh);
-	Material Level::loadMaterials(const aiMaterial* M);
+	void loadMaterials(const aiScene* scene);
 	void traverseTree(aiNode* n, Hierarchy* parent, Hierarchy* child);
+	void loadShaders();
 	void setupVertexBuffers();
 	void setupDrawBuffers();
 	void loadLights(const aiScene* scene);
@@ -67,18 +69,23 @@ private:
 	void buildRenderQueue(const Hierarchy* node, glm::mat4 globalTransform);
 	void DrawAABBs(Hierarchy node);
 	void transformBoundingBoxes(Hierarchy* node, glm::mat4 globalTransform);
+	void collectRigidPhysicMeshes(Hierarchy* node, glm::mat4 globalTransform);
+	void collectDynamicPhysicMeshes(Hierarchy* node, glm::mat4 globalTransform);
+
 
 	void resetQueue();
 	void Release();
 	
 public:
-	Level(const char* scenePath, GlobalState& state, PerFrameData& pfdata);
+	Level(const char* scenePath, std::shared_ptr<GlobalState> state, PerFrameData& pfdata);
 	~Level() { Release(); }
 
-	void DrawGraph();
+	void DrawScene();
+	void DrawSceneFromLightSource();
 
-	Hierarchy* getRigidNodes() { return rigid; }
-	Hierarchy* getDynamicNodes() { return dynamic; }
+	std::vector<PhysicsMesh> getRigid();
+	std::vector<PhysicsMesh> getDynamic();
+	std::vector<float> getLevelBounds();
 	LightSources* getLights() { return &lights; }
 	std::vector <DirectionalLight> getDirectionalLights() { return lights.directional; }
 	std::vector <PositionalLight> getPointLights() { return lights.point; }

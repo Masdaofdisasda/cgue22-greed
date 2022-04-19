@@ -31,6 +31,21 @@ layout (std140, binding = 2) uniform pLightUBlock {
 };
 uniform uint pLightCount ;
 
+layout(std140, binding = 0) uniform PerFrameData
+{
+	vec4 viewPos;
+	mat4 ViewProj;
+	mat4 lavaLevel;
+	mat4 lightViewProj;
+	mat4 viewInv;
+	mat4 projInv;
+	vec4 bloom;
+	vec4 deltaTime;
+    vec4 normalMap;
+    vec4 ssao1;
+    vec4 ssao2;
+};
+
 // model textures and ibl cubemaps
 layout (binding = 0) uniform sampler2D albedoTex;
 layout (binding = 1) uniform sampler2D normalTex;
@@ -41,18 +56,6 @@ layout (binding = 4) uniform sampler2D aoTex;
 layout (binding = 5) uniform samplerCube irradianceTex;
 layout (binding = 6) uniform samplerCube prefilterTex;
 layout (binding = 7) uniform sampler2D brdfLutTex;
-
-
-// constant per frame data
-layout(std140, binding = 0) uniform PerFrameData
-{
-	vec4 viewPos;
-	mat4 ViewProj;
-	mat4 lavaLevel;
-	vec4 bloom;
-	vec4 deltaTime;
-    vec4 normalMap;
-};
 
 // Global variables
 vec3 albedo = pow(texture(albedoTex, fUV).rgb, vec3(2.2));
@@ -254,7 +257,7 @@ vec3 calculateLight() {
 
     // sample both the pre-filter map and the BRDF lut and combine them together as per the Split-Sum approximation to get the IBL specular part.
     const float MAX_REFLECTION_LOD = 4.0;
-    vec3 prefilteredColor = textureLod(prefilterTex, R,  roughness * MAX_REFLECTION_LOD).rgb;    
+    vec3 prefilteredColor = textureLod(prefilterTex, R,  roughness * MAX_REFLECTION_LOD).rgb;
     vec2 brdf  = texture(brdfLutTex, vec2(max(dot(N, V), 0.0), roughness)).rg;
     vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
     
@@ -271,5 +274,4 @@ void main()
     vec3 light = calculateLight();
     // Tonemapping is done in CombineHDR.frag
     out_FragColor = vec4(light, 1.0);
-    //out_FragColor = vec4(N,1.0);
 }
