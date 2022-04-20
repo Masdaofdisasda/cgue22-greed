@@ -186,7 +186,7 @@ int main(int argc, char** argv)
 		if (state->usingDebugCamera_)
 			floatingPositioner.setMovementState(keyboardInput);
 		else
-			player.move(keyboardInput);
+			player.move(keyboardInput, deltaSeconds);
 
 		// calculate physics
 		physics.simulateOneStep(deltaSeconds);
