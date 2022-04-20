@@ -36,6 +36,14 @@ void PlayerController::updateCameraPositioner()
 	cameraPositioner.setPosition(rbPosition + rigidbodyToCameraOffset);
 }
 
+void PlayerController::tryCollectItem()
+{
+	// cast a ray
+	// look what item was hit
+	// if was a collectable and correct button is pressed
+	// -> collect
+}
+
 PlayerController::Movement* PlayerController::inputToMovementState(KeyboardInputState inputs)
 {
 	Movement* movement = new Movement;

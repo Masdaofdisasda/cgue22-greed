@@ -76,7 +76,7 @@ struct PhysicsMesh
 {
 	std::vector<float> vtxPositions;		// all positions (x,y,z) in model space
 	glm::mat4 modelMatrix;						// model tranformation into world space
-	std::shared_ptr<Hierarchy> node;			// pointer to set node matrices, only for dynamic objects
+	Hierarchy* node;			// pointer to set node matrices, only for dynamic objects
 };
 
 #endif

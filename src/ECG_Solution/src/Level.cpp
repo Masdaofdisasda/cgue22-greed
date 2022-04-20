@@ -436,7 +436,7 @@ void Level::collectDynamicPhysicMeshes(Hierarchy* node, glm::mat4 globalTransfor
 			phyMesh.vtxPositions.push_back(vertices[vtxOffset + i * 8 + 2]);
 		}
 		phyMesh.modelMatrix = nodeMatrix;
-		phyMesh.node = std::make_shared<Hierarchy>(*node);
+		phyMesh.node = node;
 		dynamic.push_back(phyMesh);
 	}
 
