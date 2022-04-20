@@ -71,7 +71,6 @@ Shader::Shader(const char* fileName)
 	std::string shader = read_code_from(fileName);
 	const char* shaderCode = shader.c_str();
 
-
 	glShaderSource(shader_ID, 1, &shaderCode, nullptr);
 	glCompileShader(shader_ID);
 

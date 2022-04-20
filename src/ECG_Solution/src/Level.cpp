@@ -381,7 +381,7 @@ std::vector<PhysicsMesh> Level::getRigid()
 
 std::vector<PhysicsMesh> Level::getDynamic()
 {
-	Hierarchy* dynamicNode = nullptr;
+	dynamicNode = nullptr;
 	for (size_t i = 0; i < sceneGraph.children.size(); i++)
 	{
 		if (sceneGraph.children[i].name.compare("Dynamic") == 0) {
@@ -457,6 +457,7 @@ void Level::DrawScene() {
 		FrustumCulling::getFrustumCorners(cullViewProj, frustumCorners);
 	}
 
+	// transformBoundingBoxes(dynamicNode, glm::mat4(1));
 	// flaten tree
 	resetQueue();
 	buildRenderQueue(&sceneGraph, glm::mat4(1));
@@ -602,7 +603,6 @@ void Level::DrawAABBs(Hierarchy node)
 		DrawAABBs(node.children[i]);
 	}
 }
-
 
 std::vector<float> Level::getLevelBounds()
 {

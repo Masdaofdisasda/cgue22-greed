@@ -76,6 +76,8 @@ public:
 	void setVec4(const std::string& name, glm::vec4 value);
 	void setMat4(const std::string& name, glm::mat4 value);
 
+	GLuint getHandle() const { return program_ID; }
+
 	int compileErrors();
 };
 

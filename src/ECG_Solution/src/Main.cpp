@@ -13,6 +13,7 @@
 #pragma once
 #include <sstream>
 #include <numbers>
+#include <thread>
 #include "Camera.h"
 #include "Renderer.h"
 #include "FPSCounter.h"
@@ -85,6 +86,10 @@ int main(int argc, char** argv)
 
 	LoadingScreen loadingScreen(&GLFWapp, state->width, state->height);
 	loadingScreen.DrawProgress();
+	loadingScreen.DrawProgress();
+	//loadingScreen.loop();
+	//std::thread loadscrn(&LoadingScreen::loop, std::ref(loadingScreen) );
+	//loadscrn.join();
 
 	/* --------------------------------------------- */
 	// Initialize scene and render loop
@@ -98,11 +103,9 @@ int main(int argc, char** argv)
 
 	printf("Loading level...\n");
 	Level level("../../assets/demo.fbx", state, perframeData);
-	loadingScreen.DrawProgress();
 
 	printf("Intializing renderer...\n");
 	Renderer renderer(perframeData, *level.getLights());
-	loadingScreen.DrawProgress();
 
 	//Physics Initialization
 	printf("Initializing physics...\n");
@@ -133,8 +136,6 @@ int main(int argc, char** argv)
 
 	// Setup player
 	PlayerController player(physics, playerCameraPositioner, glm::vec3(0, 2, 0));
-	
-	loadingScreen.DrawProgress();
 
 	glm::vec3 lavaPosition = glm::vec3(0.0f, -50.0f, 0.0f); // TODO
 

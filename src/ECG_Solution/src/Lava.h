@@ -132,7 +132,7 @@ void LavaSystem::Draw()
     //glEnable(GL_BLEND);
     SimRender.Use();
     glPointSize(10.0f);
-    SimRender.setVec4("Color", 0.05*glm::vec4(0.710, 0.200, 0.180, 1.0f));
+    //SimRender.setVec4("Color", 0.05*glm::vec4(0.710, 0.200, 0.180, 1.0f));
     glBindVertexArray(particlesVao);
     glDrawArrays(GL_POINTS, 0, totalParticles);
     //glDisable(GL_BLEND);

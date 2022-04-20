@@ -38,6 +38,7 @@ private:
 	std::vector <BoundingBox> boxes;		// contains all bounding boxes of the meshes
 	std::vector<RenderItem> renderQueue;	// contains for every material render commands and matrices
 	Hierarchy sceneGraph;					// saves scene hierarchy and transformations
+	Hierarchy* dynamicNode;
 	std::vector<PhysicsMesh> rigid;
 	std::vector<PhysicsMesh> dynamic;
 

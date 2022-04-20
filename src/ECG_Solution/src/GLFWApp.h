@@ -22,6 +22,12 @@ public:
 		deltaSeconds_ = static_cast<float>(newTimeStamp - timeStamp_);
 		timeStamp_ = newTimeStamp;
 	}
+	
+	/// @brief swaps back & front buffer
+	void swapBuffersUnsafe()
+	{
+		glfwSwapBuffers(window_);
+	}
 
 	/// @brief should toggle between fullscreen and window mode
 	void updateWindow()
@@ -49,7 +55,7 @@ private:
 	float deltaSeconds_ = 0.0f;
 };
 
-GLFWApp::GLFWApp(std::shared_ptr<GlobalState> state)
+inline GLFWApp::GLFWApp(std::shared_ptr<GlobalState> state)
 {
 	glfwSetErrorCallback(
 		[](int error, const char* description)

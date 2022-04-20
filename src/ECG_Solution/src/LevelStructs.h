@@ -60,6 +60,7 @@ struct Hierarchy
 
 	/// @brief set TRS "model matrix" of the node
 	void setNodeMatrix(glm::mat4 M) { glm::decompose(M, localScale, localRotation, localTranslate, glm::vec3(), glm::vec4()); }
+	void setNodeTRS(glm::vec3 T, glm::quat R, glm::vec3 S) { localTranslate = T; localRotation = R; localScale = S; }
 };
 
 /// @brief contains a list of draw commands and matching model matrices for models of the same material
