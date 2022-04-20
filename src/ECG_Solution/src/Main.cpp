@@ -87,6 +87,7 @@ int main(int argc, char** argv)
 	LoadingScreen loadingScreen(&GLFWapp, state->width, state->height);
 	loadingScreen.DrawProgress();
 	loadingScreen.DrawProgress();
+
 	//loadingScreen.loop();
 	//std::thread loadscrn(&LoadingScreen::loop, std::ref(loadingScreen) );
 	//loadscrn.join();
