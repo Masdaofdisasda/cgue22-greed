@@ -156,7 +156,7 @@ int main(int argc, char** argv)
 	glEnable(GL_CULL_FACE);
 
 	engine->stopAllSounds();
-	snd = engine->play2D("../../assets/media/EQ01 Gml Belalua Game 070 Fm.wav", true);
+	snd = engine->play2D("../../assets/media/greedCollect_v1.mp3", true);
 
 	double timeStamp = glfwGetTime();
 	float deltaSeconds = 0.0f;

@@ -8,6 +8,7 @@
 #include "Framebuffer.h"
 #include "Level.h"
 #include "FontRenderer.h"
+#include "Lava.h"
 
 #ifndef _RENDERER_
 #define _RENDERER_
@@ -29,6 +30,7 @@ private:
 	UBO perframeBuffer;	
 
 	FontRenderer fontRenderer;
+	LavaSystem lavaSim;
 
 	// Illumination
 	LightSources lights;
