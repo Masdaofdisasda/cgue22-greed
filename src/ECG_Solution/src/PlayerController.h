@@ -23,6 +23,8 @@ public:
 	/// </summary>
 	void updateCameraPositioner();
 
+	void tryCollectItem();
+
 private:
 	struct Movement
 	{

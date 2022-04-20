@@ -16,7 +16,7 @@ Physics::Physics() {
 }
 
 Physics::PhysicsObject& Physics::createPhysicsObject(
-	std::shared_ptr<Hierarchy> modelGraphics,
+	Hierarchy* modelGraphics,
 	glm::mat4 modelMatrix,
 	std::vector<float> colliderVerticePositions,
 	ObjectMode mode)
@@ -50,6 +50,19 @@ void Physics::debugDraw() {
 	bulletDebugDrawer->draw();
 }
 
+Physics::PhysicsObject* Physics::rayCast(btVector3 start, btVector3 end) {
+	btCollisionWorld::ClosestRayResultCallback result(start, end);
+	dynamics_world->rayTest(start, end, result);
+	
+	if (!result.hasHit())
+		return nullptr;
+
+	// find object in datastructure, that was hit
+	const btCollisionObject* hitObject = result.m_collisionObject;
+	//TODO
+	return nullptr;
+}
+
 void Physics::updateModelTransform(PhysicsObject* physicsObject) {
 	// only update objects with graphical representation
 	if (physicsObject->modelGraphics == nullptr)
@@ -65,10 +78,14 @@ void Physics::updateModelTransform(PhysicsObject* physicsObject) {
 	glm::mat4 T = glm::translate(glm::mat4(1), pos);
 	glm::mat4 R = glm::rotate(glm::mat4(1), glm::radians(deg), axis);
 	glm::mat4 S = glm::scale(glm::mat4(1), scale);
+
+	glm::mat4 before = physicsObject->modelGraphics->getNodeMatrix();
 	physicsObject->modelGraphics->setNodeMatrix(T * R * S);
+	glm::mat4 after = physicsObject->modelGraphics->getNodeMatrix();
+	int i;
 }
 
-Physics::PhysicsObject& Physics::addPhysicsObject(btRigidBody* rigidbody, std::shared_ptr<Hierarchy> modelGraphics, Physics::ObjectMode mode) {
+Physics::PhysicsObject& Physics::addPhysicsObject(btRigidBody* rigidbody, Hierarchy* modelGraphics, Physics::ObjectMode mode) {
 	// add it to physics world
 	dynamics_world->addRigidBody(rigidbody);
 

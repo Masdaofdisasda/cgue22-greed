@@ -24,7 +24,7 @@ public:
 	/// </summary>
 	struct PhysicsObject {
 		btRigidBody* rigidbody;
-		std::shared_ptr<Hierarchy> modelGraphics;
+		Hierarchy* modelGraphics;
 		Physics::ObjectMode mode;
 	};
 
@@ -36,12 +36,18 @@ public:
 	void debugDraw();
 
 	/// <summary>
+	/// Casts a ray between start and end. The first object, that was hit on this path, is returned.
+	/// Returns nullptr if nothing was hit
+	/// </summary>
+	Physics::PhysicsObject* rayCast(btVector3 start, btVector3 end);
+
+	/// <summary>
 	/// Makes a physics object, that has the position and orientation of the input model.
 	/// The collision shape will be generated from the collider vertice positions
 	/// The object mode determines if the object will move at all
 	/// </summary>
 	PhysicsObject& createPhysicsObject(
-		std::shared_ptr<Hierarchy> modelGraphics,
+		Hierarchy* modelGraphics,
 		glm::mat4 modelMatrix,
 		std::vector<float> colliderVerticePositions,
 		ObjectMode mode
@@ -83,7 +89,7 @@ private:
 	/// Adds a rigidbody (created from the input parameters) to the physics world.
 	/// Also adds the rigidbody and the modelGraphics to a list to keep track of them.
 	/// </summary>
-	PhysicsObject& addPhysicsObject(btRigidBody* rigidbody, std::shared_ptr<Hierarchy> modelGraphics, Physics::ObjectMode mode);
+	PhysicsObject& addPhysicsObject(btRigidBody* rigidbody, Hierarchy* modelGraphics, Physics::ObjectMode mode);
 
 	/// <summary>
 	/// Sets the transformation matrix of the visual representation
