@@ -15,21 +15,26 @@ Physics::Physics() {
 	dynamics_world->setDebugDrawer(bulletDebugDrawer);
 }
 
-PhysicsObject& Physics::createPhysicsObject(Hierarchy* modelGraphics, std::vector<float> colliderVerticePositions, ObjectMode mode) {
+Physics::PhysicsObject& Physics::createPhysicsObject(
+	std::shared_ptr<Hierarchy> modelGraphics,
+	glm::mat4 modelMatrix,
+	std::vector<float> colliderVerticePositions,
+	ObjectMode mode)
+{
 	float mass = getMassFromObjectMode(mode);
 	btCollisionShape* collider = getCollisionShapeFromMesh(colliderVerticePositions);
-	btRigidBody* rigidbody = makeRigidbody(modelGraphics->getNodeMatrix(), collider, mass);
+	btRigidBody* rigidbody = makeRigidbody(modelMatrix, collider, mass);
 	if (mode == Physics::ObjectMode::Dynamic_NoRotation)
 		rigidbody->setAngularFactor(0);
-	return addPhysicsObject(rigidbody, modelGraphics);
+	return addPhysicsObject(rigidbody, modelGraphics, mode);
 }
 
-PhysicsObject& Physics::createPhysicsObject(btVector3 pos, btCollisionShape* col, btQuaternion rot, ObjectMode mode) {
+Physics::PhysicsObject& Physics::createPhysicsObject(btVector3 pos, btCollisionShape* col, btQuaternion rot, ObjectMode mode) {
 	float mass = getMassFromObjectMode(mode);
 	btRigidBody* rigidbody = makeRigidbody(pos, col, rot, mass);
 	if (mode == Physics::ObjectMode::Dynamic_NoRotation)
 		rigidbody->setAngularFactor(0);
-	return addPhysicsObject(rigidbody, nullptr);
+	return addPhysicsObject(rigidbody, nullptr, mode);
 }
 
 void Physics::simulateOneStep(float secondsBetweenFrames) {
@@ -47,7 +52,7 @@ void Physics::debugDraw() {
 
 void Physics::updateModelTransform(PhysicsObject* physicsObject) {
 	// only update objects with graphical representation
-	if (physicsObject->graphics == nullptr)
+	if (physicsObject->modelGraphics == nullptr)
 		return;
 
 	//TODO: rewrite with getOpenGLMatrix() from btTransform
@@ -60,17 +65,18 @@ void Physics::updateModelTransform(PhysicsObject* physicsObject) {
 	glm::mat4 T = glm::translate(glm::mat4(1), pos);
 	glm::mat4 R = glm::rotate(glm::mat4(1), glm::radians(deg), axis);
 	glm::mat4 S = glm::scale(glm::mat4(1), scale);
-	physicsObject->graphics->setNodeMatrix(T * R * S);
+	physicsObject->modelGraphics->setNodeMatrix(T * R * S);
 }
 
-PhysicsObject& Physics::addPhysicsObject(btRigidBody* rigidbody, Hierarchy* modelGraphics) {
+Physics::PhysicsObject& Physics::addPhysicsObject(btRigidBody* rigidbody, std::shared_ptr<Hierarchy> modelGraphics, Physics::ObjectMode mode) {
 	// add it to physics world
 	dynamics_world->addRigidBody(rigidbody);
 
 	// save rigidbody and graphical model representation in one struct
 	PhysicsObject physicsObject;
-	physicsObject.graphics = modelGraphics;
+	physicsObject.modelGraphics = modelGraphics;
 	physicsObject.rigidbody = rigidbody;
+	physicsObject.mode = mode;
 	physicsObjects.push_back(physicsObject);
 
 	return physicsObjects.back();
@@ -91,16 +97,15 @@ float Physics::getMassFromObjectMode(Physics::ObjectMode mode) {
 /* --------------------------------------------- */
 btConvexHullShape* Physics::getCollisionShapeFromMesh(std::vector<float> verticePositionArray) {
 	btConvexHullShape* shape = new btConvexHullShape();
-	btScalar* coordinates = verticePosArrayToScalarArray(verticePositionArray);
-	int verticeAmount = verticePositionArray.size();
+	int verticeAmount = verticePositionArray.size()/3;
 	for (int i = 0; i < verticeAmount; i++)
 	{
-		btScalar x = coordinates[i * 3];
-		btScalar y = coordinates[i * 3 + 1];
-		btScalar z = coordinates[i * 3 + 2];
+		btScalar x = verticePositionArray[i * 3];
+		btScalar y = verticePositionArray[i * 3 + 1];
+		btScalar z = verticePositionArray[i * 3 + 2];
 		shape->addPoint(btVector3(x, y, z));
 	}
-	delete[] coordinates;
+
 	return shape;
 }
 
@@ -129,17 +134,6 @@ btQuaternion* Physics::emptyQuaternion() {
 /* --------------------------------------------- */
 // Conversions
 /* --------------------------------------------- */
-btScalar* Physics::verticePosArrayToScalarArray(std::vector<float> verticePositionArray) {
-	int verticeAmount = verticePositionArray.size(); // 3 coords per vertice
-	btScalar* scalars = new btScalar[verticeAmount * 3];
-	for (int i = 0; i < verticeAmount; i++)
-	{
-		scalars[i * 3] = btScalar(verticePositionArray[i]);
-		scalars[i * 3 + 1] = btScalar(verticePositionArray[i]);
-		scalars[i * 3 + 2] = btScalar(verticePositionArray[i]);
-	}
-	return scalars;
-}
 
 glm::vec3 Physics::btToGlm(btVector3 input) {
 	return glm::vec3((float)input.getX(), (float)input.getY(), (float)input.getZ());

@@ -107,14 +107,8 @@ int main(int argc, char** argv)
 	//Physics Initialization
 	printf("Initializing physics...\n");
 	Physics physics;
+
 	//---------------------------------- testing ----------------------------------//
-	btBoxShape* col = new btBoxShape(btVector3(0.5, 0.5, 0.5));
-	physics.createPhysicsObject(
-		btVector3(0, 5, 0),
-		col,
-		btQuaternion(btVector3(1, 0, 0), btScalar(45)),
-		Physics::ObjectMode::Dynamic
-	);
 	btBoxShape* col2 = new btBoxShape(btVector3(500, 0.1, 500));
 	physics.createPhysicsObject(
 		btVector3(0, 0, 0),
@@ -122,10 +116,27 @@ int main(int argc, char** argv)
 		btQuaternion(btVector3(0, 1, 0), btScalar(0)),
 		Physics::ObjectMode::Static
 	);
-	// access to level meshes:
-	//level.getRigid();
-	//level.getDynamic();
 	//---------------------------------- /testing ----------------------------------//
+	
+	// Integrate level meshes into physics world
+	std::vector<PhysicsMesh> dynamicMeshes = level.getDynamic();
+	for (int i = 0; i < dynamicMeshes.size(); i++)
+		physics.createPhysicsObject(
+			dynamicMeshes[i].node,
+			dynamicMeshes[i].modelMatrix,
+			dynamicMeshes[i].vtxPositions,
+			Physics::ObjectMode::Dynamic
+		);
+
+	std::vector<PhysicsMesh> staticMeshes = level.getRigid();
+	for (int i = 0; i < staticMeshes.size(); i++)
+		physics.createPhysicsObject(
+			staticMeshes[i].node,
+			staticMeshes[i].modelMatrix,
+			staticMeshes[i].vtxPositions,
+			Physics::ObjectMode::Static
+		);
+
 	// Setup camera
 	cameraPositioner = &playerCameraPositioner;
 	camera.setPositioner(cameraPositioner);
@@ -195,6 +206,7 @@ int main(int argc, char** argv)
 		perframeData.viewInv = glm::inverse(view);
 		perframeData.projInv = glm::inverse(projection);
 		perframeData.deltaTime.x = deltaSeconds;
+
 		// simple game logic WIP
 		if (perframeData.viewPos.y > 127.0f)
 		{

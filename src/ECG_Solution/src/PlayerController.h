@@ -35,7 +35,7 @@ private:
 
 	Physics& physics;
 	CameraPositioner_Player& cameraPositioner;
-	PhysicsObject* playerObject;
+	Physics::PhysicsObject* playerObject;
 
 	// settings
 	glm::vec3 rigidbodyToCameraOffset = glm::vec3(0,1,0);
