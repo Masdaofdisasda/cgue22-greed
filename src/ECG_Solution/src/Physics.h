@@ -4,14 +4,6 @@
 #include "BulletDebugDrawer.h"
 
 /// <summary>
-/// A struct linking the physics and the graphics representation of an object in the game
-/// </summary>
-struct PhysicsObject {
-	btRigidBody* rigidbody;
-	Hierarchy* graphics;
-};
-
-/// <summary>
 /// An abstraction of the currently used physics engine
 /// </summary>
 class Physics
@@ -27,6 +19,15 @@ public:
 	/// </summary>
 	enum ObjectMode { Static, Dynamic, Dynamic_NoRotation};
 
+	/// <summary>
+	/// A struct linking the physics and the graphics representation of an object in the game
+	/// </summary>
+	struct PhysicsObject {
+		btRigidBody* rigidbody;
+		std::shared_ptr<Hierarchy> modelGraphics;
+		Physics::ObjectMode mode;
+	};
+
 	Physics();
 
 	/// <summary>
@@ -39,7 +40,12 @@ public:
 	/// The collision shape will be generated from the collider vertice positions
 	/// The object mode determines if the object will move at all
 	/// </summary>
-	PhysicsObject& createPhysicsObject(Hierarchy* modelGraphics, std::vector<float> colliderVerticePositions, ObjectMode mode);
+	PhysicsObject& createPhysicsObject(
+		std::shared_ptr<Hierarchy> modelGraphics,
+		glm::mat4 modelMatrix,
+		std::vector<float> colliderVerticePositions,
+		ObjectMode mode
+	);
 	PhysicsObject& createPhysicsObject(btVector3 pos, btCollisionShape* col, btQuaternion rot, ObjectMode mode);
 
 	/// <summary>
@@ -71,15 +77,13 @@ private:
 	/// </summary>
 	btConvexHullShape* getCollisionShapeFromMesh(std::vector<float> verticePositionArray);
 
-	btScalar* verticePosArrayToScalarArray(std::vector<float> verticePositionArray);
-
 	float Physics::getMassFromObjectMode(Physics::ObjectMode mode);
 
 	/// <summary>
 	/// Adds a rigidbody (created from the input parameters) to the physics world.
 	/// Also adds the rigidbody and the modelGraphics to a list to keep track of them.
 	/// </summary>
-	PhysicsObject& addPhysicsObject(btRigidBody* rigidbody, Hierarchy* modelGraphics);
+	PhysicsObject& addPhysicsObject(btRigidBody* rigidbody, std::shared_ptr<Hierarchy> modelGraphics, Physics::ObjectMode mode);
 
 	/// <summary>
 	/// Sets the transformation matrix of the visual representation

@@ -12,7 +12,7 @@ PlayerController::PlayerController(Physics& physics, CameraPositioner_Player& ca
 	);
 }
 
-void PlayerController::move(KeyboardInputState inputs)
+void PlayerController::move(KeyboardInputState inputs, float deltatime)
 {
 	Movement* movement = inputToMovementState(inputs);
 
@@ -20,9 +20,9 @@ void PlayerController::move(KeyboardInputState inputs)
 	glm::vec3 movementDirection = movementStateToDirection(movement);
 	bool accelerate = glm::length(movementDirection) > 0;
 	if (accelerate)
-		playerObject->rigidbody->applyCentralImpulse(playerSpeed * physics.glmToBt(movementDirection));
+		playerObject->rigidbody->applyCentralImpulse(playerSpeed * (double)deltatime * physics.glmToBt(movementDirection));
 	else
-		decelerateXZ();
+		decelerateXZ(deltatime);
 	enforceSpeedLimit();
 
 	// jumping
@@ -69,7 +69,7 @@ glm::vec3 PlayerController::movementStateToDirection(Movement* movement)
 	return result;
 }
 
-void PlayerController::decelerateXZ()
+void PlayerController::decelerateXZ(float deltatime)
 {
 	btVector3 velocity = playerObject->rigidbody->getLinearVelocity();
 	glm::vec2 xzVelocity = glm::vec2((float)velocity.getX(), (float)velocity.getZ());
@@ -78,7 +78,7 @@ void PlayerController::decelerateXZ()
 	if (playerIsStanding)
 		return;
 
-	float newXZMagnitude = glm::length(xzVelocity) / stopSpeed;
+	float newXZMagnitude = glm::length(xzVelocity) / (1 + stopSpeed * deltatime);
 	glm::vec2 newXZVelocity = glm::normalize(xzVelocity) * newXZMagnitude;
 	playerObject->rigidbody->setLinearVelocity(btVector3(
 		newXZVelocity.x,
