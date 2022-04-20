@@ -84,12 +84,10 @@ int main(int argc, char** argv)
 	glEnable(GL_DEBUG_OUTPUT);
 	glDebugMessageCallback(Debugger::DebugCallbackDefault, 0);
 
-	LoadingScreen loadingScreen(&GLFWapp, state->width, state->height);
-	loadingScreen.DrawProgress();
-	loadingScreen.DrawProgress();
+	LoadingScreen loadingScreen = LoadingScreen(&GLFWapp, state->width, state->height);
+	loadingScreen.start();
 
-	//loadingScreen.loop();
-	//std::thread loadscrn(&LoadingScreen::loop, std::ref(loadingScreen) );
+	//std::thread loadscrn = std::thread(&LoadingScreen::start, loadingScreen );
 	//loadscrn.join();
 
 	/* --------------------------------------------- */

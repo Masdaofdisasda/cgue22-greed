@@ -457,7 +457,7 @@ void Level::DrawScene() {
 		FrustumCulling::getFrustumCorners(cullViewProj, frustumCorners);
 	}
 
-	// transformBoundingBoxes(dynamicNode, glm::mat4(1));
+	transformBoundingBoxes(dynamicNode, glm::mat4(1));
 	// flaten tree
 	resetQueue();
 	buildRenderQueue(&sceneGraph, glm::mat4(1));
