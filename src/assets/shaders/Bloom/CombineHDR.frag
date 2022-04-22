@@ -33,6 +33,17 @@ vec3 Reinhard2(vec3 x)
 	return (x * (1.0 + x / (maxWhite * maxWhite))) / (1.0 + x);
 }
 
+vec3 lookUp(vec3 raw)
+{
+	float n = 32;
+	vec3 lutSize = vec3(n,n,n); //lut resolution
+
+	vec3 scale = (lutSize -1.0) / lutSize;
+	vec3 offset = 1.0/(2.0*lutSize);
+
+	return texture(Lut3D, scale*raw + offset).rgb;
+}
+
 void main()
 {
 	float exposure = bloom.x;
@@ -47,7 +58,7 @@ void main()
 
 	color *= exposure * midGray / (max(avgLuminance,6.1e-5)); //use smallest float instead of 0
 	color = Reinhard2(color);
-	//color = texture(Lut3D, color).rgb; //WIP
+	//color = lookUp(color);
 	color = color + bloomStrength * bloom;
 	outColor = vec4(color,1.0f);
 }

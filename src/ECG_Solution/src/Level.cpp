@@ -411,7 +411,7 @@ void Level::collectRigidPhysicMeshes(Hierarchy* node, glm::mat4 globalTransform)
 		{
 			phyMesh.vtxPositions.push_back(vertices[vtxOffset + i * 8 + 0]);
 			phyMesh.vtxPositions.push_back(vertices[vtxOffset + i * 8 + 1]);
-			phyMesh.vtxPositions.push_back(vertices[vtxOffset + i * 8 + 1]);
+			phyMesh.vtxPositions.push_back(vertices[vtxOffset + i * 8 + 2]);
 		}
 
 		phyMesh.modelTRS = trs;
@@ -444,7 +444,7 @@ void Level::collectDynamicPhysicMeshes(Hierarchy* node, glm::mat4 globalTransfor
 		{
 			phyMesh.vtxPositions.push_back(vertices[vtxOffset + i * 8 + 0]);
 			phyMesh.vtxPositions.push_back(vertices[vtxOffset + i * 8 + 1]);
-			phyMesh.vtxPositions.push_back(vertices[vtxOffset + i * 8 + 1]);
+			phyMesh.vtxPositions.push_back(vertices[vtxOffset + i * 8 + 2]);
 		}
 
 		phyMesh.modelTRS = trs;

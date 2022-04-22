@@ -19,12 +19,14 @@ Renderer::Renderer(PerFrameData& pfdata, LightSources& sources)
 	IBL.loadHDR("../../assets/textures/cubemap/env.hdr");
 	std::cout << "load Skybox.." << std::endl;
 	skyTex.loadHDR("../../assets/textures/cubemap/beach.hdr");
-	Lut3D = Texture::load3Dlut("../../assets/textures/flat.CUBE");
+	Lut3D = Texture::load3Dlut("../../assets/textures/look32.CUBE");
 	glCreateVertexArrays(1, &emptyVAO);
 	PBRShader.uploadIBL(IBL.getIrradianceID(),IBL.getPreFilterID(), IBL.getBdrfLutID(), skyTex.getEnvironment());
 	glBindTextureUnit(13, Lut3D);
 
 	fontRenderer.init("../../assets/fonts/Quasimoda/Quasimoda-Regular.otf", state->width, state->height);
+
+	lavaSim.init(glm::ivec3(lights.directional.size(), lights.point.size(), 0));
 }
 
 std::shared_ptr<GlobalState> Renderer::getState()
@@ -109,7 +111,7 @@ void Renderer::setRenderSettings()
 		state->distScale,
 		1.0f);
 
-	
+	perframeData->deltaTime = glm::vec4(0);
 }
 
 /// @brief compiles all needed shaders for the render loop
@@ -143,10 +145,6 @@ void Renderer::buildShaderPrograms()
 
 	Shader lightAdaptComp("../../assets/shaders/Bloom/lightAdaption.comp");
 	lightAdapt.buildFrom(lightAdaptComp);
-
-	Shader lavaFloorVert("../../assets/shaders/Lava/lavaFloor.vert");
-	Shader lavaFloorFrag("../../assets/shaders/Lava/lavaFloor.frag");
-	lavaFloor.buildFrom(lavaFloorVert, lavaFloorFrag);
 
 	Shader SSAOFrag("../../assets/shaders/SSAO/SSAO.frag");
 	Shader combineSSAOFrag("../../assets/shaders/SSAO/combineSSAO.frag");
@@ -235,8 +233,6 @@ void Renderer::Draw(Level* level)
 		level->DrawScene();
 
 		// 2.3 - draw lava
-		lavaFloor.Use();
-		glDrawArrays(GL_TRIANGLES, 0, 3);
 		lavaSim.update(perframeData->deltaTime.x);
 		lavaSim.Draw();
 

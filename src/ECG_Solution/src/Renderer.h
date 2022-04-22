@@ -41,7 +41,6 @@ private:
 	// Scene rendering
 	Program PBRShader;		// main illumination shader
 	Program skyboxShader;	// simple skybox shader
-	Program lavaFloor;		// renders a giant orange triangle
 	// Bloom/HDR
 	Program BrightPass;		// filter bright spots
 	Program ToLuminance;	// converts brightness

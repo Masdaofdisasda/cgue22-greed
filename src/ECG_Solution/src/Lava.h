@@ -12,12 +12,18 @@ public:
 	LavaSystem();
 	~LavaSystem();
 
+    void init(glm::ivec3 lights);
     void update(float t);
     void Draw();
 
 private:
     Program SimUpdate;
     Program SimRender;
+    Program lavaFloor;		// renders a giant orange triangle
+
+    Material lava = Material("textures/Lava_1/albedo.jpg", "Lava"); //temp file, replace with procedural texture
+    GLuint LavaVAO = 0;
+    int count;
 
     glm::ivec3 nParticles = glm::ivec3(20,20,20);
     GLuint totalParticles = nParticles.x * nParticles.y * nParticles.z;
@@ -28,10 +34,15 @@ private:
     glm::vec4 bh1 = glm::vec4(-85, -1, -85, 1);
 
 	void setupBuffers();
+    void loadLava();
 
 };
 
 LavaSystem::LavaSystem()
+{
+}
+
+void LavaSystem::init(glm::ivec3 lights)
 {
     Shader RenderVert("../../assets/shaders/Lava/lavaParticles.vert");
     Shader RenderFrag("../../assets/shaders/Lava/lavaParticles.frag");
@@ -40,9 +51,12 @@ LavaSystem::LavaSystem()
     Shader Update("../../assets/shaders/Lava/lavaParticles.comp");
     SimUpdate.buildFrom(Update);
 
+    Shader lavaFloorVert("../../assets/shaders/Lava/lavaFloor.vert");
+    Shader lavaFloorFrag("../../assets/shaders/Lava/lavaPbr.frag", lights);
+    lavaFloor.buildFrom(lavaFloorVert, lavaFloorFrag);
+
     setupBuffers();
-
-
+    loadLava();
 }
 
 void LavaSystem::setupBuffers()
@@ -120,6 +134,80 @@ void LavaSystem::update(float t)
     time = t;
 }
 
+void LavaSystem::loadLava()
+{
+    Assimp::Importer importer;
+    const aiScene* scene = importer.ReadFile("../../assets/models/Lava.obj", aiProcess_MakeLeftHanded | aiProcess_FlipWindingOrder | aiProcess_FlipUVs | aiProcess_PreTransformVertices |
+        aiProcess_CalcTangentSpace |
+        aiProcess_GenSmoothNormals |
+        aiProcess_Triangulate |
+        aiProcess_FixInfacingNormals |
+        aiProcess_FindInvalidData |
+        aiProcess_ValidateDataStructure | 0
+    );
+
+    std::vector<float> vertices;
+    std::vector <GLuint> indices;
+
+    const aiMesh* mesh = scene->mMeshes[0];
+    
+    // extract vertices from the aimesh
+    for (size_t j = 0; j < mesh->mNumVertices; j++)
+    {
+        const aiVector3D p = mesh->HasPositions() ? mesh->mVertices[j] : aiVector3D(0.0f);
+        const aiVector3D n = mesh->HasNormals() ? mesh->mNormals[j] : aiVector3D(0.0f, 1.0f, 0.0f);
+        const aiVector3D t = mesh->HasTextureCoords(0) ? mesh->mTextureCoords[0][j] : aiVector3D(0.5f, 0.5f, 0.0f);
+
+        vertices.push_back(p.x);
+        vertices.push_back(p.y);
+        vertices.push_back(p.z);
+
+        vertices.push_back(n.x);
+        vertices.push_back(n.y);
+        vertices.push_back(n.z);
+
+        vertices.push_back(t.x);
+        vertices.push_back(t.y);
+
+    }
+
+    //extract indices from the aimesh
+    for (size_t j = 0; j < mesh->mNumFaces; j++)
+    {
+        for (unsigned k = 0; k != mesh->mFaces[j].mNumIndices; k++)
+        {
+            GLuint index = mesh->mFaces[j].mIndices[k];
+            count++;
+            indices.push_back(index);
+        }
+    }
+
+    GLuint VBO;
+    GLuint EBO;
+
+    glCreateBuffers(1, &VBO);
+    glNamedBufferStorage(VBO, vertices.size() * sizeof(float), vertices.data(), 0);
+    glCreateBuffers(1, &EBO);
+    glNamedBufferStorage(EBO, indices.size() * sizeof(GLuint), indices.data(), 0);
+
+    glCreateVertexArrays(1, &LavaVAO);
+    glVertexArrayElementBuffer(LavaVAO, EBO);
+    glVertexArrayVertexBuffer(LavaVAO, 0, VBO, 0, sizeof(glm::vec3) + sizeof(glm::vec3) + sizeof(glm::vec2));
+    // position
+    glEnableVertexArrayAttrib(LavaVAO, 0);
+    glVertexArrayAttribFormat(LavaVAO, 0, 3, GL_FLOAT, GL_FALSE, 0);
+    glVertexArrayAttribBinding(LavaVAO, 0, 0);
+    // normal
+    glEnableVertexArrayAttrib(LavaVAO, 1);
+    glVertexArrayAttribFormat(LavaVAO, 1, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3));
+    glVertexArrayAttribBinding(LavaVAO, 1, 0);
+    // uv
+    glEnableVertexArrayAttrib(LavaVAO, 2);
+    glVertexArrayAttribFormat(LavaVAO, 2, 2, GL_FLOAT, GL_TRUE, sizeof(glm::vec3) + sizeof(glm::vec3));
+    glVertexArrayAttribBinding(LavaVAO, 2, 0);
+
+}
+
 void LavaSystem::Draw()
 {
     // Execute the compute shader
@@ -136,6 +224,12 @@ void LavaSystem::Draw()
     glBindVertexArray(particlesVao);
     glDrawArrays(GL_POINTS, 0, totalParticles);
     //glDisable(GL_BLEND);
+
+    lavaFloor.Use();
+    glBindVertexArray(LavaVAO);
+    const GLuint textures[] = { lava.getAlbedo(), lava.getNormalmap(),lava.getMetallic(), lava.getRoughness(), lava.getAOmap() };
+    glBindTextures(0, 5, textures);
+    glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, 0);
 
 #if 0
     // Draw the attractors

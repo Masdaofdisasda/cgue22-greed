@@ -205,6 +205,7 @@ int main(int argc, char** argv)
 		perframeData.viewInv = glm::inverse(view);
 		perframeData.projInv = glm::inverse(projection);
 		perframeData.deltaTime.x = deltaSeconds;
+		perframeData.deltaTime.y += deltaSeconds;
 
 		// simple game logic WIP
 		if (perframeData.viewPos.y > 127.0f)
