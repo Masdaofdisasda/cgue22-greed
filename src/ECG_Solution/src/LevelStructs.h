@@ -40,6 +40,16 @@ struct BoundingBox
 	BoundingBox(const glm::vec3& min, const glm::vec3& max) : min_(glm::min(min, max)), max_(glm::max(min, max)) {}
 };
 
+/// @brief memory efficient TRS data capsule
+struct Transformation
+{
+	glm::vec3 Translate;				
+	glm::quat Rotation;
+	glm::vec3 Scale;
+
+	glm::mat4 getMatrix() const { return glm::translate(Translate) * glm::toMat4(Rotation) * glm::scale(Scale); }
+};
+
 /// @brief implements a simple scene graph for hierarchical tranforamtions
 struct Hierarchy
 {
@@ -48,19 +58,19 @@ struct Hierarchy
 	std::vector <Hierarchy> children;		// children nodes
 	std::vector<uint32_t> modelIndices;		// models in this node
 
-	glm::vec3 localTranslate;				// local transformation
-	glm::quat localRotation;
-	glm::vec3 localScale;
+	Transformation TRS;
 
 	BoundingBox nodeBounds;					// pretransformed bounds
 	BoundingBox modelBounds;				// bounds in model space
 
 	/// return TRS "model matrix" of the node
-	glm::mat4 getNodeMatrix() const { return glm::translate(localTranslate) * glm::toMat4(localRotation) * glm::scale(localScale); }
+	glm::mat4 getNodeMatrix() const { return TRS.getMatrix(); }
+
+	/// @return memory efficient TRS data
+	Transformation getNodeTRS() const { return TRS; }
 
 	/// @brief set TRS "model matrix" of the node
-	void setNodeMatrix(glm::mat4 M) { glm::decompose(M, localScale, localRotation, localTranslate, glm::vec3(), glm::vec4()); }
-	void setNodeTRS(glm::vec3 T, glm::quat R, glm::vec3 S) { localTranslate = T; localRotation = R; localScale = S; }
+	void setNodeTRS(glm::vec3 T, glm::quat R, glm::vec3 S) { TRS.Translate = T; TRS.Rotation = R; TRS.Scale = S; }
 };
 
 /// @brief contains a list of draw commands and matching model matrices for models of the same material
@@ -75,7 +85,7 @@ struct RenderItem
 struct PhysicsMesh
 {
 	std::vector<float> vtxPositions;		// all positions (x,y,z) in model space
-	glm::mat4 modelMatrix;						// model tranformation into world space
+	Transformation modelTRS;						// model tranformation into world space
 	Hierarchy* node;			// pointer to set node matrices, only for dynamic objects
 };
 

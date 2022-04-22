@@ -233,8 +233,8 @@ void Level::traverseTree(aiNode* n, Hierarchy* parent, Hierarchy* node)
 	}
 
 	// set translation, rotation and scale of this node
-	glm::decompose(M, node->localScale, node->localRotation, node->localTranslate, glm::vec3(), glm::vec4());
-	node->localRotation = glm::normalize(glm::conjugate(node->localRotation));
+	glm::decompose(M, node->TRS.Scale, node->TRS.Rotation, node->TRS.Translate, glm::vec3(), glm::vec4());
+	node->TRS.Rotation = glm::normalize(glm::conjugate(node->TRS.Rotation));
 
 	// travers child nodes
 	for (size_t i = 0; i < n->mNumChildren; i++)
@@ -315,8 +315,8 @@ void Level::loadLights(const aiScene* scene) {
 			const aiVector3D dir = light->mDirection;
 			const aiColor3D col = light->mColorDiffuse;
 
-			glm::vec4 direction = glm::vec4(dir.x, dir.y, dir.z, 1.0f);
-			glm::vec4 intensity = glm::vec4(col.r, col.g, col.b, 1.0f);
+			glm::vec4 direction = -glm::vec4(dir.x, dir.y, dir.z, 1.0f);
+			glm::vec4 intensity = glm::vec4(col.r, col.g, col.b, 1.0f)*2.0f;
 
 			lights.directional.push_back(DirectionalLight{direction, intensity});
 		}
@@ -402,13 +402,19 @@ void Level::collectRigidPhysicMeshes(Hierarchy* node, glm::mat4 globalTransform)
 		uint32_t vtxOffset = meshes[modelindex].vertexOffset;
 		uint32_t vtxCount = meshes[modelindex].vertexCount;
 		PhysicsMesh phyMesh;
+
+		Transformation trs;
+		glm::decompose(nodeMatrix, trs.Scale, trs.Rotation, trs.Translate, glm::vec3(), glm::vec4());
+		trs.Rotation = glm::normalize(glm::conjugate(trs.Rotation));
+
 		for (uint32_t i = 0; i < vtxCount; i++)
 		{
 			phyMesh.vtxPositions.push_back(vertices[vtxOffset + i * 8 + 0]);
 			phyMesh.vtxPositions.push_back(vertices[vtxOffset + i * 8 + 1]);
-			phyMesh.vtxPositions.push_back(vertices[vtxOffset + i * 8 + 2]);
+			phyMesh.vtxPositions.push_back(vertices[vtxOffset + i * 8 + 1]);
 		}
-		phyMesh.modelMatrix = nodeMatrix;
+
+		phyMesh.modelTRS = trs;
 		phyMesh.node = nullptr;
 		rigid.push_back(phyMesh);
 	}
@@ -429,13 +435,19 @@ void Level::collectDynamicPhysicMeshes(Hierarchy* node, glm::mat4 globalTransfor
 		uint32_t vtxOffset = meshes[modelindex].vertexOffset;
 		uint32_t vtxCount = meshes[modelindex].vertexCount;
 		PhysicsMesh phyMesh;
+
+		Transformation trs;
+		glm::decompose(nodeMatrix, trs.Scale, trs.Rotation, trs.Translate, glm::vec3(), glm::vec4());
+		trs.Rotation = glm::normalize(glm::conjugate(trs.Rotation));
+
 		for (uint32_t i = 0; i < vtxCount; i++)
 		{
 			phyMesh.vtxPositions.push_back(vertices[vtxOffset + i * 8 + 0]);
 			phyMesh.vtxPositions.push_back(vertices[vtxOffset + i * 8 + 1]);
-			phyMesh.vtxPositions.push_back(vertices[vtxOffset + i * 8 + 2]);
+			phyMesh.vtxPositions.push_back(vertices[vtxOffset + i * 8 + 1]);
 		}
-		phyMesh.modelMatrix = nodeMatrix;
+
+		phyMesh.modelTRS = trs;
 		phyMesh.node = node;
 		dynamic.push_back(phyMesh);
 	}

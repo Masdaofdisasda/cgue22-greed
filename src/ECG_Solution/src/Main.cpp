@@ -12,7 +12,6 @@
 
 #pragma once
 #include <sstream>
-#include <numbers>
 #include <thread>
 #include "Camera.h"
 #include "Renderer.h"
@@ -85,10 +84,7 @@ int main(int argc, char** argv)
 	glDebugMessageCallback(Debugger::DebugCallbackDefault, 0);
 
 	LoadingScreen loadingScreen = LoadingScreen(&GLFWapp, state->width, state->height);
-	loadingScreen.start();
-
-	//std::thread loadscrn = std::thread(&LoadingScreen::start, loadingScreen );
-	//loadscrn.join();
+	loadingScreen.DrawProgress();
 
 	/* --------------------------------------------- */
 	// Initialize scene and render loop
@@ -100,12 +96,15 @@ int main(int argc, char** argv)
 	irrklang::ISoundEngine* engine = irrklang::createIrrKlangDevice();
 	irrklang::ISound* snd = engine->play2D("../../assets/media/EQ07 Prc Fantasy Perc 060.wav", true);
 
+	loadingScreen.DrawProgress();
 	printf("Loading level...\n");
 	Level level("../../assets/demo.fbx", state, perframeData);
 
+	loadingScreen.DrawProgress();
 	printf("Intializing renderer...\n");
 	Renderer renderer(perframeData, *level.getLights());
 
+	loadingScreen.DrawProgress();
 	//Physics Initialization
 	printf("Initializing physics...\n");
 	Physics physics;
@@ -125,7 +124,7 @@ int main(int argc, char** argv)
 	for (int i = 0; i < dynamicMeshes.size(); i++)
 		physics.createPhysicsObject(
 			dynamicMeshes[i].node,
-			dynamicMeshes[i].modelMatrix,
+			dynamicMeshes[i].modelTRS,
 			dynamicMeshes[i].vtxPositions,
 			Physics::ObjectMode::Dynamic
 		);
@@ -134,7 +133,7 @@ int main(int argc, char** argv)
 	for (int i = 0; i < staticMeshes.size(); i++)
 		physics.createPhysicsObject(
 			staticMeshes[i].node,
-			staticMeshes[i].modelMatrix,
+			staticMeshes[i].modelTRS,
 			staticMeshes[i].vtxPositions,
 			Physics::ObjectMode::Static
 		);

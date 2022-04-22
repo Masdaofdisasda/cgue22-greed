@@ -6,6 +6,7 @@ layout (location=0) out vec4 out_FragColor;
 in vec3 fNormal;
 in vec3 fPosition;
 in vec2 fUV;
+in vec4 fShadow;
 
 // light sources
 struct DirectionalLight
@@ -57,6 +58,8 @@ layout (binding = 5) uniform samplerCube irradianceTex;
 layout (binding = 6) uniform samplerCube prefilterTex;
 layout (binding = 7) uniform sampler2D brdfLutTex;
 
+layout (binding = 12) uniform sampler2D depthTex;
+
 // Global variables
 vec3 albedo = pow(texture(albedoTex, fUV).rgb, vec3(2.2));
 float metallic = texture(metallicTex, fUV).r;
@@ -67,6 +70,12 @@ const float PI = 3.14159265359;
 
 
 // helper functions
+
+float debugDepthmap()
+{
+    float depth = texture(depthTex, fShadow.xy).r;
+    return depth < fShadow.z ? 0.0 : 1.0;
+}
 
 // http://www.thetenthplanet.de/archives/1180
 mat3 cotangentFrame( vec3 N, vec3 p, vec2 uv )
@@ -229,6 +238,8 @@ vec3 calculateLight() {
     if (normalMap.x > 0.0f) N = perturbNormal(normalize(fNormal), V, texture(normalTex, fUV).xyz, fUV);
     vec3 R = reflect(-V, N);
     
+    float shadow = debugDepthmap();
+    
     // calculate reflectance at normal incidence; if dia-electric (like plastic) use F0 
     // of 0.04 and if it's a metal, use the albedo color as F0 (metallic workflow)    
     vec3 F0 = vec3(0.04); 
@@ -261,9 +272,9 @@ vec3 calculateLight() {
     vec2 brdf  = texture(brdfLutTex, vec2(max(dot(N, V), 0.0), roughness)).rg;
     vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
     
-    vec3 ambient = (kD * diffuse + specular) * ao;
+    vec3 ambient = (kD * diffuse + specular* shadow) * ao;
     
-    vec3 color = ambient + Lo;
+    vec3 color = ambient + Lo * shadow;
     
     return color;
 }

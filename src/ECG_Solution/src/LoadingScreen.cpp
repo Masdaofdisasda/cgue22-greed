@@ -7,6 +7,7 @@ LoadingScreen::LoadingScreen(GLFWApp* app, int width, int height)
 	w = width;
 	h = height;
 
+	init();
 }
 
 void LoadingScreen::init()
@@ -34,8 +35,7 @@ void LoadingScreen::DrawProgress()
 	glBindTextureUnit(9, *screens[step]);
 	glBindVertexArray(emptyVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 3);
-
-	std::cout << "loop = " << step << std::endl;
+	Sleep(100);
 
 	window->swapBuffers();
 	step++;
@@ -48,7 +48,6 @@ void LoadingScreen::DrawProgress()
 
 void LoadingScreen::start() //TODO
 {
-	init();
 
 	while (!end)
 	{

@@ -27,6 +27,13 @@ layout(std430, binding = 4) restrict readonly buffer Matrices
 out vec3 fNormal;
 out vec3 fPosition;
 out vec2 fUV;
+out vec4 fShadow;
+
+const mat4 scaleBias = mat4(
+0.5, 0.0, 0.0, 0.0,
+0.0, 0.5, 0.0, 0.0,
+0.0, 0.0, 0.5, 0.0,
+0.5, 0.5, 0.5, 1.0);
 
 void main()
 {
@@ -35,4 +42,6 @@ void main()
 	fUV = vUV;
 	fPosition = vec3(model * vec4(vPosition, 1.0));
 	fNormal = mat3(transpose(inverse(model))) * vNormal;
+	
+	fShadow = scaleBias * lightViewProj * model * vec4(vPosition, 1.0);
 }

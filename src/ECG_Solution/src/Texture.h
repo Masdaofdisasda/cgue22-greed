@@ -24,6 +24,7 @@ public:
 
 	static GLuint loadTexture(const char* texPath);
 	static GLuint loadTextureTransparent(const char* texPath);
+	static GLuint load3Dlut(const char* texPath);
 
 	
 	// ensure RAII compliance

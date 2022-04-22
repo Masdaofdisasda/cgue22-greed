@@ -17,7 +17,7 @@ Physics::Physics() {
 
 Physics::PhysicsObject& Physics::createPhysicsObject(
 	Hierarchy* modelGraphics,
-	glm::mat4 modelMatrix,
+	Transformation modelMatrix,
 	std::vector<float> colliderVerticePositions,
 	ObjectMode mode)
 {
@@ -75,13 +75,9 @@ void Physics::updateModelTransform(PhysicsObject* physicsObject) {
 	glm::vec3 axis = btToGlm(rb.getOrientation().getAxis());
 	glm::vec3 scale = glm::vec3(0.5);
 
-	glm::mat4 T = glm::translate(glm::mat4(1), pos);
-	glm::mat4 R = glm::rotate(glm::mat4(1), glm::radians(deg), axis);
-	glm::mat4 S = glm::scale(glm::mat4(1), scale);
+	glm::quat R = glm::quat_cast(glm::rotate(glm::radians(deg), axis));
 
-	glm::mat4 before = physicsObject->modelGraphics->getNodeMatrix();
-	physicsObject->modelGraphics->setNodeMatrix(T * R * S);
-	glm::mat4 after = physicsObject->modelGraphics->getNodeMatrix();
+	physicsObject->modelGraphics->setNodeTRS(pos, R, scale);
 	int i;
 }
 
@@ -134,9 +130,9 @@ btRigidBody* Physics::makeRigidbody(btVector3 pos, btCollisionShape* col, btQuat
 	return new btRigidBody(mass, motionSate, col, inertia);
 }
 
-btRigidBody* Physics::makeRigidbody(glm::mat4 transform, btCollisionShape* col, btScalar mass) {
-	glm::vec3 translation = translationFromTransform(transform);
-	glm::quat rotation = rotationFromTransform(transform);
+btRigidBody* Physics::makeRigidbody(Transformation transform, btCollisionShape* col, btScalar mass) {
+	glm::vec3 translation = transform.Translate;
+	glm::quat rotation = transform.Rotation;
 	btTransform* startTransform = new btTransform(glmToBt(rotation), glmToBt(translation));
 	btMotionState* motionSate = new btDefaultMotionState(*startTransform);
 	btVector3 inertia;

@@ -61,10 +61,12 @@ private:
 	Program blurYVL;
 	// HUD
 	Program renderImage;
+	Program renderColor;
 
 	// global Textures
 	Cubemap IBL;
 	Cubemap skyTex;
+	GLuint Lut3D;
 	GLuint emptyVAO;		// for skybox drawing
 
 	// Framebuffers for HDR/Bloom

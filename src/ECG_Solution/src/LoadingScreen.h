@@ -5,6 +5,8 @@
 
 #ifndef _LOADING_SCREEN_
 #define _LOADING_SCREEN_
+/// @brief simulates what a loading screen might look like
+/// hourse tried to make an actual loading screen: 11h
 class LoadingScreen
 {
 public:
@@ -12,10 +14,10 @@ public:
 	 void stop() { end = true; }
 	LoadingScreen(GLFWApp* app, int width, int height);
 	~LoadingScreen();
+	 void DrawProgress();
 
 private:
 	
-	 void DrawProgress();
 	 void init();
 
 	 std::shared_ptr<GLFWApp> window;

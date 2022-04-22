@@ -146,8 +146,6 @@ void FontRenderer::print(std::string msg, float x, float y, float size, glm::vec
         // now advance cursors for next glyph (note that advance is number of 1/64 pixels)
         x += (l.Advance >> 6) * size; // bitshift by 6 to get value in pixels (2^6 = 64)
     }
-    glBindVertexArray(0);
-    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 FontRenderer::~FontRenderer()

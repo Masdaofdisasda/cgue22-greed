@@ -87,6 +87,82 @@ GLuint Texture::loadTextureTransparent(const char* texPath)
 	return handle;
 }
 
+/// @brief loads a 3dlut in .cube format, used for color grading in Renderer
+/// code from https://svnte.se/3d-lut
+/// @param texPath is the location of the lut
+/// @return the created texture handle
+GLuint Texture::load3Dlut(const char* texPath)
+{
+	// Load .CUBE file 
+	printf("Loading LUT file %s \n", texPath);
+	FILE* file = fopen(texPath, "r");
+
+	if (file == NULL) {
+		printf("Could not open file \n");
+		return false;
+	}
+
+	float* lut_data = nullptr;
+	int size = 0;
+
+	// Iterate through lines
+	while (true) {
+		char line[128];
+		fscanf(file, "%128[^\n]\n", line);
+
+
+
+		if (strcmp(line, "#LUT size") == 0) {
+			// Read LUT size
+			fscanf(file, "%s %i\n", &line, &size);
+			lut_data = new float[size * size * size * 3];
+		}
+		else if (strcmp(line, "#LUT data points") == 0) {
+
+			// Read colors
+			int row = 0;
+			do {
+				float r, g, b;
+				fscanf(file, "%f %f %f\n", &r, &g, &b);
+				lut_data[row * 3 + 0] = r;
+				lut_data[row * 3 + 1] = g;
+				lut_data[row * 3 + 2] = b;
+				row++;
+			} while (row < size * size * size);
+			break;
+		}
+	}
+	fclose(file);
+
+	// Create texture
+	GLuint texture;
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_3D, texture);
+
+	// Load data to texture
+	glTexImage3D(
+
+		GL_TEXTURE_3D,
+		0,
+		GL_RGB,
+		size, size, size,
+		0,
+		GL_RGB,
+		GL_FLOAT,
+		lut_data
+	);
+
+	// Set sampling parameters
+	glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP);
+
+	return texture;
+
+}
+
 /// @brief calculates mimap level for framebuffer textures
 /// @param w width of the texture
 /// @param h height of the texture

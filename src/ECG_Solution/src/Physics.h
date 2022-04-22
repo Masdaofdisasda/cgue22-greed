@@ -48,7 +48,7 @@ public:
 	/// </summary>
 	PhysicsObject& createPhysicsObject(
 		Hierarchy* modelGraphics,
-		glm::mat4 modelMatrix,
+		Transformation modelMatrix,
 		std::vector<float> colliderVerticePositions,
 		ObjectMode mode
 	);
@@ -76,7 +76,7 @@ private:
 	/// Creates and returns a bullet rigidbody
 	/// </summary>
 	btRigidBody* makeRigidbody(btVector3 pos, btCollisionShape* col, btQuaternion rot, btScalar mass);
-	btRigidBody* makeRigidbody(glm::mat4 transform, btCollisionShape* col, btScalar mass);
+	btRigidBody* makeRigidbody(Transformation transform, btCollisionShape* col, btScalar mass);
 
 	/// <summary>
 	/// Returns a collision shape generated from the input mesh
