@@ -405,11 +405,14 @@ void Level::collectRigidPhysicMeshes(Hierarchy* node, glm::mat4 globalTransform)
 		glm::decompose(nodeMatrix, trs.Scale, trs.Rotation, trs.Translate, glm::vec3(), glm::vec4());
 		trs.Rotation = glm::normalize(glm::conjugate(trs.Rotation));
 
-		for (uint32_t i = 0; i < vtxCount; i++)
+		for (auto i = 0; i != vtxCount; i++)
 		{
-			phyMesh.vtxPositions.push_back(vertices[vtxOffset + i * 8 + 0]);
-			phyMesh.vtxPositions.push_back(vertices[vtxOffset + i * 8 + 1]);
-			phyMesh.vtxPositions.push_back(vertices[vtxOffset + i * 8 + 2]);
+			auto vertexOffset = (vtxOffset + i) * 8;
+			const float* vf = &vertices[vertexOffset];
+
+			phyMesh.vtxPositions.push_back(vf[0]);
+			phyMesh.vtxPositions.push_back(vf[1]);
+			phyMesh.vtxPositions.push_back(vf[2]);
 		}
 
 		phyMesh.modelTRS = trs;
@@ -438,11 +441,14 @@ void Level::collectDynamicPhysicMeshes(Hierarchy* node, glm::mat4 globalTransfor
 		glm::decompose(nodeMatrix, trs.Scale, trs.Rotation, trs.Translate, glm::vec3(), glm::vec4());
 		trs.Rotation = glm::normalize(glm::conjugate(trs.Rotation));
 
-		for (uint32_t i = 0; i < vtxCount; i++)
+		for (auto i = 0; i != vtxCount; i++)
 		{
-			phyMesh.vtxPositions.push_back(vertices[vtxOffset + i * 8 + 0]);
-			phyMesh.vtxPositions.push_back(vertices[vtxOffset + i * 8 + 1]);
-			phyMesh.vtxPositions.push_back(vertices[vtxOffset + i * 8 + 2]);
+			auto vertexOffset = (vtxOffset + i) * 8;
+			const float* vf = &vertices[vertexOffset];
+
+			phyMesh.vtxPositions.push_back(vf[0]);
+			phyMesh.vtxPositions.push_back(vf[1]);
+			phyMesh.vtxPositions.push_back(vf[2]);
 		}
 
 		phyMesh.modelTRS = trs;

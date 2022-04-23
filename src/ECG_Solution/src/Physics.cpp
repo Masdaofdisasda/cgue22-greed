@@ -73,7 +73,7 @@ void Physics::updateModelTransform(PhysicsObject* physicsObject) {
 	glm::vec3 pos = btToGlm(rb.getCenterOfMassTransform().getOrigin());
 	float deg = (float)(rb.getOrientation().getAngle() * 180 / Physics::PI);
 	glm::vec3 axis = btToGlm(rb.getOrientation().getAxis());
-	glm::vec3 scale = glm::vec3(0.5);
+	glm::vec3 scale = glm::vec3(1.0);
 
 	glm::quat R = glm::quat_cast(glm::rotate(glm::radians(deg), axis));
 

@@ -152,7 +152,7 @@ int main(int argc, char** argv)
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glLineWidth(2.0f);
-	//glEnable(GL_CULL_FACE);
+	glEnable(GL_CULL_FACE);
 
 	engine->stopAllSounds();
 	snd = engine->play2D("../../assets/media/greedCollect_v1.mp3", true);
