@@ -216,6 +216,11 @@ void LavaSystem::Draw()
     glDispatchCompute(totalParticles / 100, 1, 1);
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
+    lavaFloor.Use();
+    glBindVertexArray(LavaVAO);
+    const GLuint textures[] = { lava.getAlbedo(), lava.getNormalmap(),lava.getMetallic(), lava.getRoughness(), lava.getAOmap() };
+    glBindTextures(0, 5, textures);
+    glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, 0);
     // Draw the particles
     //glEnable(GL_BLEND);
     SimRender.Use();
@@ -225,11 +230,6 @@ void LavaSystem::Draw()
     glDrawArrays(GL_POINTS, 0, totalParticles);
     //glDisable(GL_BLEND);
 
-    lavaFloor.Use();
-    glBindVertexArray(LavaVAO);
-    const GLuint textures[] = { lava.getAlbedo(), lava.getNormalmap(),lava.getMetallic(), lava.getRoughness(), lava.getAOmap() };
-    glBindTextures(0, 5, textures);
-    glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, 0);
 
 #if 0
     // Draw the attractors

@@ -9,7 +9,6 @@ Level::Level(const char* scenePath, std::shared_ptr<GlobalState> state, PerFrame
 	std::cout << "load scene... (this could take a while)" << std::endl;
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(scenePath,
-		aiProcess_Triangulate |
 		aiProcess_GenSmoothNormals |
 		aiProcess_SplitLargeMeshes |
 		aiProcess_ImproveCacheLocality |
@@ -102,7 +101,6 @@ subMesh Level::extractMesh(const aiMesh* mesh)
 
 		vertices.push_back(t.x);
 		vertices.push_back(t.y);
-
 	}
 
 	uint32_t indexCount = 0;
@@ -128,7 +126,7 @@ subMesh Level::extractMesh(const aiMesh* mesh)
 
 /// @brief finds the maximum and minimum vertex positions of all meshes, which should define the bounds
 BoundingBox Level::computeBoundsOfMesh(subMesh mesh) {
-	const auto numIndices = mesh.indexCount;
+	const auto numIndices = mesh.vertexCount;
 
 	glm::vec3 vmin(std::numeric_limits<float>::max());
 	glm::vec3 vmax(std::numeric_limits<float>::lowest());
@@ -268,7 +266,7 @@ void Level::setupVertexBuffers()
 	glCreateBuffers(1, &VBO);
 	glNamedBufferStorage(VBO, vertices.size() * sizeof(float), vertices.data(), 0);
 	glCreateBuffers(1, &EBO);
-	glNamedBufferStorage(EBO, globalIndexOffset * sizeof(GLuint), indices.data(), 0);
+	glNamedBufferStorage(EBO, indices.size() * sizeof(GLuint), indices.data(), 0);
 
 	glCreateVertexArrays(1, &VAO);
 	glVertexArrayElementBuffer(VAO, EBO);
@@ -486,8 +484,7 @@ void Level::DrawScene() {
 		const GLuint textures[] = {materials[i].getAlbedo(), materials[i].getNormalmap(), materials[i].getMetallic(), materials[i].getRoughness(), materials[i].getAOmap() };
 
 		glBindTextures(0, 5, textures);
-		glMultiDrawArraysIndirect(GL_TRIANGLES, nullptr, renderQueue[i].commands.size(), 0);
-		// todo: glMultiDrawElementsIndirect
+		glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, (GLvoid*)0, (GLsizei)renderQueue[i].commands.size(), 0);
 	}
 
 	if (state->cullDebug_) // bounding box & frustum culling debug view
@@ -546,8 +543,7 @@ void Level::DrawSceneFromLightSource()
 
 		glNamedBufferSubData(IBO, 0, renderQueue[i].commands.size() * sizeof(DrawElementsIndirectCommand), renderQueue[i].commands.data());
 
-		glMultiDrawArraysIndirect(GL_TRIANGLES, nullptr, renderQueue[i].commands.size(), 0);
-		// todo: glMultiDrawElementsIndirect
+		glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, (GLvoid*)0, (GLsizei)renderQueue[i].commands.size(), 0);
 	}
 	state->cull_ = cull;
 }
@@ -568,14 +564,17 @@ void Level::buildRenderQueue(const Hierarchy* node, glm::mat4 globalTransform) {
 	{
 		uint32_t meshIndex = node->modelIndices[i];
 		uint32_t materialIndex = meshes[meshIndex].materialIndex;
-		uint32_t count = meshes[meshIndex].indexCount;
-		uint32_t firstIndex = meshes[meshIndex].indexOffset;
+		uint32_t count = meshes[meshIndex].vertexCount;
+		uint32_t instanceCount = 1;
+		//uint32_t firstIndex = meshes[meshIndex].indexOffset;
+		uint32_t baseVertex = meshes[meshIndex].vertexOffset;
 		uint32_t baseInstance = renderQueue[materialIndex].modelMatrices.size();
 
 		DrawElementsIndirectCommand cmd= DrawElementsIndirectCommand{
 			count,
-			1,
-			firstIndex,
+			instanceCount,
+			0,
+			baseVertex,
 			baseInstance };
 
 		renderQueue[materialIndex].commands.push_back(cmd);

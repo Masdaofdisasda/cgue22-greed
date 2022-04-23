@@ -26,7 +26,8 @@ struct DrawElementsIndirectCommand
 {
 	uint32_t count_;
 	uint32_t instanceCount_;
-	uint32_t first_;
+	uint32_t firstIndex_;
+	uint32_t baseVertex_;
 	uint32_t baseInstance_;
 };
 
