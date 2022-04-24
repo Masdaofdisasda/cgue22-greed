@@ -81,7 +81,7 @@ private:
 	/// <summary>
 	/// Returns a collision shape generated from the input mesh
 	/// </summary>
-	btConvexHullShape* getCollisionShapeFromMesh(std::vector<float> verticePositionArray);
+	btConvexHullShape* getCollisionShapeFromMesh(std::vector<float> verticePositionArray, btVector3 scale);
 
 	float Physics::getMassFromObjectMode(Physics::ObjectMode mode);
 

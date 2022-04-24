@@ -22,7 +22,8 @@ Physics::PhysicsObject& Physics::createPhysicsObject(
 	ObjectMode mode)
 {
 	float mass = getMassFromObjectMode(mode);
-	btCollisionShape* collider = getCollisionShapeFromMesh(colliderVerticePositions);
+	btVector3 scale = glmToBt(scaleFromTransform(modelMatrix));
+	btCollisionShape* collider = getCollisionShapeFromMesh(colliderVerticePositions, scale);
 	btRigidBody* rigidbody = makeRigidbody(modelMatrix, collider, mass);
 	if (mode == Physics::ObjectMode::Dynamic_NoRotation)
 		rigidbody->setAngularFactor(0);
@@ -53,7 +54,7 @@ void Physics::debugDraw() {
 Physics::PhysicsObject* Physics::rayCast(btVector3 start, btVector3 end) {
 	btCollisionWorld::ClosestRayResultCallback result(start, end);
 	dynamics_world->rayTest(start, end, result);
-	
+
 	if (!result.hasHit())
 		return nullptr;
 
@@ -68,21 +69,14 @@ void Physics::updateModelTransform(PhysicsObject* physicsObject) {
 	if (physicsObject->modelGraphics == nullptr)
 		return;
 
-	//TODO: rewrite with getOpenGLMatrix() from btTransform
 	btRigidBody rb = *physicsObject->rigidbody;
 	glm::vec3 pos = btToGlm(rb.getCenterOfMassTransform().getOrigin());
 	float deg = (float)(rb.getOrientation().getAngle() * 180 / Physics::PI);
 	glm::vec3 axis = btToGlm(rb.getOrientation().getAxis());
+	glm::quat rotation = glm::quat_cast(glm::rotate(glm::mat4(1), glm::radians(deg), axis));
 	glm::vec3 scale = glm::vec3(0.5);
 
-	glm::mat4 T = glm::translate(glm::mat4(1), pos);
-	glm::mat4 R = glm::rotate(glm::mat4(1), glm::radians(deg), axis);
-	glm::mat4 S = glm::scale(glm::mat4(1), scale);
-
-	glm::mat4 before = physicsObject->modelGraphics->getNodeMatrix();
-	physicsObject->modelGraphics->setNodeMatrix(T * R * S);
-	glm::mat4 after = physicsObject->modelGraphics->getNodeMatrix();
-	int i;
+	physicsObject->modelGraphics->setNodeTRS(pos, rotation, scale);
 }
 
 Physics::PhysicsObject& Physics::addPhysicsObject(btRigidBody* rigidbody, Hierarchy* modelGraphics, Physics::ObjectMode mode) {
@@ -112,15 +106,18 @@ float Physics::getMassFromObjectMode(Physics::ObjectMode mode) {
 /* --------------------------------------------- */
 // Static functions
 /* --------------------------------------------- */
-btConvexHullShape* Physics::getCollisionShapeFromMesh(std::vector<float> verticePositionArray) {
+btConvexHullShape* Physics::getCollisionShapeFromMesh(std::vector<float> verticePositionArray, btVector3 scale) {
 	btConvexHullShape* shape = new btConvexHullShape();
-	int verticeAmount = verticePositionArray.size()/3;
+	glm::mat4 scalingMatrix = glm::scale(glm::mat4(), btToGlm(scale));
+
+	int verticeAmount = verticePositionArray.size() / 3;
 	for (int i = 0; i < verticeAmount; i++)
 	{
-		btScalar x = verticePositionArray[i * 3];
-		btScalar y = verticePositionArray[i * 3 + 1];
-		btScalar z = verticePositionArray[i * 3 + 2];
-		shape->addPoint(btVector3(x, y, z));
+		float x = verticePositionArray[i * 3];
+		float y = verticePositionArray[i * 3 + 1];
+		float z = verticePositionArray[i * 3 + 2];
+		glm::vec4 scaledPoint = scalingMatrix * glm::vec4(x, y, z, 1);
+		shape->addPoint(btVector3(scaledPoint.x, scaledPoint.y, scaledPoint.z));
 	}
 
 	return shape;
