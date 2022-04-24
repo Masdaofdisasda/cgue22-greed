@@ -71,13 +71,14 @@ void Physics::updateModelTransform(PhysicsObject* physicsObject) {
 	//TODO: rewrite with getOpenGLMatrix() from btTransform
 	btRigidBody rb = *physicsObject->rigidbody;
 	glm::vec3 pos = btToGlm(rb.getCenterOfMassTransform().getOrigin());
-	float deg = (float)(rb.getOrientation().getAngle() * 180 / Physics::PI);
+	//float deg = (float)(rb.getOrientation().getAngle() * 180 / Physics::PI);
+	float deg = (float)rb.getOrientation().getAngle();
 	glm::vec3 axis = btToGlm(rb.getOrientation().getAxis());
 	glm::vec3 scale = glm::vec3(1.0);
 
-	glm::quat R = glm::quat_cast(glm::rotate(glm::radians(deg), axis));
+	glm::quat rot = glm::angleAxis(deg, axis);
 
-	physicsObject->modelGraphics->setNodeTRS(pos, R, scale);
+	physicsObject->modelGraphics->setNodeTRS(pos, rot, scale);
 	int i;
 }
 

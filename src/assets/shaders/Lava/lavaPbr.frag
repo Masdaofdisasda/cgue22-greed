@@ -62,7 +62,7 @@ layout (binding = 12) uniform sampler2D depthTex;
 
 // Global variables
 vec3 albedo = pow(texture(albedoTex, fUV).rgb, vec3(2.2));
-vec3 emissive  = albedo;
+vec3 emissive  = albedo * bloom.y;
 float metallic = texture(metallicTex, fUV).r;
 float roughness = texture(roughnessTex, fUV).r;
 float ao = texture(aoTex,fUV).r;

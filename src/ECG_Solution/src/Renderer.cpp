@@ -198,10 +198,9 @@ void Renderer::Draw(Level* level)
 	glClearNamedFramebufferfv(framebuffer1.getHandle(), GL_COLOR, 0, &(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)[0]));
 	glClearNamedFramebufferfi(framebuffer1.getHandle(), GL_DEPTH_STENCIL, 0, 1.0f, 0);
 
-	glm::mat4 lightView = glmlookAt2(glm::vec3(0, 0, 0), glm::vec3(0.00001, -1, 0), glm::vec3(0, 1, 0));
-	std::vector<float> b = level->getLevelBounds();
-	glm::mat4 lightProj = glm::ortho(b[0], b[3], b[2], b[4], -b[5], -b[2]); // why does -100 fix this?
-	//glm::mat4 lightProj = glm::ortho(-157.1f, 148.7f, -25.0f, 150.0f, 151.0f, -125.0f);
+	glm::vec3 dir = glm::vec3(lights.directional[0].direction);
+	glm::mat4 lightView = glmlookAt2(glm::vec3(0, 0, 0), dir, glm::vec3(0, 0, 1));
+	glm::mat4 lightProj = level->getTightSceneFrustum();
 	perframeData->lightViewProj = lightProj * lightView;
 
 	perframeBuffer.Update(*perframeData);

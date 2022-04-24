@@ -1,5 +1,6 @@
 #include "Level.h"
 #include "Program.h"
+#include <unordered_map>
 
 /// @brief loads an fbx file from the given path and converts it to useable data structures
 /// @param scenePath location of the fbx file, expected to be in "assets"
@@ -237,7 +238,8 @@ void Level::traverseTree(aiNode* n, Hierarchy* parent, Hierarchy* node)
 	// travers child nodes
 	for (size_t i = 0; i < n->mNumChildren; i++)
 	{
-		if (strcmp(n->mChildren[i]->mName.C_Str(),"Lights") != 0) // exclude lights
+		if (strcmp(n->mChildren[i]->mName.C_Str(),"Lights") != 0 && // skip lights
+			(n->mChildren[i]->mNumChildren > 0 || n->mChildren[i]->mNumMeshes > 0)) // skip empty nodes
 		{
 		Hierarchy child;
 		traverseTree(n->mChildren[i], node, &child);
@@ -303,53 +305,73 @@ void Level::setupDrawBuffers()
 /// @param scene is the scene containing the lights and root node
 void Level::loadLights(const aiScene* scene) {
 
+	// collect light sources
+	std::unordered_map<std::string, aiLight*> lightMap;
 	for (size_t i = 0; i < scene->mNumLights; i++)
 	{
-		const aiLightSourceType type = scene->mLights[i]->mType;
+		aiLight* light = scene->mLights[i];
+		lightMap.insert({light->mName.C_Str(), light});
+	}
 
-		if (type == aiLightSource_DIRECTIONAL)
+	// find the light node
+	aiNode* lights = nullptr;
+	for (size_t i = 0; i < scene->mRootNode->mNumChildren; i++)
+	{
+		if (strcmp(scene->mRootNode->mChildren[i]->mName.C_Str(), "Lights") == 0)
 		{
-			const aiLight* light = scene->mLights[i];
-			const aiVector3D dir = light->mDirection;
-			const aiColor3D col = light->mColorDiffuse;
-
-			glm::vec4 direction = -glm::vec4(dir.x, dir.y, dir.z, 1.0f);
-			glm::vec4 intensity = glm::vec4(col.r, col.g, col.b, 1.0f)*2.0f;
-
-			lights.directional.push_back(DirectionalLight{direction, intensity});
-		}
-
-		if (type == aiLightSource_POINT)
-		{
-			const aiLight* light = scene->mLights[i];
-			const aiColor3D col = light->mColorDiffuse;
-			const aiString name = light->mName;
-
-			aiVector3D p; //TODO
-			for (size_t i = 0; i < scene->mRootNode->mNumChildren; i++)
-			{
-				if(strcmp(scene->mRootNode->mChildren[i]->mName.C_Str(), "lights") == 0)
-				{
-					for (size_t j = 0; j < scene->mRootNode->mChildren[i]->mNumChildren; j++)
-					{
-						if (strcmp(scene->mRootNode->mChildren[i]->mChildren[j]->mName.C_Str(), name.C_Str()) == 0)
-						{
-							p = scene->mRootNode->mTransformation *
-								scene->mRootNode->mChildren[i]->mTransformation *
-								scene->mRootNode->mChildren[i]->mChildren[j]->mTransformation * p;
-
-						}
-					}
-				}
-			}
-
-			glm::vec4 position = glm::vec4(p.x, p.y, p.z, 1.0f);
-			glm::vec4 intensity = glm::vec4(col.r, col.g, col.b, 1.0f);
-
-			lights.point.push_back(PositionalLight{ position, intensity });
+			lights = scene->mRootNode->mChildren[i];
+			break;
 		}
 	}
 
+	// extract light soruces
+	for (size_t i = 0; i < lights->mNumChildren; i++)
+	{
+		aiNode* child = lights->mChildren[i];
+
+		if (child->mNumChildren == 1) // directional light
+		{
+			aiNode* pre = child; // get prerotation
+			glm::quat preRot = glm::quat_cast(toGlmMat4(pre->mTransformation));
+
+			aiNode* post = pre->mChildren[0]; // get prerotation
+			glm::quat postRot = glm::quat_cast(toGlmMat4(post->mTransformation));
+
+			aiNode* lig = post->mChildren[0]; // get light
+			std::string name = lig->mName.C_Str();
+			aiLight* light = lightMap.at(name);
+			assert(light->mType == aiLightSource_DIRECTIONAL);
+			glm::quat ligRot = glm::quat_cast(toGlmMat4(lig->mTransformation));
+
+
+			glm::quat finalRot = preRot * ligRot * postRot;
+
+			const aiVector3D dir = light->mDirection;
+			const aiColor3D col = light->mColorDiffuse;
+
+			glm::vec3 direction = glm::vec3(dir.x, dir.y, dir.z);	
+			direction = -glm::rotate(finalRot, direction);	// light direction gets inverted in shader
+			direction = glm::vec3(0.0001, 1, 0); // todo
+			glm::vec4 intensity = glm::vec4(col.r, col.g, col.b, 1.0f) * 3.0f; // double the light intensity (maya normalizes it)
+
+			this->lights.directional.push_back(DirectionalLight{glm::vec4(direction,1.0f), intensity});
+		}
+		else // point light
+		{
+			std::string name = child->mName.C_Str();
+			aiLight* light = lightMap.at(name);
+			assert(light->mType == aiLightSource_POINT);
+			glm::mat4 M = toGlmMat4(child->mTransformation);
+
+			const aiColor3D col = light->mColorDiffuse;
+			glm::vec4 position = glm::vec4(0,0,0,1.0f);
+
+			position = M * position;
+			glm::vec4 intensity = glm::vec4(col.r, col.g, col.b, 1.0f);
+
+			this->lights.point.push_back(PositionalLight{ position, intensity });
+		}
+	}
 }
 
 void Level::loadShaders()
@@ -621,16 +643,18 @@ void Level::DrawAABBs(Hierarchy node)
 	}
 }
 
-std::vector<float> Level::getLevelBounds()
+glm::mat4 Level::getTightSceneFrustum()
 {
-	std::vector<float> b;
-	b.push_back(sceneGraph.nodeBounds.min_.x);
-	b.push_back(sceneGraph.nodeBounds.min_.y);
-	b.push_back(sceneGraph.nodeBounds.min_.z);
-	b.push_back(sceneGraph.nodeBounds.max_.x);
-	b.push_back(sceneGraph.nodeBounds.max_.y);
-	b.push_back(sceneGraph.nodeBounds.max_.z);
-	return b;
+	// rotate scene bounds from opengl view direction to camera direction
+	glm::vec3 Ldir = lights.directional[0].direction;
+	glm::vec3 Vdir = glm::vec3(0.0f, 0.0f, 1.0f);
+	glm::quat r = glm::rotation(Vdir, Ldir);
+	glm::vec3 min = glm::rotate(r, sceneGraph.nodeBounds.min_);
+	glm::vec3 max = glm::rotate(r, sceneGraph.nodeBounds.max_);
+	//glm::vec3 min = sceneGraph.nodeBounds.min_;
+	//glm::vec3 max = sceneGraph.nodeBounds.max_;
+
+	return glm::ortho(min.x, max.x, min.y, max.y, -max.z, -min.z); 
 }
 
 /// @brief cleans up all buffers and textures

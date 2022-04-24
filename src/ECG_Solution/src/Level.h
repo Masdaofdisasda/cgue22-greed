@@ -86,7 +86,7 @@ public:
 
 	std::vector<PhysicsMesh> getRigid();
 	std::vector<PhysicsMesh> getDynamic();
-	std::vector<float> getLevelBounds();
+	glm::mat4 getTightSceneFrustum();
 	LightSources* getLights() { return &lights; }
 	std::vector <DirectionalLight> getDirectionalLights() { return lights.directional; }
 	std::vector <PositionalLight> getPointLights() { return lights.point; }
