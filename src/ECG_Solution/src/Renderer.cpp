@@ -15,13 +15,18 @@ Renderer::Renderer(PerFrameData& pfdata, LightSources& sources)
 	perframeBuffer.fillBuffer(pfdata); // load UBO to shader;
 
 	prepareFramebuffers(); // for hdr rendering and tonemapping
-	std::cout << "load enviroment map and process it.." << std::endl;
+	std::cout << "load Enviroment Map.." << std::endl;
 	IBL.loadHDR("../../assets/textures/cubemap/env.hdr");
-	std::cout << "load skybox and process it.." << std::endl;
+	std::cout << "load Skybox.." << std::endl;
 	skyTex.loadHDR("../../assets/textures/cubemap/beach.hdr");
+	Lut3D = Texture::load3Dlut("../../assets/textures/look32.CUBE");
 	glCreateVertexArrays(1, &emptyVAO);
 	PBRShader.uploadIBL(IBL.getIrradianceID(),IBL.getPreFilterID(), IBL.getBdrfLutID(), skyTex.getEnvironment());
+	glBindTextureUnit(13, Lut3D);
+
 	fontRenderer.init("../../assets/fonts/Quasimoda/Quasimoda-Regular.otf", state->width, state->height);
+
+	lavaSim.init(glm::ivec3(lights.directional.size(), lights.point.size(), 0));
 }
 
 std::shared_ptr<GlobalState> Renderer::getState()
@@ -106,7 +111,7 @@ void Renderer::setRenderSettings()
 		state->distScale,
 		1.0f);
 
-	
+	perframeData->deltaTime = glm::vec4(0);
 }
 
 /// @brief compiles all needed shaders for the render loop
@@ -141,10 +146,6 @@ void Renderer::buildShaderPrograms()
 	Shader lightAdaptComp("../../assets/shaders/Bloom/lightAdaption.comp");
 	lightAdapt.buildFrom(lightAdaptComp);
 
-	Shader lavaFloorVert("../../assets/shaders/Lava/lavaFloor.vert");
-	Shader lavaFloorFrag("../../assets/shaders/Lava/lavaFloor.frag");
-	lavaFloor.buildFrom(lavaFloorVert, lavaFloorFrag);
-
 	Shader SSAOFrag("../../assets/shaders/SSAO/SSAO.frag");
 	Shader combineSSAOFrag("../../assets/shaders/SSAO/combineSSAO.frag");
 	SSAO.buildFrom(fullScreenTriangleVert, SSAOFrag);
@@ -152,7 +153,9 @@ void Renderer::buildShaderPrograms()
 
 	Shader renderImgVert("../../assets/shaders/fullScreenTriangle.vert");
 	Shader renderImgFrag("../../assets/shaders/HUD/fullScreenImage.frag");
+	Shader renderColFrag("../../assets/shaders/HUD/fullScreenColor.frag");
 	renderImage.buildFrom(renderImgVert, renderImgFrag);
+	renderColor.buildFrom(renderImgVert, renderColFrag);
 
 	Shader depthVert("../../assets/shaders/lightFX/depthMap.vert");
 	Shader depthFrag("../../assets/shaders/lightFX/depthMap.frag");
@@ -230,8 +233,6 @@ void Renderer::Draw(Level* level)
 		level->DrawScene();
 
 		// 2.3 - draw lava
-		lavaFloor.Use();
-		glDrawArrays(GL_TRIANGLES, 0, 3);
 		lavaSim.update(perframeData->deltaTime.x);
 		lavaSim.Draw();
 
@@ -407,10 +408,16 @@ void Renderer::Draw(Level* level)
 
 	if (state->won_)
 	{
+		renderColor.Use();
+		renderColor.setVec4("color", glm::vec4(0.0f, 0.0f, 0.0f, 0.7f));
+		glDrawArrays(GL_TRIANGLES, 0, 3);
 		fontRenderer.print("You made it!", state->width * 0.36f, state->height * 0.48f, 2.0f, glm::vec3(.85f, .68f, .19f));
 	}
 	if (state->lost_)
 	{
+		renderColor.Use();
+		renderColor.setVec4("color", glm::vec4(0.710, 0.200, 0.180, 1.0f));
+		glDrawArrays(GL_TRIANGLES, 0, 3);
 		fontRenderer.print("Smells like bacon", state->width * 0.33f, state->height * 0.48f, 2.0f, glm::vec3(.0f, .0f, .0f));
 	}
 	glDisable(GL_BLEND);

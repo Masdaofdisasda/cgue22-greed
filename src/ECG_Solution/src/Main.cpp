@@ -12,7 +12,6 @@
 
 #pragma once
 #include <sstream>
-#include <numbers>
 #include <thread>
 #include "Camera.h"
 #include "Renderer.h"
@@ -84,13 +83,8 @@ int main(int argc, char** argv)
 	glEnable(GL_DEBUG_OUTPUT);
 	glDebugMessageCallback(Debugger::DebugCallbackDefault, 0);
 
-	LoadingScreen loadingScreen(&GLFWapp, state->width, state->height);
+	LoadingScreen loadingScreen = LoadingScreen(&GLFWapp, state->width, state->height);
 	loadingScreen.DrawProgress();
-	loadingScreen.DrawProgress();
-
-	//loadingScreen.loop();
-	//std::thread loadscrn(&LoadingScreen::loop, std::ref(loadingScreen) );
-	//loadscrn.join();
 
 	/* --------------------------------------------- */
 	// Initialize scene and render loop
@@ -102,12 +96,15 @@ int main(int argc, char** argv)
 	irrklang::ISoundEngine* engine = irrklang::createIrrKlangDevice();
 	irrklang::ISound* snd = engine->play2D("../../assets/media/EQ07 Prc Fantasy Perc 060.wav", true);
 
+	loadingScreen.DrawProgress();
 	printf("Loading level...\n");
 	Level level("../../assets/demo.fbx", state, perframeData);
 
+	loadingScreen.DrawProgress();
 	printf("Intializing renderer...\n");
 	Renderer renderer(perframeData, *level.getLights());
 
+	loadingScreen.DrawProgress();
 	//Physics Initialization
 	printf("Initializing physics...\n");
 	Physics physics;
@@ -127,7 +124,7 @@ int main(int argc, char** argv)
 	for (int i = 0; i < dynamicMeshes.size(); i++)
 		physics.createPhysicsObject(
 			dynamicMeshes[i].node,
-			dynamicMeshes[i].modelMatrix,
+			dynamicMeshes[i].modelTRS,
 			dynamicMeshes[i].vtxPositions,
 			Physics::ObjectMode::Dynamic
 		);
@@ -136,7 +133,7 @@ int main(int argc, char** argv)
 	for (int i = 0; i < staticMeshes.size(); i++)
 		physics.createPhysicsObject(
 			staticMeshes[i].node,
-			staticMeshes[i].modelMatrix,
+			staticMeshes[i].modelTRS,
 			staticMeshes[i].vtxPositions,
 			Physics::ObjectMode::Static
 		);
@@ -202,12 +199,16 @@ int main(int argc, char** argv)
 		const glm::mat4 projection = glm::perspective(glm::radians(state->fov), ratio, state->Znear, state->Zfar);
 		const glm::mat4 view = camera.getViewMatrix();
 		perframeData.ViewProj = projection * view;
-		lavaPosition.y += deltaSeconds * 1.0f;
+		if (!state->usingDebugCamera_)
+		{
+			lavaPosition.y += deltaSeconds * 1.0f;
+		}
 		perframeData.lavaLevel = glm::translate(lavaPosition);
 		perframeData.viewPos = glm::vec4(camera.getPosition(), 1.0f);
 		perframeData.viewInv = glm::inverse(view);
 		perframeData.projInv = glm::inverse(projection);
 		perframeData.deltaTime.x = deltaSeconds;
+		perframeData.deltaTime.y += deltaSeconds;
 
 		// simple game logic WIP
 		if (perframeData.viewPos.y > 127.0f)

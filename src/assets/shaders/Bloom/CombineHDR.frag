@@ -8,7 +8,7 @@ layout(location = 0) out vec4 outColor;
 layout(binding = 9) uniform sampler2D texScene;
 layout(binding = 10) uniform sampler2D texLuminance;
 layout(binding = 11) uniform sampler2D texBloom;
-layout(binding = 14) uniform sampler2D texlight;
+layout(binding = 13) uniform sampler3D Lut3D;
 
 layout(std140, binding = 0) uniform PerFrameData
 {
@@ -33,6 +33,17 @@ vec3 Reinhard2(vec3 x)
 	return (x * (1.0 + x / (maxWhite * maxWhite))) / (1.0 + x);
 }
 
+vec3 lookUp(vec3 raw)
+{
+	float n = 32;
+	vec3 lutSize = vec3(n,n,n); //lut resolution
+
+	vec3 scale = (lutSize -1.0) / lutSize;
+	vec3 offset = 1.0/(2.0*lutSize);
+
+	return texture(Lut3D, scale*raw + offset).rgb;
+}
+
 void main()
 {
 	float exposure = bloom.x;
@@ -40,12 +51,14 @@ void main()
 
 	vec3 color = texture(texScene, uv).rgb;
 	vec3 bloom = texture(texBloom, uv).rgb;
-	vec3 light = texture(texlight, uv).rgb;
+	//vec3 light = texture(texlight, uv).rgb;
 	float avgLuminance = texture(texLuminance, vec2(0.5, 0.5)).x;
 
 	float midGray = 0.5;
 
 	color *= exposure * midGray / (max(avgLuminance,6.1e-5)); //use smallest float instead of 0
-	color = Reinhard2(color) + light;
-	outColor = vec4(color + bloomStrength * bloom, 1.0);
+	color = Reinhard2(color);
+	//color = lookUp(color);
+	color = color + bloomStrength * bloom;
+	outColor = vec4(color,1.0f);
 }

@@ -9,7 +9,6 @@ Level::Level(const char* scenePath, std::shared_ptr<GlobalState> state, PerFrame
 	std::cout << "load scene... (this could take a while)" << std::endl;
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(scenePath,
-		aiProcess_Triangulate |
 		aiProcess_GenSmoothNormals |
 		aiProcess_SplitLargeMeshes |
 		aiProcess_ImproveCacheLocality |
@@ -102,7 +101,6 @@ subMesh Level::extractMesh(const aiMesh* mesh)
 
 		vertices.push_back(t.x);
 		vertices.push_back(t.y);
-
 	}
 
 	uint32_t indexCount = 0;
@@ -128,7 +126,7 @@ subMesh Level::extractMesh(const aiMesh* mesh)
 
 /// @brief finds the maximum and minimum vertex positions of all meshes, which should define the bounds
 BoundingBox Level::computeBoundsOfMesh(subMesh mesh) {
-	const auto numIndices = mesh.indexCount;
+	const auto numIndices = mesh.vertexCount;
 
 	glm::vec3 vmin(std::numeric_limits<float>::max());
 	glm::vec3 vmax(std::numeric_limits<float>::lowest());
@@ -233,8 +231,8 @@ void Level::traverseTree(aiNode* n, Hierarchy* parent, Hierarchy* node)
 	}
 
 	// set translation, rotation and scale of this node
-	glm::decompose(M, node->localScale, node->localRotation, node->localTranslate, glm::vec3(), glm::vec4());
-	node->localRotation = glm::normalize(glm::conjugate(node->localRotation));
+	glm::decompose(M, node->TRS.Scale, node->TRS.Rotation, node->TRS.Translate, glm::vec3(), glm::vec4());
+	node->TRS.Rotation = glm::normalize(glm::conjugate(node->TRS.Rotation));
 
 	// travers child nodes
 	for (size_t i = 0; i < n->mNumChildren; i++)
@@ -268,7 +266,7 @@ void Level::setupVertexBuffers()
 	glCreateBuffers(1, &VBO);
 	glNamedBufferStorage(VBO, vertices.size() * sizeof(float), vertices.data(), 0);
 	glCreateBuffers(1, &EBO);
-	glNamedBufferStorage(EBO, globalIndexOffset * sizeof(GLuint), indices.data(), 0);
+	glNamedBufferStorage(EBO, indices.size() * sizeof(GLuint), indices.data(), 0);
 
 	glCreateVertexArrays(1, &VAO);
 	glVertexArrayElementBuffer(VAO, EBO);
@@ -315,8 +313,8 @@ void Level::loadLights(const aiScene* scene) {
 			const aiVector3D dir = light->mDirection;
 			const aiColor3D col = light->mColorDiffuse;
 
-			glm::vec4 direction = glm::vec4(dir.x, dir.y, dir.z, 1.0f);
-			glm::vec4 intensity = glm::vec4(col.r, col.g, col.b, 1.0f);
+			glm::vec4 direction = -glm::vec4(dir.x, dir.y, dir.z, 1.0f);
+			glm::vec4 intensity = glm::vec4(col.r, col.g, col.b, 1.0f)*2.0f;
 
 			lights.directional.push_back(DirectionalLight{direction, intensity});
 		}
@@ -402,13 +400,22 @@ void Level::collectRigidPhysicMeshes(Hierarchy* node, glm::mat4 globalTransform)
 		uint32_t vtxOffset = meshes[modelindex].vertexOffset;
 		uint32_t vtxCount = meshes[modelindex].vertexCount;
 		PhysicsMesh phyMesh;
-		for (uint32_t i = 0; i < vtxCount; i++)
+
+		Transformation trs;
+		glm::decompose(nodeMatrix, trs.Scale, trs.Rotation, trs.Translate, glm::vec3(), glm::vec4());
+		trs.Rotation = glm::normalize(glm::conjugate(trs.Rotation));
+
+		for (auto i = 0; i != vtxCount; i++)
 		{
-			phyMesh.vtxPositions.push_back(vertices[vtxOffset + i * 8 + 0]);
-			phyMesh.vtxPositions.push_back(vertices[vtxOffset + i * 8 + 1]);
-			phyMesh.vtxPositions.push_back(vertices[vtxOffset + i * 8 + 2]);
+			auto vertexOffset = (vtxOffset + i) * 8;
+			const float* vf = &vertices[vertexOffset];
+
+			phyMesh.vtxPositions.push_back(vf[0]);
+			phyMesh.vtxPositions.push_back(vf[1]);
+			phyMesh.vtxPositions.push_back(vf[2]);
 		}
-		phyMesh.modelMatrix = nodeMatrix;
+
+		phyMesh.modelTRS = trs;
 		phyMesh.node = nullptr;
 		rigid.push_back(phyMesh);
 	}
@@ -429,13 +436,22 @@ void Level::collectDynamicPhysicMeshes(Hierarchy* node, glm::mat4 globalTransfor
 		uint32_t vtxOffset = meshes[modelindex].vertexOffset;
 		uint32_t vtxCount = meshes[modelindex].vertexCount;
 		PhysicsMesh phyMesh;
-		for (uint32_t i = 0; i < vtxCount; i++)
+
+		Transformation trs;
+		glm::decompose(nodeMatrix, trs.Scale, trs.Rotation, trs.Translate, glm::vec3(), glm::vec4());
+		trs.Rotation = glm::normalize(glm::conjugate(trs.Rotation));
+
+		for (auto i = 0; i != vtxCount; i++)
 		{
-			phyMesh.vtxPositions.push_back(vertices[vtxOffset + i * 8 + 0]);
-			phyMesh.vtxPositions.push_back(vertices[vtxOffset + i * 8 + 1]);
-			phyMesh.vtxPositions.push_back(vertices[vtxOffset + i * 8 + 2]);
+			auto vertexOffset = (vtxOffset + i) * 8;
+			const float* vf = &vertices[vertexOffset];
+
+			phyMesh.vtxPositions.push_back(vf[0]);
+			phyMesh.vtxPositions.push_back(vf[1]);
+			phyMesh.vtxPositions.push_back(vf[2]);
 		}
-		phyMesh.modelMatrix = nodeMatrix;
+
+		phyMesh.modelTRS = trs;
 		phyMesh.node = node;
 		dynamic.push_back(phyMesh);
 	}
@@ -457,7 +473,7 @@ void Level::DrawScene() {
 		FrustumCulling::getFrustumCorners(cullViewProj, frustumCorners);
 	}
 
-	// transformBoundingBoxes(dynamicNode, glm::mat4(1));
+	transformBoundingBoxes(dynamicNode, glm::mat4(1));
 	// flaten tree
 	resetQueue();
 	buildRenderQueue(&sceneGraph, glm::mat4(1));
@@ -474,8 +490,7 @@ void Level::DrawScene() {
 		const GLuint textures[] = {materials[i].getAlbedo(), materials[i].getNormalmap(), materials[i].getMetallic(), materials[i].getRoughness(), materials[i].getAOmap() };
 
 		glBindTextures(0, 5, textures);
-		glMultiDrawArraysIndirect(GL_TRIANGLES, nullptr, renderQueue[i].commands.size(), 0);
-		// todo: glMultiDrawElementsIndirect
+		glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, (GLvoid*)0, (GLsizei)renderQueue[i].commands.size(), 0);
 	}
 
 	if (state->cullDebug_) // bounding box & frustum culling debug view
@@ -534,8 +549,7 @@ void Level::DrawSceneFromLightSource()
 
 		glNamedBufferSubData(IBO, 0, renderQueue[i].commands.size() * sizeof(DrawElementsIndirectCommand), renderQueue[i].commands.data());
 
-		glMultiDrawArraysIndirect(GL_TRIANGLES, nullptr, renderQueue[i].commands.size(), 0);
-		// todo: glMultiDrawElementsIndirect
+		glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, (GLvoid*)0, (GLsizei)renderQueue[i].commands.size(), 0);
 	}
 	state->cull_ = cull;
 }
@@ -556,14 +570,17 @@ void Level::buildRenderQueue(const Hierarchy* node, glm::mat4 globalTransform) {
 	{
 		uint32_t meshIndex = node->modelIndices[i];
 		uint32_t materialIndex = meshes[meshIndex].materialIndex;
-		uint32_t count = meshes[meshIndex].indexCount;
-		uint32_t firstIndex = meshes[meshIndex].indexOffset;
+		uint32_t count = meshes[meshIndex].vertexCount;
+		uint32_t instanceCount = 1;
+		//uint32_t firstIndex = meshes[meshIndex].indexOffset;
+		uint32_t baseVertex = meshes[meshIndex].vertexOffset;
 		uint32_t baseInstance = renderQueue[materialIndex].modelMatrices.size();
 
 		DrawElementsIndirectCommand cmd= DrawElementsIndirectCommand{
 			count,
-			1,
-			firstIndex,
+			instanceCount,
+			0,
+			baseVertex,
 			baseInstance };
 
 		renderQueue[materialIndex].commands.push_back(cmd);

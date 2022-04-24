@@ -43,6 +43,7 @@ const char* Material::append(const char* texPath, char* texType)
 /// @brief explicitly deletes every texture in this material
 void Material::clear()
 {
+	
 	glDeleteTextures(1, &albedo);
 	glDeleteTextures(1, &normal);
 	glDeleteTextures(1, &metal);

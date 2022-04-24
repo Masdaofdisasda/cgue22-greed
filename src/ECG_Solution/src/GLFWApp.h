@@ -22,12 +22,6 @@ public:
 		deltaSeconds_ = static_cast<float>(newTimeStamp - timeStamp_);
 		timeStamp_ = newTimeStamp;
 	}
-	
-	/// @brief swaps back & front buffer
-	void swapBuffersUnsafe()
-	{
-		glfwSwapBuffers(window_);
-	}
 
 	/// @brief should toggle between fullscreen and window mode
 	void updateWindow()
