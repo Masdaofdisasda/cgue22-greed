@@ -92,7 +92,7 @@ int main(int argc, char** argv)
 
 	printf("Initializing scene and render loop...\n");
 
-	printf("Intializing audio...\n"); 
+	printf("Intializing audio...\n");
 	irrklang::ISoundEngine* engine = irrklang::createIrrKlangDevice();
 	irrklang::ISound* snd = engine->play2D("../../assets/media/EQ07 Prc Fantasy Perc 060.wav", true);
 
@@ -118,7 +118,7 @@ int main(int argc, char** argv)
 		Physics::ObjectMode::Static
 	);
 	//---------------------------------- /testing ----------------------------------//
-	
+
 	// Integrate level meshes into physics world
 	std::vector<PhysicsMesh> dynamicMeshes = level.getDynamic();
 	for (int i = 0; i < dynamicMeshes.size(); i++)
