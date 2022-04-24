@@ -233,6 +233,7 @@ void Renderer::Draw(Level* level)
 
 		// 2.3 - draw lava
 		lavaSim.update(perframeData->deltaTime.x);
+		lavaSim.simulationStep();
 		lavaSim.Draw();
 
 	framebuffer1.unbind(); 

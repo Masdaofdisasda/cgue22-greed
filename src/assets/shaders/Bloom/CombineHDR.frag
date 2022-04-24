@@ -25,11 +25,11 @@ layout(std140, binding = 0) uniform PerFrameData
     vec4 ssao2;
 };
 
+	float maxWhite = bloom.y;
+
 // Extended Reinhard tone mapping operator
 vec3 Reinhard2(vec3 x)
 {
-	float maxWhite = bloom.y;
-
 	return (x * (1.0 + x / (maxWhite * maxWhite))) / (1.0 + x);
 }
 
@@ -41,7 +41,7 @@ vec3 lookUp(vec3 raw)
 	vec3 scale = (lutSize -1.0) / lutSize;
 	vec3 offset = 1.0/(2.0*lutSize);
 
-	return texture(Lut3D, scale*raw + offset).rgb;
+	return max(texture(Lut3D, scale*raw + offset).rgb, raw);
 }
 
 void main()
@@ -58,7 +58,7 @@ void main()
 
 	color *= exposure * midGray / (max(avgLuminance,6.1e-5)); //use smallest float instead of 0
 	color = Reinhard2(color);
-	//color = lookUp(color);
+	color = lookUp(color);
 	color = color + bloomStrength * bloom;
 	outColor = vec4(color,1.0f);
 }

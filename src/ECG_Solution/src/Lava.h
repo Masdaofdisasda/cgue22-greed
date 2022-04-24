@@ -14,6 +14,7 @@ public:
 
     void init(glm::ivec3 lights);
     void update(float t);
+    void simulationStep();
     void Draw();
 
 private:
@@ -208,13 +209,17 @@ void LavaSystem::loadLava()
 
 }
 
-void LavaSystem::Draw()
+inline void LavaSystem::simulationStep()
 {
     // Execute the compute shader
     SimUpdate.Use();
     SimUpdate.setVec3("BlackHolePos1", bh1);
     glDispatchCompute(totalParticles / 100, 1, 1);
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+}
+
+void LavaSystem::Draw()
+{
 
     lavaFloor.Use();
     glBindVertexArray(LavaVAO);
