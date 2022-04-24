@@ -22,7 +22,7 @@ Physics::PhysicsObject& Physics::createPhysicsObject(
 	ObjectMode mode)
 {
 	float mass = getMassFromObjectMode(mode);
-	btVector3 scale = glmToBt(scaleFromTransform(modelMatrix));
+	btVector3 scale = glmToBt(scaleFromTransform(modelMatrix.getMatrix()));
 	btCollisionShape* collider = getCollisionShapeFromMesh(colliderVerticePositions, scale);
 	btRigidBody* rigidbody = makeRigidbody(modelMatrix, collider, mass);
 	if (mode == Physics::ObjectMode::Dynamic_NoRotation)
