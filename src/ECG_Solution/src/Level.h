@@ -33,7 +33,7 @@ private:
 	// mesh data - a loaded scene is entirely contained in these data structures
 	std::vector <subMesh> meshes;			// contains mesh offsets for glDraw 
 	std::vector<float> vertices;			// contains a stream of vertices in (px,py,pz,ny,ny,nz,u,v)-form
-	std::vector <GLuint> indices;			// contains the indices that make triangles
+	std::vector <unsigned int> indices;			// contains the indices that make triangles
 	std::vector <Material> materials;		// contains all needed textures
 	std::vector <BoundingBox> boxes;		// contains all bounding boxes of the meshes
 	std::vector<RenderItem> renderQueue;	// contains for every material render commands and matrices
@@ -59,6 +59,7 @@ private:
 
 	void loadMeshes(const aiScene* scene);
 	subMesh extractMesh(const aiMesh* mesh);
+	void optimizeMeshes();
 	BoundingBox computeBoundsOfMesh(subMesh mesh);
 	void loadMaterials(const aiScene* scene);
 	void traverseTree(aiNode* n, Hierarchy* parent, Hierarchy* child);
