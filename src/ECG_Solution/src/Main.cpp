@@ -6,7 +6,7 @@
 
 
 /*
- Main funtion of the game "Greed" by David K�ppl and Nicolas Eder
+ Main funtion of the game "Greed" by David Köppl and Nicolas Eder
  contains initialization, resource loading and render loop
 */
 
@@ -74,11 +74,6 @@ int main(int argc, char** argv)
 	glewExperimental = GL_TRUE;
 	if (glewInit() != GLEW_OK)
 		EXIT_WITH_ERROR("Failed to load GLEW");
-
-	//part of the ECG magical framework
-	printf("Initializing framework...\n");
-	if (!initFramework())
-		EXIT_WITH_ERROR("Failed to init framework");
 
 	glEnable(GL_DEBUG_OUTPUT);
 	glDebugMessageCallback(Debugger::DebugCallbackDefault, 0);
@@ -227,17 +222,10 @@ int main(int argc, char** argv)
 		renderer.swapLuminance();
 	}
 
-	/* --------------------------------------------- */
-	// Destroy framework
-	/* --------------------------------------------- */
-
-	destroyFramework();
-
 
 	/* --------------------------------------------- */
 	// Destroy context and exit
 	/* --------------------------------------------- */
-
 
 	printf("Exiting programm...");
 	return EXIT_SUCCESS;

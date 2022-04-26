@@ -3,8 +3,6 @@
 #include "GLFWApp.h"
 #include "Program.h"
 
-#ifndef _LOADING_SCREEN_
-#define _LOADING_SCREEN_
 /// @brief simulates what a loading screen might look like
 /// hourse tried to make an actual loading screen: 11h
 class LoadingScreen
@@ -39,5 +37,3 @@ private:
 
 		std::shared_ptr<Program> renderImage;
 };
-
-#endif

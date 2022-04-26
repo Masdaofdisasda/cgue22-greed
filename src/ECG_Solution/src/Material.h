@@ -31,8 +31,6 @@ private:
 	GLuint rough = 0;
 	GLuint ao = 0;
 
-	//helper functions for easier loading
-	const char* append(const char* texPath, char* texType);
 
 	void Release()
 	{

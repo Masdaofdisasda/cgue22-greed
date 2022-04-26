@@ -31,18 +31,6 @@ Material::Material(const char* texPath, const char* name) {
 	ao = handles[4];
 }
 
-/// @brief adds a subfolder to a given path
-/// @param texPath is the path to the root folder
-/// @param texType is the name of the image file in the root folder
-/// @return the path to the image file
-const char* Material::append(const char* texPath, char* texType)
-{
-	char c[100];
-	strcpy(c, texPath);
-
-	return strcat(c, texType);
-}
-
 /// @brief explicitly deletes every texture in this material
 void Material::clear()
 {

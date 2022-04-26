@@ -14,8 +14,6 @@
 
 //---------------------------------------------------------------------------------------------------------------//
 
-#ifndef _LEVEL_
-#define _LEVEL_
 class Program;
 /// @brief Level is primarily a data structure for complex 3D scenes
 /// loads and manages geometry, textures and model matrices from some fbx file
@@ -93,5 +91,3 @@ public:
 	std::vector <DirectionalLight> getDirectionalLights() { return lights.directional; }
 	std::vector <PositionalLight> getPointLights() { return lights.point; }
 };
-
-#endif

@@ -14,10 +14,9 @@
     <ClCompile Include="src\Program.cpp" />
     <ClCompile Include="src\Renderer.cpp" />
     <ClCompile Include="src\Texture.cpp" />
-    <ClCompile Include="src\EBO.cpp" />
     <ClCompile Include="src\Shader.cpp" />
     <ClCompile Include="src\UBO.cpp" />
-    <ClCompile Include="src\VBO.cpp" />
+    <ClCompile Include="src\Utils.cpp" />
     <ClInclude Include="src\FontRenderer.h" />
     <ClInclude Include="src\Lava.h" />
     <ClInclude Include="src\PlayerController.h" />
@@ -38,13 +37,11 @@
     <ClInclude Include="src\Renderer.h" />
     <ClInclude Include="src\Texture.h" />
     <ClInclude Include="src\LightSource.h" />
-    <ClInclude Include="src\EBO.h" />
     <ClInclude Include="src\INIReader.h" />
     <ClCompile Include="src\Main.cpp" />
     <ClInclude Include="src\Shader.h" />
     <ClInclude Include="src\UBO.h" />
     <ClInclude Include="src\Utils.h" />
-    <ClInclude Include="src\VBO.h" />
   </ItemGroup>
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">

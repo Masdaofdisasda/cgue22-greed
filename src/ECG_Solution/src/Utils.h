@@ -15,8 +15,6 @@
 #include <glm\glm.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
 
-#ifndef _GLOBAL_STRUCTS_
-#define _GLOBAL_STRUCTS_
 struct GlobalState
 {
 	int width = 800;
@@ -93,15 +91,14 @@ struct PerFrameData
 	glm::mat4 ViewProj;		// view projection matrix
 	glm::mat4 lavaLevel;	// lava translation matrix
 	glm::mat4 lightViewProj;// light matrix for shadowmapping
-	glm::mat4 viewInv;
-	glm::mat4 projInv;
+	glm::mat4 viewInv;		// todo
+	glm::mat4 projInv;		// todo
 	glm::vec4 bloom;		// x = exposure, y = maxWhite, z = bloomStrength, w = adaptionSpeed
 	glm::vec4 deltaTime;	// x = deltaSeconds, y = summedTime, z = ?, w = ?
 	glm::vec4 normalMap;	// x = normalMapToogle, y = ?, z = ?, w = ?
 	glm::vec4 ssao1;		// x = scale,, y = bias, z = znear, w = zfar
 	glm::vec4 ssao2;		// x = radius, y = attscale, z = distscale, w = ?
 };
-#endif
 
 #define EXIT_WITH_ERROR(err) \
         { \
@@ -112,95 +109,8 @@ struct PerFrameData
         }
 
 
-#define FOURCC_DXT1	MAKEFOURCC('D', 'X', 'T', '1')
-#define FOURCC_DXT3	MAKEFOURCC('D', 'X', 'T', '3')
-#define FOURCC_DXT5	MAKEFOURCC('D', 'X', 'T', '5')
+glm::vec3 translationFromTransform(glm::mat4 transform);
 
-/*!
- * A loaded '.dss' image
- */
-class DDSImage {
-public:
-	unsigned char* data;
-	unsigned int width;
-	unsigned int height;
-	unsigned int size;
-	GLenum format;
+glm::quat rotationFromTransform(glm::mat4 transform);
 
-	DDSImage() : data(nullptr), width(0), height(0), size(0), format(GL_NONE) {}
-	DDSImage(const DDSImage& img) = delete;
-	DDSImage(DDSImage&& img) : data(img.data), width(img.width), height(img.height), size(img.size), format(img.format) {
-		img.data = nullptr;
-	}
-	DDSImage& operator=(const DDSImage& img) = delete;
-	DDSImage& operator=(DDSImage&& img) {
-		data = img.data;
-		img.data = nullptr;
-		width = img.width;
-		height = img.height;
-		size = img.size;
-		format = img.format;
-		return *this;
-	};
-
-	~DDSImage() { if (data != nullptr) { delete[] data; data = nullptr; } }
-};
-
-
-/* --------------------------------------------- */
-// Framework functions
-/* --------------------------------------------- */
-
-/*!
- * Initializes the framework
- * Do not overwrite this function!
- */
-bool initFramework();
-
-/*!
- * Draws a teapot
- */
-void drawTeapot();
-
-/*!
- * Destroys the framework
- * Do not overwrite this function!
- */
-void destroyFramework();
-
-/*!
- * Loads a '.dss' image from a file
- * @param file: the path to the image file
- * @return a loaded DSS image
- */
-DDSImage loadDDS(const char* file);
-
-glm::vec3 translationFromTransform(glm::mat4 transform) {
-	glm::vec3 scale;
-	glm::quat rotation;
-	glm::vec3 translation;
-	glm::vec3 skew;
-	glm::vec4 perspective;
-	glm::decompose(transform, scale, rotation, translation, skew, perspective);
-	return translation;
-}
-
-glm::quat rotationFromTransform(glm::mat4 transform) {
-	glm::vec3 scale;
-	glm::quat rotation;
-	glm::vec3 translation;
-	glm::vec3 skew;
-	glm::vec4 perspective;
-	glm::decompose(transform, scale, rotation, translation, skew, perspective);
-	return rotation;
-}
-
-glm::vec3 scaleFromTransform(glm::mat4 transform) {
-	glm::vec3 scale;
-	glm::quat rotation;
-	glm::vec3 translation;
-	glm::vec3 skew;
-	glm::vec4 perspective;
-	glm::decompose(transform, scale, rotation, translation, skew, perspective);
-	return scale;
-}
+glm::vec3 scaleFromTransform(glm::mat4 transform);

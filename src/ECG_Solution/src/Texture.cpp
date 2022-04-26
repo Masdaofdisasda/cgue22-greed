@@ -17,7 +17,6 @@ Texture::Texture(GLenum type, int width, int height, GLenum internalFormat)
 	glTextureParameteri(tex_ID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTextureStorage2D(tex_ID, getNumMipMapLevels2D(width, height), internalFormat, width, height);
 }
-
 /// @brief loads a texture from image, used in Material.h
 /// @param texPath is the location of an image
 /// @return the created texture handle
@@ -74,6 +73,7 @@ void Texture::loadTextureMT(const char* texPath, GLuint handles[])
 	for (size_t i = 0; i < 5; i++)
 	{
 		workers[i].join();
+		int mipMapLevel = getNumMipMapLevels2D(imgData[i].w, imgData[i].h);
 		glCreateTextures(GL_TEXTURE_2D, 1, &handles[i]);
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -83,9 +83,11 @@ void Texture::loadTextureMT(const char* texPath, GLuint handles[])
 		
 		if (imgData[i].data > 0)
 		{
-			glTextureStorage2D(handles[i], 1, GL_RGB8, imgData[i].w, imgData[i].h);
 			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+			glTextureStorage2D(handles[i], mipMapLevel, GL_RGB8, imgData[i].w, imgData[i].h);
 			glTextureSubImage2D(handles[i], 0, 0, 0, imgData[i].w, imgData[i].h, GL_RGB, GL_UNSIGNED_BYTE, imgData[i].data);
+			glGenerateTextureMipmap(handles[i]);
+			glTextureParameteri(handles[i], GL_TEXTURE_MAX_LEVEL, mipMapLevel - 1);
 			glBindTextures(0, 1, &handles[i]);
 			delete imgData[i].data;
 		}

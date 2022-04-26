@@ -23,7 +23,7 @@ private:
 		tex_ID = 0;
 	}
 
-	int getNumMipMapLevels2D(int w, int h);
+	static int getNumMipMapLevels2D(int w, int h);
 	static std::string append(const char* texPath, char* texType);
 
 public:

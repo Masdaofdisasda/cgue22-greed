@@ -10,8 +10,6 @@
 #include "FontRenderer.h"
 #include "Lava.h"
 
-#ifndef _RENDERER_
-#define _RENDERER_
 class Renderer
 {
 public:
@@ -101,6 +99,5 @@ private:
 	void setRenderSettings();
 	glm::mat4 glmlookAt2(glm::vec3 pos, glm::vec3 target, glm::vec3 up);
 };
-#endif
 
 

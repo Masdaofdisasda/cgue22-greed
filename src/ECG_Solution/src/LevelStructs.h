@@ -7,9 +7,6 @@
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
 
-#ifndef _LEVEL_STRUCTS_
-#define _LEVEL_STRUCTS_
-
 /// @brief describes the position of a mesh in an index and vertex array 
 struct subMesh
 {
@@ -89,5 +86,3 @@ struct PhysicsMesh
 	Transformation modelTRS;						// model tranformation into world space
 	Hierarchy* node;			// pointer to set node matrices, only for dynamic objects
 };
-
-#endif
