@@ -1,5 +1,6 @@
 #include "Level.h"
 #include "Program.h"
+#include <meshoptimizer/meshoptimizer.h>
 #include <unordered_map>
 
 /// @brief loads an fbx file from the given path and converts it to useable data structures
@@ -27,7 +28,9 @@ Level::Level(const char* scenePath, std::shared_ptr<GlobalState> state, PerFrame
 
 	// 2. iterate through the scene and create a mesh object for every aimesh in the scene
 	loadMeshes(scene);
-	
+
+	//optimizeMeshes(); //WIP
+
 	// 3. load materials
 	std::cout << "loading materials..." << std::endl;
 	loadMaterials(scene);
@@ -123,6 +126,25 @@ subMesh Level::extractMesh(const aiMesh* mesh)
 
 	printf("Mesh [%s] %u\n", mesh->mName.C_Str(), meshes.size() + 1);
 	return m;
+}
+
+void Level::optimizeMeshes()
+{
+	struct Vertex
+	{ float px, py, pz, nx, ny, nz, tu, tv; };
+
+	size_t index_count = indices.size();
+	std::vector<unsigned int> remap(index_count); // allocate temporary memory for the remap table
+	size_t vertex_count = meshopt_generateVertexRemap(remap.data(), indices.data(), index_count, vertices.data(), index_count, sizeof(Vertex));
+
+	std::vector <unsigned int> opt_indices(index_count);
+	meshopt_remapIndexBuffer(opt_indices.data(), indices.data(), index_count, remap.data());
+
+	std::vector<float> opt_vertices(vertex_count);
+	meshopt_remapVertexBuffer(opt_vertices.data(), vertices.data(), vertices.size(), sizeof(Vertex), remap.data());
+
+	indices = opt_indices;
+	vertices = opt_vertices;
 }
 
 /// @brief finds the maximum and minimum vertex positions of all meshes, which should define the bounds

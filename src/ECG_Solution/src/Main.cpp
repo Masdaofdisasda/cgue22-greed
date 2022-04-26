@@ -98,7 +98,7 @@ int main(int argc, char** argv)
 
 	loadingScreen.DrawProgress();
 	printf("Loading level...\n");
-	Level level("../../assets/demo.fbx", state, perframeData);
+	Level level("../../assets/submission1.fbx", state, perframeData);
 
 	loadingScreen.DrawProgress();
 	printf("Intializing renderer...\n");
@@ -136,7 +136,7 @@ int main(int argc, char** argv)
 	playerCameraPositioner.setPosition(glm::vec3(0, 10, 0));
 
 	// Setup player
-	PlayerController player(physics, playerCameraPositioner, glm::vec3(0, 2, 0));
+	PlayerController player(physics, playerCameraPositioner, glm::vec3(0, 20, 0));
 
 	glm::vec3 lavaPosition = glm::vec3(0.0f, -50.0f, 0.0f); // TODO
 
@@ -147,7 +147,7 @@ int main(int argc, char** argv)
 	glEnable(GL_CULL_FACE);
 
 	engine->stopAllSounds();
-	snd = engine->play2D("../../assets/media/greedCollect_v1.mp3", true);
+	snd = engine->play2D("../../assets/media/Wolum - Greed Collecting.mp3", true);
 
 	double timeStamp = glfwGetTime();
 	float deltaSeconds = 0.0f;

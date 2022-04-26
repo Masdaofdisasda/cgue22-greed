@@ -29,7 +29,7 @@ struct GlobalState
 	float Zfar = 1000.0;
 
 	bool bloom_ = true;
-	bool cull_ = false;
+	bool cull_ = true;
 	bool freezeCull_ = false;
 	bool ssao_ = true;
 	bool cullDebug_ = false;
