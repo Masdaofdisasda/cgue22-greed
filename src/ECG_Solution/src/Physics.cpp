@@ -39,11 +39,27 @@ Physics::PhysicsObject& Physics::createPhysicsObject(btVector3 pos, btCollisionS
 }
 
 void Physics::simulateOneStep(float secondsBetweenFrames) {
+	// look which items are allowed to take part
+	for (int i = 0; i < physicsObjects.size(); i++)
+		excludeAndIncludePhysicsObject(physicsObjects[i]);
+
+	// simulate
 	dynamics_world->stepSimulation(secondsBetweenFrames);
 
-	// update positions of all dynamic objects
+	// update positions of all dynamic objects for rendering
 	for (int i = 0; i < physicsObjects.size(); i++)
 		updateModelTransform(&physicsObjects[i]);
+}
+
+void Physics::excludeAndIncludePhysicsObject(Physics::PhysicsObject &obj) {
+	if (obj.modelGraphics == nullptr)
+		return;
+	//if(physicsObjects[i].mode == Physics::ObjectMode::Dynamic)
+
+	if (!obj.modelGraphics->gameProperties.isActive) {
+		obj.rigidbody->setActivationState(ISLAND_SLEEPING);
+		obj.rigidbody->setCollisionFlags(btCollisionObject::CF_NO_CONTACT_RESPONSE);
+	}
 }
 
 void Physics::debugDraw() {
@@ -60,7 +76,13 @@ Physics::PhysicsObject* Physics::rayCast(btVector3 start, btVector3 end) {
 
 	// find object in datastructure, that was hit
 	const btCollisionObject* hitObject = result.m_collisionObject;
-	//TODO
+	return getPhysicsObjectByCollisionObject(hitObject);
+}
+
+Physics::PhysicsObject* Physics::getPhysicsObjectByCollisionObject(const btCollisionObject* collider) {
+	for (int i = 0; i < physicsObjects.size(); i++)
+		if (physicsObjects[i].rigidbody->getCollisionShape() == collider->getCollisionShape())
+			return &physicsObjects[i];
 	return nullptr;
 }
 

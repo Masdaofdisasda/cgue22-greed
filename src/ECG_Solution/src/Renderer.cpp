@@ -413,12 +413,15 @@ void Renderer::Draw(Level* level)
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 		fontRenderer.print("You made it!", state->width * 0.36f, state->height * 0.48f, 2.0f, glm::vec3(.85f, .68f, .19f));
 	}
-	if (state->lost_)
+	else if (state->lost_)
 	{
 		renderColor.Use();
 		renderColor.setVec4("color", glm::vec4(0.710, 0.200, 0.180, 1.0f));
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 		fontRenderer.print("Smells like bacon", state->width * 0.33f, state->height * 0.48f, 2.0f, glm::vec3(.0f, .0f, .0f));
+	}
+	if (state->displayCollectItemHint_) {
+		fontRenderer.print("Click to collect", state->width * 0.42f, state->height * 0.60f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f));
 	}
 	glDisable(GL_BLEND);
 }

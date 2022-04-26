@@ -19,7 +19,7 @@ void PlayerController::move(KeyboardInputState inputs, float deltatime)
 	// running
 	glm::vec3 movementDirection = movementStateToDirection(movement);
 	bool accelerate = glm::length(movementDirection) > 0;
-	if (accelerate)
+	if (accelerate) 
 		playerObject->rigidbody->applyCentralImpulse(playerSpeed * (double)deltatime * physics.glmToBt(movementDirection));
 	else
 		decelerateXZ(deltatime);
@@ -36,12 +36,46 @@ void PlayerController::updateCameraPositioner()
 	cameraPositioner.setPosition(rbPosition + rigidbodyToCameraOffset);
 }
 
-void PlayerController::tryCollectItem()
+bool PlayerController::hasCollectableItemInReach() {
+	return geCollectableInFrontOfPlayer() != nullptr;
+}
+
+void PlayerController::tryCollectItem(MouseState mouseState, KeyboardInputState keyboardState)
 {
-	// cast a ray
-	// look what item was hit
-	// if was a collectable and correct button is pressed
-	// -> collect
+	bool wantToCollect = mouseState.pressedLeft || keyboardState.pressingE;
+	if (!wantToCollect)
+		return;
+
+	Physics::PhysicsObject* item = geCollectableInFrontOfPlayer();
+
+	// item there?
+	if (item == nullptr)
+		return;
+
+	// collect
+	printf("collected item\n");
+	collectedItems.push_back(item);
+	GameProperties* itemProperties = &item->modelGraphics->gameProperties;
+	itemProperties->isActive = false;
+	itemWeight += itemProperties->collectableItemProperties.weight;
+}
+
+Physics::PhysicsObject* PlayerController::geCollectableInFrontOfPlayer() {
+	glm::vec3 cameraPosition = cameraPositioner.getPosition();
+	const glm::mat4 v = glm::mat4_cast(cameraPositioner.getOrientation());
+	const glm::vec3 cameraAimDirection = -glm::vec3(v[0][2], v[1][2], v[2][2]);
+
+	btVector3 rayCastStartPoint = physics.glmToBt(cameraPosition);
+	btVector3 rayCastEndPoint = physics.glmToBt(cameraPosition + cameraAimDirection * reach);
+	Physics::PhysicsObject* hitObject = physics.rayCast(rayCastStartPoint, rayCastEndPoint);
+
+	if (hitObject == nullptr || hitObject->modelGraphics == nullptr)
+		return nullptr;
+	if (!hitObject->modelGraphics->gameProperties.isActive)
+		return nullptr;
+	if (hitObject->modelGraphics->gameProperties.isCollectable)
+		return hitObject;
+	return nullptr;
 }
 
 PlayerController::Movement* PlayerController::inputToMovementState(KeyboardInputState inputs)
@@ -99,13 +133,15 @@ void PlayerController::enforceSpeedLimit()
 {
 	btVector3 velocity = playerObject->rigidbody->getLinearVelocity();
 	glm::vec2 xzVelocity = glm::vec2((float)velocity.getX(), (float)velocity.getZ());
+	float currentSpeed = glm::length(xzVelocity);
+	float newMaxSpeed = maxSpeed - itemWeight;
 
-	bool playerIsStanding = glm::length(xzVelocity) <= 0;
-	bool speedIsTooHigh = glm::length(xzVelocity) > maxSpeed;
+	bool playerIsStanding = currentSpeed <= 0;
+	bool speedIsTooHigh = currentSpeed > newMaxSpeed;
 	if (playerIsStanding || !speedIsTooHigh)
 		return;
 
-	glm::vec2 newXZVelocity = glm::normalize(xzVelocity) * maxSpeed;
+	glm::vec2 newXZVelocity = glm::normalize(xzVelocity) * newMaxSpeed;
 	playerObject->rigidbody->setLinearVelocity(btVector3(
 		newXZVelocity.x,
 		velocity.getY(),

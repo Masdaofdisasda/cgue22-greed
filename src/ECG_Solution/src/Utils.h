@@ -51,6 +51,8 @@ struct GlobalState
 	//game logic
 	bool won_ = false;
 	bool lost_ = false;
+	//ui
+	bool displayCollectItemHint_ = false;
 };
 
 struct KeyboardInputState {
