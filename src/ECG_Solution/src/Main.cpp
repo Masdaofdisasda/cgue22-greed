@@ -199,10 +199,7 @@ int main(int argc, char** argv)
 		const glm::mat4 projection = glm::perspective(glm::radians(state->fov), ratio, state->Znear, state->Zfar);
 		const glm::mat4 view = camera.getViewMatrix();
 		perframeData.ViewProj = projection * view;
-		if (!state->usingDebugCamera_)
-		{
-			lavaPosition.y += deltaSeconds * 1.0f;
-		}
+		lavaPosition.y += deltaSeconds * 1.0f;
 		perframeData.lavaLevel = glm::translate(lavaPosition);
 		perframeData.viewPos = glm::vec4(camera.getPosition(), 1.0f);
 		perframeData.viewInv = glm::inverse(view);

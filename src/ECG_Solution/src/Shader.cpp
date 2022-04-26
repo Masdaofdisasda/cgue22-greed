@@ -109,7 +109,7 @@ void Shader::setLightCounts(int dir, int pos)
 }
 
 /// @brief check for shader compilation errors
-int Shader::compileErrors()
+void Shader::compileErrors()
 {
 	GLint succeded;
 
@@ -120,7 +120,7 @@ int Shader::compileErrors()
 		glGetShaderiv(shader_ID, GL_INFO_LOG_LENGTH, &logSize);
 		GLchar* message = new char[logSize];
 		glGetShaderInfoLog(shader_ID, logSize, nullptr, message);
-		EXIT_WITH_ERROR(message);
+		std::cerr << message;
 		delete[] message;
 	}
 }

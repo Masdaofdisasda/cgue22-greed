@@ -35,8 +35,7 @@ private:
 	std::vector<float> vertices;			// contains a stream of vertices in (px,py,pz,ny,ny,nz,u,v)-form
 	std::vector <unsigned int> indices;			// contains the indices that make triangles
 	std::vector <Material> materials;		// contains all needed textures
-	std::vector <BoundingBox> boxes;		// contains all bounding boxes of the meshes
-	std::vector<RenderItem> renderQueue;	// contains for every material render commands and matrices
+	std::vector<RenderItem> renderQueue;	
 	Hierarchy sceneGraph;					// saves scene hierarchy and transformations
 	Hierarchy* dynamicNode;
 	std::vector<PhysicsMesh> rigid;
@@ -59,6 +58,7 @@ private:
 
 	void loadMeshes(const aiScene* scene);
 	subMesh extractMesh(const aiMesh* mesh);
+	subMesh extractMesh2(const aiMesh* mesh);
 	void optimizeMeshes();
 	BoundingBox computeBoundsOfMesh(subMesh mesh);
 	void loadMaterials(const aiScene* scene);
@@ -84,6 +84,7 @@ public:
 
 	void DrawScene();
 	void DrawSceneFromLightSource();
+
 
 	std::vector<PhysicsMesh> getRigid();
 	std::vector<PhysicsMesh> getDynamic();

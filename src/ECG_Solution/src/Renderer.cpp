@@ -70,6 +70,8 @@ GlobalState Renderer::loadSettings()
 	return state;
 	}
 
+	// TODO 
+	return *Renderer::state;
 }
 
 

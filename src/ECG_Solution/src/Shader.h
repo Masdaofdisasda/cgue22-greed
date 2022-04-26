@@ -65,7 +65,7 @@ private:
 	// set light counts
 	void setLightCounts(int dir, int pos);
 	// Checks if the different Shaders have compiled properly
-	int compileErrors();
+	void compileErrors();
 	// Replace MAXLIGHTS with correct light count
 	std::string insertLightcount(std::string code);
 

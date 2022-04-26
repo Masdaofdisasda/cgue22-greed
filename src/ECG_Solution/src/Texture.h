@@ -1,6 +1,13 @@
 #pragma once
 
 #include "Utils.h"
+#include <vector>
+
+struct stbiData
+{
+	uint8_t* data;
+	int w, h, comp;
+};
 
 /// @brief Texture is an OpenGL sampler2D or sampler3D aka Texture or Cubemap
 /// it can create textures from images or pset them up for framebuffers
@@ -17,14 +24,17 @@ private:
 	}
 
 	int getNumMipMapLevels2D(int w, int h);
+	static std::string append(const char* texPath, char* texType);
 
 public:
 	Texture(GLenum type, int width, int height, GLenum internalFormat);
 	~Texture() { Release(); }
 
 	static GLuint loadTexture(const char* texPath);
+	static void loadTextureMT(const char* texPath, GLuint handles[]);
 	static GLuint loadTextureTransparent(const char* texPath);
 	static GLuint load3Dlut(const char* texPath);
+	static void stbiLoad(std::string texPath, stbiData* img);
 
 	
 	// ensure RAII compliance
