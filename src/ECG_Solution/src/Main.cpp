@@ -133,7 +133,6 @@ int main(int argc, char** argv)
 	PlayerController player(physics, playerCameraPositioner, glm::vec3(0, 20, 0));
 
 	ItemCollection* itemCollection = new ItemCollection();
-	state->itemCollection_ = itemCollection;
 
 	glm::vec3 lavaPosition = glm::vec3(0.0f, -50.0f, 0.0f); // TODO
 
@@ -203,6 +202,8 @@ int main(int argc, char** argv)
 		if (perframeData.viewPos.y > 127.0f)
 		{
 			state->won_ = true;
+			state->totalCash = itemCollection->getTotalMonetaryValue();
+			state->collectedItems = itemCollection->size();
 		}
 		if (perframeData.viewPos.y < lavaPosition.y)
 		{

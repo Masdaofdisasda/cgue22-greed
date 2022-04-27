@@ -50,9 +50,10 @@ struct GlobalState
 	//game logic
 	bool won_ = false;
 	bool lost_ = false;
-	ItemCollection* itemCollection_ = nullptr;
 	//ui
 	bool displayCollectItemHint_ = false;
+	float totalCash = 0;
+	int collectedItems = 0;
 };
 
 struct KeyboardInputState {

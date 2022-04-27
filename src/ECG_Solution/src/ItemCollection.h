@@ -14,6 +14,7 @@ public:
 	float getTotalMonetaryValue();
 	float getTotalWeight();
 	std::vector<ItemInfo> getListOfItems();
+	int size();
 private:
 	std::vector<Physics::PhysicsObject*> collectedItems;
 	float totalWeight;

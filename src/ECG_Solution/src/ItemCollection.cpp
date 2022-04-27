@@ -28,3 +28,8 @@ std::vector<ItemCollection::ItemInfo> ItemCollection::getListOfItems()
 	}
 	return itemList;
 }
+
+int ItemCollection::size()
+{
+	return collectedItems.size();
+}
