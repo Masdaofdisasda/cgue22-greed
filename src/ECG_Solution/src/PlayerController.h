@@ -2,6 +2,7 @@
 #include "Camera.h"
 #include "Physics.h"
 #include <glm/ext.hpp>
+#include "ItemCollection.h"
 
 /// <summary>
 /// Creates a rigidbody, that can be moved around. Positions the camera as if it was a part of the rigidbody.
@@ -23,7 +24,9 @@ public:
 	/// </summary>
 	void updateCameraPositioner();
 
-	void tryCollectItem();
+	bool hasCollectableItemInReach();
+
+	void tryCollectItem(MouseState mouseState, KeyboardInputState keyboardState, ItemCollection& itemCollection);
 
 private:
 	struct Movement
@@ -41,11 +44,14 @@ private:
 
 	// settings
 	glm::vec3 rigidbodyToCameraOffset = glm::vec3(0,1,0);
-	float playerSpeed = 20.0f; // how fast the player accelerates
-	float jumpStrength = 0.1f; // how high the player can jump
+	float playerSpeed = 20.0f; // how fast the player accelerates (x,z axis)
+	float jumpStrength = 0.1f; // how high the player can jump (y axis)
 	float stopSpeed = 5.0f; // how fast the player decelerates when not giving input (x,z axis)
 	float maxSpeed = 15.0f; // how fast the player is allowed to run at max (x,z axis)
+	float reach = 5.0f; // maximum distance that items can be away and still be collected
+	float itemWeight = 0; // how much all the items weigh together (influences movement)
 
+	Physics::PhysicsObject* geCollectableInFrontOfPlayer();
 	Movement* inputToMovementState(KeyboardInputState inputs);
 	glm::vec3 movementStateToDirection(Movement* movement);
 	void decelerateXZ(float deltatime);

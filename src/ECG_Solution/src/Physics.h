@@ -85,6 +85,10 @@ private:
 
 	float Physics::getMassFromObjectMode(Physics::ObjectMode mode);
 
+	PhysicsObject* getPhysicsObjectByCollisionObject(const btCollisionObject* collider);
+
+	void excludeAndIncludePhysicsObject(Physics::PhysicsObject& obj);
+
 	/// <summary>
 	/// Adds a rigidbody (created from the input parameters) to the physics world.
 	/// Also adds the rigidbody and the modelGraphics to a list to keep track of them.

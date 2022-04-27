@@ -14,6 +14,7 @@
 #include <glm\gtc\matrix_transform.hpp>
 #include <glm\glm.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
+#include "ItemCollection.h"
 
 struct GlobalState
 {
@@ -49,6 +50,10 @@ struct GlobalState
 	//game logic
 	bool won_ = false;
 	bool lost_ = false;
+	//ui
+	bool displayCollectItemHint_ = false;
+	float totalCash = 0;
+	int collectedItems = 0;
 };
 
 struct KeyboardInputState {

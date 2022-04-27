@@ -48,6 +48,21 @@ struct Transformation
 	glm::mat4 getMatrix() const { return glm::translate(Translate) * glm::toMat4(Rotation) * glm::scale(Scale); }
 };
 
+/// @brief a collection of settings for collectable items in the world
+struct CollectableItemProperties {
+	float worth = 100;
+	float weight = 1;
+};
+
+/// @brief a collection of settings for an object in the game world
+struct GameProperties {
+	string displayName = "Gameobject";
+	bool isActive = true; // only active items are rendered. only active items are allowed to interact with the physics world
+	bool isCollectable = false; // determines if the player can collect it
+	bool isGround = true; // determines wether the player can jump off of it
+	CollectableItemProperties collectableItemProperties; // if the gamobject is collectable this determines some extra properties
+};
+
 /// @brief implements a simple scene graph for hierarchical tranforamtions
 struct Hierarchy
 {
@@ -60,6 +75,8 @@ struct Hierarchy
 
 	BoundingBox nodeBounds;					// pretransformed bounds
 	BoundingBox modelBounds;				// bounds in model space
+
+	GameProperties gameProperties;
 
 	/// return TRS "model matrix" of the node
 	glm::mat4 getNodeMatrix() const { return TRS.getMatrix(); }

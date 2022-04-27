@@ -525,7 +525,7 @@ void Level::collectRigidPhysicMeshes(Hierarchy* node, glm::mat4 globalTransform)
 		}
 
 		phyMesh.modelTRS = trs;
-		phyMesh.node = nullptr;
+		phyMesh.node = node;
 		rigid.push_back(phyMesh);
 	}
 
@@ -667,6 +667,8 @@ void Level::DrawSceneFromLightSource()
 /// @param node that gets checked for models
 /// @param globalTransform the summed tranformation matrices of all parent nodes
 void Level::buildRenderQueue(const Hierarchy* node, glm::mat4 globalTransform) {
+	if (!node->gameProperties.isActive)
+		return;
 
 	if (state->cull_)
 	{

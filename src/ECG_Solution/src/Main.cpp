@@ -104,25 +104,17 @@ int main(int argc, char** argv)
 	printf("Initializing physics...\n");
 	Physics physics;
 
-	//---------------------------------- testing ----------------------------------//
-	btBoxShape* col2 = new btBoxShape(btVector3(500, 0.1, 500));
-	physics.createPhysicsObject(
-		btVector3(0, 0, 0),
-		col2,
-		btQuaternion(btVector3(0, 1, 0), btScalar(0)),
-		Physics::ObjectMode::Static
-	);
-	//---------------------------------- /testing ----------------------------------//
-
 	// Integrate level meshes into physics world
 	std::vector<PhysicsMesh> dynamicMeshes = level.getDynamic();
-	for (int i = 0; i < dynamicMeshes.size(); i++)
-		physics.createPhysicsObject(
+	for (int i = 0; i < dynamicMeshes.size(); i++) {
+		Physics::PhysicsObject obj = physics.createPhysicsObject(
 			dynamicMeshes[i].node,
 			dynamicMeshes[i].modelTRS,
 			dynamicMeshes[i].vtxPositions,
 			Physics::ObjectMode::Dynamic
 		);
+		obj.modelGraphics->gameProperties.isCollectable = true; // temporary solution
+	}
 
 	std::vector<PhysicsMesh> staticMeshes = level.getRigid();
 	for (int i = 0; i < staticMeshes.size(); i++)
@@ -138,8 +130,9 @@ int main(int argc, char** argv)
 	camera.setPositioner(cameraPositioner);
 	playerCameraPositioner.setPosition(glm::vec3(0, 10, 0));
 
-	// Setup player
 	PlayerController player(physics, playerCameraPositioner, glm::vec3(0, 20, 0));
+
+	ItemCollection* itemCollection = new ItemCollection();
 
 	glm::vec3 lavaPosition = glm::vec3(0.0f, -5.0f, 0.0f); // TODO
 
@@ -176,11 +169,14 @@ int main(int argc, char** argv)
 		glViewport(0, 0, state->width, state->height);
 		GLFWapp.updateWindow();
 
-		// movement
+		// player actions
 		if (state->usingDebugCamera_)
 			floatingPositioner.setMovementState(keyboardInput);
-		else
+		else {
 			player.move(keyboardInput, deltaSeconds);
+			state->displayCollectItemHint_ = player.hasCollectableItemInReach();
+			player.tryCollectItem(mouseState, keyboardInput, *itemCollection);
+		}
 
 		// calculate physics
 		physics.simulateOneStep(deltaSeconds);
@@ -206,6 +202,8 @@ int main(int argc, char** argv)
 		if (perframeData.viewPos.y > 127.0f)
 		{
 			state->won_ = true;
+			state->totalCash = itemCollection->getTotalMonetaryValue();
+			state->collectedItems = itemCollection->size();
 		}
 		if (perframeData.viewPos.y < lavaPosition.y)
 		{
