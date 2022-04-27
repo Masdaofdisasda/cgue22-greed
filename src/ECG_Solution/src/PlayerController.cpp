@@ -27,7 +27,7 @@ void PlayerController::move(KeyboardInputState inputs, float deltatime)
 
 	// jumping
 	if (movement->jump)
-		playerObject->rigidbody->applyCentralImpulse(jumpStrength * btVector3(0, 1, 0));
+		playerObject->rigidbody->applyCentralImpulse(btVector3(0, jumpStrength, 0));
 }
 
 void PlayerController::updateCameraPositioner()
