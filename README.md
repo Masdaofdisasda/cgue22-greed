@@ -12,8 +12,10 @@ by David Köppl (12022493) and Nicolas Eder (12020626)
 * OS: Windows 10 32 bit or 64 bit
 * CPU: 3.0 GHz
 * RAM: 2 GB
-* GPU: one that supports OpenGL 4.60 
+* GPU: Nvidia/AMD with OpenGL 4.60 
 * DISK: 1 GB
+
+
 The game was tested on an Nvdia GTX 1080 at 1920x1080
 
 ### Setup
@@ -37,14 +39,14 @@ To run the game, open the .exe in bin/Release. Make sure you meet the requiremen
 * shadowRes - how big the shadow map texture is, gets multiplied by 1024
 
 ## Camera & Controls
-For this game we didn't want to create a player model and decided it would be the best to use a quaternion based first person camera.
-Movement is mapped to the standard WASD scheme: 
+
+### Player Controls:
 * WASD - move player horizontally
 * Space - jump
 * Mouse - rotate camera
 * LMB - pickup object
 
-For debugging and effects you can use:
+### For debugging and effects you can use:
 * F1 - sets window to fullscreen (can't be reversed)
 * F2 - toggle frustum culling debug mode, make AABBs and frustum visible, output culled objects to console
 * F3 - toggle bloom effect (also tonemapping so image may look dark)
@@ -54,16 +56,23 @@ For debugging and effects you can use:
 * F7 - freeze frustum for culling
 * F8 - toggle frustum culling
 * F9 - toggle SSAO
+* ESC - exit game
+
+### Free Camera Controls (F6):
+* WASD - move forward/backword and left/right on the cameras xz plane
+* 1,2 - move up/down along the cameras y axis
+* LSHIT - faster camera movement
+* Mouse - click with LMB and drag to rotate
 
 ## Creating a Level
-In theory assimp can load any fbx file, but for our game engine we decided on a few prerequisites:
+The game can load a level from a fbx file, if it conforms to these contraints:
 
 * the Maya projects is located in the assets folder
-* a texture is located in assets/texture/(texture_name)/(albedo/normal/metal/rough/ao).jpg
+* every texture is located in assets/texture/(texture_name)/(albedo/normal/metal/rough/ao).jpg
 * in Maya only directional and pointlights should be added and only on the root node
-* meshes should be parented in rigid and dynamic
-* every mesh must have a material
-* a material is based on the PBSstingray shader, and needs to have every textures except the emissive, associatet with it
+* meshes should be grouped in rigid and dynamic, depending on them being movable or not
+* every mesh must have a material assigned to it
+* a material is based on the PBSstingray shader, and needs to have every textures except the emissive, associated with it
 * a material must have the same name as the (texture_name) folder and can only use textures in that folder
 * when exporting to fbx, triangulate the mesh, and split vertex normals. Uncheck everything besides lights and keep the scale factor at 1.0. Save as binary
 

@@ -93,6 +93,13 @@ private:
 
 	GLuint hud;
 
+	std::vector<std::string> deathMsgs =
+	{
+		"Mmhhh, smells like bacon",
+		"maybe try being less greedy next time?",
+		"YOU WERE THE CHOOSEN ONE!"
+	};
+
 	void fillLightsources();
 	void buildShaderPrograms(); 
 	void prepareFramebuffers();

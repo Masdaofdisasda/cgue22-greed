@@ -40,7 +40,7 @@ vec3 lookUp(vec3 raw)
 
 	vec3 scale = (lutSize -1.0) / lutSize;
 	vec3 offset = 1.0/(2.0*lutSize);
-
+	
 	return max(texture(Lut3D, scale*raw + offset).rgb, raw);
 }
 

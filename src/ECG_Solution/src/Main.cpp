@@ -141,7 +141,7 @@ int main(int argc, char** argv)
 	// Setup player
 	PlayerController player(physics, playerCameraPositioner, glm::vec3(0, 20, 0));
 
-	glm::vec3 lavaPosition = glm::vec3(0.0f, -50.0f, 0.0f); // TODO
+	glm::vec3 lavaPosition = glm::vec3(0.0f, -5.0f, 0.0f); // TODO
 
 	glViewport(0, 0, state->width, state->height);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -194,7 +194,7 @@ int main(int argc, char** argv)
 		const glm::mat4 projection = glm::perspective(glm::radians(state->fov), ratio, state->Znear, state->Zfar);
 		const glm::mat4 view = camera.getViewMatrix();
 		perframeData.ViewProj = projection * view;
-		lavaPosition.y += deltaSeconds * 1.0f;
+		if (perframeData.deltaTime.y > 60.0f) lavaPosition.y += deltaSeconds * 1.0f; //TODO
 		perframeData.lavaLevel = glm::translate(lavaPosition);
 		perframeData.viewPos = glm::vec4(camera.getPosition(), 1.0f);
 		perframeData.viewInv = glm::inverse(view);

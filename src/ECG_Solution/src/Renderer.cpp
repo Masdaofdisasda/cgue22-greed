@@ -408,6 +408,19 @@ void Renderer::Draw(Level* level)
 	fontRenderer.print("PRE ALPHA FOOTAGE", state->width * 0.82f, state->height * 0.08f, .5f, glm::vec3(.5f, .5f, .5f));
 	fontRenderer.print("all content is subject to change", state->width * 0.78f, state->height * 0.05f, .5f, glm::vec3(.5f, .5f, .5f));
 
+	renderColor.Use();
+	renderColor.setVec4("color", glm::vec4(0.0f, 0.0f, 0.0f, 0.7f));
+	glViewport(state->width * 0.04, state->height * 0.06, state->width * 0.1, state->height * 0.08);
+	glDrawArrays(GL_TRIANGLES, 0, 3);
+	glViewport(0, 0, state->width, state->height);
+
+	int weight = 80; // change before submission
+	std::string weightText = "Weight: " + std::to_string(weight) + "kg";
+	fontRenderer.print(weightText, state->width * 0.05f, state->height * 0.105f, .5f, glm::vec3(.95f, .86f, .6f));
+	int money = 100; // change before submission
+	std::string loot = "Loot: " + std::to_string(money) + "$";
+	fontRenderer.print(loot, state->width * 0.05f, state->height * 0.07f, .5f, glm::vec3(.95f, .86f, .6f));
+
 	if (state->won_)
 	{
 		renderColor.Use();
@@ -420,7 +433,7 @@ void Renderer::Draw(Level* level)
 		renderColor.Use();
 		renderColor.setVec4("color", glm::vec4(0.710, 0.200, 0.180, 1.0f));
 		glDrawArrays(GL_TRIANGLES, 0, 3);
-		fontRenderer.print("Smells like bacon", state->width * 0.33f, state->height * 0.48f, 2.0f, glm::vec3(.0f, .0f, .0f));
+		fontRenderer.print(deathMsgs[0], state->width * 0.2f, state->height * 0.48f, 2.0f, glm::vec3(.0f, .0f, .0f));
 	}
 	glDisable(GL_BLEND);
 }

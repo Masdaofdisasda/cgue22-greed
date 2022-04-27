@@ -20,7 +20,7 @@ public:
 private:
     Program SimUpdate;
     Program SimRender;
-    Program lavaFloor;		// renders a giant orange triangle
+    Program lavaFloor;		
 
     Material lava = Material("textures/Lava_1/albedo.jpg", "Lava"); //temp file, replace with procedural texture
     GLuint LavaVAO = 0;
@@ -32,7 +32,7 @@ private:
     float time = 0.0f, deltaT = 0.0f, speed = 35.0f, angle = 0.0f;
     GLuint particlesVao;
     GLuint bhVao, bhBuf;  // black hole VAO and buffer
-    glm::vec4 bh1 = glm::vec4(-85, -1, -85, 1);
+    glm::vec4 bh1 = glm::vec4(-85, -5, -85, 1);
 
 	void setupBuffers();
     void loadLava();

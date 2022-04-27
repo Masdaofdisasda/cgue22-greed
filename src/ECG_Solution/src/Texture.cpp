@@ -88,6 +88,7 @@ void Texture::loadTextureMT(const char* texPath, GLuint handles[])
 			glTextureSubImage2D(handles[i], 0, 0, 0, imgData[i].w, imgData[i].h, GL_RGB, GL_UNSIGNED_BYTE, imgData[i].data);
 			glGenerateTextureMipmap(handles[i]);
 			glTextureParameteri(handles[i], GL_TEXTURE_MAX_LEVEL, mipMapLevel - 1);
+			glTextureParameteri(handles[i], GL_TEXTURE_MAX_ANISOTROPY, 16);
 			glBindTextures(0, 1, &handles[i]);
 			delete imgData[i].data;
 		}
