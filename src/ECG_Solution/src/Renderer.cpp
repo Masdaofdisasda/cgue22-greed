@@ -414,10 +414,10 @@ void Renderer::Draw(Level* level)
 	glDrawArrays(GL_TRIANGLES, 0, 3);
 	glViewport(0, 0, state->width, state->height);
 
-	int weight = 80; // change before submission
-	std::string weightText = "Weight: " + std::to_string(weight) + "kg";
+	int items = state->collectedItems;
+	std::string weightText = "Items: " + std::to_string(items);
 	fontRenderer.print(weightText, state->width * 0.05f, state->height * 0.105f, .5f, glm::vec3(.95f, .86f, .6f));
-	int money = 100; // change before submission
+	int money = (int)state->totalCash;
 	std::string loot = "Loot: " + std::to_string(money) + "$";
 	fontRenderer.print(loot, state->width * 0.05f, state->height * 0.07f, .5f, glm::vec3(.95f, .86f, .6f));
 
