@@ -40,7 +40,7 @@ bool PlayerController::hasCollectableItemInReach() {
 	return geCollectableInFrontOfPlayer() != nullptr;
 }
 
-void PlayerController::tryCollectItem(MouseState mouseState, KeyboardInputState keyboardState)
+void PlayerController::tryCollectItem(MouseState mouseState, KeyboardInputState keyboardState, ItemCollection& itemCollection)
 {
 	bool wantToCollect = mouseState.pressedLeft || keyboardState.pressingE;
 	if (!wantToCollect)
@@ -54,10 +54,8 @@ void PlayerController::tryCollectItem(MouseState mouseState, KeyboardInputState 
 
 	// collect
 	printf("collected item\n");
-	collectedItems.push_back(item);
-	GameProperties* itemProperties = &item->modelGraphics->gameProperties;
-	itemProperties->isActive = false;
-	itemWeight += itemProperties->collectableItemProperties.weight;
+	itemCollection.collect(item);
+	itemWeight = itemCollection.getTotalWeight();
 }
 
 Physics::PhysicsObject* PlayerController::geCollectableInFrontOfPlayer() {

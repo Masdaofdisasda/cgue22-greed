@@ -2,6 +2,7 @@
 #include "Camera.h"
 #include "Physics.h"
 #include <glm/ext.hpp>
+#include "ItemCollection.h"
 
 /// <summary>
 /// Creates a rigidbody, that can be moved around. Positions the camera as if it was a part of the rigidbody.
@@ -25,7 +26,7 @@ public:
 
 	bool hasCollectableItemInReach();
 
-	void tryCollectItem(MouseState mouseState, KeyboardInputState keyboardState);
+	void tryCollectItem(MouseState mouseState, KeyboardInputState keyboardState, ItemCollection& itemCollection);
 
 private:
 	struct Movement
@@ -40,7 +41,6 @@ private:
 	Physics& physics;
 	CameraPositioner_Player& cameraPositioner;
 	Physics::PhysicsObject* playerObject;
-	std::vector<Physics::PhysicsObject*> collectedItems;
 
 	// settings
 	glm::vec3 rigidbodyToCameraOffset = glm::vec3(0,1,0);

@@ -3,6 +3,8 @@
 void ItemCollection::collect(Physics::PhysicsObject* object)
 {
 	collectedItems.push_back(object);
+	GameProperties* itemProperties = &object->modelGraphics->gameProperties;
+	itemProperties->isActive = false;
 }
 
 float ItemCollection::getTotalMonetaryValue()

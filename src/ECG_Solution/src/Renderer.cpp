@@ -414,6 +414,18 @@ void Renderer::Draw(Level* level)
 		renderColor.setVec4("color", glm::vec4(0.0f, 0.0f, 0.0f, 0.7f));
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 		fontRenderer.print("You made it!", state->width * 0.36f, state->height * 0.48f, 2.0f, glm::vec3(.85f, .68f, .19f));
+		
+		// Show collected items
+		const float startHeight = 0.5f;
+		const float lineHeight = 0.1f;
+		std::vector<ItemCollection::ItemInfo> itemInfos = state->itemCollection_->getListOfItems();
+		for (int i = 0; i < itemInfos.size(); i++)
+		{
+			const char* text = (itemInfos[i].name + " " + itemInfos[i].price).c_str();
+			float textHeight = state->height * (startHeight + lineHeight * i);
+			fontRenderer.print(text, state->width * 0.36f, textHeight, 0.5f, glm::vec3(.85f, .68f, .19f));
+		}
+		// show total price
 	}
 	else if (state->lost_)
 	{

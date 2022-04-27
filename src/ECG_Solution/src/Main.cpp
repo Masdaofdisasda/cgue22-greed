@@ -130,8 +130,10 @@ int main(int argc, char** argv)
 	camera.setPositioner(cameraPositioner);
 	playerCameraPositioner.setPosition(glm::vec3(0, 10, 0));
 
-	// Setup player
 	PlayerController player(physics, playerCameraPositioner, glm::vec3(0, 20, 0));
+
+	ItemCollection* itemCollection = new ItemCollection();
+	state->itemCollection_ = itemCollection;
 
 	glm::vec3 lavaPosition = glm::vec3(0.0f, -50.0f, 0.0f); // TODO
 
@@ -174,7 +176,7 @@ int main(int argc, char** argv)
 		else {
 			player.move(keyboardInput, deltaSeconds);
 			state->displayCollectItemHint_ = player.hasCollectableItemInReach();
-			player.tryCollectItem(mouseState, keyboardInput);
+			player.tryCollectItem(mouseState, keyboardInput, *itemCollection);
 		}
 
 		// calculate physics
