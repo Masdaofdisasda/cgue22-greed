@@ -4,9 +4,6 @@
 #include <glm\glm.hpp>
 #include "LevelStructs.h"
 
-#ifndef _FRUSTUM_CULLING_
-#define _FRUSTUM_CULLING_
-
 namespace FrustumCulling
 {
 	/// @brief extracts 6 viewing planes from a view prjectio matrix of a right handed coordinate system
@@ -79,4 +76,3 @@ namespace FrustumCulling
 		return true;
 	}
 }
-#endif

@@ -14,30 +14,21 @@ Material::Material(const char* texPath, const char* name) {
 	size_t start = path.length() - 11;
 	path.erase(start, 11);
 
-	// append "../../assests/" to the start of the string
+	// append "../../assets/" to the start of the string
 	char* file = new char[path.length() + 1];
 	strcpy(file, path.c_str());
 	char c[100];
 	strcpy(c, "../../assets/");
 	strcat(c, file);
 
-	albedo = Texture::loadTexture(append(c, "/albedo.jpg"));
-	normal = Texture::loadTexture(append(c, "/normal.jpg"));
-	metal = Texture::loadTexture(append(c, "/metal.jpg"));
-	rough = Texture::loadTexture(append(c, "/rough.jpg"));
-	ao = Texture::loadTexture(append(c, "/ao.jpg"));
-}
-
-/// @brief adds a subfolder to a given path
-/// @param texPath is the path to the root folder
-/// @param texType is the name of the image file in the root folder
-/// @return the path to the image file
-const char* Material::append(const char* texPath, char* texType)
-{
-	char c[100];
-	strcpy(c, texPath);
-
-	return strcat(c, texType);
+	// load textures multithreaded
+	GLuint handles[5];
+	Texture::loadTextureMT(c, handles);
+	albedo = handles[0];
+	normal = handles[1];
+	metal = handles[2];
+	rough = handles[3];
+	ao = handles[4];
 }
 
 /// @brief explicitly deletes every texture in this material

@@ -2,13 +2,14 @@
 #include "Program.h"
 #include <meshoptimizer/meshoptimizer.h>
 #include <unordered_map>
+#include <thread>
 
 /// @brief loads an fbx file from the given path and converts it to useable data structures
 /// @param scenePath location of the fbx file, expected to be in "assets"
 Level::Level(const char* scenePath, std::shared_ptr<GlobalState> state, PerFrameData& pfdata) {
 
 	// 1. load fbx file into assimps internal data structures and apply various preprocessing to the data
-	std::cout << "load scene... (this could take a while)" << std::endl;
+	std::cout << "import scene from fbx file..." << std::endl;
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(scenePath,
 		aiProcess_GenSmoothNormals |
@@ -19,39 +20,33 @@ Level::Level(const char* scenePath, std::shared_ptr<GlobalState> state, PerFrame
 		aiProcess_GenUVCoords |
 		aiProcess_FlipUVs |
 		aiProcess_FixInfacingNormals |
-		aiProcess_ValidateDataStructure
-	);
+		aiProcess_ValidateDataStructure | 
+		0);
 
 	if (!&scene){
 		std::cerr << "ERROR: Couldn't load scene" << std::endl;
-		exit(EXIT_FAILURE);}
+		exit(EXIT_FAILURE);
+	}
 
-	// 2. iterate through the scene and create a mesh object for every aimesh in the scene
-	loadMeshes(scene);
+	std::thread mesh(&Level::loadMeshes, this, std::ref(scene));
+
+	std::thread light(&Level::loadLights, this, std::ref(scene));
 
 	//optimizeMeshes(); //WIP
 
-	// 3. load materials
-	std::cout << "loading materials..." << std::endl;
 	loadMaterials(scene);
 
-	// 5. build scene graph and calculate AABBs
+	// build scene graph and calculate AABBs
 	std::cout << "build scene hierarchy..." << std::endl;
+	mesh.join();
 	traverseTree(scene->mRootNode, nullptr, &sceneGraph);
 	transformBoundingBoxes(&sceneGraph, glm::mat4(1));
 
-	// 6. setup buffers for vertex and indices data
-	std::cout << "setup buffers..." << std::endl;
 	setupVertexBuffers();
-
-	// 7. setup buffers for transform and drawcommands
 	setupDrawBuffers();
 
-	// 8. load lights sources 
-	std::cout << "loading lights..." << std::endl;
-	loadLights(scene); //TODO
-
-	// 9 finalize
+	// finalize
+	light.join();
 	loadShaders();
 	this->state = state;
 	perframeData = &pfdata;
@@ -65,7 +60,6 @@ void Level::loadMeshes(const aiScene* scene)
 	globalIndexOffset = 0;
 
 	meshes.reserve(scene->mNumMeshes);
-	boxes.reserve(scene->mNumMeshes);
 
 	std::cout << "loading meshes..." << std::endl;
 	for (size_t i = 0; i < scene->mNumMeshes; i++)
@@ -92,8 +86,8 @@ subMesh Level::extractMesh(const aiMesh* mesh)
 	for (size_t j = 0; j < mesh->mNumVertices; j++)
 	{
 		const aiVector3D p = mesh->HasPositions() ? mesh->mVertices[j] : aiVector3D(0.0f);
-		const aiVector3D n = mesh->HasNormals() ? mesh->mNormals[j] : aiVector3D(0.0f,1.0f,0.0f);
-		const aiVector3D t = mesh->HasTextureCoords(0) ? mesh->mTextureCoords[0][j] : aiVector3D(0.5f,0.5f,0.0f);
+		const aiVector3D n = mesh->HasNormals() ? mesh->mNormals[j] : aiVector3D(0.0f, 1.0f, 0.0f);
+		const aiVector3D t = mesh->HasTextureCoords(0) ? mesh->mTextureCoords[0][j] : aiVector3D(0.5f, 0.5f, 0.0f);
 
 		vertices.push_back(p.x);
 		vertices.push_back(p.y);
@@ -124,6 +118,71 @@ subMesh Level::extractMesh(const aiMesh* mesh)
 	globalVertexOffset += mesh->mNumVertices;
 	globalIndexOffset += indexCount;
 
+	printf("Mesh [%s] %u\n", mesh->mName.C_Str(), meshes.size() + 1);
+	return m;
+}
+
+/// @brief extracts position, normal and uvs with the correlating indices from an assimp mesh
+/// @param mesh is a single meshm with a unique material
+/// @return a mesh but in usable structures for drawing it
+subMesh Level::extractMesh2(const aiMesh* mesh)
+{
+	subMesh m;
+	m.name = mesh->mName.C_Str();
+	m.indexOffset = globalIndexOffset;
+	m.vertexOffset = globalVertexOffset;
+	//m.vertexCount = mesh->mNumVertices;
+	m.materialIndex = mesh->mMaterialIndex;
+			
+	std::vector<float> localVertices;
+	std::vector <unsigned int> localindices;			
+
+	// extract vertices from the aimesh
+	for (size_t j = 0; j < mesh->mNumVertices; j++)
+	{
+		const aiVector3D p = mesh->HasPositions() ? mesh->mVertices[j] : aiVector3D(0.0f);
+		const aiVector3D n = mesh->HasNormals() ? mesh->mNormals[j] : aiVector3D(0.0f, 1.0f, 0.0f);
+		const aiVector3D t = mesh->HasTextureCoords(0) ? mesh->mTextureCoords[0][j] : aiVector3D(0.5f, 0.5f, 0.0f);
+
+		localVertices.push_back(p.x);
+		localVertices.push_back(p.y);
+		localVertices.push_back(p.z);
+
+		localVertices.push_back(n.x);
+		localVertices.push_back(n.y);
+		localVertices.push_back(n.z);
+
+		localVertices.push_back(t.x);
+		localVertices.push_back(t.y);
+	}
+
+	//extract indices from the aimesh
+	for (size_t j = 0; j < mesh->mNumFaces; j++)
+	{
+		for (unsigned k = 0; k != mesh->mFaces[j].mNumIndices; k++)
+		{
+			//GLuint index = mesh->mFaces[j].mIndices[k] + globalIndexOffset;
+			GLuint index = mesh->mFaces[j].mIndices[k];
+			localindices.push_back(index);
+		}
+	}
+
+	//m.indexCount = indexCount;
+
+	std::vector<unsigned int> remap(localindices.size()); // allocate temporary memory for the remap table
+	size_t vertex_count = meshopt_generateVertexRemap(remap.data(), localindices.data(), localindices.size(), vertices.data(), localindices.size(), 8*sizeof(float));
+
+	std::vector <unsigned int> opt_indices(localindices.size());
+	meshopt_remapIndexBuffer(opt_indices.data(), localindices.data(), localindices.size(), remap.data());
+
+	std::vector<float> opt_vertices(vertex_count);
+	meshopt_remapVertexBuffer(opt_vertices.data(), localVertices.data(), localVertices.size(), 8 * sizeof(float), remap.data());
+
+
+
+	globalVertexOffset += opt_vertices.size();
+	globalIndexOffset += opt_indices.size();
+	//a.insert(std::end(a), std::begin(b), std::end(b));
 	printf("Mesh [%s] %u\n", mesh->mName.C_Str(), meshes.size() + 1);
 	return m;
 }
@@ -212,6 +271,8 @@ void Level::transformBoundingBoxes(Hierarchy* node, glm::mat4 globalTransform)
 /// @return a material object containing opengl handles to the fives loaded textures
 void Level::loadMaterials(const aiScene* scene)
 {
+	std::cout << "loading materials..." << std::endl;
+
 	for (size_t m = 0; m < scene->mNumMaterials; m++)
 	{
 		aiMaterial* mm = scene->mMaterials[m];
@@ -287,6 +348,8 @@ glm::mat4 Level::toGlmMat4(const aiMatrix4x4& mat)
 /// @brief Creates and fills vertex and index buffers and sets up the "big" vao which will suffice to render all meshes
 void Level::setupVertexBuffers()
 {
+	std::cout << "setup buffers..." << std::endl;
+
 	glCreateBuffers(1, &VBO);
 	glNamedBufferStorage(VBO, vertices.size() * sizeof(float), vertices.data(), 0);
 	glCreateBuffers(1, &EBO);
@@ -326,6 +389,8 @@ void Level::setupDrawBuffers()
 /// @brief loads all directional and positional lights in the assimp scene, corrects position for positional lights by traversing the tree
 /// @param scene is the scene containing the lights and root node
 void Level::loadLights(const aiScene* scene) {
+
+	std::cout << "loading lights..." << std::endl;
 
 	// collect light sources
 	std::unordered_map<std::string, aiLight*> lightMap;

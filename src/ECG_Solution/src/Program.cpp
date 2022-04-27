@@ -132,7 +132,7 @@ void Program::setMat4(const std::string& name, glm::mat4 value)
 }
 
 /// @brief check for compile errors
-int Program::compileErrors()
+void Program::compileErrors()
 {
 	GLint succeded;
 
@@ -143,7 +143,7 @@ int Program::compileErrors()
 		glGetProgramiv(program_ID, GL_INFO_LOG_LENGTH, &logSize);
 		GLchar* message = new char[logSize];
 		glGetProgramInfoLog(program_ID, logSize, nullptr, message);
-		EXIT_WITH_ERROR(message);
+		std::cerr <<message;
 		delete[] message;
 	}
 }

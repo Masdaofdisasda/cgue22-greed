@@ -1,6 +1,7 @@
 #include "Texture.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
+#include <thread>
 
 /// @brief create a new texture, used in Framebuffer.h
 /// @param type GL Texture type, eg GL_TEXTURE_2D
@@ -16,7 +17,6 @@ Texture::Texture(GLenum type, int width, int height, GLenum internalFormat)
 	glTextureParameteri(tex_ID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTextureStorage2D(tex_ID, getNumMipMapLevels2D(width, height), internalFormat, width, height);
 }
-
 /// @brief loads a texture from image, used in Material.h
 /// @param texPath is the location of an image
 /// @return the created texture handle
@@ -50,6 +50,53 @@ GLuint Texture::loadTexture(const char* texPath)
 	}
 	glBindTexture(GL_TEXTURE_2D, 0);
 	return handle;
+}
+
+/// @brief multi threaded variant
+/// @param texPath 
+/// @param handles 
+void Texture::loadTextureMT(const char* texPath, GLuint handles[])
+{
+	stbiData imgData[5]; std::thread workers[5];
+
+	std::string albedo = append(texPath, "/albedo.jpg");
+	workers[0] = std::thread (Texture::stbiLoad, albedo, &imgData[0]);
+	std::string normal = append(texPath, "/normal.jpg");
+	workers[1] = std::thread (Texture::stbiLoad, normal, &imgData[1]);
+	std::string metal = append(texPath, "/metal.jpg");
+	workers[2] = std::thread (Texture::stbiLoad, metal, &imgData[2]);
+	std::string rough = append(texPath, "/rough.jpg");
+	workers[3] = std::thread (Texture::stbiLoad, rough, &imgData[3]);
+	std::string ao = append(texPath, "/ao.jpg");
+	workers[4] = std::thread (Texture::stbiLoad, ao, &imgData[4]);
+
+	for (size_t i = 0; i < 5; i++)
+	{
+		workers[i].join();
+		int mipMapLevel = getNumMipMapLevels2D(imgData[i].w, imgData[i].h);
+		glCreateTextures(GL_TEXTURE_2D, 1, &handles[i]);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		
+		if (imgData[i].data > 0)
+		{
+			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+			glTextureStorage2D(handles[i], mipMapLevel, GL_RGB8, imgData[i].w, imgData[i].h);
+			glTextureSubImage2D(handles[i], 0, 0, 0, imgData[i].w, imgData[i].h, GL_RGB, GL_UNSIGNED_BYTE, imgData[i].data);
+			glGenerateTextureMipmap(handles[i]);
+			glTextureParameteri(handles[i], GL_TEXTURE_MAX_LEVEL, mipMapLevel - 1);
+			glBindTextures(0, 1, &handles[i]);
+			delete imgData[i].data;
+		}
+		else
+		{
+			std::cout << "could not load texture" << texPath << std::endl;
+		}
+	}
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 /// @brief loads a texture from image, used in Material.h
@@ -173,4 +220,23 @@ int Texture::getNumMipMapLevels2D(int w, int h)
 	while ((w | h) >> levels)
 		levels += 1;
 	return levels;
+}
+
+void Texture::stbiLoad(std::string texPath, stbiData* img)
+{
+	stbi_set_flip_vertically_on_load(true);
+
+	img->data = stbi_load(texPath.c_str(), &img->w, &img->h, &img->comp, 3);
+}
+
+/// @brief adds a subfolder to a given path
+/// @param texPath is the path to the root folder
+/// @param texType is the name of the image file in the root folder
+/// @return the path to the image file
+std::string Texture::append(const char* texPath, char* texType)
+{
+	char c[100];
+	strcpy(c, texPath);
+	std::string result = strcat(c, texType);
+	return result;
 }

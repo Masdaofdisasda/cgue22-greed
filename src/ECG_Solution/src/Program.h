@@ -4,8 +4,6 @@
 #include "Cubemap.h"
 #include "Level.h"
 
-#ifndef _PROGRAM_
-#define _PROGRAM_
 class Level;
 /// @brief Program is a shader program compiled from 1 to 5 shaders
 /// contains a handle, builds and error checks the programm
@@ -78,7 +76,5 @@ public:
 
 	GLuint getHandle() const { return program_ID; }
 
-	int compileErrors();
+	void compileErrors();
 };
-
-#endif
