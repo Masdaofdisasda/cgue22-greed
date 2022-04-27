@@ -5,6 +5,8 @@ void ItemCollection::collect(Physics::PhysicsObject* object)
 	collectedItems.push_back(object);
 	GameProperties* itemProperties = &object->modelGraphics->gameProperties;
 	itemProperties->isActive = false;
+	totalMonetaryValue += itemProperties->collectableItemProperties.worth;
+	totalWeight += itemProperties->collectableItemProperties.weight;
 }
 
 float ItemCollection::getTotalMonetaryValue()

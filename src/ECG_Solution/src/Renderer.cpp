@@ -427,12 +427,6 @@ void Renderer::Draw(Level* level)
 		renderColor.setVec4("color", glm::vec4(0.0f, 0.0f, 0.0f, 0.7f));
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 		fontRenderer.print("You made it!", state->width * 0.36f, state->height * 0.48f, 2.0f, glm::vec3(.85f, .68f, .19f));
-		
-		// Show collected items and price
-		const char* collectedItemAmount = "Collected items: " + state->collectedItems;
-		const char* collectedMoney = "Money made: " + (int)state->totalCash;
-		fontRenderer.print(collectedItemAmount, state->width * 0.36f, state->height * 0.4f, 1.0f, glm::vec3(.85f, .68f, .19f));
-		fontRenderer.print(collectedMoney, state->width * 0.36f, state->height * 0.3f, 1.0f, glm::vec3(.85f, .68f, .19f));
 	}
 	else if (state->lost_)
 	{

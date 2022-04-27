@@ -199,11 +199,11 @@ int main(int argc, char** argv)
 		perframeData.deltaTime.y += deltaSeconds;
 
 		// simple game logic WIP
+		state->totalCash = itemCollection->getTotalMonetaryValue();
+		state->collectedItems = itemCollection->size();
 		if (perframeData.viewPos.y > 127.0f)
 		{
 			state->won_ = true;
-			state->totalCash = itemCollection->getTotalMonetaryValue();
-			state->collectedItems = itemCollection->size();
 		}
 		if (perframeData.viewPos.y < lavaPosition.y)
 		{
