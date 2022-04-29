@@ -58,7 +58,7 @@ private:
 
 	void loadMeshes(const aiScene* scene);
 	subMesh extractMesh(const aiMesh* mesh);
-	void generateLODs(std::vector<uint32_t>& indices, std::vector<float>& vertices, std::vector<std::vector<uint32_t>>& LODs);
+	void generateLODs(std::vector<unsigned int>& indices, const std::vector<float>& vertices, std::vector<std::vector<unsigned int>>& LODs);
 	BoundingBox computeBoundsOfMesh(subMesh mesh);
 	void loadMaterials(const aiScene* scene);
 	void traverseTree(aiNode* n, Hierarchy* parent, Hierarchy* child);
@@ -68,6 +68,7 @@ private:
 	void loadLights(const aiScene* scene);
 	glm::mat4 toGlmMat4(const aiMatrix4x4& mat);
 	void buildRenderQueue(const Hierarchy* node, glm::mat4 globalTransform);
+	uint32_t decideLOD(uint32_t lods, glm::mat4 M);
 	void DrawAABBs(Hierarchy node);
 	void transformBoundingBoxes(Hierarchy* node, glm::mat4 globalTransform);
 	void collectRigidPhysicMeshes(Hierarchy* node, glm::mat4 globalTransform);

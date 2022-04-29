@@ -78,7 +78,6 @@ subMesh Level::extractMesh(const aiMesh* mesh)
 	printf("Mesh [%s] %u\n", mesh->mName.C_Str(), meshes.size() + 1);
 	subMesh m;
 	m.name = mesh->mName.C_Str();
-	m.indexOffset.push_back(globalIndexOffset);
 	m.vertexOffset = globalVertexOffset;
 	m.materialIndex = mesh->mMaterialIndex;
 			
@@ -129,7 +128,6 @@ subMesh Level::extractMesh(const aiMesh* mesh)
 	
 
 	m.vertexCount = opt_vertices.size();
-	m.indexCount.push_back(opt_indices.size());
 
 	std::vector<float> resultVertices;
 	for (const auto& vertex : opt_vertices)
@@ -147,18 +145,27 @@ subMesh Level::extractMesh(const aiMesh* mesh)
 	std::vector<std::vector<unsigned int>> LODs;
 	generateLODs(opt_indices, resultVertices, LODs);
 
-	globalVertexOffset += m.vertexCount;
-	globalIndexOffset += m.indexCount[0];
 
 	vertices.insert(vertices.end(), resultVertices.begin(), resultVertices.end());
-	indices.insert(indices.end(), opt_indices.begin(), opt_indices.end());
+	//indices.insert(indices.end(), LODs[0].begin(), LODs[0].end());
 
+	auto indexSum = 0;
+	for (size_t i = 0; i < LODs.size(); i++)
+	{
+		m.indexCount.push_back(LODs[i].size());
+		m.indexOffset.push_back(globalIndexOffset + indexSum);
+		indexSum += LODs[i].size();
+		indices.insert(indices.end(), LODs[i].begin(), LODs[i].end());
+	}
+
+	globalVertexOffset += m.vertexCount;
+	globalIndexOffset += indexSum;
 	return m;
 }
 
-void Level::generateLODs(std::vector<unsigned int>& indices, std::vector<float>& vertices, std::vector<std::vector<unsigned int>>& LODs)
+void Level::generateLODs(std::vector<unsigned int>& indices,const std::vector<float>& vertices, std::vector<std::vector<unsigned int>>& LODs)
 {
-	size_t verticesCountIn = vertices.size() / 2;
+	size_t verticesCountIn = vertices.size() / 8;
 	size_t targetIndicesCount = indices.size();
 
 	uint8_t LOD = 1;
@@ -178,7 +185,7 @@ void Level::generateLODs(std::vector<unsigned int>& indices, std::vector<float>&
 			indices.data(),
 			indices.data(), (unsigned int)indices.size(),
 			vertices.data(), verticesCountIn,
-			vtxStride,
+			sizeof(float) * 8,
 			targetIndicesCount, 0.02f);
 
 		// cannot simplify further
@@ -191,7 +198,7 @@ void Level::generateLODs(std::vector<unsigned int>& indices, std::vector<float>&
 					indices.data(),
 					indices.data(), indices.size(),
 					vertices.data(), verticesCountIn,
-					vtxStride,
+					sizeof(float) * 8,
 					targetIndicesCount);
 				sloppy = true;
 				if (numOptIndices == indices.size()) break;
@@ -686,6 +693,7 @@ void Level::buildRenderQueue(const Hierarchy* node, glm::mat4 globalTransform) {
 	{
 		if (!FrustumCulling::isBoxInFrustum(frustumPlanes, frustumCorners, node->nodeBounds))
 			return;
+
 	}
 
 	glm::mat4 nodeMatrix = globalTransform * node->getNodeMatrix();
@@ -694,9 +702,11 @@ void Level::buildRenderQueue(const Hierarchy* node, glm::mat4 globalTransform) {
 		uint32_t meshIndex = node->modelIndices[i];
 		uint32_t materialIndex = meshes[meshIndex].materialIndex;
 
-		uint32_t count = meshes[meshIndex].indexCount[0];	// number of indices that get drawn, eg for single quad = 6
+		uint32_t LOD = decideLOD(meshes[meshIndex].indexCount.size(), nodeMatrix);
+
+		uint32_t count = meshes[meshIndex].indexCount[LOD];	// number of indices that get drawn, eg for single quad = 6
 		uint32_t instanceCount = 1;	// number of instanced that get drawn, 0 means none, this programm doesn't use instanced rendering
-		uint32_t firstIndex = meshes[meshIndex].indexOffset[0]; // index offset, eg for first mesh = 0, sec mesh = firstIndexOffs + 0, etc
+		uint32_t firstIndex = meshes[meshIndex].indexOffset[LOD]; // index offset, eg for first mesh = 0, sec mesh = firstIndexOffs + 0, etc
 		uint32_t baseVertex = meshes[meshIndex].vertexOffset; // offset added before chosing vertices
 		uint32_t baseInstance = renderQueue[materialIndex].modelMatrices.size(); // model matrix id, could be used for bindless textures
 
@@ -729,6 +739,17 @@ void Level::resetQueue()
 	}
 
 	ModelsVisible = 0;
+}
+
+uint32_t Level::decideLOD(uint32_t lods, glm::mat4 M)
+{	//TODO
+	float maxDistance = 150;
+	glm::vec4 model(1);
+	model = M * model;
+	glm::vec4 dist = model - perframeData->viewPos;
+	float d = glm::length(dist);
+	//return (d / maxDistance) * lods;
+	return 0;
 }
 
 void Level::DrawAABBs(Hierarchy node)
