@@ -10,12 +10,12 @@
 /// @brief describes the position of a mesh in an index and vertex array 
 struct subMesh
 {
-	std::string name;			// name of the mesh, for debugging
-	uint32_t indexOffset;		// start of mesh in vector indices
-	uint32_t vertexOffset;		// start of mesh in vector vertices
-	uint32_t indexCount;		// number of indices to render
-	uint32_t vertexCount;		// number of vertices to render
-	uint32_t materialIndex;		// associated material
+	std::string name;						// name of the mesh, for debugging
+	std::vector<uint32_t> indexOffset;		// start of mesh in vector indices, [0] being original index count, [8] being lowest LOD
+	uint32_t vertexOffset;					// start of mesh in vector vertices
+	std::vector<uint32_t> indexCount;		// number of indices to render, [0] being original index count, [8] being lowest LOD
+	uint32_t vertexCount;					// number of vertices to render
+	uint32_t materialIndex;					// associated material
 };
 
 /// @brief deascribes one indirect command for GlDraw_Indrect calls
@@ -102,4 +102,12 @@ struct PhysicsMesh
 	std::vector<float> vtxPositions;		// all positions (x,y,z) in model space
 	Transformation modelTRS;						// model tranformation into world space
 	Hierarchy* node;			// pointer to set node matrices, only for dynamic objects
+};
+
+/// @brief needed for mesh optimizer
+struct Vertex
+{
+	float px, py, pz;
+	float nx, ny, nz;
+	float tx, ty;
 };

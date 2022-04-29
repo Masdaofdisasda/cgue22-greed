@@ -405,7 +405,7 @@ void Renderer::Draw(Level* level)
 	glEnable(GL_BLEND);
 	glBindTextureUnit(9, hud);
 	glDrawArrays(GL_TRIANGLES, 0, 3);
-	fontRenderer.print("PRE ALPHA FOOTAGE", state->width * 0.82f, state->height * 0.08f, .5f, glm::vec3(.5f, .5f, .5f));
+	fontRenderer.print("CLOSED BETA FOOTAGE", state->width * 0.78f, state->height * 0.08f, .5f, glm::vec3(.5f, .5f, .5f));
 	fontRenderer.print("all content is subject to change", state->width * 0.78f, state->height * 0.05f, .5f, glm::vec3(.5f, .5f, .5f));
 
 	renderColor.Use();

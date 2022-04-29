@@ -19,6 +19,8 @@ class Program;
 /// loads and manages geometry, textures and model matrices from some fbx file
 class Level {
 private:
+	static const auto vtxStride = sizeof(Vertex);
+
 	uint32_t globalVertexOffset = 0;
 	uint32_t globalIndexOffset = 0;
 
@@ -56,7 +58,7 @@ private:
 
 	void loadMeshes(const aiScene* scene);
 	subMesh extractMesh(const aiMesh* mesh);
-	subMesh extractMesh2(const aiMesh* mesh);
+	void generateLODs(std::vector<uint32_t>& indices, std::vector<float>& vertices, std::vector<std::vector<uint32_t>>& LODs);
 	BoundingBox computeBoundsOfMesh(subMesh mesh);
 	void loadMaterials(const aiScene* scene);
 	void traverseTree(aiNode* n, Hierarchy* parent, Hierarchy* child);

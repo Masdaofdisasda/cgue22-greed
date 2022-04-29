@@ -64,7 +64,7 @@ void Level::loadMeshes(const aiScene* scene)
 	for (size_t i = 0; i < scene->mNumMeshes; i++)
 	{
 		const aiMesh* mesh = scene->mMeshes[i];
-		meshes.push_back(extractMesh2(mesh));
+		meshes.push_back(extractMesh(mesh));
 	}
 	ModelsLoaded = meshes.size();
 }
@@ -74,69 +74,11 @@ void Level::loadMeshes(const aiScene* scene)
 /// @return a mesh but in usable structures for drawing it
 subMesh Level::extractMesh(const aiMesh* mesh)
 {
-	subMesh m;
-	m.name = mesh->mName.C_Str();
-	m.indexOffset = globalIndexOffset;
-	m.vertexOffset = globalVertexOffset;
-	m.vertexCount = mesh->mNumVertices;
-	m.materialIndex = mesh->mMaterialIndex;
-
-	// extract vertices from the aimesh
-	for (size_t j = 0; j < mesh->mNumVertices; j++)
-	{
-		const aiVector3D p = mesh->HasPositions() ? mesh->mVertices[j] : aiVector3D(0.0f);
-		const aiVector3D n = mesh->HasNormals() ? mesh->mNormals[j] : aiVector3D(0.0f, 1.0f, 0.0f);
-		const aiVector3D t = mesh->HasTextureCoords(0) ? mesh->mTextureCoords[0][j] : aiVector3D(0.5f, 0.5f, 0.0f);
-
-		vertices.push_back(p.x);
-		vertices.push_back(p.y);
-		vertices.push_back(p.z);
-
-		vertices.push_back(n.x);
-		vertices.push_back(n.y);
-		vertices.push_back(n.z);
-
-		vertices.push_back(t.x);
-		vertices.push_back(t.y);
-	}
-
-	uint32_t indexCount = 0;
-	//extract indices from the aimesh
-	for (size_t j = 0; j < mesh->mNumFaces; j++)
-	{
-		for (unsigned k = 0; k != mesh->mFaces[j].mNumIndices; k++)
-		{
-			GLuint index = mesh->mFaces[j].mIndices[k] + globalIndexOffset;
-			indexCount++;
-			indices.push_back(index);
-		}
-	}
-
-	m.indexCount = indexCount;
-
-	globalVertexOffset += mesh->mNumVertices;
-	globalIndexOffset += indexCount;
-
-	printf("Mesh [%s] %u\n", mesh->mName.C_Str(), meshes.size() + 1);
-	return m;
-}
-
-/// @brief extracts position, normal and uvs with the correlating indices from an assimp mesh
-/// @param mesh is a single meshm with a unique material
-/// @return a mesh but in usable structures for drawing it
-subMesh Level::extractMesh2(const aiMesh* mesh)
-{
-	struct Vertex
-	{
-		float px, py, pz;
-		float nx, ny, nz;
-		float tx, ty;
-	};
 
 	printf("Mesh [%s] %u\n", mesh->mName.C_Str(), meshes.size() + 1);
 	subMesh m;
 	m.name = mesh->mName.C_Str();
-	m.indexOffset = globalIndexOffset;
+	m.indexOffset.push_back(globalIndexOffset);
 	m.vertexOffset = globalVertexOffset;
 	m.materialIndex = mesh->mMaterialIndex;
 			
@@ -170,8 +112,6 @@ subMesh Level::extractMesh2(const aiMesh* mesh)
 		}
 	}
 
-	const auto vtxStride = sizeof(Vertex);
-
 	// re-index geometry
 	std::vector<unsigned int> remap(rawIndices.size());
 	size_t vertex_count = meshopt_generateVertexRemap(remap.data(), rawIndices.data(), rawIndices.size(), rawVertices.data(), rawIndices.size(), vtxStride);
@@ -183,12 +123,13 @@ subMesh Level::extractMesh2(const aiMesh* mesh)
 	meshopt_remapVertexBuffer(opt_vertices.data(), rawVertices.data(), rawVertices.size(), vtxStride, remap.data());
 
 	// further optimize geometry
-	//meshopt_optimizeVertexCache(opt_indices.data(), opt_indices.data(), rawIndices.size(), vertex_count);
-	//meshopt_optimizeOverdraw(opt_indices.data(), opt_indices.data(), rawIndices.size(), &opt_vertices[0].px, vertex_count, vtxStride, 1.05f);
-	//meshopt_optimizeVertexFetch(opt_vertices.data(), opt_indices.data(), rawIndices.size(), opt_vertices.data(), vertex_count, vtxStride);
+	meshopt_optimizeVertexCache(opt_indices.data(), opt_indices.data(), rawIndices.size(), vertex_count);
+	meshopt_optimizeOverdraw(opt_indices.data(), opt_indices.data(), rawIndices.size(), &opt_vertices[0].px, vertex_count, vtxStride, 1.05f);
+	meshopt_optimizeVertexFetch(opt_vertices.data(), opt_indices.data(), rawIndices.size(), opt_vertices.data(), vertex_count, vtxStride);
 	
+
 	m.vertexCount = opt_vertices.size();
-	m.indexCount = opt_indices.size();
+	m.indexCount.push_back(opt_indices.size());
 
 	std::vector<float> resultVertices;
 	for (const auto& vertex : opt_vertices)
@@ -203,13 +144,72 @@ subMesh Level::extractMesh2(const aiMesh* mesh)
 		resultVertices.push_back(vertex.ty);
 	}
 
+	std::vector<std::vector<unsigned int>> LODs;
+	generateLODs(opt_indices, resultVertices, LODs);
+
 	globalVertexOffset += m.vertexCount;
-	globalIndexOffset += m.indexCount;
+	globalIndexOffset += m.indexCount[0];
 
 	vertices.insert(vertices.end(), resultVertices.begin(), resultVertices.end());
 	indices.insert(indices.end(), opt_indices.begin(), opt_indices.end());
 
 	return m;
+}
+
+void Level::generateLODs(std::vector<unsigned int>& indices, std::vector<float>& vertices, std::vector<std::vector<unsigned int>>& LODs)
+{
+	size_t verticesCountIn = vertices.size() / 2;
+	size_t targetIndicesCount = indices.size();
+
+	uint8_t LOD = 1;
+
+	printf("LOD0: %i indices   \n", int(indices.size()));
+
+	LODs.push_back(indices);
+
+	auto target = 256; // for testing, final should be 1024
+	while (targetIndicesCount > target && LOD < 8)
+	{
+		targetIndicesCount = indices.size() / 2;
+
+		bool sloppy = false;
+
+		size_t numOptIndices = meshopt_simplify(
+			indices.data(),
+			indices.data(), (unsigned int)indices.size(),
+			vertices.data(), verticesCountIn,
+			vtxStride,
+			targetIndicesCount, 0.02f);
+
+		// cannot simplify further
+		if (static_cast<size_t>(numOptIndices * 1.1f) > indices.size())
+		{
+			if (LOD > 1)
+			{
+				// try harder
+				numOptIndices = meshopt_simplifySloppy(
+					indices.data(),
+					indices.data(), indices.size(),
+					vertices.data(), verticesCountIn,
+					vtxStride,
+					targetIndicesCount);
+				sloppy = true;
+				if (numOptIndices == indices.size()) break;
+			}
+			else
+				break;
+		}
+
+		indices.resize(numOptIndices);
+
+		meshopt_optimizeVertexCache(indices.data(), indices.data(), indices.size(), verticesCountIn);
+
+		printf("LOD%i: %i indices %s   \n", int(LOD), int(numOptIndices), sloppy ? "[sloppy]" : "");
+
+		LOD++;
+
+		LODs.push_back(indices);
+	}
 }
 
 /// @brief finds the maximum and minimum vertex positions of all meshes, which should define the bounds
@@ -694,9 +694,9 @@ void Level::buildRenderQueue(const Hierarchy* node, glm::mat4 globalTransform) {
 		uint32_t meshIndex = node->modelIndices[i];
 		uint32_t materialIndex = meshes[meshIndex].materialIndex;
 
-		uint32_t count = meshes[meshIndex].indexCount;	// number of indices that get drawn, eg for single quad = 6
+		uint32_t count = meshes[meshIndex].indexCount[0];	// number of indices that get drawn, eg for single quad = 6
 		uint32_t instanceCount = 1;	// number of instanced that get drawn, 0 means none, this programm doesn't use instanced rendering
-		uint32_t firstIndex = meshes[meshIndex].indexOffset; // index offset, eg for first mesh = 0, sec mesh = firstIndexOffs + 0, etc
+		uint32_t firstIndex = meshes[meshIndex].indexOffset[0]; // index offset, eg for first mesh = 0, sec mesh = firstIndexOffs + 0, etc
 		uint32_t baseVertex = meshes[meshIndex].vertexOffset; // offset added before chosing vertices
 		uint32_t baseInstance = renderQueue[materialIndex].modelMatrices.size(); // model matrix id, could be used for bindless textures
 
