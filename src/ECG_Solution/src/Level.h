@@ -57,7 +57,6 @@ private:
 	void loadMeshes(const aiScene* scene);
 	subMesh extractMesh(const aiMesh* mesh);
 	subMesh extractMesh2(const aiMesh* mesh);
-	void optimizeMeshes();
 	BoundingBox computeBoundsOfMesh(subMesh mesh);
 	void loadMaterials(const aiScene* scene);
 	void traverseTree(aiNode* n, Hierarchy* parent, Hierarchy* child);

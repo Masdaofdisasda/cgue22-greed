@@ -32,7 +32,6 @@ Level::Level(const char* scenePath, std::shared_ptr<GlobalState> state, PerFrame
 
 	std::thread light(&Level::loadLights, this, std::ref(scene));
 
-	//optimizeMeshes(); //WIP
 
 	loadMaterials(scene);
 
@@ -65,7 +64,7 @@ void Level::loadMeshes(const aiScene* scene)
 	for (size_t i = 0; i < scene->mNumMeshes; i++)
 	{
 		const aiMesh* mesh = scene->mMeshes[i];
-		meshes.push_back(extractMesh(mesh));
+		meshes.push_back(extractMesh2(mesh));
 	}
 	ModelsLoaded = meshes.size();
 }
@@ -127,15 +126,22 @@ subMesh Level::extractMesh(const aiMesh* mesh)
 /// @return a mesh but in usable structures for drawing it
 subMesh Level::extractMesh2(const aiMesh* mesh)
 {
+	struct Vertex
+	{
+		float px, py, pz;
+		float nx, ny, nz;
+		float tx, ty;
+	};
+
+	printf("Mesh [%s] %u\n", mesh->mName.C_Str(), meshes.size() + 1);
 	subMesh m;
 	m.name = mesh->mName.C_Str();
 	m.indexOffset = globalIndexOffset;
 	m.vertexOffset = globalVertexOffset;
-	//m.vertexCount = mesh->mNumVertices;
 	m.materialIndex = mesh->mMaterialIndex;
 			
-	std::vector<float> localVertices;
-	std::vector <unsigned int> localindices;			
+	std::vector<Vertex> rawVertices;
+	std::vector <unsigned int> rawIndices;			
 
 	// extract vertices from the aimesh
 	for (size_t j = 0; j < mesh->mNumVertices; j++)
@@ -144,16 +150,14 @@ subMesh Level::extractMesh2(const aiMesh* mesh)
 		const aiVector3D n = mesh->HasNormals() ? mesh->mNormals[j] : aiVector3D(0.0f, 1.0f, 0.0f);
 		const aiVector3D t = mesh->HasTextureCoords(0) ? mesh->mTextureCoords[0][j] : aiVector3D(0.5f, 0.5f, 0.0f);
 
-		localVertices.push_back(p.x);
-		localVertices.push_back(p.y);
-		localVertices.push_back(p.z);
+		Vertex vtx =
+		{
+			p.x, p.y, p.z,
+			n.x, n.y, n.z,
+			t.x, t.y
+		};
 
-		localVertices.push_back(n.x);
-		localVertices.push_back(n.y);
-		localVertices.push_back(n.z);
-
-		localVertices.push_back(t.x);
-		localVertices.push_back(t.y);
+		rawVertices.push_back(vtx);
 	}
 
 	//extract indices from the aimesh
@@ -161,49 +165,51 @@ subMesh Level::extractMesh2(const aiMesh* mesh)
 	{
 		for (unsigned k = 0; k != mesh->mFaces[j].mNumIndices; k++)
 		{
-			//GLuint index = mesh->mFaces[j].mIndices[k] + globalIndexOffset;
 			GLuint index = mesh->mFaces[j].mIndices[k];
-			localindices.push_back(index);
+			rawIndices.push_back(index);
 		}
 	}
 
-	//m.indexCount = indexCount;
+	const auto vtxStride = sizeof(Vertex);
 
-	std::vector<unsigned int> remap(localindices.size()); // allocate temporary memory for the remap table
-	size_t vertex_count = meshopt_generateVertexRemap(remap.data(), localindices.data(), localindices.size(), vertices.data(), localindices.size(), 8*sizeof(float));
+	// re-index geometry
+	std::vector<unsigned int> remap(rawIndices.size());
+	size_t vertex_count = meshopt_generateVertexRemap(remap.data(), rawIndices.data(), rawIndices.size(), rawVertices.data(), rawIndices.size(), vtxStride);
 
-	std::vector <unsigned int> opt_indices(localindices.size());
-	meshopt_remapIndexBuffer(opt_indices.data(), localindices.data(), localindices.size(), remap.data());
+	std::vector <unsigned int> opt_indices(rawIndices.size());
+	std::vector<Vertex> opt_vertices(vertex_count);
 
-	std::vector<float> opt_vertices(vertex_count);
-	meshopt_remapVertexBuffer(opt_vertices.data(), localVertices.data(), localVertices.size(), 8 * sizeof(float), remap.data());
+	meshopt_remapIndexBuffer(opt_indices.data(), rawIndices.data(), rawIndices.size(), remap.data());
+	meshopt_remapVertexBuffer(opt_vertices.data(), rawVertices.data(), rawVertices.size(), vtxStride, remap.data());
 
+	// further optimize geometry
+	//meshopt_optimizeVertexCache(opt_indices.data(), opt_indices.data(), rawIndices.size(), vertex_count);
+	//meshopt_optimizeOverdraw(opt_indices.data(), opt_indices.data(), rawIndices.size(), &opt_vertices[0].px, vertex_count, vtxStride, 1.05f);
+	//meshopt_optimizeVertexFetch(opt_vertices.data(), opt_indices.data(), rawIndices.size(), opt_vertices.data(), vertex_count, vtxStride);
+	
+	m.vertexCount = opt_vertices.size();
+	m.indexCount = opt_indices.size();
 
+	std::vector<float> resultVertices;
+	for (const auto& vertex : opt_vertices)
+	{
+		resultVertices.push_back(vertex.px);
+		resultVertices.push_back(vertex.py);
+		resultVertices.push_back(vertex.pz);
+		resultVertices.push_back(vertex.nx);
+		resultVertices.push_back(vertex.ny);
+		resultVertices.push_back(vertex.nz);
+		resultVertices.push_back(vertex.tx);
+		resultVertices.push_back(vertex.ty);
+	}
 
-	globalVertexOffset += opt_vertices.size();
-	globalIndexOffset += opt_indices.size();
-	//a.insert(std::end(a), std::begin(b), std::end(b));
-	printf("Mesh [%s] %u\n", mesh->mName.C_Str(), meshes.size() + 1);
+	globalVertexOffset += m.vertexCount;
+	globalIndexOffset += m.indexCount;
+
+	vertices.insert(vertices.end(), resultVertices.begin(), resultVertices.end());
+	indices.insert(indices.end(), opt_indices.begin(), opt_indices.end());
+
 	return m;
-}
-
-void Level::optimizeMeshes()
-{
-	struct Vertex
-	{ float px, py, pz, nx, ny, nz, tu, tv; };
-
-	size_t index_count = indices.size();
-	std::vector<unsigned int> remap(index_count); // allocate temporary memory for the remap table
-	size_t vertex_count = meshopt_generateVertexRemap(remap.data(), indices.data(), index_count, vertices.data(), index_count, sizeof(Vertex));
-
-	std::vector <unsigned int> opt_indices(index_count);
-	meshopt_remapIndexBuffer(opt_indices.data(), indices.data(), index_count, remap.data());
-
-	std::vector<float> opt_vertices(vertex_count);
-	meshopt_remapVertexBuffer(opt_vertices.data(), vertices.data(), vertices.size(), sizeof(Vertex), remap.data());
-
-	indices = opt_indices;
-	vertices = opt_vertices;
 }
 
 /// @brief finds the maximum and minimum vertex positions of all meshes, which should define the bounds
@@ -600,6 +606,12 @@ void Level::DrawScene() {
 
 		glBindTextures(0, 5, textures);
 		glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, (GLvoid*)0, (GLsizei)renderQueue[i].commands.size(), 0);
+		/// explaination:
+		/// GL_TRIANGLES - draw triangles from every 3 indices
+		/// GL_UNSIGNED_INT - data type of the indices vector
+		/// (GLvoid*)0 - offset into commands buffer, which is zero
+		/// (GLsizei)renderQueue[i].commands.size() - is the number of draw calls that should be generated
+		/// 0 - because the commands are packed tightly aka just as descriped in the GL specs
 	}
 
 	if (state->cullDebug_) // bounding box & frustum culling debug view
@@ -681,16 +693,17 @@ void Level::buildRenderQueue(const Hierarchy* node, glm::mat4 globalTransform) {
 	{
 		uint32_t meshIndex = node->modelIndices[i];
 		uint32_t materialIndex = meshes[meshIndex].materialIndex;
-		uint32_t count = meshes[meshIndex].vertexCount;
-		uint32_t instanceCount = 1;
-		//uint32_t firstIndex = meshes[meshIndex].indexOffset;
-		uint32_t baseVertex = meshes[meshIndex].vertexOffset;
-		uint32_t baseInstance = renderQueue[materialIndex].modelMatrices.size();
+
+		uint32_t count = meshes[meshIndex].indexCount;	// number of indices that get drawn, eg for single quad = 6
+		uint32_t instanceCount = 1;	// number of instanced that get drawn, 0 means none, this programm doesn't use instanced rendering
+		uint32_t firstIndex = meshes[meshIndex].indexOffset; // index offset, eg for first mesh = 0, sec mesh = firstIndexOffs + 0, etc
+		uint32_t baseVertex = meshes[meshIndex].vertexOffset; // offset added before chosing vertices
+		uint32_t baseInstance = renderQueue[materialIndex].modelMatrices.size(); // model matrix id, could be used for bindless textures
 
 		DrawElementsIndirectCommand cmd= DrawElementsIndirectCommand{
 			count,
 			instanceCount,
-			0,
+			firstIndex,
 			baseVertex,
 			baseInstance };
 
