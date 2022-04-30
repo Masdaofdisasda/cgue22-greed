@@ -1,23 +1,21 @@
 #include "Program.h"
 
-void program::build_from(Shader& a)
+void program::build_from(Shader& a) const
 {
 	glAttachShader(program_id_, *a.get_id());
 	glLinkProgram(program_id_);
 
 	compile_errors();
-	get_uniform_locations();
 }
-void program::build_from(Shader& a, Shader& b)
+void program::build_from(Shader& a, Shader& b) const
 {
 	glAttachShader(program_id_, *a.get_id());
 	glAttachShader(program_id_, *b.get_id());
 	glLinkProgram(program_id_);
 
 	compile_errors();
-	get_uniform_locations();
 }
-void program::build_from(Shader& a, Shader& b, Shader& c)
+void program::build_from(Shader& a, Shader& b, Shader& c) const
 {
 	glAttachShader(program_id_, *a.get_id());
 	glAttachShader(program_id_, *b.get_id());
@@ -25,9 +23,8 @@ void program::build_from(Shader& a, Shader& b, Shader& c)
 	glLinkProgram(program_id_);
 
 	compile_errors();
-	get_uniform_locations();
 }
-void program::build_from(Shader& a, Shader& b, Shader& c, Shader& d)
+void program::build_from(Shader& a, Shader& b, Shader& c, Shader& d) const
 {
 	glAttachShader(program_id_, *a.get_id());
 	glAttachShader(program_id_, *b.get_id());
@@ -36,9 +33,8 @@ void program::build_from(Shader& a, Shader& b, Shader& c, Shader& d)
 	glLinkProgram(program_id_);
 
 	compile_errors();
-	get_uniform_locations();
 }
-void program::build_from(Shader& a, Shader& b, Shader& c, Shader& d, Shader& e)
+void program::build_from(Shader& a, Shader& b, Shader& c, Shader& d, Shader& e) const
 {
 	glAttachShader(program_id_, *a.get_id());
 	glAttachShader(program_id_, *b.get_id());
@@ -48,7 +44,6 @@ void program::build_from(Shader& a, Shader& b, Shader& c, Shader& d, Shader& e)
 	glLinkProgram(program_id_);
 
 	compile_errors();
-	get_uniform_locations();
 
 }
 
@@ -70,22 +65,6 @@ void program::upload_ibl(const GLuint irradiance, const GLuint pre_filter, const
 				bdrf_lut,
 				enviroment };
 	glBindTextures(5, 4, textures);
-}
-
-// TODO
-void program::get_uniform_locations()
-{
-
-	dirLoc = glGetUniformBlockIndex(program_id_, "dLightUBlock");
-	posLoc = glGetUniformBlockIndex(program_id_, "pLightUBlock");
-
-}
-
-// TODO
-void program::bind_light_buffers(UBO* directional, UBO* positional)
-{
-	glBindBufferBase(GL_UNIFORM_BUFFER, 1, directional->get_id());
-	glBindBufferBase(GL_UNIFORM_BUFFER, 2, positional->get_id());
 }
 
 void program::setu_int(const std::string& name, int value) const

@@ -19,7 +19,7 @@
     <ClCompile Include="src\Renderer.cpp" />
     <ClCompile Include="src\Texture.cpp" />
     <ClCompile Include="src\Shader.cpp" />
-    <ClCompile Include="src\UBO.cpp" />
+    <ClCompile Include="src\buffer.cpp" />
     <ClCompile Include="src\Utils.cpp" />
     <ClInclude Include="src\FontRenderer.h" />
     <ClInclude Include="src\ItemCollection.h" />
@@ -45,7 +45,7 @@
     <ClInclude Include="src\INIReader.h" />
     <ClCompile Include="src\Main.cpp" />
     <ClInclude Include="src\Shader.h" />
-    <ClInclude Include="src\UBO.h" />
+    <ClInclude Include="src\buffer.h" />
     <ClInclude Include="src\Utils.h" />
   </ItemGroup>
   <ItemGroup Label="ProjectConfigurations">

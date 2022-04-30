@@ -10,15 +10,14 @@ renderer::renderer(PerFrameData& perframe_data, light_sources& sources)
 
 	build_shader_programs(); 
 	set_render_settings();
-	fill_lightsources(); 
-	perframe_buffer_.fill_buffer(perframe_data);
+	fill_buffers(); 
 	prepare_framebuffers();
 
 	std::cout << "load Enviroment Map.." << std::endl;
 	ibl_.load_hdr("../../assets/textures/cubemap/env.hdr");
 	std::cout << "load Skybox.." << std::endl;
 	sky_tex_.load_hdr("../../assets/textures/cubemap/beach.hdr");
-	pbr_shader_.upload_ibl(ibl_.get_irradiance_id(), ibl_.get_pre_filter_id(), ibl_.get_bdrf_lut_id(), sky_tex_.get_environment());
+	program::upload_ibl(ibl_.get_irradiance_id(), ibl_.get_pre_filter_id(), ibl_.get_bdrf_lut_id(), sky_tex_.get_environment());
 	lut_3d_ = Texture::load_3dlut("../../assets/textures/look32.CUBE");
 
 	glCreateVertexArrays(1, &empty_vao_);
@@ -28,18 +27,12 @@ renderer::renderer(PerFrameData& perframe_data, light_sources& sources)
 	lava_sim_.init(glm::ivec3(lights_.directional.size(), lights_.point.size(), 0));
 }
 
-// TODO
-void renderer::fill_lightsources()
+void renderer::fill_buffers() const
 {
 	// create Uniform Buffer Objects from light source struct vectors
-	directional_lights_.fill_buffer(lights_.directional);
-	positional_lights_.fill_buffer(lights_.point);
-
-	// bind UBOs to bindings in shader
-	pbr_shader_.bind_light_buffers(&directional_lights_, &positional_lights_);
-	// set light source count variables
-	pbr_shader_.setu_int("dLightCount", lights_.directional.size());
-	pbr_shader_.setu_int("pLightCount", lights_.point.size());
+	directional_lights_.reserve_memory(1, lights_.directional.size() * sizeof(directional_light), lights_.directional.data());
+	positional_lights_.reserve_memory(2, lights_.point.size() * sizeof(positional_light), lights_.point.data());
+	perframe_buffer_.reserve_memory(0, sizeof(PerFrameData), perframe_data_);
 }
 
 void renderer::set_render_settings() const
@@ -150,7 +143,7 @@ void renderer::draw(level* level)
 	const glm::mat4 light_proj = level->get_tight_scene_frustum();
 	perframe_data_->light_view_proj = light_proj * light_view;
 
-	perframe_buffer_.update(*perframe_data_);
+	perframe_buffer_.update(sizeof(PerFrameData), perframe_data_);
 
 	glEnable(GL_DEPTH_TEST);
 

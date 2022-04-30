@@ -4,7 +4,7 @@
 #include "Texture.h"
 #include "Cubemap.h"
 #include "LightSource.h"
-#include "UBO.h"
+#include "buffer.h"
 #include "Framebuffer.h"
 #include "Level.h"
 #include "FontRenderer.h"
@@ -31,15 +31,15 @@ public:
 
 private:
 	// Render Settings
-	PerFrameData* perframe_data_;	// viewproj, viewpos,...
-	UBO perframe_buffer_;	
+	PerFrameData* perframe_data_;
+	buffer perframe_buffer_{GL_UNIFORM_BUFFER};
 
 	font_renderer font_renderer_;
 	lava_system lava_sim_;
 
 	// Illumination
 	light_sources lights_;
-	UBO directional_lights_, positional_lights_;
+	buffer directional_lights_{ GL_UNIFORM_BUFFER }, positional_lights_{ GL_UNIFORM_BUFFER };
 
 	// Shader Programs
 	// Scene rendering
@@ -108,7 +108,7 @@ private:
 	/**
 	 * \brief bind light sources to binding points
 	 */
-	void fill_lightsources();
+	void fill_buffers() const;
 
 	/// @brief compiles all needed shaders for the render loop
 	void build_shader_programs();

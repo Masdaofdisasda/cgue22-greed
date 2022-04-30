@@ -5,7 +5,7 @@
 #include <thread>
 
 level::level(const char* scene_path, const std::shared_ptr<global_state> state, PerFrameData& perframe_data)
-: state_(std::move(state)), perframe_data_(&perframe_data)
+: state_(state), perframe_data_(&perframe_data)
 {
 	std::cout << "import scene from fbx file..." << std::endl;
 	Assimp::Importer importer;
@@ -36,8 +36,7 @@ level::level(const char* scene_path, const std::shared_ptr<global_state> state, 
 	traverse_tree(scene->mRootNode, nullptr, &scene_graph_);
 	transform_bounding_boxes(&scene_graph_, glm::mat4(1));
 
-	setup_vertex_buffers();
-	setup_draw_buffers();
+	setup_buffers();
 
 	// finalize
 	light.join();
@@ -335,18 +334,18 @@ glm::mat4 level::to_glm_mat4(const aiMatrix4x4& mat)
 	return result;
 }
 
-void level::setup_vertex_buffers()
+void level::setup_buffers()
 {
 	std::cout << "setup buffers..." << std::endl;
 
-	glCreateBuffers(1, &vbo_);
-	glNamedBufferStorage(vbo_, static_cast<GLsizeiptr>(vertices.size() * sizeof(float)), vertices.data(), 0);
-	glCreateBuffers(1, &ebo_);
-	glNamedBufferStorage(ebo_, static_cast<GLsizeiptr>(indices_.size() * sizeof(GLuint)), indices_.data(), 0);
+	const buffer vbo(0);
+	vbo.reserve_memory(static_cast<GLsizeiptr>(vertices.size() * sizeof(float)), vertices.data());
+	const buffer ebo(0);
+	ebo.reserve_memory(static_cast<GLsizeiptr>(indices_.size() * sizeof(GLuint)), indices_.data());
 
 	glCreateVertexArrays(1, &vao_);
-	glVertexArrayElementBuffer(vao_, ebo_);
-	glVertexArrayVertexBuffer(vao_, 0, vbo_, 0, sizeof(glm::vec3) + sizeof(glm::vec3) + sizeof(glm::vec2));
+	glVertexArrayElementBuffer(vao_, ebo.get_id());
+	glVertexArrayVertexBuffer(vao_, 0, vbo.get_id(), 0, sizeof(glm::vec3) + sizeof(glm::vec3) + sizeof(glm::vec2));
 	// position
 	glEnableVertexArrayAttrib(vao_, 0);
 	glVertexArrayAttribFormat(vao_, 0, 3, GL_FLOAT, GL_FALSE, 0);
@@ -359,19 +358,9 @@ void level::setup_vertex_buffers()
 	glEnableVertexArrayAttrib(vao_, 2);
 	glVertexArrayAttribFormat(vao_, 2, 2, GL_FLOAT, GL_TRUE, sizeof(glm::vec3) + sizeof(glm::vec3));
 	glVertexArrayAttribBinding(vao_, 2, 0);
-}
 
-void level::setup_draw_buffers()
-{
-
-	glCreateBuffers(1, &ibo_);
-	glNamedBufferStorage(ibo_, static_cast<GLsizeiptr>(meshes_.size() * sizeof(draw_elements_indirect_command)), nullptr, GL_DYNAMIC_STORAGE_BIT);
-
-	glCreateBuffers(1, &matrix_ssbo_);
-	glNamedBufferStorage(matrix_ssbo_, static_cast<GLsizeiptr>(meshes_.size() * sizeof(glm::mat4)), nullptr, GL_DYNAMIC_STORAGE_BIT);
-
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, matrix_ssbo_);
-	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, ibo_);
+	ibo_.reserve_memory(static_cast<GLsizeiptr>(meshes_.size() * sizeof(draw_elements_indirect_command)), nullptr);
+	ssbo_.reserve_memory(4, static_cast<GLsizeiptr>(meshes_.size() * sizeof(glm::mat4)), nullptr);
 }
 
 void level::load_lights(const aiScene* scene) {
@@ -577,10 +566,9 @@ void level::draw_scene() {
 
 	for (size_t i = 0; i < render_queue_.size(); i++)
 	{
-		glNamedBufferSubData(matrix_ssbo_, 0, static_cast<GLsizeiptr>(sizeof(glm::mat4) * render_queue_[i].model_matrices.size()), render_queue_[i].model_matrices.data());
+		ssbo_.update(static_cast<GLsizeiptr>(sizeof(glm::mat4) * render_queue_[i].model_matrices.size()), render_queue_[i].model_matrices.data());
+		ibo_.update(static_cast<GLsizeiptr>(render_queue_[i].commands.size() * sizeof(draw_elements_indirect_command)), render_queue_[i].commands.data());
 
-		glNamedBufferSubData(ibo_, 0, static_cast<GLsizeiptr>(render_queue_[i].commands.size() * sizeof(draw_elements_indirect_command)), render_queue_[i].commands.data());
-		
 		const GLuint textures[] = {materials_[i].get_albedo(), materials_[i].get_normal_map(), materials_[i].get_metallic(), materials_[i].get_roughness(), materials_[i].get_ao_map() };
 
 		glBindTextures(0, 5, textures);
@@ -645,9 +633,8 @@ void level::draw_scene_shadow_map()
 
 	for (auto& item : render_queue_)
 	{
-		glNamedBufferSubData(matrix_ssbo_, 0, static_cast<GLsizeiptr>(sizeof(glm::mat4) * item.model_matrices.size()), item.model_matrices.data());
-		glNamedBufferSubData(ibo_, 0, static_cast<GLsizeiptr>(item.commands.size() * sizeof(draw_elements_indirect_command)),
-		                     item.commands.data());
+		ssbo_.update(static_cast<GLsizeiptr>(sizeof(glm::mat4) * item.model_matrices.size()), item.model_matrices.data());
+		ibo_.update(static_cast<GLsizeiptr>(item.commands.size() * sizeof(draw_elements_indirect_command)), item.commands.data());
 		glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, static_cast<GLvoid*>(nullptr), static_cast<GLsizei>(item
 			                            .commands.size()), 0);
 
@@ -757,10 +744,6 @@ glm::mat4 level::get_tight_scene_frustum() const
 void level::release() const
 {
 	glDeleteVertexArrays(1, &vao_);
-	glDeleteBuffers(1, &vbo_);
-	glDeleteBuffers(1, &ebo_);
-	glDeleteBuffers(1, &ibo_);
-	glDeleteBuffers(1, &matrix_ssbo_);
 
 	for (auto& material : materials_)
 	{

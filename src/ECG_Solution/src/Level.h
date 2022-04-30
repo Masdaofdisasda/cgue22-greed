@@ -6,6 +6,7 @@
 #include "Camera.h"
 #include "LevelStructs.h"
 #include "FrustumCuller.h"
+#include "buffer.h"
 #include <glm/gtx/matrix_decompose.hpp>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -28,10 +29,10 @@ private:
 
 	// buffers
 	GLuint vao_ = 0; 
-	GLuint vbo_ = 0; 
-	GLuint ebo_ = 0; 
-	GLuint ibo_ = 0; 
-	GLuint matrix_ssbo_ = 0; 
+	//GLuint vbo_ = 0; 
+	//GLuint ebo_ = 0; 
+	buffer ibo_{ GL_DRAW_INDIRECT_BUFFER };
+	buffer ssbo_{ GL_SHADER_STORAGE_BUFFER };
 
 	// mesh data - a loaded scene is entirely contained in these data structures
 	std::vector<sub_mesh> meshes_; 
@@ -110,12 +111,7 @@ private:
 	/**
 	 * \brief Creates and fills vertex and index buffers and sets up the "big" vao which contains all meshes
 	 */
-	void setup_vertex_buffers();
-
-	/**
-	 * \brief sets up indirect command and shader storage buffers for the multidrawindirect render call
-	 */
-	void setup_draw_buffers();
+	void setup_buffers();
 
 	/**
 	 * \brief loads all direction/point lights from the assimp scene, corrects position and rotation automatically

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Shader.h"
-#include "UBO.h"
+#include "buffer.h"
 #include "Level.h"
 
 class level;
@@ -14,29 +14,23 @@ private:
 	// Reference ID of the Shader Program
 	GLuint program_id_ = 0;
 
-	// Location of light source buffer blocks
-	GLuint dirLoc=0, posLoc=0;
-
 	
 	void release()
 	{
 		glDeleteProgram(program_id_);
 		program_id_ = 0;
-		dirLoc = 0, posLoc = 0;
 	}
-
-	void get_uniform_locations();
 
 public:
 
 	/// @brief build a shader program from shaders and check for compile errors
 	/// all buildFrom() functions do the same thing but with more shaders
 	/// @param a is a valid shader
-	void build_from(Shader& a);
-	void build_from(Shader& a, Shader& b);
-	void build_from(Shader& a, Shader& b, Shader& c);
-	void build_from(Shader& a, Shader& b, Shader& c, Shader& d);
-	void build_from(Shader& a, Shader& b, Shader& c, Shader& d, Shader& e);
+	void build_from(Shader& a) const;
+	void build_from(Shader& a, Shader& b) const;
+	void build_from(Shader& a, Shader& b, Shader& c) const;
+	void build_from(Shader& a, Shader& b, Shader& c, Shader& d) const;
+	void build_from(Shader& a, Shader& b, Shader& c, Shader& d, Shader& e) const;
 
 	/// @brief creates an OpenGL handle, program needs to call some of the buildfrom()
 	/// functions before Use(), otherwise the app may crash, this constructor makes
@@ -62,8 +56,6 @@ public:
 	program(program&& other)noexcept : program_id_(other.program_id_)
 	{
 		other.program_id_ = 0; //Use the "null" ID for the old object.
-		other.dirLoc = 0;
-		other.posLoc = 0;
 	}
 
 	program& operator=(program&& other)
@@ -74,13 +66,11 @@ public:
 			release();
 			//obj_ is now 0.
 			std::swap(program_id_, other.program_id_);
-			std::swap(dirLoc, other.dirLoc);
-			std::swap(posLoc, other.posLoc);
 		}
 	}
 
 	// various unifrom set methods
-	void bind_light_buffers(UBO* directional, UBO* positional);
+	void bind_light_buffers(buffer* directional, buffer* positional);
 	void setu_int(const std::string& name, int value) const;
 	void set_int(const std::string& name, int value) const;
 	void set_float(const std::string& name, float value) const;
