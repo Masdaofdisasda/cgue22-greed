@@ -19,19 +19,19 @@ class Program;
 /// loads and manages geometry, textures and model matrices from some fbx file
 class Level {
 private:
-	static const auto vtxStride = sizeof(Vertex);
+	static constexpr auto vtx_stride = sizeof(Vertex);
 
-	uint32_t globalVertexOffset = 0;
-	uint32_t globalIndexOffset = 0;
+	uint32_t global_vertex_offset_ = 0;
+	uint32_t global_index_offset_ = 0;
 
-	GLuint VAO = 0; // vertex layouts
-	GLuint VBO = 0; // vertices
-	GLuint EBO = 0; // elements
-	GLuint IBO = 0; // indirect commands
-	GLuint matrixSSBO = 0; // tranformations
+	GLuint vao_ = 0; // vertex layouts
+	GLuint vbo_ = 0; // vertices
+	GLuint ebo_ = 0; // elements
+	GLuint ibo_ = 0; // indirect commands
+	GLuint matrix_ssbo_ = 0; // transformations
 
 	// mesh data - a loaded scene is entirely contained in these data structures
-	std::vector <subMesh> meshes;			// contains mesh offsets for glDraw 
+	std::vector <subMesh> meshes_;			// contains mesh offsets for glDraw 
 	std::vector<float> vertices;			// contains a stream of vertices in (px,py,pz,ny,ny,nz,u,v)-form
 	std::vector <unsigned int> indices;			// contains the indices that make triangles
 	std::vector <Material> materials;		// contains all needed textures
@@ -68,7 +68,7 @@ private:
 	void loadLights(const aiScene* scene);
 	glm::mat4 toGlmMat4(const aiMatrix4x4& mat);
 	void buildRenderQueue(const Hierarchy* node, glm::mat4 globalTransform);
-	uint32_t decideLOD(uint32_t lods, glm::mat4 M);
+	uint32_t decideLOD(uint32_t lods, BoundingBox aabb) const;
 	void DrawAABBs(Hierarchy node);
 	void transformBoundingBoxes(Hierarchy* node, glm::mat4 globalTransform);
 	void collectRigidPhysicMeshes(Hierarchy* node, glm::mat4 globalTransform);

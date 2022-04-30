@@ -55,18 +55,18 @@ Level::Level(const char* scenePath, std::shared_ptr<GlobalState> state, PerFrame
 
 void Level::loadMeshes(const aiScene* scene)
 {
-	globalVertexOffset = 0;
-	globalIndexOffset = 0;
+	global_vertex_offset_ = 0;
+	global_index_offset_ = 0;
 
-	meshes.reserve(scene->mNumMeshes);
+	meshes_.reserve(scene->mNumMeshes);
 
 	std::cout << "loading meshes..." << std::endl;
 	for (size_t i = 0; i < scene->mNumMeshes; i++)
 	{
 		const aiMesh* mesh = scene->mMeshes[i];
-		meshes.push_back(extractMesh(mesh));
+		meshes_.push_back(extractMesh(mesh));
 	}
-	ModelsLoaded = meshes.size();
+	ModelsLoaded = meshes_.size();
 }
 
 /// @brief extracts position, normal and uvs with the correlating indices from an assimp mesh
@@ -75,10 +75,10 @@ void Level::loadMeshes(const aiScene* scene)
 subMesh Level::extractMesh(const aiMesh* mesh)
 {
 
-	printf("Mesh [%s] %u\n", mesh->mName.C_Str(), meshes.size() + 1);
+	printf("Mesh [%s] %u\n", mesh->mName.C_Str(), meshes_.size() + 1);
 	subMesh m;
 	m.name = mesh->mName.C_Str();
-	m.vertexOffset = globalVertexOffset;
+	m.vertexOffset = global_vertex_offset_;
 	m.materialIndex = mesh->mMaterialIndex;
 			
 	std::vector<Vertex> rawVertices;
@@ -113,18 +113,18 @@ subMesh Level::extractMesh(const aiMesh* mesh)
 
 	// re-index geometry
 	std::vector<unsigned int> remap(rawIndices.size());
-	size_t vertex_count = meshopt_generateVertexRemap(remap.data(), rawIndices.data(), rawIndices.size(), rawVertices.data(), rawIndices.size(), vtxStride);
+	size_t vertex_count = meshopt_generateVertexRemap(remap.data(), rawIndices.data(), rawIndices.size(), rawVertices.data(), rawIndices.size(), vtx_stride);
 
 	std::vector <unsigned int> opt_indices(rawIndices.size());
 	std::vector<Vertex> opt_vertices(vertex_count);
 
 	meshopt_remapIndexBuffer(opt_indices.data(), rawIndices.data(), rawIndices.size(), remap.data());
-	meshopt_remapVertexBuffer(opt_vertices.data(), rawVertices.data(), rawVertices.size(), vtxStride, remap.data());
+	meshopt_remapVertexBuffer(opt_vertices.data(), rawVertices.data(), rawVertices.size(), vtx_stride, remap.data());
 
 	// further optimize geometry
 	meshopt_optimizeVertexCache(opt_indices.data(), opt_indices.data(), rawIndices.size(), vertex_count);
-	meshopt_optimizeOverdraw(opt_indices.data(), opt_indices.data(), rawIndices.size(), &opt_vertices[0].px, vertex_count, vtxStride, 1.05f);
-	meshopt_optimizeVertexFetch(opt_vertices.data(), opt_indices.data(), rawIndices.size(), opt_vertices.data(), vertex_count, vtxStride);
+	meshopt_optimizeOverdraw(opt_indices.data(), opt_indices.data(), rawIndices.size(), &opt_vertices[0].px, vertex_count, vtx_stride, 1.05f);
+	meshopt_optimizeVertexFetch(opt_vertices.data(), opt_indices.data(), rawIndices.size(), opt_vertices.data(), vertex_count, vtx_stride);
 	
 
 	m.vertexCount = opt_vertices.size();
@@ -147,19 +147,18 @@ subMesh Level::extractMesh(const aiMesh* mesh)
 
 
 	vertices.insert(vertices.end(), resultVertices.begin(), resultVertices.end());
-	//indices.insert(indices.end(), LODs[0].begin(), LODs[0].end());
 
 	auto indexSum = 0;
 	for (size_t i = 0; i < LODs.size(); i++)
 	{
 		m.indexCount.push_back(LODs[i].size());
-		m.indexOffset.push_back(globalIndexOffset + indexSum);
+		m.indexOffset.push_back(global_index_offset_ + indexSum);
 		indexSum += LODs[i].size();
 		indices.insert(indices.end(), LODs[i].begin(), LODs[i].end());
 	}
 
-	globalVertexOffset += m.vertexCount;
-	globalIndexOffset += indexSum;
+	global_vertex_offset_ += m.vertexCount;
+	global_index_offset_ += indexSum;
 	return m;
 }
 
@@ -324,7 +323,7 @@ void Level::traverseTree(aiNode* n, Hierarchy* parent, Hierarchy* node)
 	for (unsigned int i = 0; i < n->mNumMeshes; i++)
 	{
 		node->modelIndices.push_back(n->mMeshes[i]);
-		node->modelBounds = computeBoundsOfMesh(meshes[n->mMeshes[i]]);
+		node->modelBounds = computeBoundsOfMesh(meshes_[n->mMeshes[i]]);
 	}
 
 	// set translation, rotation and scale of this node
@@ -363,40 +362,40 @@ void Level::setupVertexBuffers()
 {
 	std::cout << "setup buffers..." << std::endl;
 
-	glCreateBuffers(1, &VBO);
-	glNamedBufferStorage(VBO, vertices.size() * sizeof(float), vertices.data(), 0);
-	glCreateBuffers(1, &EBO);
-	glNamedBufferStorage(EBO, indices.size() * sizeof(GLuint), indices.data(), 0);
+	glCreateBuffers(1, &vbo_);
+	glNamedBufferStorage(vbo_, vertices.size() * sizeof(float), vertices.data(), 0);
+	glCreateBuffers(1, &ebo_);
+	glNamedBufferStorage(ebo_, indices.size() * sizeof(GLuint), indices.data(), 0);
 
-	glCreateVertexArrays(1, &VAO);
-	glVertexArrayElementBuffer(VAO, EBO);
-	glVertexArrayVertexBuffer(VAO, 0, VBO, 0, sizeof(glm::vec3) + sizeof(glm::vec3) + sizeof(glm::vec2));
+	glCreateVertexArrays(1, &vao_);
+	glVertexArrayElementBuffer(vao_, ebo_);
+	glVertexArrayVertexBuffer(vao_, 0, vbo_, 0, sizeof(glm::vec3) + sizeof(glm::vec3) + sizeof(glm::vec2));
 	// position
-	glEnableVertexArrayAttrib(VAO, 0);
-	glVertexArrayAttribFormat(VAO, 0, 3, GL_FLOAT, GL_FALSE, 0);
-	glVertexArrayAttribBinding(VAO, 0, 0);
+	glEnableVertexArrayAttrib(vao_, 0);
+	glVertexArrayAttribFormat(vao_, 0, 3, GL_FLOAT, GL_FALSE, 0);
+	glVertexArrayAttribBinding(vao_, 0, 0);
 	// normal
-	glEnableVertexArrayAttrib(VAO, 1);
-	glVertexArrayAttribFormat(VAO, 1, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3));
-	glVertexArrayAttribBinding(VAO, 1, 0);
+	glEnableVertexArrayAttrib(vao_, 1);
+	glVertexArrayAttribFormat(vao_, 1, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3));
+	glVertexArrayAttribBinding(vao_, 1, 0);
 	// uv
-	glEnableVertexArrayAttrib(VAO, 2);
-	glVertexArrayAttribFormat(VAO, 2, 2, GL_FLOAT, GL_TRUE, sizeof(glm::vec3) + sizeof(glm::vec3));
-	glVertexArrayAttribBinding(VAO, 2, 0);
+	glEnableVertexArrayAttrib(vao_, 2);
+	glVertexArrayAttribFormat(vao_, 2, 2, GL_FLOAT, GL_TRUE, sizeof(glm::vec3) + sizeof(glm::vec3));
+	glVertexArrayAttribBinding(vao_, 2, 0);
 }
 
 /// @brief sets up indirect command and shader storage buffers for efficient und reduced render calls
 void Level::setupDrawBuffers()
 {
 
-	glCreateBuffers(1, &IBO);
-	glNamedBufferStorage(IBO, meshes.size() * sizeof(DrawElementsIndirectCommand), nullptr, GL_DYNAMIC_STORAGE_BIT);
+	glCreateBuffers(1, &ibo_);
+	glNamedBufferStorage(ibo_, meshes_.size() * sizeof(DrawElementsIndirectCommand), nullptr, GL_DYNAMIC_STORAGE_BIT);
 
-	glCreateBuffers(1, &matrixSSBO);
-	glNamedBufferStorage(matrixSSBO, meshes.size() * sizeof(glm::mat4), nullptr, GL_DYNAMIC_STORAGE_BIT);
+	glCreateBuffers(1, &matrix_ssbo_);
+	glNamedBufferStorage(matrix_ssbo_, meshes_.size() * sizeof(glm::mat4), nullptr, GL_DYNAMIC_STORAGE_BIT);
 
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, matrixSSBO);
-	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, IBO);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, matrix_ssbo_);
+	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, ibo_);
 }
 
 /// @brief loads all directional and positional lights in the assimp scene, corrects position for positional lights by traversing the tree
@@ -519,8 +518,8 @@ void Level::collectRigidPhysicMeshes(Hierarchy* node, glm::mat4 globalTransform)
 	for (uint32_t i = 0; i < node->modelIndices.size(); i++)
 	{
 		uint32_t modelindex = node->modelIndices[i];
-		uint32_t vtxOffset = meshes[modelindex].vertexOffset;
-		uint32_t vtxCount = meshes[modelindex].vertexCount;
+		uint32_t vtxOffset = meshes_[modelindex].vertexOffset;
+		uint32_t vtxCount = meshes_[modelindex].vertexCount;
 		PhysicsMesh phyMesh;
 
 		Transformation trs;
@@ -555,8 +554,8 @@ void Level::collectDynamicPhysicMeshes(Hierarchy* node, glm::mat4 globalTransfor
 	for (uint32_t i = 0; i < node->modelIndices.size(); i++)
 	{
 		uint32_t modelindex = node->modelIndices[i];
-		uint32_t vtxOffset = meshes[modelindex].vertexOffset;
-		uint32_t vtxCount = meshes[modelindex].vertexCount;
+		uint32_t vtxOffset = meshes_[modelindex].vertexOffset;
+		uint32_t vtxCount = meshes_[modelindex].vertexCount;
 		PhysicsMesh phyMesh;
 
 		Transformation trs;
@@ -601,13 +600,13 @@ void Level::DrawScene() {
 	buildRenderQueue(&sceneGraph, glm::mat4(1));
 
 	// draw mesh
-	glBindVertexArray(VAO);
+	glBindVertexArray(vao_);
 
 	for (size_t i = 0; i < renderQueue.size(); i++)
 	{
-		glNamedBufferSubData(matrixSSBO, 0, sizeof(glm::mat4) * renderQueue[i].modelMatrices.size(), renderQueue[i].modelMatrices.data());
+		glNamedBufferSubData(matrix_ssbo_, 0, sizeof(glm::mat4) * renderQueue[i].modelMatrices.size(), renderQueue[i].modelMatrices.data());
 
-		glNamedBufferSubData(IBO, 0, renderQueue[i].commands.size() * sizeof(DrawElementsIndirectCommand), renderQueue[i].commands.data());
+		glNamedBufferSubData(ibo_, 0, renderQueue[i].commands.size() * sizeof(DrawElementsIndirectCommand), renderQueue[i].commands.data());
 		
 		const GLuint textures[] = {materials[i].getAlbedo(), materials[i].getNormalmap(), materials[i].getMetallic(), materials[i].getRoughness(), materials[i].getAOmap() };
 
@@ -669,13 +668,13 @@ void Level::DrawSceneFromLightSource()
 	buildRenderQueue(&sceneGraph, glm::mat4(1));
 
 	// draw mesh
-	glBindVertexArray(VAO);
+	glBindVertexArray(vao_);
 
 	for (size_t i = 0; i < renderQueue.size(); i++)
 	{
-		glNamedBufferSubData(matrixSSBO, 0, sizeof(glm::mat4) * renderQueue[i].modelMatrices.size(), renderQueue[i].modelMatrices.data());
+		glNamedBufferSubData(matrix_ssbo_, 0, sizeof(glm::mat4) * renderQueue[i].modelMatrices.size(), renderQueue[i].modelMatrices.data());
 
-		glNamedBufferSubData(IBO, 0, renderQueue[i].commands.size() * sizeof(DrawElementsIndirectCommand), renderQueue[i].commands.data());
+		glNamedBufferSubData(ibo_, 0, renderQueue[i].commands.size() * sizeof(DrawElementsIndirectCommand), renderQueue[i].commands.data());
 
 		glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, (GLvoid*)0, (GLsizei)renderQueue[i].commands.size(), 0);
 	}
@@ -700,14 +699,14 @@ void Level::buildRenderQueue(const Hierarchy* node, glm::mat4 globalTransform) {
 	for (size_t i = 0; i < node->modelIndices.size(); i++)
 	{
 		uint32_t meshIndex = node->modelIndices[i];
-		uint32_t materialIndex = meshes[meshIndex].materialIndex;
+		uint32_t materialIndex = meshes_[meshIndex].materialIndex;
 
-		uint32_t LOD = decideLOD(meshes[meshIndex].indexCount.size(), nodeMatrix);
+		uint32_t LOD = decideLOD(meshes_[meshIndex].indexCount.size(), node->nodeBounds);
 
-		uint32_t count = meshes[meshIndex].indexCount[LOD];	// number of indices that get drawn, eg for single quad = 6
+		uint32_t count = meshes_[meshIndex].indexCount[LOD];	// number of indices that get drawn, eg for single quad = 6
 		uint32_t instanceCount = 1;	// number of instanced that get drawn, 0 means none, this programm doesn't use instanced rendering
-		uint32_t firstIndex = meshes[meshIndex].indexOffset[LOD]; // index offset, eg for first mesh = 0, sec mesh = firstIndexOffs + 0, etc
-		uint32_t baseVertex = meshes[meshIndex].vertexOffset; // offset added before chosing vertices
+		uint32_t firstIndex = meshes_[meshIndex].indexOffset[LOD]; // index offset, eg for first mesh = 0, sec mesh = firstIndexOffs + 0, etc
+		uint32_t baseVertex = meshes_[meshIndex].vertexOffset; // offset added before chosing vertices
 		uint32_t baseInstance = renderQueue[materialIndex].modelMatrices.size(); // model matrix id, could be used for bindless textures
 
 		DrawElementsIndirectCommand cmd= DrawElementsIndirectCommand{
@@ -741,14 +740,27 @@ void Level::resetQueue()
 	ModelsVisible = 0;
 }
 
-uint32_t Level::decideLOD(uint32_t lods, glm::mat4 M)
-{	//TODO
-	float maxDistance = 150;
-	glm::vec4 model(1);
-	model = M * model;
-	glm::vec4 dist = model - perframeData->viewPos;
-	float d = glm::length(dist);
-	//return (d / maxDistance) * lods;
+/**
+ * \brief selects a LOD based on the projected area of an estimated bounding sphere of a mesh
+ * formula from : Real-Time Rendering, p862
+ * \param lods number of lod meshes to select from
+ * \param aabb the AABB bounds of the mesh
+ * \return a number between 0 and lods
+ */
+uint32_t Level::decideLOD(uint32_t lods, const BoundingBox aabb) const
+{
+	const auto c = glm::vec4((aabb.max_ + aabb.min_)/2, 1.0f);
+	const auto r = glm::length(aabb.max_ - aabb.min_)/2;
+	const auto n = perframeData->ssao1.z;
+	const auto v = perframeData->viewPos;
+	glm::mat4 vp = glm::transpose(perframeData->ViewProj);
+	const auto d = vp[3];
+	auto m = perframeData->ViewProj;
+	const auto p = (n * r) / glm::dot(d ,(v - c));
+
+	auto area = glm::pi<float>() * p * p * static_cast<float>(state->width) * static_cast<float>(state->height);
+	auto AreaTotal = static_cast<float>(state->width) * static_cast<float>(state->height);
+
 	return 0;
 }
 
@@ -774,8 +786,6 @@ glm::mat4 Level::getTightSceneFrustum()
 	glm::quat r = glm::rotation(Vdir, Ldir);
 	glm::vec3 min = glm::rotate(r, sceneGraph.nodeBounds.min_);
 	glm::vec3 max = glm::rotate(r, sceneGraph.nodeBounds.max_);
-	//glm::vec3 min = sceneGraph.nodeBounds.min_;
-	//glm::vec3 max = sceneGraph.nodeBounds.max_;
 
 	return glm::ortho(min.x, max.x, min.y, max.y, -max.z, -min.z); 
 }
@@ -783,11 +793,11 @@ glm::mat4 Level::getTightSceneFrustum()
 /// @brief cleans up all buffers and textures
 void Level::Release()
 {
-	glDeleteVertexArrays(1, &VAO);
-	glDeleteBuffers(1, &VBO);
-	glDeleteBuffers(1, &EBO);
-	glDeleteBuffers(1, &IBO);
-	glDeleteBuffers(1, &matrixSSBO);
+	glDeleteVertexArrays(1, &vao_);
+	glDeleteBuffers(1, &vbo_);
+	glDeleteBuffers(1, &ebo_);
+	glDeleteBuffers(1, &ibo_);
+	glDeleteBuffers(1, &matrix_ssbo_);
 
 	for (size_t i = 0; i < materials.size(); i++)
 	{
