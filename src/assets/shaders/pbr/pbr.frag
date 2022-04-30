@@ -19,7 +19,6 @@ struct DirectionalLight
 layout (std140, binding = 1) uniform dLightUBlock {
  DirectionalLight dLights [ dMAXLIGHTS ]; // xMAXLIGHTS gets replaced at runtime
 };
-uniform uint dLightCount ;
 
 struct PositionalLight
 {
@@ -30,7 +29,6 @@ struct PositionalLight
 layout (std140, binding = 2) uniform pLightUBlock {
  PositionalLight pLights [ pMAXLIGHTS ];
 };
-uniform uint pLightCount ;
 
 layout(std140, binding = 0) uniform PerFrameData
 {
@@ -250,11 +248,11 @@ vec3 calculateLight() {
     vec3 Lo = vec3(0.0);
 
 	// add the directional light's contribution to the output
-	for(int i = 0; i < dLightCount; i++)
+	for(int i = 0; i < dLights.length; i++)
 	Lo += Idirectional(dLights[i], N, fPosition, V, F0);
 
 	// do the same for all point lights
-	for(int i = 0; i < pLightCount; i++)
+	for(int i = 0; i < pLights.length(); i++)
   	Lo += Ipoint(pLights[i], N, fPosition, V, F0);
 
     // ambient lighting (we now use IBL as the ambient term)

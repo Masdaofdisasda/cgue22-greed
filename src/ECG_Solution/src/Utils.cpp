@@ -1,6 +1,6 @@
 #include "Utils.h"
 
-glm::vec3 translationFromTransform(glm::mat4 transform) {
+glm::vec3 translation_from_transform(const glm::mat4 transform) {
 	glm::vec3 scale;
 	glm::quat rotation;
 	glm::vec3 translation;
@@ -10,7 +10,7 @@ glm::vec3 translationFromTransform(glm::mat4 transform) {
 	return translation;
 }
 
-glm::quat rotationFromTransform(glm::mat4 transform) {
+glm::quat rotation_from_transform(const glm::mat4 transform) {
 	glm::vec3 scale;
 	glm::quat rotation;
 	glm::vec3 translation;
@@ -20,7 +20,7 @@ glm::quat rotationFromTransform(glm::mat4 transform) {
 	return rotation;
 }
 
-glm::vec3 scaleFromTransform(glm::mat4 transform) {
+glm::vec3 scale_from_transform(const glm::mat4 transform) {
 	glm::vec3 scale;
 	glm::quat rotation;
 	glm::vec3 translation;
@@ -54,9 +54,9 @@ glm::mat4 glm_look_at(const glm::vec3 pos, const glm::vec3 target, const glm::ve
 	return rotation * translation;
 }
 
-GlobalState load_settings()
+global_state load_settings()
 {
-	GlobalState state;
+	global_state state;
 	std::cout << "reading setting from settings.ini..." << std::endl;
 	INIReader reader("../../assets/settings.ini");
 
@@ -64,24 +64,24 @@ GlobalState load_settings()
 	state.width = reader.GetInteger("window", "width", 800);
 	state.height = reader.GetInteger("window", "height", 800);
 	state.refresh_rate = reader.GetInteger("window", "refresh_rate", 60);
-	state.fullscreen_ = reader.GetBoolean("window", "fullscreen", false);
+	state.fullscreen = reader.GetBoolean("window", "fullscreen", false);
 	state.window_title = "Greed";
 	state.fov = reader.GetReal("camera", "fov", 60.0f);
-	state.Znear = 0.1f;
-	state.Zfar = 1000.0f;
+	state.znear = 0.1f;
+	state.zfar = 1000.0f;
 
-	state.bloom_ = reader.GetBoolean("image", "bloom", true);
-	state.exposure_ = reader.GetReal("image", "exposure", 0.9f);
-	state.maxWhite_ = reader.GetReal("image", "maxWhite", 1.07f);
-	state.bloomStrength_ = reader.GetReal("image", "bloomStrength", 0.2f);
-	state.adaptationSpeed_ = reader.GetReal("image", "lightAdaption", 0.1f);
-	state.ssao_ = reader.GetBoolean("image", "ssao", true);
-	state.scale_ = reader.GetReal("image", "scale", 1.0f);
-	state.bias_ = reader.GetReal("image", "bias", 0.2f);
+	state.bloom = reader.GetBoolean("image", "bloom", true);
+	state.exposure = reader.GetReal("image", "exposure", 0.9f);
+	state.max_white = reader.GetReal("image", "maxWhite", 1.07f);
+	state.bloom_strength = reader.GetReal("image", "bloomStrength", 0.2f);
+	state.adaptation_speed = reader.GetReal("image", "lightAdaption", 0.1f);
+	state.ssao = reader.GetBoolean("image", "ssao", true);
+	state.scale = reader.GetReal("image", "scale", 1.0f);
+	state.bias = reader.GetReal("image", "bias", 0.2f);
 	state.radius = reader.GetReal("image", "radius", 0.2f);
-	state.attScale = reader.GetReal("image", "attScale", 1.0f);
-	state.distScale = reader.GetReal("image", "distScale", 0.5f);
-	state.shadowRes_ = reader.GetInteger("image", "shadowRes", 4);
+	state.att_scale = reader.GetReal("image", "attScale", 1.0f);
+	state.dist_scale = reader.GetReal("image", "distScale", 0.5f);
+	state.shadow_res = reader.GetInteger("image", "shadowRes", 4);
 
 	return state;
 }

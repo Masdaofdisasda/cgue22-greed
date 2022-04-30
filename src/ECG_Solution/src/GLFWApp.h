@@ -6,7 +6,7 @@
 class glfw_app
 {
 public:
-	explicit glfw_app(const std::shared_ptr<GlobalState>& state);
+	explicit glfw_app(const std::shared_ptr<global_state>& state);
 	~glfw_app();
 	GLFWwindow* get_window() const { return window_; }
 	float get_delta_seconds() const { return delta_seconds_; }
@@ -27,7 +27,7 @@ public:
 	void update_window() const
 	{
 		
-		if (state_->fullscreen_)
+		if (state_->fullscreen)
 		{
 			const GLFWvidmode* info = glfwGetVideoMode(glfwGetPrimaryMonitor());
 			state_->width = info->width;
@@ -43,13 +43,13 @@ public:
 	}
 
 private:
-	std::shared_ptr<GlobalState> state_;
+	std::shared_ptr<global_state> state_;
 	GLFWwindow* window_ = nullptr;
 	double time_stamp_ = glfwGetTime();
 	float delta_seconds_ = 0.0f;
 };
 
-inline glfw_app::glfw_app(const std::shared_ptr<GlobalState>& state)
+inline glfw_app::glfw_app(const std::shared_ptr<global_state>& state)
 {
 	glfwSetErrorCallback(
 		[](int error, const char* description)

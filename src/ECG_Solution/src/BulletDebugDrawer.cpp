@@ -7,7 +7,7 @@ BulletDebugDrawer::BulletDebugDrawer(){
 	Shader vertexShader("../../assets/shaders/Testing/bulletDebug.vert");
 	Shader fragmentShader("../../assets/shaders/Testing/bulletDebug.frag");
 	program;
-	program.buildFrom(vertexShader, fragmentShader);
+	program.build_from(vertexShader, fragmentShader);
 	glGenBuffers(1, &vbo_ID);
 	glGenVertexArrays(1, &vao_ID);
 }
@@ -28,7 +28,7 @@ void BulletDebugDrawer::draw() {
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	// draw
-	program.Use();
+	program.use();
 	glDrawArrays(GL_LINES, 0, vertices.size());
 
 	// cleanup

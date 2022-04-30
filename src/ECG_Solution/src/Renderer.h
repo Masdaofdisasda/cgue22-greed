@@ -26,8 +26,8 @@ public:
 	void draw(level* level);
 	void swap_luminance();
 
-	std::shared_ptr<GlobalState> static get_state();
-	static std::shared_ptr<GlobalState> state;
+	std::shared_ptr<global_state> static get_state();
+	static std::shared_ptr<global_state> state;
 
 private:
 	// Render Settings
@@ -91,7 +91,7 @@ private:
 	GLuint pattern_ = 0;
 
 	// Framebuffers for light/shadow
-	framebuffer depth_map_fb_ = framebuffer(1024 * state->shadowRes_, 1024 * state->shadowRes_, 0, GL_DEPTH_COMPONENT24);
+	framebuffer depth_map_fb_ = framebuffer(1024 * state->shadow_res, 1024 * state->shadow_res, 0, GL_DEPTH_COMPONENT24);
 	framebuffer blur0_ = framebuffer(state->width / 2, state->height / 2, GL_RGBA8, 0);
 	framebuffer blur1_ = framebuffer(state->width / 2, state->height / 2, GL_RGBA8, 0);
 	framebuffer depth_half_res_ = framebuffer(state->width / 2, state->height / 2, 0, GL_DEPTH_COMPONENT24);

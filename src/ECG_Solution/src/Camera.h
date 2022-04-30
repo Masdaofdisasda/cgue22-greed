@@ -69,7 +69,7 @@ class camera_positioner_first_person final : public camera_positioner_interface
 			, camera_orientation_(glm_look_at(pos, target, up))
 			, up_(up)
 		{}
-		void set_movement_state(KeyboardInputState input);
+		void set_movement_state(keyboard_input_state input);
 		void update(double delta_seconds, const glm::vec2& mouse_pos, bool mouse_pressed) override;
 		virtual glm::mat4 get_view_matrix() const override
 		{

@@ -4,14 +4,14 @@ void lava_system::init(glm::ivec3 lights)
 {
     Shader render_vert("../../assets/shaders/Lava/lavaParticles.vert");
     Shader render_frag("../../assets/shaders/Lava/lavaParticles.frag");
-    sim_render_.buildFrom(render_vert, render_frag);
+    sim_render_.build_from(render_vert, render_frag);
 
     Shader update("../../assets/shaders/Lava/lavaParticles.comp");
-    sim_update_.buildFrom(update);
+    sim_update_.build_from(update);
 
     Shader lava_floor_vert("../../assets/shaders/Lava/lavaFloor.vert");
     Shader lava_floor_frag("../../assets/shaders/Lava/lavaPbr.frag", lights);
-    lava_floor_.buildFrom(lava_floor_vert, lava_floor_frag);
+    lava_floor_.build_from(lava_floor_vert, lava_floor_frag);
 
     setup_buffers();
     load_lava();
@@ -169,8 +169,8 @@ void lava_system::load_lava()
 void lava_system::simulation_step()
 {
     // Execute the compute shader
-    sim_update_.Use();
-    sim_update_.setVec3("BlackHolePos1", bh1_);
+    sim_update_.use();
+    sim_update_.set_vec3("BlackHolePos1", bh1_);
     glDispatchCompute(total_particles_ / 100, 1, 1);
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }
@@ -178,14 +178,14 @@ void lava_system::simulation_step()
 void lava_system::draw()
 {
 
-    lava_floor_.Use();
+    lava_floor_.use();
     glBindVertexArray(lava_vao_);
     const GLuint textures[] = { lava_.get_albedo(), lava_.get_normal_map(),lava_.get_metallic(), lava_.get_roughness(), lava_.get_ao_map() };
     glBindTextures(0, 5, textures);
     glDrawElements(GL_TRIANGLES, count_, GL_UNSIGNED_INT, 0);
 
     // Draw the particles
-    sim_render_.Use();
+    sim_render_.use();
     glPointSize(10.0f);
     glBindVertexArray(particles_vao_);
     glDrawArrays(GL_POINTS, 0, static_cast<GLsizeiptr>(total_particles_));

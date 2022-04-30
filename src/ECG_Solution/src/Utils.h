@@ -15,64 +15,64 @@
 #include <glm\glm.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
 
-struct GlobalState
+struct global_state
 {
 	int width = 800;
 	int height = 800;
 	int refresh_rate = 60;
-	bool fullscreen_ = false;
+	bool fullscreen = false;
 	std::string window_title = "Greed";
 	float fov = 60;
-	float Znear = 0.1;
-	float Zfar = 1000.0;
+	float znear = 0.1;
+	float zfar = 1000.0;
 
-	bool bloom_ = true;
-	bool cull_ = true;
-	bool freezeCull_ = false;
-	bool ssao_ = true;
-	bool cullDebug_ = false;
-	bool debugDrawPhysics_ = false;
-	bool usingDebugCamera_ = false;
+	bool bloom = true;
+	bool cull = true;
+	bool freeze_cull = false;
+	bool ssao = true;
+	bool cull_debug = false;
+	bool debug_draw_physics = false;
+	bool using_debug_camera = false;
 	//bloom
-	float exposure_ = 0.9f;
-	float maxWhite_ = 1.07f;
-	float bloomStrength_ = 0.2f;
-	float adaptationSpeed_ = 0.1f;
+	float exposure = 0.9f;
+	float max_white = 1.07f;
+	float bloom_strength = 0.2f;
+	float adaptation_speed = 0.1f;
 	//ssao
-	float scale_ = 1.0f;
-	float bias_ = 0.2f;
+	float scale = 1.0f;
+	float bias = 0.2f;
 	float radius = 0.2f;
-	float attScale = 1.0f;
-	float distScale = 0.5f;
+	float att_scale = 1.0f;
+	float dist_scale = 0.5f;
 	//lightFX
-	int shadowRes_ = 4;
+	int shadow_res = 4;
 	//game logic
-	bool won_ = false;
-	bool lost_ = false;
+	bool won = false;
+	bool lost = false;
 	//ui
-	bool displayCollectItemHint_ = false;
-	float totalCash = 0;
-	int collectedItems = 0;
+	bool display_collect_item_hint = false;
+	float total_cash = 0;
+	int collected_items = 0;
 };
 
-struct KeyboardInputState {
-	bool pressingW = false;
-	bool pressingS = false;
-	bool pressingA = false;
-	bool pressingD = false;
-	bool pressing1 = false;
-	bool pressing2 = false;
-	bool pressingShift = false;
-	bool pressingSpace = false;
-	bool pressingE = false;
-	bool pressingQ = false;
+struct keyboard_input_state {
+	bool pressing_w = false;
+	bool pressing_s = false;
+	bool pressing_a = false;
+	bool pressing_d = false;
+	bool pressing_1 = false;
+	bool pressing_2 = false;
+	bool pressing_shift = false;
+	bool pressing_space = false;
+	bool pressing_e = false;
+	bool pressing_q = false;
 };
 
-struct MouseState
+struct mouse_state
 {
 	glm::vec2 pos = glm::vec2(0.0f);
-	bool pressedLeft = false;
-	bool pressedRight = false;
+	bool pressed_left = false;
+	bool pressed_right = false;
 };
 
 /*files using this structure:
@@ -91,15 +91,15 @@ VolumetricLight.frag
 */
 struct PerFrameData
 {
-	glm::vec4 viewPos;		// view/eye vector
-	glm::mat4 ViewProj;		// view projection matrix
-	glm::mat4 lavaLevel;	// lava translation matrix
-	glm::mat4 lightViewProj;// light matrix for shadowmapping
-	glm::mat4 viewInv;		// todo
-	glm::mat4 projInv;		// todo
+	glm::vec4 view_pos;		// view/eye vector
+	glm::mat4 view_proj;		// view projection matrix
+	glm::mat4 lava_level;	// lava translation matrix
+	glm::mat4 light_view_proj;// light matrix for shadowmapping
+	glm::mat4 view_inv;		// todo
+	glm::mat4 proj_inv;		// todo
 	glm::vec4 bloom;		// x = exposure, y = maxWhite, z = bloomStrength, w = adaptionSpeed
-	glm::vec4 deltaTime;	// x = deltaSeconds, y = summedTime, z = ?, w = ?
-	glm::vec4 normalMap;	// x = normalMapToogle, y = ?, z = ?, w = ?
+	glm::vec4 delta_time;	// x = deltaSeconds, y = summedTime, z = ?, w = ?
+	glm::vec4 normal_map;	// x = normalMapToogle, y = ?, z = ?, w = ?
 	glm::vec4 ssao1;		// x = scale,, y = bias, z = znear, w = zfar
 	glm::vec4 ssao2;		// x = radius, y = attscale, z = distscale, w = ?
 };
@@ -113,11 +113,11 @@ struct PerFrameData
         }
 
 
-glm::vec3 translationFromTransform(glm::mat4 transform);
+glm::vec3 translation_from_transform(glm::mat4 transform);
 
-glm::quat rotationFromTransform(glm::mat4 transform);
+glm::quat rotation_from_transform(glm::mat4 transform);
 
-glm::vec3 scaleFromTransform(glm::mat4 transform);
+glm::vec3 scale_from_transform(glm::mat4 transform);
 
 /// @brief an implementation of the glm::lookat() function, because this framework
 /// makes it impossible to use, same code as in the Camera class
@@ -131,4 +131,4 @@ glm::mat4 glm_look_at(const glm::vec3 pos, const glm::vec3 target, const glm::ve
  * \brief loads settings from settings.ini, should only be called at startup
  * \return the loaded settings
  */
-GlobalState load_settings();
+global_state load_settings();

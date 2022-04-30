@@ -90,11 +90,11 @@ void cubemap::load_hdr(const char* tex_path)
     Shader rect2cubeVert("../../assets/shaders/IBL/rectangleToCubemap.vert");
     Shader rect2cubeFrag("../../assets/shaders/IBL/rectangleToCubemap.frag");
     program rectangleToCubemap;
-    rectangleToCubemap.buildFrom(rect2cubeVert, rect2cubeFrag);
+    rectangleToCubemap.build_from(rect2cubeVert, rect2cubeFrag);
 
-    rectangleToCubemap.Use();
-    rectangleToCubemap.setInt("equirectangularMap", 0);
-    rectangleToCubemap.setMat4("projection", captureProjection);
+    rectangleToCubemap.use();
+    rectangleToCubemap.set_int("equirectangularMap", 0);
+    rectangleToCubemap.set_mat4("projection", captureProjection);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, hdr_id);
 
@@ -102,7 +102,7 @@ void cubemap::load_hdr(const char* tex_path)
     glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
     for (unsigned int i = 0; i < 6; ++i)
     {
-        rectangleToCubemap.setMat4("view", captureViews[i]);
+        rectangleToCubemap.set_mat4("view", captureViews[i]);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, env_id_, 0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -136,11 +136,11 @@ void cubemap::load_hdr(const char* tex_path)
     Shader irradianceVert("../../assets/shaders/IBL/irradiance.vert");
     Shader irradianceFrag("../../assets/shaders/IBL/irradiance.frag");
     program irradiance;
-    irradiance.buildFrom(irradianceVert, irradianceFrag);
+    irradiance.build_from(irradianceVert, irradianceFrag);
 
-    irradiance.Use();
-    irradiance.setInt("environmentMap", 0);
-    irradiance.setMat4("projection", captureProjection);
+    irradiance.use();
+    irradiance.set_int("environmentMap", 0);
+    irradiance.set_mat4("projection", captureProjection);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, env_id_);
 
@@ -148,7 +148,7 @@ void cubemap::load_hdr(const char* tex_path)
     glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
     for (unsigned int i = 0; i < 6; ++i)
     {
-        irradiance.setMat4("view", captureViews[i]);
+        irradiance.set_mat4("view", captureViews[i]);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, irrad_id_, 0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -176,11 +176,11 @@ void cubemap::load_hdr(const char* tex_path)
     Shader preFilterVert("../../assets/shaders/IBL/preFilter.vert");
     Shader preFilterFrag("../../assets/shaders/IBL/preFilter.frag");
     program preFilter;
-    preFilter.buildFrom(preFilterVert, preFilterFrag);
+    preFilter.build_from(preFilterVert, preFilterFrag);
 
-    preFilter.Use();
-    preFilter.setInt("environmentMap", 0);
-    preFilter.setMat4("projection", captureProjection);
+    preFilter.use();
+    preFilter.set_int("environmentMap", 0);
+    preFilter.set_mat4("projection", captureProjection);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, env_id_);
 
@@ -196,10 +196,10 @@ void cubemap::load_hdr(const char* tex_path)
         glViewport(0, 0, mipWidth, mipHeight);
 
         float roughness = (float)mip / (float)(maxMipLevels - 1);
-        preFilter.setFloat("roughness", roughness);
+        preFilter.set_float("roughness", roughness);
         for (unsigned int i = 0; i < 6; ++i)
         {
-            preFilter.setMat4("view", captureViews[i]);
+            preFilter.set_mat4("view", captureViews[i]);
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, prefilt_id_, mip);
 
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -230,10 +230,10 @@ void cubemap::load_hdr(const char* tex_path)
     Shader brdfLutVert("../../assets/shaders/IBL/brdfLut.vert");
     Shader brdfLutFrag("../../assets/shaders/IBL/brdfLut.frag");
     program brdfLut;
-    brdfLut.buildFrom(brdfLutVert, brdfLutFrag);
+    brdfLut.build_from(brdfLutVert, brdfLutFrag);
 
     glViewport(0, 0, 512, 512);
-    brdfLut.Use();
+    brdfLut.use();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     render_quad();
 

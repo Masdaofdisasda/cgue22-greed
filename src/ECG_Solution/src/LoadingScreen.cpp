@@ -21,7 +21,7 @@ void LoadingScreen::init()
 	render_image_ = std::make_unique<program>();
 	Shader render_img_vert("../../assets/shaders/fullScreenTriangle.vert");
 	Shader render_img_frag("../../assets/shaders/HUD/fullScreenImage.frag");
-	render_image_->buildFrom(render_img_vert, render_img_frag);
+	render_image_->build_from(render_img_vert, render_img_frag);
 
 	glCreateVertexArrays(1, &empty_vao_);
 }
@@ -31,7 +31,7 @@ void LoadingScreen::draw_progress()
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glViewport(0, 0, w_, h_);
 
-	render_image_->Use();
+	render_image_->use();
 	glBindTextureUnit(9, *screens_[step_]);
 	glBindVertexArray(empty_vao_);
 	glDrawArrays(GL_TRIANGLES, 0, 3);

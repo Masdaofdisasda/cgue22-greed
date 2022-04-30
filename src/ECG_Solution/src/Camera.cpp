@@ -1,16 +1,16 @@
 #include "Camera.h"
 
-void camera_positioner_first_person::set_movement_state(KeyboardInputState input)
+void camera_positioner_first_person::set_movement_state(keyboard_input_state input)
 {
-	movement.forward = input.pressingW;
-	movement.backward = input.pressingS;
-	movement.left = input.pressingA;
-	movement.right = input.pressingD;
-	movement.up = input.pressing1;
-	movement.down = input.pressing2;
-	movement.fast_speed = input.pressingShift;
+	movement.forward = input.pressing_w;
+	movement.backward = input.pressing_s;
+	movement.left = input.pressing_a;
+	movement.right = input.pressing_d;
+	movement.up = input.pressing_1;
+	movement.down = input.pressing_2;
+	movement.fast_speed = input.pressing_shift;
 
-	if (input.pressingSpace)
+	if (input.pressing_space)
 		set_up_vector(glm::vec3(0.0f, 1.0f, 0.0f));
 }
 

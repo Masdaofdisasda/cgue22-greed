@@ -62,7 +62,7 @@ void font_renderer::init(const char* tex_path, const int w, const int h)
 
     Shader text_vert("../../assets/shaders/HUD/textPrinter.vert");
     Shader text_frag("../../assets/shaders/HUD/textPrinter.frag");
-    printer_.buildFrom(text_vert, text_frag);
+    printer_.build_from(text_vert, text_frag);
 
     proj_ = glm::ortho(0.0f, static_cast<float>(w), 0.0f, static_cast<float>(h));
 
@@ -81,9 +81,9 @@ void font_renderer::init(const char* tex_path, const int w, const int h)
 void font_renderer::print(std::string msg, float x, const float y, const float size, const glm::vec3 color)
 {
     // activate corresponding render state	
-    printer_.Use();
-    printer_.setVec3("color", color);
-    printer_.setMat4("projection", proj_);
+    printer_.use();
+    printer_.set_vec3("color", color);
+    printer_.set_mat4("projection", proj_);
 
     glActiveTexture(GL_TEXTURE13);
     glBindVertexArray(vao_);

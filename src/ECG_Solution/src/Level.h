@@ -56,7 +56,7 @@ private:
 
 	light_sources lights;
 
-	std::shared_ptr<GlobalState> state_;
+	std::shared_ptr<global_state> state_;
 	PerFrameData* perframe_data_{};
 
 	/**
@@ -188,7 +188,7 @@ public:
 	/// @param scene_path location of the fbx file, expected to be in folder "assets"
 	/// @param state global state of the program, needed for screen resolution, etc
 	/// @param perframe_data camera uniforms, needed for frustum culling
-	level(const char* scene_path, std::shared_ptr<GlobalState> state, PerFrameData& perframe_data);
+	level(const char* scene_path, std::shared_ptr<global_state> state, PerFrameData& perframe_data);
 	~level() { release(); }
 
 	/**

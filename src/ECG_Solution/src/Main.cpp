@@ -27,10 +27,10 @@
 // Global variables
 /* --------------------------------------------- */
 
-std::shared_ptr<GlobalState> state;
-KeyboardInputState keyboard_input;
+std::shared_ptr<global_state> state;
+keyboard_input_state keyboard_input;
 PerFrameData perframe_data;
-MouseState mouse_state;
+mouse_state mouse_state;
 
 camera_positioner_interface* camera_positioner;
 camera_positioner_first_person floating_positioner(glm::vec3(0.0f, 1.85f, 70.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -168,11 +168,11 @@ int main(int argc, char** argv)
 		glfw_app.update_window();
 
 		// player actions
-		if (state->usingDebugCamera_)
+		if (state->using_debug_camera)
 			floating_positioner.set_movement_state(keyboard_input);
 		else {
 			player.move(keyboard_input, delta_seconds);
-			state->displayCollectItemHint_ = player.hasCollectableItemInReach();
+			state->display_collect_item_hint = player.hasCollectableItemInReach();
 			player.tryCollectItem(mouse_state, keyboard_input, *item_collection);
 		}
 
@@ -181,36 +181,36 @@ int main(int argc, char** argv)
 
 		// update camera
 		player.updateCameraPositioner();
-		camera_positioner->update(delta_seconds, mouse_state.pos, mouse_state.pressedLeft);
+		camera_positioner->update(delta_seconds, mouse_state.pos, mouse_state.pressed_left);
 
 		// calculate and set per frame matrices
 		const float ratio = static_cast<float>(state->width) / static_cast<float>(state->height);
-		const glm::mat4 projection = glm::perspective(glm::radians(state->fov), ratio, state->Znear, state->Zfar);
+		const glm::mat4 projection = glm::perspective(glm::radians(state->fov), ratio, state->znear, state->zfar);
 		const glm::mat4 view = camera.get_view_matrix();
-		perframe_data.ViewProj = projection * view;
-		if (perframe_data.deltaTime.y > 60.0f) lava_position.y += delta_seconds * 1.0f; //TODO
-		perframe_data.lavaLevel = glm::translate(lava_position);
-		perframe_data.viewPos = glm::vec4(camera.get_position(), 1.0f);
-		perframe_data.viewInv = glm::inverse(view);
-		perframe_data.projInv = glm::inverse(projection);
-		perframe_data.deltaTime.x = delta_seconds;
-		perframe_data.deltaTime.y += delta_seconds;
+		perframe_data.view_proj = projection * view;
+		if (perframe_data.delta_time.y > 60.0f) lava_position.y += delta_seconds * 1.0f; //TODO
+		perframe_data.lava_level = glm::translate(lava_position);
+		perframe_data.view_pos = glm::vec4(camera.get_position(), 1.0f);
+		perframe_data.view_inv = glm::inverse(view);
+		perframe_data.proj_inv = glm::inverse(projection);
+		perframe_data.delta_time.x = delta_seconds;
+		perframe_data.delta_time.y += delta_seconds;
 
 		// simple game logic WIP
-		state->totalCash = item_collection->getTotalMonetaryValue();
-		state->collectedItems = item_collection->size();
-		if (perframe_data.viewPos.y > 127.0f)
+		state->total_cash = item_collection->getTotalMonetaryValue();
+		state->collected_items = item_collection->size();
+		if (perframe_data.view_pos.y > 127.0f)
 		{
-			state->won_ = true;
+			state->won = true;
 		}
-		if (perframe_data.viewPos.y < lava_position.y)
+		if (perframe_data.view_pos.y-1.8f < lava_position.y)
 		{
-			state->lost_ = true;
+			state->lost = true;
 		}
 
 		// actual draw call
 		renderer.draw(&level);
-		if (state->debugDrawPhysics_)
+		if (state->debug_draw_physics)
 			physics.debugDraw();
 
 		// swap buffers
@@ -234,113 +234,113 @@ void registerInputCallbacks(glfw_app& app) {
 			// Movement
 			const bool press = action != GLFW_RELEASE;
 			if (key == GLFW_KEY_W)
-				keyboard_input.pressingW = press;
+				keyboard_input.pressing_w = press;
 			if (key == GLFW_KEY_S)
-				keyboard_input.pressingS = press;
+				keyboard_input.pressing_s = press;
 			if (key == GLFW_KEY_A)
-				keyboard_input.pressingA = press;
+				keyboard_input.pressing_a = press;
 			if (key == GLFW_KEY_D)
-				keyboard_input.pressingD = press;
+				keyboard_input.pressing_d = press;
 			if (key == GLFW_KEY_1)
-				keyboard_input.pressing1 = press;
+				keyboard_input.pressing_1 = press;
 			if (key == GLFW_KEY_2)
-				keyboard_input.pressing2 = press;
+				keyboard_input.pressing_2 = press;
 			if (mods & GLFW_MOD_SHIFT)
-				keyboard_input.pressingShift = press;
+				keyboard_input.pressing_shift = press;
 			if (key == GLFW_KEY_SPACE)
-				keyboard_input.pressingSpace = press;
+				keyboard_input.pressing_space = press;
 
 			// Window management, Debug, Effects
 			if (key == GLFW_KEY_ESCAPE)
 				glfwSetWindowShouldClose(window, GLFW_TRUE);
 			if (key == GLFW_KEY_F1 && action == GLFW_PRESS)
 			{
-				if (state->fullscreen_)
+				if (state->fullscreen)
 					printf("Fullscreen off\n");
 				else
 					printf("Fullscreen on\n");
 
-				state->fullscreen_ = !state->fullscreen_;
+				state->fullscreen = !state->fullscreen;
 			}
 			if (key == GLFW_KEY_F2 && action == GLFW_PRESS)
-				state->cullDebug_ = !state->cullDebug_;
+				state->cull_debug = !state->cull_debug;
 			if (key == GLFW_KEY_F3 && action == GLFW_PRESS)
 			{
-				if (state->bloom_)
+				if (state->bloom)
 					printf("Bloom off\n");
 				else
 					printf("Bloom on\n");
 
-				state->bloom_ = !state->bloom_;
+				state->bloom = !state->bloom;
 			}
 			if (key == GLFW_KEY_F4 && action == GLFW_PRESS)
 			{
-				if (state->debugDrawPhysics_)
+				if (state->debug_draw_physics)
 					printf("Physics debugging off");
 				else
 					printf("Physics debugging on");
 
-				state->debugDrawPhysics_ = !state->debugDrawPhysics_;
+				state->debug_draw_physics = !state->debug_draw_physics;
 			}
 			if (key == GLFW_KEY_F5 && action == GLFW_PRESS)
 			{
-				if (perframe_data.normalMap.x > 0.0f)
+				if (perframe_data.normal_map.x > 0.0f)
 					printf("normal mapping off");
 				else
 					printf("normal mapping on");
 
-				perframe_data.normalMap.x *= -1.0f;
+				perframe_data.normal_map.x *= -1.0f;
 			}
 			if (key == GLFW_KEY_F6 && action == GLFW_PRESS) {
-				if (state->usingDebugCamera_) {
+				if (state->using_debug_camera) {
 					printf("Switch camera to player");
 					camera_positioner = &player_camera_positioner;
-					state->debugDrawPhysics_ = false;
+					state->debug_draw_physics = false;
 					glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 				}
 				else {
 					printf("Switch camera to debug camera");
 					camera_positioner = &floating_positioner;
-					state->debugDrawPhysics_ = true;
+					state->debug_draw_physics = true;
 					glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 				}
-				state->usingDebugCamera_ = !state->usingDebugCamera_;
+				state->using_debug_camera = !state->using_debug_camera;
 				camera.set_positioner(camera_positioner);
 			}
 			if (key == GLFW_KEY_F7 && action == GLFW_PRESS)
 			{
-				if (state->freezeCull_)
+				if (state->freeze_cull)
 				{
 					printf("resume frustum culling\n");
-					state->freezeCull_ = false;
+					state->freeze_cull = false;
 				}
 				else {
 					printf("freeze frustum culling\n");
-					state->freezeCull_ = true;
+					state->freeze_cull = true;
 				}
 			}
 			if (key == GLFW_KEY_F8 && action == GLFW_PRESS)
 			{
-				if (state->cull_)
+				if (state->cull)
 				{
 					printf("frustum culling off\n");
-					state->cull_ = false;
+					state->cull = false;
 				}
 				else {
 					printf("frustum culling on\n");
-					state->cull_ = true;
+					state->cull = true;
 				}
 			}
 			if (key == GLFW_KEY_F9 && action == GLFW_PRESS)
 			{
-				if (state->ssao_)
+				if (state->ssao)
 				{
 					printf("SSAO off\n");
-					state->ssao_ = false;
+					state->ssao = false;
 				}
 				else {
 					printf("SSAO on\n");
-					state->ssao_ = true;
+					state->ssao = true;
 				}
 			}
 		});
@@ -348,10 +348,10 @@ void registerInputCallbacks(glfw_app& app) {
 		[](auto* window, int button, int action, int mods)
 		{
 			if (button == GLFW_MOUSE_BUTTON_LEFT)
-				mouse_state.pressedLeft = action == GLFW_PRESS;
+				mouse_state.pressed_left = action == GLFW_PRESS;
 
 			if (button == GLFW_MOUSE_BUTTON_RIGHT)
-				mouse_state.pressedRight = action == GLFW_PRESS;
+				mouse_state.pressed_right = action == GLFW_PRESS;
 
 		});
 	glfwSetCursorPosCallback(

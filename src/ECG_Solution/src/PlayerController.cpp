@@ -12,7 +12,7 @@ PlayerController::PlayerController(Physics& physics, camera_positioner_player& c
 	);
 }
 
-void PlayerController::move(KeyboardInputState inputs, float deltatime)
+void PlayerController::move(keyboard_input_state inputs, float deltatime)
 {
 	Movement* movement = inputToMovementState(inputs);
 
@@ -40,9 +40,9 @@ bool PlayerController::hasCollectableItemInReach() {
 	return geCollectableInFrontOfPlayer() != nullptr;
 }
 
-void PlayerController::tryCollectItem(MouseState mouseState, KeyboardInputState keyboardState, ItemCollection& itemCollection)
+void PlayerController::tryCollectItem(mouse_state mouseState, keyboard_input_state keyboardState, ItemCollection& itemCollection)
 {
-	bool wantToCollect = mouseState.pressedLeft || keyboardState.pressingE;
+	bool wantToCollect = mouseState.pressed_left || keyboardState.pressing_e;
 	if (!wantToCollect)
 		return;
 
@@ -76,14 +76,14 @@ Physics::PhysicsObject* PlayerController::geCollectableInFrontOfPlayer() {
 	return nullptr;
 }
 
-PlayerController::Movement* PlayerController::inputToMovementState(KeyboardInputState inputs)
+PlayerController::Movement* PlayerController::inputToMovementState(keyboard_input_state inputs)
 {
 	Movement* movement = new Movement;
-	movement->forwards = inputs.pressingW;
-	movement->backwards = inputs.pressingS;
-	movement->left = inputs.pressingA;
-	movement->right = inputs.pressingD;
-	movement->jump = inputs.pressingSpace;
+	movement->forwards = inputs.pressing_w;
+	movement->backwards = inputs.pressing_s;
+	movement->left = inputs.pressing_a;
+	movement->right = inputs.pressing_d;
+	movement->jump = inputs.pressing_space;
 
 	return movement;
 }

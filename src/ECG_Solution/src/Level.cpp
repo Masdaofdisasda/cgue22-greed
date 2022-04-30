@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <thread>
 
-level::level(const char* scene_path, const std::shared_ptr<GlobalState> state, PerFrameData& perframe_data)
+level::level(const char* scene_path, const std::shared_ptr<global_state> state, PerFrameData& perframe_data)
 : state_(std::move(state)), perframe_data_(&perframe_data)
 {
 	std::cout << "import scene from fbx file..." << std::endl;
@@ -452,11 +452,11 @@ void level::load_shaders()
 	aabb_viewer_ = std::make_unique<program>();
 	Shader bounds_vert("../../assets/shaders/Testing/AABBviewer.vert");
 	Shader bounds_frag("../../assets/shaders/Testing/AABBviewer.frag");
-	aabb_viewer_->buildFrom(bounds_vert, bounds_frag);
+	aabb_viewer_->build_from(bounds_vert, bounds_frag);
 
 	frustumviewer_ = std::make_unique<program>();
 	Shader frustum_vert("../../assets/shaders/Testing/Frustumviewer.vert");
-	frustumviewer_->buildFrom(frustum_vert, bounds_frag);
+	frustumviewer_->build_from(frustum_vert, bounds_frag);
 }
 
 std::vector<physics_mesh> level::get_rigid()
@@ -560,9 +560,9 @@ void level::collect_dynamic_physic_meshes(hierarchy* node, glm::mat4 global_tran
 void level::draw_scene() {
 
 	// update view frustum
-	if (!state_->freezeCull_)
+	if (!state_->freeze_cull)
 	{
-		cull_view_proj_ = perframe_data_->ViewProj;
+		cull_view_proj_ = perframe_data_->view_proj;
 		frustum_culler::get_frustum_planes(cull_view_proj_, frustum_planes_);
 		frustum_culler::get_frustum_corners(cull_view_proj_, frustum_corners_);
 	}
@@ -593,33 +593,33 @@ void level::draw_scene() {
 		/// stride - because the commands are packed tightly aka just as descriped in the GL specs
 	}
 
-	if (state_->cullDebug_) // bounding box & frustum culling debug view
+	if (state_->cull_debug) // bounding box & frustum culling debug view
 	{
 		glDisable(GL_CULL_FACE);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		glEnable(GL_BLEND);
-		aabb_viewer_->Use();
-		aabb_viewer_->setVec4("lineColor", glm::vec4(0.0f,1.0f,0.0f, .1f));
+		aabb_viewer_->use();
+		aabb_viewer_->set_vec4("lineColor", glm::vec4(0.0f,1.0f,0.0f, .1f));
 			draw_aabbs(scene_graph_); // draw AABBs
-		frustumviewer_->Use();
-		frustumviewer_->setVec4("lineColor", glm::vec4(1.0f, 1.0f, 0.0f, .1f));
-		frustumviewer_->setVec3("corner0", frustum_corners_[0]);
-		frustumviewer_->setVec3("corner1", frustum_corners_[1]);
-		frustumviewer_->setVec3("corner2", frustum_corners_[2]);
-		frustumviewer_->setVec3("corner3", frustum_corners_[3]);
-		frustumviewer_->setVec3("corner4", frustum_corners_[4]);
-		frustumviewer_->setVec3("corner5", frustum_corners_[5]);
-		frustumviewer_->setVec3("corner6", frustum_corners_[6]);
-		frustumviewer_->setVec3("corner7", frustum_corners_[7]);
+		frustumviewer_->use();
+		frustumviewer_->set_vec4("lineColor", glm::vec4(1.0f, 1.0f, 0.0f, .1f));
+		frustumviewer_->set_vec3("corner0", frustum_corners_[0]);
+		frustumviewer_->set_vec3("corner1", frustum_corners_[1]);
+		frustumviewer_->set_vec3("corner2", frustum_corners_[2]);
+		frustumviewer_->set_vec3("corner3", frustum_corners_[3]);
+		frustumviewer_->set_vec3("corner4", frustum_corners_[4]);
+		frustumviewer_->set_vec3("corner5", frustum_corners_[5]);
+		frustumviewer_->set_vec3("corner6", frustum_corners_[6]);
+		frustumviewer_->set_vec3("corner7", frustum_corners_[7]);
 			glDrawArrays(GL_TRIANGLES, 0, 36); // draw frustum
 		glDisable(GL_BLEND);
 		glEnable(GL_CULL_FACE);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		
 		// output frustum culling information for debugging every 2 seconds
-		if (state_->cull_)
+		if (state_->cull)
 		{
-			seconds_since_flush_ += perframe_data_->deltaTime.x;
+			seconds_since_flush_ += perframe_data_->delta_time.x;
 			if (seconds_since_flush_ >= 2)
 			{
 				std::cout << "Models Loaded: " << models_loaded_ << ", Models rendered: " << models_visible_
@@ -633,8 +633,8 @@ void level::draw_scene() {
 
 void level::draw_scene_shadow_map()
 {
-	const boolean cull = state_->cull_;
-	state_->cull_ = false;
+	const boolean cull = state_->cull;
+	state_->cull = false;
 
 	// flatten tree
 	reset_queue();
@@ -652,14 +652,14 @@ void level::draw_scene_shadow_map()
 			                            .commands.size()), 0);
 
 	}
-	state_->cull_ = cull;
+	state_->cull = cull;
 }
 
 void level::build_render_queue(const hierarchy* node, const glm::mat4 global_transform) {
 	if (!node->game_properties.is_active)
 		return;
 
-	if (state_->cull_)
+	if (state_->cull)
 	{
 		if (!frustum_culler::is_box_in_frustum(frustum_planes_, frustum_corners_, node->node_bounds))
 			return;
@@ -716,10 +716,10 @@ uint32_t level::decide_lod(uint32_t lods, const bounding_box aabb) const
 	const auto c = glm::vec4((aabb.max_ + aabb.min_)/2, 1.0f);
 	const auto r = glm::length(aabb.max_ - aabb.min_)/2;
 	const auto n = perframe_data_->ssao1.z;
-	const auto v = perframe_data_->viewPos;
-	glm::mat4 vp = glm::transpose(perframe_data_->ViewProj);
+	const auto v = perframe_data_->view_pos;
+	glm::mat4 vp = glm::transpose(perframe_data_->view_proj);
 	const auto d = vp[3];
-	auto m = perframe_data_->ViewProj;
+	auto m = perframe_data_->view_proj;
 	const auto p = (n * r) / glm::dot(d ,(v - c));
 
 	auto area = glm::pi<float>() * p * p * static_cast<float>(state_->width) * static_cast<float>(state_->height);
@@ -731,8 +731,8 @@ uint32_t level::decide_lod(uint32_t lods, const bounding_box aabb) const
 void level::draw_aabbs(const hierarchy node)
 {
 	bounding_box bounds = node.node_bounds;
-	aabb_viewer_->setVec3("min", node.node_bounds.min_);
-	aabb_viewer_->setVec3("max", node.node_bounds.max_);
+	aabb_viewer_->set_vec3("min", node.node_bounds.min_);
+	aabb_viewer_->set_vec3("max", node.node_bounds.max_);
 
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 

@@ -17,7 +17,7 @@ public:
 	/// Tries to move the rigidbody in the desired direction. 
 	/// Forwards and backwards depend on the orientation of the camera.
 	/// </summary>
-	void move(KeyboardInputState inputs, float deltaTime);
+	void move(keyboard_input_state inputs, float deltaTime);
 
 	/// <summary>
 	/// Sets the camera position to be on top of the player rigidbody
@@ -26,7 +26,7 @@ public:
 
 	bool hasCollectableItemInReach();
 
-	void tryCollectItem(MouseState mouseState, KeyboardInputState keyboardState, ItemCollection& itemCollection);
+	void tryCollectItem(mouse_state mouseState, keyboard_input_state keyboardState, ItemCollection& itemCollection);
 
 private:
 	struct Movement
@@ -52,7 +52,7 @@ private:
 	float itemWeight = 0; // how much all the items weigh together (influences movement)
 
 	Physics::PhysicsObject* geCollectableInFrontOfPlayer();
-	Movement* inputToMovementState(KeyboardInputState inputs);
+	Movement* inputToMovementState(keyboard_input_state inputs);
 	glm::vec3 movementStateToDirection(Movement* movement);
 	void decelerateXZ(float deltatime);
 	void enforceSpeedLimit();
