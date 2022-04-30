@@ -6,80 +6,79 @@
 #include <vector>
 #include <random>
 
-class LavaSystem
+class lava_system
 {
 public:
-	LavaSystem();
-	~LavaSystem();
+	lava_system();
+	~lava_system();
 
     void init(glm::ivec3 lights);
     void update(float t);
-    void simulationStep();
-    void Draw();
+    void simulation_step();
+    void draw();
 
 private:
-    Program SimUpdate;
-    Program SimRender;
-    Program lavaFloor;		
+    program sim_update_;
+    program sim_render_;
+    program lava_floor_;		
 
-    Material lava = Material("textures/Lava_1/albedo.jpg", "Lava"); //temp file, replace with procedural texture
-    GLuint LavaVAO = 0;
-    int count;
+    Material lava_ = Material("textures/Lava_1/albedo.jpg", "Lava"); //temp file, replace with procedural texture
+    GLuint lava_vao_ = 0;
+    int count_ = 0;
 
-    glm::ivec3 nParticles = glm::ivec3(20,20,20);
-    GLuint totalParticles = nParticles.x * nParticles.y * nParticles.z;
+    glm::ivec3 n_particles_ = glm::ivec3(20,20,20);
+    GLuint total_particles_ = n_particles_.x * n_particles_.y * n_particles_.z;
 
-    float time = 0.0f, deltaT = 0.0f, speed = 35.0f, angle = 0.0f;
-    GLuint particlesVao;
-    GLuint bhVao, bhBuf;  // black hole VAO and buffer
-    glm::vec4 bh1 = glm::vec4(-85, -5, -85, 1);
+    float time_ = 0.0f, delta_t_ = 0.0f, speed_ = 35.0f, angle_ = 0.0f;
+    GLuint particles_vao_ = 0;
+    GLuint bh_vao_ = 0, bh_buf_ = 0;  // black hole VAO and buffer
+    glm::vec4 bh1_ = glm::vec4(-85, -5, -85, 1);
 
-	void setupBuffers();
-    void loadLava();
+	void setup_buffers();
+    void load_lava();
 
 };
 
-LavaSystem::LavaSystem()
+inline lava_system::lava_system()
+= default;
+
+inline void lava_system::init(glm::ivec3 lights)
 {
+    Shader render_vert("../../assets/shaders/Lava/lavaParticles.vert");
+    Shader render_frag("../../assets/shaders/Lava/lavaParticles.frag");
+    sim_render_.buildFrom(render_vert, render_frag);
+
+    Shader update("../../assets/shaders/Lava/lavaParticles.comp");
+    sim_update_.buildFrom(update);
+
+    Shader lava_floor_vert("../../assets/shaders/Lava/lavaFloor.vert");
+    Shader lava_floor_frag("../../assets/shaders/Lava/lavaPbr.frag", lights);
+    lava_floor_.buildFrom(lava_floor_vert, lava_floor_frag);
+
+    setup_buffers();
+    load_lava();
 }
 
-void LavaSystem::init(glm::ivec3 lights)
-{
-    Shader RenderVert("../../assets/shaders/Lava/lavaParticles.vert");
-    Shader RenderFrag("../../assets/shaders/Lava/lavaParticles.frag");
-    SimRender.buildFrom(RenderVert, RenderFrag);
-
-    Shader Update("../../assets/shaders/Lava/lavaParticles.comp");
-    SimUpdate.buildFrom(Update);
-
-    Shader lavaFloorVert("../../assets/shaders/Lava/lavaFloor.vert");
-    Shader lavaFloorFrag("../../assets/shaders/Lava/lavaPbr.frag", lights);
-    lavaFloor.buildFrom(lavaFloorVert, lavaFloorFrag);
-
-    setupBuffers();
-    loadLava();
-}
-
-void LavaSystem::setupBuffers()
+inline void lava_system::setup_buffers()
 {// Initial positions of the particles
-    std::vector<GLfloat> initPos;
-    std::vector<GLfloat> initVel(totalParticles * 4, 0.0f);
+    std::vector<GLfloat> init_pos;
+    const std::vector<GLfloat> init_vel(total_particles_ * 4, 0.0f);
 
     std::default_random_engine generator;
     std::normal_distribution<float> distribution(0, 1.0);
-    glm::vec3 spawn(-85, 150, -85);
+    const glm::vec3 spawn(-85, 150, -85);
 
     // We want to center the particles at (0,0,0)
-    float steps = 130.0f / (float)totalParticles;
-    for (int i = 0; i < totalParticles; i++) {
+    const float steps = 130.0f / static_cast<float>(total_particles_);
+    for (auto i = 0; i < total_particles_; i++) {
         glm::vec4 p(0.0f, 0.0f, 0.0f, 1.0f);
         p.x = spawn.x + distribution(generator);
         p.y = i* steps;
         p.z = spawn.z + distribution(generator);
-        initPos.push_back(p.x);
-        initPos.push_back(p.y);
-        initPos.push_back(p.z);
-        initPos.push_back(p.w);
+        init_pos.push_back(p.x);
+        init_pos.push_back(p.y);
+        init_pos.push_back(p.z);
+        init_pos.push_back(p.w);
     }
 
     // We need buffers for position , and velocity.
@@ -88,19 +87,19 @@ void LavaSystem::setupBuffers()
     GLuint posBuf = bufs[0];
     GLuint velBuf = bufs[1];
 
-    GLuint bufSize = totalParticles * 4 * sizeof(GLfloat);
+    GLuint bufSize = total_particles_ * 4 * sizeof(GLfloat);
 
     // The buffers for positions
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, posBuf);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, bufSize, &initPos[0], GL_DYNAMIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, bufSize, &init_pos[0], GL_DYNAMIC_DRAW);
 
     // Velocities
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, velBuf);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, bufSize, &initVel[0], GL_DYNAMIC_COPY);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, bufSize, &init_vel[0], GL_DYNAMIC_COPY);
 
     // Set up the VAO
-    glGenVertexArrays(1, &particlesVao);
-    glBindVertexArray(particlesVao);
+    glGenVertexArrays(1, &particles_vao_);
+    glBindVertexArray(particles_vao_);
 
     glBindBuffer(GL_ARRAY_BUFFER, posBuf);
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0);
@@ -109,33 +108,33 @@ void LavaSystem::setupBuffers()
     glBindVertexArray(0);
 
     // Set up a buffer and a VAO for drawing the attractors (the "black holes")
-    glGenBuffers(1, &bhBuf);
-    glBindBuffer(GL_ARRAY_BUFFER, bhBuf);
-    GLfloat data[] = { bh1.x, bh1.y, bh1.z, bh1.w };
+    glGenBuffers(1, &bh_buf_);
+    glBindBuffer(GL_ARRAY_BUFFER, bh_buf_);
+    const GLfloat data[] = { bh1_.x, bh1_.y, bh1_.z, bh1_.w };
     glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(GLfloat), data, GL_DYNAMIC_DRAW);
 
-    glGenVertexArrays(1, &bhVao);
-    glBindVertexArray(bhVao);
+    glGenVertexArrays(1, &bh_vao_);
+    glBindVertexArray(bh_vao_);
 
-    glBindBuffer(GL_ARRAY_BUFFER, bhBuf);
+    glBindBuffer(GL_ARRAY_BUFFER, bh_buf_);
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(0);
 
     glBindVertexArray(0);
 }
 
-void LavaSystem::update(float t)
+inline void lava_system::update(const float t)
 {
-    if (time == 0.0f) {
-        deltaT = 0.0f;
+    if (time_ == 0.0f) {
+        delta_t_ = 0.0f;
     }
     else {
-        deltaT = t - time;
+        delta_t_ = t - time_;
     }
-    time = t;
+    time_ = t;
 }
 
-void LavaSystem::loadLava()
+inline void lava_system::load_lava()
 {
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile("../../assets/models/Lava.obj", aiProcess_MakeLeftHanded | aiProcess_FlipWindingOrder | aiProcess_FlipUVs | aiProcess_PreTransformVertices |
@@ -178,60 +177,60 @@ void LavaSystem::loadLava()
         for (unsigned k = 0; k != mesh->mFaces[j].mNumIndices; k++)
         {
             GLuint index = mesh->mFaces[j].mIndices[k];
-            count++;
+            count_++;
             indices.push_back(index);
         }
     }
 
-    GLuint VBO;
-    GLuint EBO;
+    GLuint vbo;
+    GLuint ebo;
 
-    glCreateBuffers(1, &VBO);
-    glNamedBufferStorage(VBO, vertices.size() * sizeof(float), vertices.data(), 0);
-    glCreateBuffers(1, &EBO);
-    glNamedBufferStorage(EBO, indices.size() * sizeof(GLuint), indices.data(), 0);
+    glCreateBuffers(1, &vbo);
+    glNamedBufferStorage(vbo, static_cast<GLsizeiptr>(vertices.size() * sizeof(float)), vertices.data(), 0);
+    glCreateBuffers(1, &ebo);
+    glNamedBufferStorage(ebo, static_cast<GLsizeiptr>(indices.size() * sizeof(GLuint)), indices.data(), 0);
 
-    glCreateVertexArrays(1, &LavaVAO);
-    glVertexArrayElementBuffer(LavaVAO, EBO);
-    glVertexArrayVertexBuffer(LavaVAO, 0, VBO, 0, sizeof(glm::vec3) + sizeof(glm::vec3) + sizeof(glm::vec2));
+    glCreateVertexArrays(1, &lava_vao_);
+    glVertexArrayElementBuffer(lava_vao_, ebo);
+    glVertexArrayVertexBuffer(lava_vao_, 0, vbo, 0, sizeof(glm::vec3) + sizeof(glm::vec3) + sizeof(glm::vec2));
     // position
-    glEnableVertexArrayAttrib(LavaVAO, 0);
-    glVertexArrayAttribFormat(LavaVAO, 0, 3, GL_FLOAT, GL_FALSE, 0);
-    glVertexArrayAttribBinding(LavaVAO, 0, 0);
+    glEnableVertexArrayAttrib(lava_vao_, 0);
+    glVertexArrayAttribFormat(lava_vao_, 0, 3, GL_FLOAT, GL_FALSE, 0);
+    glVertexArrayAttribBinding(lava_vao_, 0, 0);
     // normal
-    glEnableVertexArrayAttrib(LavaVAO, 1);
-    glVertexArrayAttribFormat(LavaVAO, 1, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3));
-    glVertexArrayAttribBinding(LavaVAO, 1, 0);
+    glEnableVertexArrayAttrib(lava_vao_, 1);
+    glVertexArrayAttribFormat(lava_vao_, 1, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3));
+    glVertexArrayAttribBinding(lava_vao_, 1, 0);
     // uv
-    glEnableVertexArrayAttrib(LavaVAO, 2);
-    glVertexArrayAttribFormat(LavaVAO, 2, 2, GL_FLOAT, GL_TRUE, sizeof(glm::vec3) + sizeof(glm::vec3));
-    glVertexArrayAttribBinding(LavaVAO, 2, 0);
+    glEnableVertexArrayAttrib(lava_vao_, 2);
+    glVertexArrayAttribFormat(lava_vao_, 2, 2, GL_FLOAT, GL_TRUE, sizeof(glm::vec3) + sizeof(glm::vec3));
+    glVertexArrayAttribBinding(lava_vao_, 2, 0);
 
 }
 
-inline void LavaSystem::simulationStep()
+inline void lava_system::simulation_step()
 {
     // Execute the compute shader
-    SimUpdate.Use();
-    SimUpdate.setVec3("BlackHolePos1", bh1);
-    glDispatchCompute(totalParticles / 100, 1, 1);
+    sim_update_.Use();
+    sim_update_.setVec3("BlackHolePos1", bh1_);
+    glDispatchCompute(total_particles_ / 100, 1, 1);
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }
 
-void LavaSystem::Draw()
+inline void lava_system::draw()
 {
 
-    lavaFloor.Use();
-    glBindVertexArray(LavaVAO);
-    const GLuint textures[] = { lava.getAlbedo(), lava.getNormalmap(),lava.getMetallic(), lava.getRoughness(), lava.getAOmap() };
+    lava_floor_.Use();
+    glBindVertexArray(lava_vao_);
+    const GLuint textures[] = { lava_.get_albedo(), lava_.get_normal_map(),lava_.get_metallic(), lava_.get_roughness(), lava_.get_ao_map() };
     glBindTextures(0, 5, textures);
-    glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, count_, GL_UNSIGNED_INT, 0);
 
     // Draw the particles
-    SimRender.Use();
+    sim_render_.Use();
     glPointSize(10.0f);
-    glBindVertexArray(particlesVao);
-    glDrawArrays(GL_POINTS, 0, totalParticles);
+    glBindVertexArray(particles_vao_);
+    glDrawArrays(GL_POINTS, 0, static_cast<GLsizeiptr>(total_particles_));
 
 
 #if 0
@@ -247,6 +246,5 @@ void LavaSystem::Draw()
 
 }
 
-LavaSystem::~LavaSystem()
-{
-}
+inline lava_system::~lava_system()
+= default;

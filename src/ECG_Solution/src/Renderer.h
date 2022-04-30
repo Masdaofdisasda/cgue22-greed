@@ -10,101 +10,101 @@
 #include "FontRenderer.h"
 #include "Lava.h"
 
-class Renderer
+class renderer
 {
 public:
-	Renderer(PerFrameData& pfdata, LightSources& sources);
-	~Renderer();
+	renderer(PerFrameData& perframe_data, light_sources& sources);
+	~renderer();
 
-	void Draw(Level* level);
-	void swapLuminance();
+	void draw(level* level);
+	void swap_luminance();
 
-	GlobalState static loadSettings();
-	std::shared_ptr<GlobalState> static getState();
+	GlobalState static load_settings();
+	std::shared_ptr<GlobalState> static get_state();
 	static std::shared_ptr<GlobalState> state;
 private:
 	// Render Settings
-	PerFrameData* perframeData;	// viewproj, viewpos,...
-	UBO perframeBuffer;	
+	PerFrameData* perframe_data_;	// viewproj, viewpos,...
+	UBO perframe_buffer_;	
 
-	FontRenderer fontRenderer;
-	LavaSystem lavaSim;
+	font_renderer font_renderer_;
+	lava_system lava_sim_;
 
 	// Illumination
-	LightSources lights;
-	UBO directionalLights;
-	UBO positionalLights;
+	light_sources lights_;
+	UBO directional_lights_;
+	UBO positional_lights_;
 
 	// Shader Programs
 	// Scene rendering
-	Program PBRShader;		// main illumination shader
-	Program skyboxShader;	// simple skybox shader
+	program pbr_shader_;		// main illumination shader
+	program skybox_shader_;	// simple skybox shader
 	// Bloom/HDR
-	Program BrightPass;		// filter bright spots
-	Program ToLuminance;	// converts brightness
-	Program BlurX;			// gauss blur in x direction
-	Program BlurY;			// gauss blur in y direction
-	Program CombineHDR;		// combines blur with render fbo, tone mapping
-	Program lightAdapt;		// calculates luminance changes
+	program bright_pass_;		// filter bright spots
+	program to_luminance_;	// converts brightness
+	program blur_x_;			// gauss blur in x direction
+	program blur_y_;			// gauss blur in y direction
+	program combine_hdr_;		// combines blur with render fbo, tone mapping
+	program light_adapt_;		// calculates luminance changes
 	// SSAO
-	Program SSAO;			// calculates occlusion
-	Program CombineSSAO;	// combines ssao with render fbo
+	program ssao_;			// calculates occlusion
+	program combine_ssao_;	// combines ssao with render fbo
 	// Volumetric Light
-	Program DepthMap;		// samples depth from a directional light
-	Program VolumetricLight;// calculate light with raymarching
-	Program downsampleVL;	// downsamples depth buffer
-	Program upsampleVL;		// upsamples depth buffer
-	Program blurXVL;
-	Program blurYVL;
+	program depth_map_;		// samples depth from a directional light
+	program volumetric_light_;// calculate light with raymarching
+	program downsample_vl_;	// downsamples depth buffer
+	program upsample_vl_;		// upsamples depth buffer
+	program blur_xvl_;
+	program blur_yvl_;
 	// HUD
-	Program renderImage;
-	Program renderColor;
+	program render_image_;
+	program render_color_;
 
 	// global Textures
-	Cubemap IBL;
-	Cubemap skyTex;
-	GLuint Lut3D;
-	GLuint emptyVAO;		// for skybox drawing
+	cubemap ibl_;
+	cubemap sky_tex_;
+	GLuint lut_3d_ = 0;
+	GLuint empty_vao_ = 0;		// for skybox drawing
 
 	// Framebuffers for HDR/Bloom
-	GLuint luminance1x1;
+	GLuint luminance1x1_{};
 	// Framebuffer size cant be changed after init eg. window resizing not correctly working
-	Framebuffer framebuffer1 = Framebuffer(state->width, state->height, GL_RGBA16F, GL_DEPTH_COMPONENT24); // main render target for processing
-	Framebuffer framebuffer2 = Framebuffer(state->width, state->height, GL_RGBA16F, GL_DEPTH_COMPONENT24); // main render target for processing
-	Framebuffer framebuffer3 = Framebuffer(state->width, state->height, GL_RGBA16F, GL_DEPTH_COMPONENT24); // main render target for processing
-	Framebuffer luminance = Framebuffer(64, 64, GL_RGBA16F, 0);
-	Framebuffer brightPass = Framebuffer(256, 256, GL_RGBA16F, 0);
-	Framebuffer bloom0 = Framebuffer(256, 256, GL_RGBA16F, 0); 
-	Framebuffer bloom1 = Framebuffer(256, 256, GL_RGBA16F, 0);
-	Texture luminance0 = Texture(GL_TEXTURE_2D, 1, 1, GL_RGBA16F);
-	Texture luminance1 = Texture(GL_TEXTURE_2D, 1, 1, GL_RGBA16F);
-	const Texture* luminances[2] = { &luminance0, &luminance1 };
+	framebuffer framebuffer1_ = framebuffer(state->width, state->height, GL_RGBA16F, GL_DEPTH_COMPONENT24); // main render target for processing
+	framebuffer framebuffer2_ = framebuffer(state->width, state->height, GL_RGBA16F, GL_DEPTH_COMPONENT24); // main render target for processing
+	framebuffer framebuffer3_ = framebuffer(state->width, state->height, GL_RGBA16F, GL_DEPTH_COMPONENT24); // main render target for processing
+	framebuffer luminance_ = framebuffer(64, 64, GL_RGBA16F, 0);
+	framebuffer bright_pass_fb_ = framebuffer(256, 256, GL_RGBA16F, 0);
+	framebuffer bloom0_ = framebuffer(256, 256, GL_RGBA16F, 0); 
+	framebuffer bloom1_ = framebuffer(256, 256, GL_RGBA16F, 0);
+	Texture luminance0_ = Texture(GL_TEXTURE_2D, 1, 1, GL_RGBA16F);
+	Texture luminance1_ = Texture(GL_TEXTURE_2D, 1, 1, GL_RGBA16F);
+	const Texture* luminances_[2] = { &luminance0_, &luminance1_ };
 
 	// Framebuffers for SSAO
-	Framebuffer ssao = Framebuffer(1024, 1024, GL_RGBA8, 0);
-	Framebuffer blur = Framebuffer(1024, 1024, GL_RGBA8, 0);
-	GLuint pattern;
+	framebuffer ssao_fb_ = framebuffer(1024, 1024, GL_RGBA8, 0);
+	framebuffer blur_ = framebuffer(1024, 1024, GL_RGBA8, 0);
+	GLuint pattern_ = 0;
 
 	// Framebuffers for light/shadow
-	Framebuffer depthMap = Framebuffer(1024 * state->shadowRes_, 1024 * state->shadowRes_, 0, GL_DEPTH_COMPONENT24);
-	Framebuffer blur0 = Framebuffer(state->width / 2, state->height / 2, GL_RGBA8, 0);
-	Framebuffer blur1 = Framebuffer(state->width / 2, state->height / 2, GL_RGBA8, 0);
-	Framebuffer depthHalfRes = Framebuffer(state->width / 2, state->height / 2, 0, GL_DEPTH_COMPONENT24);
+	framebuffer depth_map_fb_ = framebuffer(1024 * state->shadowRes_, 1024 * state->shadowRes_, 0, GL_DEPTH_COMPONENT24);
+	framebuffer blur0_ = framebuffer(state->width / 2, state->height / 2, GL_RGBA8, 0);
+	framebuffer blur1_ = framebuffer(state->width / 2, state->height / 2, GL_RGBA8, 0);
+	framebuffer depth_half_res_ = framebuffer(state->width / 2, state->height / 2, 0, GL_DEPTH_COMPONENT24);
 
-	GLuint hud;
+	GLuint hud_ = 0;
 
-	std::vector<std::string> deathMsgs =
+	std::vector<std::string> death_msgs_ =
 	{
 		"Mmhhh, smells like bacon",
 		"maybe try being less greedy next time?",
-		"YOU WERE THE CHOOSEN ONE!"
+		"YOU WERE THE CHOSEN ONE!"
 	};
 
-	void fillLightsources();
-	void buildShaderPrograms(); 
-	void prepareFramebuffers();
-	void setRenderSettings();
-	glm::mat4 glmlookAt2(glm::vec3 pos, glm::vec3 target, glm::vec3 up);
+	void fill_lightsources();
+	void build_shader_programs(); 
+	void prepare_framebuffers();
+	void set_render_settings() const;
+	glm::mat4 glmlook_at2(glm::vec3 pos, glm::vec3 target, glm::vec3 up);
 };
 
 

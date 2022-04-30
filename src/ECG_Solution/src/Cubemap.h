@@ -4,61 +4,60 @@
 /// @brief loads and processes 4 different textures for image based lightning
 /// loads an equirectangular panorama HDR image and prepares it for the render pipeline
 /// for an actual implemention of a cubemap texture use Texture.h
-class Cubemap{
+class cubemap{
 private:
-	GLuint env_ID = 0; // enviroment created from the hdri image (Cubemap)
-	GLuint irrad_ID = 0; // irradiance (Cubemap)
-	GLuint prefilt_ID = 0; // pre filtered (Cubemap)
-	GLuint brdfLut_ID = 0; // brdf LUT (Texture)
+	GLuint env_id_ = 0; // enviroment created from the hdri image (Cubemap)
+	GLuint irrad_id_ = 0; // irradiance (Cubemap)
+	GLuint prefilt_id_ = 0; // pre filtered (Cubemap)
+	GLuint brdf_lut_id_ = 0; // brdf LUT (Texture)
 
-	void Release()
+	void release()
 	{
-		glDeleteTextures(1, &env_ID);
-		glDeleteTextures(1, &irrad_ID);
-		glDeleteTextures(1, &prefilt_ID);
-		glDeleteTextures(1, &brdfLut_ID);
-		env_ID = 0;
-		irrad_ID = 0;
-		prefilt_ID = 0;
-		brdfLut_ID = 0;
+		glDeleteTextures(1, &env_id_);
+		glDeleteTextures(1, &irrad_id_);
+		glDeleteTextures(1, &prefilt_id_);
+		glDeleteTextures(1, &brdf_lut_id_);
+		env_id_ = 0;
+		irrad_id_ = 0;
+		prefilt_id_ = 0;
+		brdf_lut_id_ = 0;
 	}
 
 	// only needed for initialization
-	void renderCube();
-	void renderQuad();
-	glm::mat4 glmlookAt2(glm::vec3 eye, glm::vec3 target, glm::vec3 up);
+	void render_cube();
+	void render_quad();
 
 public:
-	Cubemap();
-	~Cubemap() { Release(); }
+	cubemap();
+	~cubemap() { release(); }
 
-	void loadHDR(const char* texPath);
+	void load_hdr(const char* tex_path);
 
 	// ensure RAII compliance
-	Cubemap(const Cubemap&) = delete;
-	Cubemap& operator=(const Cubemap&) = delete;
+	cubemap(const cubemap&) = delete;
+	cubemap& operator=(const cubemap&) = delete;
 
-	 Cubemap(Cubemap&& other) noexcept : env_ID(other.env_ID)
+	 cubemap(cubemap&& other) noexcept : env_id_(other.env_id_)
 	{
-		other.env_ID = 0; //Use the "null" ID for the old object.
+		other.env_id_ = 0; //Use the "null" ID for the old object.
 	} 
 
-	Cubemap& operator=(Cubemap&& other)
+	cubemap& operator=(cubemap&& other)
 	{
 		//ALWAYS check for self-assignment.
 		if (this != &other)
 		{
-			Release();
+			release();
 			//obj_ is now 0.
-			std::swap(env_ID, other.env_ID);
-			std::swap(irrad_ID, other.irrad_ID);
-			std::swap(prefilt_ID, other.prefilt_ID);
-			std::swap(brdfLut_ID, other.brdfLut_ID);
+			std::swap(env_id_, other.env_id_);
+			std::swap(irrad_id_, other.irrad_id_);
+			std::swap(prefilt_id_, other.prefilt_id_);
+			std::swap(brdf_lut_id_, other.brdf_lut_id_);
 		}
 	}
 
-	GLuint getEnvironment()const { return env_ID; }
-	GLuint getIrradianceID() const { return irrad_ID; }
-	GLuint getPreFilterID()const { return prefilt_ID; }
-	GLuint getBdrfLutID()const { return brdfLut_ID; }
+	GLuint get_environment()const { return env_id_; }
+	GLuint get_irradiance_id() const { return irrad_id_; }
+	GLuint get_pre_filter_id()const { return prefilt_id_; }
+	GLuint get_bdrf_lut_id()const { return brdf_lut_id_; }
 };

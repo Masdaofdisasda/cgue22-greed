@@ -7,20 +7,20 @@
 /// @param type GL Texture type, eg GL_TEXTURE_2D
 /// @param width of the texture (same as framebuffer)
 /// @param height of the texture (same as framebuffer)
-/// @param internalFormat is the color or depth format
-Texture::Texture(GLenum type, int width, int height, GLenum internalFormat)
+/// @param internal_format is the color or depth format
+Texture::Texture(const GLenum type, const int width, const int height, const GLenum internal_format)
 	: type_(type)
 {
-	glCreateTextures(type, 1, &tex_ID);
-	glTextureParameteri(tex_ID, GL_TEXTURE_MAX_LEVEL, 0);
-	glTextureParameteri(tex_ID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTextureParameteri(tex_ID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTextureStorage2D(tex_ID, getNumMipMapLevels2D(width, height), internalFormat, width, height);
+	glCreateTextures(type, 1, &tex_id_);
+	glTextureParameteri(tex_id_, GL_TEXTURE_MAX_LEVEL, 0);
+	glTextureParameteri(tex_id_, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTextureParameteri(tex_id_, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTextureStorage2D(tex_id_, get_num_mip_map_levels_2d(width, height), internal_format, width, height);
 }
 /// @brief loads a texture from image, used in Material.h
-/// @param texPath is the location of an image
+/// @param tex_path is the location of an image
 /// @return the created texture handle
-GLuint Texture::loadTexture(const char* texPath)
+GLuint Texture::load_texture(const char* tex_path)
 {
 	GLuint handle = 0;
 	// generate texture
@@ -34,9 +34,9 @@ GLuint Texture::loadTexture(const char* texPath)
 	stbi_set_flip_vertically_on_load(true);
 
 	int w, h, comp;
-	const uint8_t* img = stbi_load(texPath, &w, &h, &comp, 3);
+	const uint8_t* img = stbi_load(tex_path, &w, &h, &comp, 3);
 
-	if (img > 0)
+	if (img > nullptr)
 	{
 		glTextureStorage2D(handle, 1, GL_RGB8, w, h);
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -46,34 +46,34 @@ GLuint Texture::loadTexture(const char* texPath)
 	}
 	else
 	{
-		std::cout << "could not load texture" << texPath << std::endl;
+		std::cout << "could not load texture" << tex_path << std::endl;
 	}
 	glBindTexture(GL_TEXTURE_2D, 0);
 	return handle;
 }
 
-/// @brief multi threaded variant
-/// @param texPath 
-/// @param handles 
-void Texture::loadTextureMT(const char* texPath, GLuint handles[])
+/// @brief load 5 pbr textures using multiple threads
+/// @param tex_path folder location of the material
+/// @param handles target containing the texture handles after call
+void Texture::load_texture_mt(const char* tex_path, GLuint handles[])
 {
-	stbiData imgData[5]; std::thread workers[5];
+	stbiData img_data[5]; std::thread workers[5];
 
-	std::string albedo = append(texPath, "/albedo.jpg");
-	workers[0] = std::thread (Texture::stbiLoad, albedo, &imgData[0]);
-	std::string normal = append(texPath, "/normal.jpg");
-	workers[1] = std::thread (Texture::stbiLoad, normal, &imgData[1]);
-	std::string metal = append(texPath, "/metal.jpg");
-	workers[2] = std::thread (Texture::stbiLoad, metal, &imgData[2]);
-	std::string rough = append(texPath, "/rough.jpg");
-	workers[3] = std::thread (Texture::stbiLoad, rough, &imgData[3]);
-	std::string ao = append(texPath, "/ao.jpg");
-	workers[4] = std::thread (Texture::stbiLoad, ao, &imgData[4]);
+	std::string albedo = append(tex_path, "/albedo.jpg");
+	workers[0] = std::thread (Texture::stbi_load_single, albedo, &img_data[0]);
+	std::string normal = append(tex_path, "/normal.jpg");
+	workers[1] = std::thread (Texture::stbi_load_single, normal, &img_data[1]);
+	std::string metal = append(tex_path, "/metal.jpg");
+	workers[2] = std::thread (Texture::stbi_load_single, metal, &img_data[2]);
+	std::string rough = append(tex_path, "/rough.jpg");
+	workers[3] = std::thread (Texture::stbi_load_single, rough, &img_data[3]);
+	std::string ao = append(tex_path, "/ao.jpg");
+	workers[4] = std::thread (Texture::stbi_load_single, ao, &img_data[4]);
 
 	for (size_t i = 0; i < 5; i++)
 	{
 		workers[i].join();
-		int mipMapLevel = getNumMipMapLevels2D(imgData[i].w, imgData[i].h);
+		const int mipMapLevel = get_num_mip_map_levels_2d(img_data[i].w, img_data[i].h);
 		glCreateTextures(GL_TEXTURE_2D, 1, &handles[i]);
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -81,29 +81,29 @@ void Texture::loadTextureMT(const char* texPath, GLuint handles[])
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		
-		if (imgData[i].data > 0)
+		if (img_data[i].data > nullptr)
 		{
 			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-			glTextureStorage2D(handles[i], mipMapLevel, GL_RGB8, imgData[i].w, imgData[i].h);
-			glTextureSubImage2D(handles[i], 0, 0, 0, imgData[i].w, imgData[i].h, GL_RGB, GL_UNSIGNED_BYTE, imgData[i].data);
+			glTextureStorage2D(handles[i], mipMapLevel, GL_RGB8, img_data[i].w, img_data[i].h);
+			glTextureSubImage2D(handles[i], 0, 0, 0, img_data[i].w, img_data[i].h, GL_RGB, GL_UNSIGNED_BYTE, img_data[i].data);
 			glGenerateTextureMipmap(handles[i]);
 			glTextureParameteri(handles[i], GL_TEXTURE_MAX_LEVEL, mipMapLevel - 1);
 			glTextureParameteri(handles[i], GL_TEXTURE_MAX_ANISOTROPY, 16);
 			glBindTextures(0, 1, &handles[i]);
-			delete imgData[i].data;
+			delete img_data[i].data;
 		}
 		else
 		{
-			std::cout << "could not load texture" << texPath << std::endl;
+			std::cout << "could not load texture" << tex_path << std::endl;
 		}
 	}
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 /// @brief loads a texture from image, used in Material.h
-/// @param texPath is the location of an image
+/// @param tex_path is the location of an image
 /// @return the created texture handle
-GLuint Texture::loadTextureTransparent(const char* texPath)
+GLuint Texture::load_texture_transparent(const char* tex_path)
 {
 	GLuint handle = 0;
 	// generate texture
@@ -117,9 +117,9 @@ GLuint Texture::loadTextureTransparent(const char* texPath)
 	stbi_set_flip_vertically_on_load(true);
 
 	int w, h, comp;
-	const uint8_t* img = stbi_load(texPath, &w, &h, &comp, STBI_rgb_alpha);
+	const uint8_t* img = stbi_load(tex_path, &w, &h, &comp, STBI_rgb_alpha);
 
-	if (img > 0)
+	if (img > nullptr)
 	{
 		glTextureStorage2D(handle, 1, GL_RGBA8, w, h);
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -129,7 +129,7 @@ GLuint Texture::loadTextureTransparent(const char* texPath)
 	}
 	else
 	{
-		std::cout << "could not load texture" << texPath << std::endl;
+		std::cout << "could not load texture" << tex_path << std::endl;
 	}
 	glBindTexture(GL_TEXTURE_2D, 0);
 	return handle;
@@ -137,15 +137,15 @@ GLuint Texture::loadTextureTransparent(const char* texPath)
 
 /// @brief loads a 3dlut in .cube format, used for color grading in Renderer
 /// code from https://svnte.se/3d-lut
-/// @param texPath is the location of the lut
+/// @param tex_path is the location of the lut
 /// @return the created texture handle
-GLuint Texture::load3Dlut(const char* texPath)
+GLuint Texture::load_3dlut(const char* tex_path)
 {
 	// Load .CUBE file 
-	printf("Loading LUT file %s \n", texPath);
-	FILE* file = fopen(texPath, "r");
+	printf("Loading LUT file %s \n", tex_path);
+	FILE* file = fopen(tex_path, "r");
 
-	if (file == NULL) {
+	if (file == nullptr) {
 		printf("Could not open file \n");
 		return false;
 	}
@@ -215,7 +215,7 @@ GLuint Texture::load3Dlut(const char* texPath)
 /// @param w width of the texture
 /// @param h height of the texture
 /// @return the number of mipmap levles
-int Texture::getNumMipMapLevels2D(int w, int h)
+int Texture::get_num_mip_map_levels_2d(const int w, const int h)
 {
 	int levels = 1;
 	while ((w | h) >> levels)
@@ -223,21 +223,21 @@ int Texture::getNumMipMapLevels2D(int w, int h)
 	return levels;
 }
 
-void Texture::stbiLoad(std::string texPath, stbiData* img)
+void Texture::stbi_load_single(const std::string& tex_path, stbiData* img)
 {
 	stbi_set_flip_vertically_on_load(true);
 
-	img->data = stbi_load(texPath.c_str(), &img->w, &img->h, &img->comp, 3);
+	img->data = stbi_load(tex_path.c_str(), &img->w, &img->h, &img->comp, 3);
 }
 
 /// @brief adds a subfolder to a given path
-/// @param texPath is the path to the root folder
-/// @param texType is the name of the image file in the root folder
+/// @param tex_path is the path to the root folder
+/// @param tex_type is the name of the image file in the root folder
 /// @return the path to the image file
-std::string Texture::append(const char* texPath, char* texType)
+std::string Texture::append(const char* tex_path, const char* tex_type)
 {
 	char c[100];
-	strcpy(c, texPath);
-	std::string result = strcat(c, texType);
+	strcpy(c, tex_path);
+	std::string result = strcat(c, tex_type);
 	return result;
 }

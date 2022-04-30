@@ -2,40 +2,39 @@
 
 /// @brief sets up shaders for rendering and post processing and also enviroment maps
 /// @param state is the global state of the program at runtime
-/// @param pfdata is per render cycle static data
+/// @param perframe_data is per render cycle static data
 /// @param sources are the light sources of some level
-Renderer::Renderer(PerFrameData& pfdata, LightSources& sources)
+renderer::renderer(PerFrameData& perframe_data, light_sources& sources)
+: perframe_data_(&perframe_data), lights_(sources)
 {
-	assert(Renderer::state != nullptr);
-	perframeData = &pfdata; // link per frame data
-	lights = sources; // set lights and lightcounts for shaders
-	buildShaderPrograms(); // build shader programs
-	setRenderSettings();	// set effect settings 
-	fillLightsources(); // binds lights to binding points in shader
-	perframeBuffer.fillBuffer(pfdata); // load UBO to shader;
+	assert(renderer::state != nullptr);
+	build_shader_programs(); // build shader programs
+	set_render_settings();	// set effect settings 
+	fill_lightsources(); // binds lights to binding points in shader
+	perframe_buffer_.fill_buffer(perframe_data); // load UBO to shader;
 
-	prepareFramebuffers(); // for hdr rendering and tonemapping
+	prepare_framebuffers(); // for hdr rendering and tonemapping
 	std::cout << "load Enviroment Map.." << std::endl;
-	IBL.loadHDR("../../assets/textures/cubemap/env.hdr");
+	ibl_.load_hdr("../../assets/textures/cubemap/env.hdr");
 	std::cout << "load Skybox.." << std::endl;
-	skyTex.loadHDR("../../assets/textures/cubemap/beach.hdr");
-	Lut3D = Texture::load3Dlut("../../assets/textures/look32.CUBE");
-	glCreateVertexArrays(1, &emptyVAO);
-	PBRShader.uploadIBL(IBL.getIrradianceID(),IBL.getPreFilterID(), IBL.getBdrfLutID(), skyTex.getEnvironment());
-	glBindTextureUnit(13, Lut3D);
+	sky_tex_.load_hdr("../../assets/textures/cubemap/beach.hdr");
+	lut_3d_ = Texture::load_3dlut("../../assets/textures/look32.CUBE");
+	glCreateVertexArrays(1, &empty_vao_);
+	pbr_shader_.uploadIBL(ibl_.get_irradiance_id(),ibl_.get_pre_filter_id(), ibl_.get_bdrf_lut_id(), sky_tex_.get_environment());
+	glBindTextureUnit(13, lut_3d_);
 
-	fontRenderer.init("../../assets/fonts/Quasimoda/Quasimoda-Regular.otf", state->width, state->height);
+	font_renderer_.init("../../assets/fonts/Quasimoda/Quasimoda-Regular.otf", state->width, state->height);
 
-	lavaSim.init(glm::ivec3(lights.directional.size(), lights.point.size(), 0));
+	lava_sim_.init(glm::ivec3(lights_.directional.size(), lights_.point.size(), 0));
 }
 
-std::shared_ptr<GlobalState> Renderer::getState()
+std::shared_ptr<GlobalState> renderer::get_state()
 {
 	return state;
 }
 /// @brief loads settings from settings.ini, called in main
 /// @return a globalstate from settings.ini
-GlobalState Renderer::loadSettings()
+GlobalState renderer::load_settings()
 {
 	if (state == nullptr)
 	{
@@ -71,176 +70,176 @@ GlobalState Renderer::loadSettings()
 	}
 
 	// TODO 
-	return *Renderer::state;
+	return *renderer::state;
 }
 
 
-std::shared_ptr<GlobalState> Renderer::state = std::make_shared<GlobalState>(Renderer::loadSettings());
+std::shared_ptr<GlobalState> renderer::state = std::make_shared<GlobalState>(renderer::load_settings());
 
 // TODO
-void Renderer::fillLightsources()
+void renderer::fill_lightsources()
 {
 	// create Uniform Buffer Objects from light source struct vectors
-	directionalLights.fillBuffer(lights.directional);
-	positionalLights.fillBuffer(lights.point);
+	directional_lights_.fill_buffer(lights_.directional);
+	positional_lights_.fill_buffer(lights_.point);
 
 	// bind UBOs to bindings in shader
-	PBRShader.bindLightBuffers(&directionalLights, &positionalLights);
+	pbr_shader_.bindLightBuffers(&directional_lights_, &positional_lights_);
 	// set light source count variables
-	PBRShader.setuInt("dLightCount", lights.directional.size());
-	PBRShader.setuInt("pLightCount", lights.point.size());
+	pbr_shader_.setuInt("dLightCount", lights_.directional.size());
+	pbr_shader_.setuInt("pLightCount", lights_.point.size());
 }
 
 /// @brief initializes settings for post processing and rendering
-void Renderer::setRenderSettings()
+void renderer::set_render_settings() const
 {
-	perframeData->bloom = glm::vec4(
+	perframe_data_->bloom = glm::vec4(
 		state->exposure_,
 		state->maxWhite_,
 		state->bloomStrength_,
 		state->adaptationSpeed_);
 
-	perframeData->normalMap = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	perframe_data_->normalMap = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
-	perframeData->ssao1 = glm::vec4(
+	perframe_data_->ssao1 = glm::vec4(
 		state->scale_,
 		state->bias_,
 		state->Znear,
 		state->Zfar);
-	perframeData->ssao2 = glm::vec4(
+	perframe_data_->ssao2 = glm::vec4(
 		state->radius,
 		state->attScale,
 		state->distScale,
 		1.0f);
 
-	perframeData->deltaTime = glm::vec4(0);
+	perframe_data_->deltaTime = glm::vec4(0);
 }
 
 /// @brief compiles all needed shaders for the render loop
-void Renderer::buildShaderPrograms()
+void renderer::build_shader_programs()
 {
-	Shader pbrVert("../../assets/shaders/PBR/pbr.vert");
-	Shader pbrFrag("../../assets/shaders/PBR/pbr.frag", glm::ivec3(lights.directional.size(), lights.point.size(), 0));
-	PBRShader.buildFrom(pbrVert, pbrFrag);
-	PBRShader.Use();
+	Shader pbr_vert("../../assets/shaders/PBR/pbr.vert");
+	Shader pbr_frag("../../assets/shaders/PBR/pbr.frag", glm::ivec3(lights_.directional.size(), lights_.point.size(), 0));
+	pbr_shader_.buildFrom(pbr_vert, pbr_frag);
+	pbr_shader_.Use();
 
-	Shader skyboxVert("../../assets/shaders/skybox/skybox.vert");
-	Shader skyboxFrag("../../assets/shaders/skybox/skybox.frag");
-	skyboxShader.buildFrom(skyboxVert, skyboxFrag);
-	skyboxShader.Use();
+	Shader skybox_vert("../../assets/shaders/skybox/skybox.vert");
+	Shader skybox_frag("../../assets/shaders/skybox/skybox.frag");
+	skybox_shader_.buildFrom(skybox_vert, skybox_frag);
+	skybox_shader_.Use();
 
-	Shader fullScreenTriangleVert("../../assets/shaders/fullScreenTriangle.vert");
+	Shader full_screen_triangle_vert("../../assets/shaders/fullScreenTriangle.vert");
 
-	Shader BrightPassFrag("../../assets/shaders/Bloom/BrightPass.frag");
-	BrightPass.buildFrom(fullScreenTriangleVert, BrightPassFrag);
+	Shader bright_pass_frag("../../assets/shaders/Bloom/BrightPass.frag");
+	bright_pass_.buildFrom(full_screen_triangle_vert, bright_pass_frag);
 
-	Shader CombineHDRFrag("../../assets/shaders/Bloom/CombineHDR.frag");
-	CombineHDR.buildFrom(fullScreenTriangleVert, CombineHDRFrag);
+	Shader combine_hdr_frag("../../assets/shaders/Bloom/CombineHDR.frag");
+	combine_hdr_.buildFrom(full_screen_triangle_vert, combine_hdr_frag);
 
-	Shader BlurXFrag("../../assets/shaders/Bloom/BlurX.frag");
-	Shader BlurYFrag("../../assets/shaders/Bloom/BlurY.frag");
-	BlurX.buildFrom(fullScreenTriangleVert, BlurXFrag);
-	BlurY.buildFrom(fullScreenTriangleVert, BlurYFrag);
+	Shader blur_x_frag("../../assets/shaders/Bloom/BlurX.frag");
+	Shader blur_y_frag("../../assets/shaders/Bloom/BlurY.frag");
+	blur_x_.buildFrom(full_screen_triangle_vert, blur_x_frag);
+	blur_y_.buildFrom(full_screen_triangle_vert, blur_y_frag);
 
-	Shader LuminanceFrag("../../assets/shaders/Bloom/toLuminance.frag");
-	ToLuminance.buildFrom(fullScreenTriangleVert, LuminanceFrag);
+	Shader luminance_frag("../../assets/shaders/Bloom/toLuminance.frag");
+	to_luminance_.buildFrom(full_screen_triangle_vert, luminance_frag);
 
-	Shader lightAdaptComp("../../assets/shaders/Bloom/lightAdaption.comp");
-	lightAdapt.buildFrom(lightAdaptComp);
+	Shader light_adapt_comp("../../assets/shaders/Bloom/lightAdaption.comp");
+	light_adapt_.buildFrom(light_adapt_comp);
 
-	Shader SSAOFrag("../../assets/shaders/SSAO/SSAO.frag");
-	Shader combineSSAOFrag("../../assets/shaders/SSAO/combineSSAO.frag");
-	SSAO.buildFrom(fullScreenTriangleVert, SSAOFrag);
-	CombineSSAO.buildFrom(fullScreenTriangleVert, combineSSAOFrag);
+	Shader ssao_frag("../../assets/shaders/SSAO/SSAO.frag");
+	Shader combine_ssao_frag("../../assets/shaders/SSAO/combineSSAO.frag");
+	ssao_.buildFrom(full_screen_triangle_vert, ssao_frag);
+	combine_ssao_.buildFrom(full_screen_triangle_vert, combine_ssao_frag);
 
-	Shader renderImgVert("../../assets/shaders/fullScreenTriangle.vert");
-	Shader renderImgFrag("../../assets/shaders/HUD/fullScreenImage.frag");
-	Shader renderColFrag("../../assets/shaders/HUD/fullScreenColor.frag");
-	renderImage.buildFrom(renderImgVert, renderImgFrag);
-	renderColor.buildFrom(renderImgVert, renderColFrag);
+	Shader render_img_vert("../../assets/shaders/fullScreenTriangle.vert");
+	Shader render_img_frag("../../assets/shaders/HUD/fullScreenImage.frag");
+	Shader render_col_frag("../../assets/shaders/HUD/fullScreenColor.frag");
+	render_image_.buildFrom(render_img_vert, render_img_frag);
+	render_color_.buildFrom(render_img_vert, render_col_frag);
 
-	Shader depthVert("../../assets/shaders/lightFX/depthMap.vert");
-	Shader depthFrag("../../assets/shaders/lightFX/depthMap.frag");
-	DepthMap.buildFrom(depthVert, depthFrag);
+	Shader depth_vert("../../assets/shaders/lightFX/depthMap.vert");
+	Shader depth_frag("../../assets/shaders/lightFX/depthMap.frag");
+	depth_map_.buildFrom(depth_vert, depth_frag);
 
-	Shader volightFrag("../../assets/shaders/lightFX/VolumetricLight.frag", glm::ivec3(lights.directional.size(), lights.point.size(), 0));
-	VolumetricLight.buildFrom(fullScreenTriangleVert, volightFrag);
+	Shader volight_frag("../../assets/shaders/lightFX/VolumetricLight.frag", glm::ivec3(lights_.directional.size(), lights_.point.size(), 0));
+	volumetric_light_.buildFrom(full_screen_triangle_vert, volight_frag);
 
-	Shader downVlVert("../../assets/shaders/lightFX/downVL.vert");
-	Shader downVlFrag("../../assets/shaders/lightFX/downVL.frag");
-	downsampleVL.buildFrom(downVlVert, downVlFrag);
+	Shader down_vl_vert("../../assets/shaders/lightFX/downVL.vert");
+	Shader down_vl_frag("../../assets/shaders/lightFX/downVL.frag");
+	downsample_vl_.buildFrom(down_vl_vert, down_vl_frag);
 
-	Shader upVlVert("../../assets/shaders/lightFX/upVL.vert");
-	Shader upVlFrag("../../assets/shaders/lightFX/upVL.frag");
-	upsampleVL.buildFrom(upVlVert, upVlFrag);
+	Shader up_vl_vert("../../assets/shaders/lightFX/upVL.vert");
+	Shader up_vl_frag("../../assets/shaders/lightFX/upVL.frag");
+	upsample_vl_.buildFrom(up_vl_vert, up_vl_frag);
 
-	PBRShader.Use();
+	pbr_shader_.Use();
 }
 
 
 /// @brief sets OpenGL states before first draw call, which can't be done in header file
-void Renderer::prepareFramebuffers() {
+void renderer::prepare_framebuffers() {
 
-	glGenTextures(1, &luminance1x1);
-	glTextureView(luminance1x1, GL_TEXTURE_2D, luminance.getTextureColor().getHandle(), GL_RGBA16F, 6, 1, 0, 1);
+	glGenTextures(1, &luminance1x1_);
+	glTextureView(luminance1x1_, GL_TEXTURE_2D, luminance_.get_texture_color().get_handle(), GL_RGBA16F, 6, 1, 0, 1);
 
 	const glm::vec4 startingLuminance(glm::vec3(0.0f), 1.0f);
-	glTextureSubImage2D(luminance0.getHandle(), 0, 0, 0, 1, 1, GL_RGBA, GL_FLOAT, &startingLuminance[0]);
+	glTextureSubImage2D(luminance0_.get_handle(), 0, 0, 0, 1, 1, GL_RGBA, GL_FLOAT, &startingLuminance[0]);
 
-	pattern = Texture::loadTexture("../../assets/shaders/SSAO/pattern.bmp");
+	pattern_ = Texture::load_texture("../../assets/shaders/SSAO/pattern.bmp");
 
-	hud = Texture::loadTextureTransparent("../../assets/textures/loading/alpha HUD.png");
+	hud_ = Texture::load_texture_transparent("../../assets/textures/loading/alpha HUD.png");
 }
 
 /// @brief implements the pipeline for HDR, tonemapping and shadows
 /// @param level is the geometry which should be drawn
-void Renderer::Draw(Level* level)
+void renderer::draw(level* level)
 {
 	
-	glClearNamedFramebufferfv(framebuffer1.getHandle(), GL_COLOR, 0, &(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)[0]));
-	glClearNamedFramebufferfi(framebuffer1.getHandle(), GL_DEPTH_STENCIL, 0, 1.0f, 0);
+	glClearNamedFramebufferfv(framebuffer1_.get_handle(), GL_COLOR, 0, &(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)[0]));
+	glClearNamedFramebufferfi(framebuffer1_.get_handle(), GL_DEPTH_STENCIL, 0, 1.0f, 0);
 
-	glm::vec3 dir = glm::vec3(lights.directional[0].direction);
-	glm::mat4 lightView = glmlookAt2(glm::vec3(0, 0, 0), dir, glm::vec3(0, 0, 1));
-	glm::mat4 lightProj = level->getTightSceneFrustum();
-	perframeData->lightViewProj = lightProj * lightView;
+	const glm::vec3 dir = glm::vec3(lights_.directional[0].direction);
+	const glm::mat4 light_view = glmlook_at2(glm::vec3(0, 0, 0), dir, glm::vec3(0, 0, 1));
+	const glm::mat4 light_proj = level->get_tight_scene_frustum();
+	perframe_data_->lightViewProj = light_proj * light_view;
 
-	perframeBuffer.Update(*perframeData);
+	perframe_buffer_.update(*perframe_data_);
 
 	glEnable(GL_DEPTH_TEST);
 
 	// 1 - depth mapping
 #if 1 // under construction
-	depthMap.bind();
-		glClearNamedFramebufferfi(depthMap.getHandle(), GL_DEPTH_STENCIL, 0, 1.0f, 0);
-		DepthMap.Use();
-		level->DrawSceneFromLightSource();
-	depthMap.unbind();
-	glBindTextureUnit(12, depthMap.getTextureDepth().getHandle());
+	depth_map_fb_.bind();
+		glClearNamedFramebufferfi(depth_map_fb_.get_handle(), GL_DEPTH_STENCIL, 0, 1.0f, 0);
+		depth_map_.Use();
+		level->draw_scene_shadow_map();
+	depth_map_fb_.unbind();
+	glBindTextureUnit(12, depth_map_fb_.get_texture_depth().get_handle());
 #endif // constructions ends
 
 	// 2 - render scene to framebuffer
-	framebuffer1.bind();
+	framebuffer1_.bind();
 
 		// 2.1 - draw skybox (background)    
-		skyboxShader.Use();
+		skybox_shader_.Use();
 		glDepthMask(false);
-		glBindVertexArray(emptyVAO);
+		glBindVertexArray(empty_vao_);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 		glDepthMask(true);
 
 		// 2.2 - draw scene
-		PBRShader.Use();
-		level->DrawScene();
+		pbr_shader_.Use();
+		level->draw_scene();
 
 		// 2.3 - draw lava
-		lavaSim.update(perframeData->deltaTime.x);
-		lavaSim.simulationStep();
-		lavaSim.Draw();
+		lava_sim_.update(perframe_data_->deltaTime.x);
+		lava_sim_.simulation_step();
+		lava_sim_.draw();
 
-	framebuffer1.unbind(); 
-	glGenerateTextureMipmap(framebuffer1.getTextureColor().getHandle());
-	glTextureParameteri(framebuffer1.getTextureColor().getHandle(), GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	framebuffer1_.unbind(); 
+	glGenerateTextureMipmap(framebuffer1_.get_texture_color().get_handle());
+	glTextureParameteri(framebuffer1_.get_texture_color().get_handle(), GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
 	glDisable(GL_DEPTH_TEST);
 
@@ -258,11 +257,11 @@ void Renderer::Draw(Level* level)
 		glBindTextureUnit(12, depthHalfRes.getTextureDepth().getHandle());
 		*/
 		// calculate volumetric lighting
-		VolumetricLight.Use();
-		blur0.bind();
+		volumetric_light_.Use();
+		blur0_.bind();
 		glDrawArrays(GL_TRIANGLES, 0, 3);
-		blur0.unbind();
-		glBindTextureUnit(12, blur0.getTextureColor().getHandle());
+		blur0_.unbind();
+		glBindTextureUnit(12, blur0_.get_texture_color().get_handle());
 
 
 		/*
@@ -299,43 +298,43 @@ void Renderer::Draw(Level* level)
 	if (state->ssao_)
 	{
 		//3.1 - render scene with ssao pattern
-		glClearNamedFramebufferfv(ssao.getHandle(), GL_COLOR, 0, &(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)[0]));
-		ssao.bind();
-			SSAO.Use();
-			glBindTextureUnit(9, framebuffer1.getTextureDepth().getHandle());
-			glBindTextureUnit(10, pattern);
+		glClearNamedFramebufferfv(ssao_fb_.get_handle(), GL_COLOR, 0, &(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)[0]));
+		ssao_fb_.bind();
+			ssao_.Use();
+			glBindTextureUnit(9, framebuffer1_.get_texture_depth().get_handle());
+			glBindTextureUnit(10, pattern_);
 			glDrawArrays(GL_TRIANGLES, 0, 3);
-		ssao.unbind();
+		ssao_fb_.unbind();
 
 		// 3.2 - blur SSAO image
 		// Blur X
-		blur.bind();
-			BlurX.Use();
-			glBindTextureUnit(9, ssao.getTextureColor().getHandle());
+		blur_.bind();
+			blur_x_.Use();
+			glBindTextureUnit(9, ssao_fb_.get_texture_color().get_handle());
 			glDrawArrays(GL_TRIANGLES, 0, 3);
-		blur.unbind();
+		blur_.unbind();
 		// Blur Y
-		ssao.bind();
-			BlurY.Use();
-			glBindTextureUnit(9, blur.getTextureColor().getHandle());
+		ssao_fb_.bind();
+			blur_y_.Use();
+			glBindTextureUnit(9, blur_.get_texture_color().get_handle());
 			glDrawArrays(GL_TRIANGLES, 0, 3);
-		ssao.unbind();
+		ssao_fb_.unbind();
 
-		glClearNamedFramebufferfv(framebuffer2.getHandle(), GL_COLOR, 0, &(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)[0]));
+		glClearNamedFramebufferfv(framebuffer2_.get_handle(), GL_COLOR, 0, &(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)[0]));
 
 		// 3.3 - combine SSAO with rendered scene
 		glViewport(0, 0, state->width, state->height);
 
-		framebuffer2.bind();
-			CombineSSAO.Use();
-			glBindTextureUnit(9, framebuffer1.getTextureColor().getHandle());
-			glBindTextureUnit(10, ssao.getTextureColor().getHandle());
+		framebuffer2_.bind();
+			combine_ssao_.Use();
+			glBindTextureUnit(9, framebuffer1_.get_texture_color().get_handle());
+			glBindTextureUnit(10, ssao_fb_.get_texture_color().get_handle());
 			glDrawArrays(GL_TRIANGLES, 0, 3);
-		framebuffer2.unbind();
+		framebuffer2_.unbind();
 	}
 	else
 	{
-		glBlitNamedFramebuffer(framebuffer1.getHandle(), framebuffer2.getHandle(), 0, 0, state->width, state->height,
+		glBlitNamedFramebuffer(framebuffer1_.get_handle(), framebuffer2_.get_handle(), 0, 0, state->width, state->height,
 			0, 0, state->width, state->height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 	}
 
@@ -344,107 +343,107 @@ void Renderer::Draw(Level* level)
 	{
 
 		// 4.1 - downscale for addiational blur and convert framebuffer to luminance
-		luminance.bind();
-			ToLuminance.Use();
-			glBindTextureUnit(9, framebuffer2.getTextureColor().getHandle());
+		luminance_.bind();
+			to_luminance_.Use();
+			glBindTextureUnit(9, framebuffer2_.get_texture_color().get_handle());
 			glDrawArrays(GL_TRIANGLES, 0, 3);
-		luminance.unbind();
-		glGenerateTextureMipmap(luminance.getTextureColor().getHandle());
+		luminance_.unbind();
+		glGenerateTextureMipmap(luminance_.get_texture_color().get_handle());
 
 		// 4.2 - compute light adaption (OpenGL memory model requires these memory barriers: https://www.khronos.org/opengl/wiki/Memory_Model )
 		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-		lightAdapt.Use();
-		glBindImageTexture(0, luminances[0]->getHandle(), 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA16F);
-		glBindImageTexture(1, luminance1x1, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA16F);
-		glBindImageTexture(2, luminances[1]->getHandle(), 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA16F);
+		light_adapt_.Use();
+		glBindImageTexture(0, luminances_[0]->get_handle(), 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA16F);
+		glBindImageTexture(1, luminance1x1_, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA16F);
+		glBindImageTexture(2, luminances_[1]->get_handle(), 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA16F);
 		glDispatchCompute(1, 1, 1);
 		glMemoryBarrier(GL_TEXTURE_FETCH_BARRIER_BIT);
 
 		// 4.3 - filter bright spots from framebuffer
-		brightPass.bind();
-			BrightPass.Use();
-			glBindTextureUnit(9, framebuffer2.getTextureColor().getHandle());
+		bright_pass_fb_.bind();
+			bright_pass_.Use();
+			glBindTextureUnit(9, framebuffer2_.get_texture_color().get_handle());
 			glDrawArrays(GL_TRIANGLES, 0, 3);
-		brightPass.unbind();
-		glBlitNamedFramebuffer(brightPass.getHandle(), bloom1.getHandle(), 0, 0, 256, 256, 0, 0, 256, 256, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+		bright_pass_fb_.unbind();
+		glBlitNamedFramebuffer(bright_pass_fb_.get_handle(), bloom1_.get_handle(), 0, 0, 256, 256, 0, 0, 256, 256, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
 		// 4.4 - blur bright spots using ping pong buffers and a seperate blur in x and y direction
 		for (int i = 0; i < 4; i++)
 		{
 			// blur x
-			bloom0.bind();
-				BlurX.Use();
-				glBindTextureUnit(9, bloom1.getTextureColor().getHandle());
+			bloom0_.bind();
+				blur_x_.Use();
+				glBindTextureUnit(9, bloom1_.get_texture_color().get_handle());
 				glDrawArrays(GL_TRIANGLES, 0, 3);
-			bloom0.unbind();
+			bloom0_.unbind();
 			// blur y
-			bloom1.bind();
-				BlurY.Use();
-				glBindTextureUnit(9, bloom0.getTextureColor().getHandle());
+			bloom1_.bind();
+				blur_y_.Use();
+				glBindTextureUnit(9, bloom0_.get_texture_color().get_handle());
 				glDrawArrays(GL_TRIANGLES, 0, 3);
-			bloom1.unbind();
+			bloom1_.unbind();
 		}
 
 		// 4.5 - combine framebuffer with blurred image 
 		glViewport(0, 0, state->width, state->height);
 
-		CombineHDR.Use();
-		glBindTextureUnit(9, framebuffer2.getTextureColor().getHandle());
-		glBindTextureUnit(10, luminances[1]->getHandle());
-		glBindTextureUnit(11, bloom1.getTextureColor().getHandle());
+		combine_hdr_.Use();
+		glBindTextureUnit(9, framebuffer2_.get_texture_color().get_handle());
+		glBindTextureUnit(10, luminances_[1]->get_handle());
+		glBindTextureUnit(11, bloom1_.get_texture_color().get_handle());
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 	}
 	else
 	{
-		glBlitNamedFramebuffer(framebuffer2.getHandle(), 0, 0, 0, state->width, state->height, 0, 0, 
+		glBlitNamedFramebuffer(framebuffer2_.get_handle(), 0, 0, 0, state->width, state->height, 0, 0, 
 			state->width, state->height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 	}
 	
 	// 5 - render HUD
-	renderImage.Use();
+	render_image_.Use();
 	glEnable(GL_BLEND);
-	glBindTextureUnit(9, hud);
+	glBindTextureUnit(9, hud_);
 	glDrawArrays(GL_TRIANGLES, 0, 3);
-	fontRenderer.print("CLOSED BETA FOOTAGE", state->width * 0.8f, state->height * 0.08f, .5f, glm::vec3(.7f, .7f, .7f));
-	fontRenderer.print("all content is subject to change", state->width * 0.78f, state->height * 0.05f, .5f, glm::vec3(.5f, .5f, .5f));
+	font_renderer_.print("CLOSED BETA FOOTAGE", state->width * 0.8f, state->height * 0.08f, .5f, glm::vec3(.7f, .7f, .7f));
+	font_renderer_.print("all content is subject to change", state->width * 0.78f, state->height * 0.05f, .5f, glm::vec3(.5f, .5f, .5f));
 
-	renderColor.Use();
-	renderColor.setVec4("color", glm::vec4(0.0f, 0.0f, 0.0f, 0.7f));
+	render_color_.Use();
+	render_color_.setVec4("color", glm::vec4(0.0f, 0.0f, 0.0f, 0.7f));
 	glViewport(state->width * 0.04, state->height * 0.06, state->width * 0.1, state->height * 0.08);
 	glDrawArrays(GL_TRIANGLES, 0, 3);
 	glViewport(0, 0, state->width, state->height);
 
-	int items = state->collectedItems;
-	std::string weightText = "Items: " + std::to_string(items);
-	fontRenderer.print(weightText, state->width * 0.05f, state->height * 0.105f, .5f, glm::vec3(.95f, .86f, .6f));
-	int money = (int)state->totalCash;
-	std::string loot = "Loot: " + std::to_string(money) + "$";
-	fontRenderer.print(loot, state->width * 0.05f, state->height * 0.07f, .5f, glm::vec3(.95f, .86f, .6f));
+	const int items = state->collectedItems;
+	const std::string weightText = "Items: " + std::to_string(items);
+	font_renderer_.print(weightText, state->width * 0.05f, state->height * 0.105f, .5f, glm::vec3(.95f, .86f, .6f));
+	const int money = (int)state->totalCash;
+	const std::string loot = "Loot: " + std::to_string(money) + "$";
+	font_renderer_.print(loot, state->width * 0.05f, state->height * 0.07f, .5f, glm::vec3(.95f, .86f, .6f));
 
 	if (state->won_)
 	{
-		renderColor.Use();
-		renderColor.setVec4("color", glm::vec4(0.0f, 0.0f, 0.0f, 0.7f));
+		render_color_.Use();
+		render_color_.setVec4("color", glm::vec4(0.0f, 0.0f, 0.0f, 0.7f));
 		glDrawArrays(GL_TRIANGLES, 0, 3);
-		fontRenderer.print("You made it!", state->width * 0.36f, state->height * 0.48f, 2.0f, glm::vec3(.85f, .68f, .19f));
+		font_renderer_.print("You made it!", state->width * 0.36f, state->height * 0.48f, 2.0f, glm::vec3(.85f, .68f, .19f));
 	}
 	else if (state->lost_)
 	{
-		renderColor.Use();
-		renderColor.setVec4("color", glm::vec4(0.710, 0.200, 0.180, 1.0f));
+		render_color_.Use();
+		render_color_.setVec4("color", glm::vec4(0.710, 0.200, 0.180, 1.0f));
 		glDrawArrays(GL_TRIANGLES, 0, 3);
-		fontRenderer.print(deathMsgs[0], state->width * 0.2f, state->height * 0.48f, 2.0f, glm::vec3(.0f, .0f, .0f));
+		font_renderer_.print(death_msgs_[0], state->width * 0.2f, state->height * 0.48f, 2.0f, glm::vec3(.0f, .0f, .0f));
 	}
 	if (state->displayCollectItemHint_) {
-		fontRenderer.print("Click to collect", state->width * 0.42f, state->height * 0.60f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f));
+		font_renderer_.print("Click to collect", state->width * 0.42f, state->height * 0.60f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f));
 	}
 	glDisable(GL_BLEND);
 }
 
 /// @brief swaps framebuffers for light adaption computation
-void Renderer::swapLuminance()
+void renderer::swap_luminance()
 {
-	std::swap(luminances[0], luminances[1]);
+	std::swap(luminances_[0], luminances_[1]);
 }
 
 
@@ -454,11 +453,11 @@ void Renderer::swapLuminance()
 /// @param target to "look at" from the position
 /// @param up is the up vetor of the world
 /// @return a view matrix according to the input vectors
-glm::mat4 Renderer::glmlookAt2(glm::vec3 pos, glm::vec3 target, glm::vec3 up)
+glm::mat4 renderer::glmlook_at2(glm::vec3 pos, glm::vec3 target, glm::vec3 up)
 {
-	glm::vec3 zaxis = glm::normalize(pos - target);
-	glm::vec3 xaxis = glm::normalize(glm::cross(glm::normalize(up), zaxis));
-	glm::vec3 yaxis = glm::cross(zaxis, xaxis);
+	const glm::vec3 zaxis = glm::normalize(pos - target);
+	const glm::vec3 xaxis = glm::normalize(glm::cross(glm::normalize(up), zaxis));
+	const glm::vec3 yaxis = glm::cross(zaxis, xaxis);
 
 	glm::mat4 translation;
 	translation[3][0] = -pos.x;
@@ -479,10 +478,10 @@ glm::mat4 Renderer::glmlookAt2(glm::vec3 pos, glm::vec3 target, glm::vec3 up)
 }
 
 /// @brief frees resources
-Renderer::~Renderer()
+renderer::~renderer()
 {
-	perframeData = nullptr;
-	glDeleteTextures(1, &luminance1x1);
-	glDeleteTextures(1, &pattern);
-	glDeleteTextures(1, &hud);
+	perframe_data_ = nullptr;
+	glDeleteTextures(1, &luminance1x1_);
+	glDeleteTextures(1, &pattern_);
+	glDeleteTextures(1, &hud_);
 }

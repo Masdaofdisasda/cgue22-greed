@@ -14,27 +14,27 @@ struct stbiData
 class Texture
 {
 private:
-	GLuint tex_ID = 0;
+	GLuint tex_id_ = 0;
 	GLenum type_ = 0;
 
-	void Release()
+	void release()
 	{
-		glDeleteTextures(1, &tex_ID);
-		tex_ID = 0;
+		glDeleteTextures(1, &tex_id_);
+		tex_id_ = 0;
 	}
 
-	static int getNumMipMapLevels2D(int w, int h);
-	static std::string append(const char* texPath, char* texType);
+	static int get_num_mip_map_levels_2d(int w, int h);
+	static std::string append(const char* tex_path, const char* tex_type);
 
 public:
-	Texture(GLenum type, int width, int height, GLenum internalFormat);
-	~Texture() { Release(); }
+	Texture(GLenum type, int width, int height, GLenum internal_format);
+	~Texture() { release(); }
 
-	static GLuint loadTexture(const char* texPath);
-	static void loadTextureMT(const char* texPath, GLuint handles[]);
-	static GLuint loadTextureTransparent(const char* texPath);
-	static GLuint load3Dlut(const char* texPath);
-	static void stbiLoad(std::string texPath, stbiData* img);
+	static GLuint load_texture(const char* tex_path);
+	static void load_texture_mt(const char* tex_path, GLuint handles[]);
+	static GLuint load_texture_transparent(const char* tex_path);
+	static GLuint load_3dlut(const char* tex_path);
+	static void stbi_load_single(const std::string& tex_path, stbiData* img);
 
 	
 	// ensure RAII compliance
@@ -42,11 +42,11 @@ public:
 
 	Texture(Texture&& other)
 		: type_(other.type_)
-		, tex_ID(other.tex_ID)
+		, tex_id_(other.tex_id_)
 	{
 		other.type_ = 0;
-		other.tex_ID = 0;
+		other.tex_id_ = 0;
 	}
 
-	GLuint getHandle() const { return tex_ID; }
+	GLuint get_handle() const { return tex_id_; }
 };

@@ -3,14 +3,14 @@
 #include <glm\gtc\matrix_transform.hpp>
 #include "LevelStructs.h"
 
-namespace FrustumCulling
+namespace frustum_culling
 {
 	/// @brief extracts 6 viewing planes from a view prjectio matrix of a right handed coordinate system
 	/// https://fgiesen.wordpress.com/2012/08/31/frustum-planes-from-the-projection-matrix/
 	/// https://www.gamedevs.org/uploads/fast-extraction-viewing-frustum-planes-from-world-view-projection-matrix.pdf
 	/// @param vp is the view projection matrix, describing the view frustum
 	/// @param planes is an array of 6 planes which contain the frustum planes after the method call
-	void getFrustumPlanes(glm::mat4 vp, glm::vec4* planes)
+	inline void get_frustum_planes(glm::mat4 vp, glm::vec4* planes)
 	{
 		vp = glm::transpose(vp); // creat row vectors
 		planes[0] = glm::vec4(vp[3] + vp[0]); // left
@@ -24,7 +24,7 @@ namespace FrustumCulling
 	/// @brief extracts 8 corners of the viewing frustum from a view projection matrix
 	/// @param vp is the view projection matrix, describing the view frustum
 	/// @param points is an array of 8 vectors which contain the frustum corners after the method call
-	void getFrustumCorners(glm::mat4 vp, glm::vec4* points)
+	inline void get_frustum_corners(glm::mat4 vp, glm::vec4* points)
 	{
 		//corners in clip space
 		const glm::vec4 corners[] = {
@@ -47,7 +47,7 @@ namespace FrustumCulling
 	/// @param corners 
 	/// @param b 
 	/// @return 
-	bool isBoxInFrustum(glm::vec4* planes, glm::vec4* corners, const BoundingBox& b)
+	inline bool is_box_in_frustum(glm::vec4* planes, glm::vec4* corners, const bounding_box& b)
 	{
 		// rejects if box is outside a frustum plane
 		for (int i = 0; i < 6; i++) {

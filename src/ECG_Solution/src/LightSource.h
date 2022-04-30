@@ -3,22 +3,22 @@
 #include "vector"
 
 // setup light sources
-struct DirectionalLight
+struct directional_light
 {
 	glm::vec4 direction;
 
 	glm::vec4 intensity;
 };
 
-struct PositionalLight
+struct positional_light
 {
 	glm::vec4 position;
 
 	glm::vec4 intensity;
 };
 
-struct LightSources
+struct light_sources
 {
-	std::vector <DirectionalLight> directional;
-	std::vector <PositionalLight> point;
+	std::vector <directional_light> directional;
+	std::vector <positional_light> point;
 };

@@ -118,3 +118,11 @@ glm::vec3 translationFromTransform(glm::mat4 transform);
 glm::quat rotationFromTransform(glm::mat4 transform);
 
 glm::vec3 scaleFromTransform(glm::mat4 transform);
+
+/// @brief an implementation of the glm::lookat() function, because this framework
+/// makes it impossible to use, same code as in the Camera class
+/// @param pos is the position aka eye or view of the camera
+/// @param target to "look at" from the position
+/// @param up is the up vector of the world
+/// @return a view matrix according to the input vectors
+glm::mat4 glm_look_at(const glm::vec3 pos, const glm::vec3 target, const glm::vec3 up);

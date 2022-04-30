@@ -3,13 +3,13 @@
 #include <assert.h>
 
 /// @brief handles the logic for frames per second calculation
-class FPSCounter
+class fps_counter
 {
 public:
 
-	explicit FPSCounter(float avgIntervalSec = 0.5f) : avgIntervalSec_(avgIntervalSec)
+	explicit fps_counter(const float avg_interval_sec = 0.5f) : avg_interval_sec_(avg_interval_sec)
 	{
-		assert(avgIntervalSec > 0.0f);
+		assert(avg_interval_sec > 0.0f);
 	}
 
 	/// @brief calculate average frames per second
@@ -17,23 +17,23 @@ public:
 	/// @return 
 	bool tick(
 		float deltaSeconds) {
-		numFrames_++;
-		accumulatedTime_ += deltaSeconds; if (accumulatedTime_ < avgIntervalSec_)
+		num_frames_++;
+		accumulated_time_ += static_cast<double>(deltaSeconds); if (accumulated_time_ < static_cast<double>(avg_interval_sec_))
 			return false;
-		currentFPS_ = static_cast<float>(
-			numFrames_ / accumulatedTime_);
-		fps = std::to_string(currentFPS_);
-		numFrames_ = 0;
-		accumulatedTime_ = 0;
+		current_fps_ = static_cast<float>(
+			num_frames_ / accumulated_time_);
+		fps_ = std::to_string(current_fps_);
+		num_frames_ = 0;
+		accumulated_time_ = 0;
 		return true;
 	}
 
-	std::string FPSCounter::getFPS() const { return fps; }
+	std::string get_fps() const { return fps_; }
 
 private:
-	const float avgIntervalSec_ = 0.5f;
-	unsigned int numFrames_ = 0;
-	double accumulatedTime_ = 0;
-	float currentFPS_ = 0.0f;
-	std::string fps = "60";
+	const float avg_interval_sec_ = 0.5f;
+	unsigned int num_frames_ = 0;
+	double accumulated_time_ = 0;
+	float current_fps_ = 0.0f;
+	std::string fps_ = "60";
 };

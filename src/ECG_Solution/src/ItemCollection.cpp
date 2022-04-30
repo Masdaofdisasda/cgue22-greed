@@ -3,8 +3,8 @@
 void ItemCollection::collect(Physics::PhysicsObject* object)
 {
 	collectedItems.push_back(object);
-	GameProperties* itemProperties = &object->modelGraphics->gameProperties;
-	itemProperties->isActive = false;
+	game_properties* itemProperties = &object->modelGraphics->game_properties;
+	itemProperties->is_active = false;
 	totalMonetaryValue += itemProperties->collectableItemProperties.worth;
 	totalWeight += itemProperties->collectableItemProperties.weight;
 }
@@ -24,8 +24,8 @@ std::vector<ItemCollection::ItemInfo> ItemCollection::getListOfItems()
 	std::vector<ItemInfo> itemList;
 	for (int i = 0; i < collectedItems.size(); i++) {
 		ItemInfo item;
-		item.name = collectedItems[i]->modelGraphics->gameProperties.displayName;
-		item.price = std::to_string(collectedItems[i]->modelGraphics->gameProperties.collectableItemProperties.worth);
+		item.name = collectedItems[i]->modelGraphics->game_properties.display_name;
+		item.price = std::to_string(collectedItems[i]->modelGraphics->game_properties.collectableItemProperties.worth);
 		itemList.push_back(item);
 	}
 	return itemList;

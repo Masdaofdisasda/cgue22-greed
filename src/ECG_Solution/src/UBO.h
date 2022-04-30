@@ -9,32 +9,32 @@ class UBO
     private:
 
         // reference ID
-        GLuint ubo_ID = 0;
+        GLuint ubo_id_ = 0;
 
-        void Release()
+        void release()
         {
-            glDeleteBuffers(1, &ubo_ID);
-			ubo_ID = 0;
+            glDeleteBuffers(1, &ubo_id_);
+			ubo_id_ = 0;
         }
 
     public:
 
-		void fillBuffer(std::vector<DirectionalLight>& bufferData);
-		void fillBuffer(std::vector<PositionalLight>& bufferData);
-		void fillBuffer(PerFrameData pfbuffer);
+		void fill_buffer(std::vector<directional_light>& buffer_data) const;
+		void fill_buffer(std::vector<positional_light>& buffer_data) const;
+		void fill_buffer(PerFrameData pfbuffer);
 		UBO();
         
-		~UBO() { Release(); }
+		~UBO() { release(); }
 
-		void Update(PerFrameData pfbuffer);
+		void update(PerFrameData pfbuffer) const;
 
 		// ensure RAII compliance
 		UBO(const UBO&) = delete;
 		UBO& operator=(const UBO&) = delete;
 
-		UBO(UBO&& other) noexcept : ubo_ID(other.ubo_ID)
+		UBO(UBO&& other) noexcept : ubo_id_(other.ubo_id_)
 		{
-			other.ubo_ID = 0; //Use the "null" ID for the old object.
+			other.ubo_id_ = 0; //Use the "null" ID for the old object.
 		}
 
 		UBO& operator=(UBO&& other)
@@ -42,11 +42,11 @@ class UBO
 			//ALWAYS check for self-assignment.
 			if (this != &other)
 			{
-				Release();
+				release();
 				//obj_ is now 0.
-				std::swap(ubo_ID, other.ubo_ID);
+				std::swap(ubo_id_, other.ubo_id_);
 			}
 		}
 		
-		GLuint getID() const {return ubo_ID;}
+		GLuint get_id() const {return ubo_id_;}
 };

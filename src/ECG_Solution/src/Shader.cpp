@@ -3,7 +3,7 @@
 /// @brief load shader code from file
 /// @param file is the path to some shader file
 /// @return a string containing shader code
-std::string read_code_from(const char* file)
+std::string Shader::read_code_from(const char* file)
 {
 	std::ifstream ifs(file);
 	if (!ifs.is_open())
@@ -17,35 +17,35 @@ std::string read_code_from(const char* file)
 /// @brief replaces placeholder code with actual numbers
 /// @param code some shader code in string form with a light source array of size "xMAXLIGHTS"
 /// @return the same shader code but with array size set to the number of lights
-std::string Shader::insertLightcount(std::string code)
+std::string Shader::insert_lightcount(std::string code)
 {
-	std::string dReplace = "dMAXLIGHTS";
-	std::string pReplace = "pMAXLIGHTS";
+	const std::string d_replace = "dMAXLIGHTS";
+	const std::string p_replace = "pMAXLIGHTS";
 
 	// replace first (and only) occurence of xReplace and replace it with xLights
-	code.replace(code.find(dReplace), dReplace.length(), dLights);
-	code.replace(code.find(pReplace), pReplace.length(), pLights);
+	code.replace(code.find(d_replace), d_replace.length(), d_lights);
+	code.replace(code.find(p_replace), p_replace.length(), p_lights);
 
 	return code;
 }
 
 
 /// @brief find correct shader type based on file ending
-/// @param fileName is the path to some shader program
+/// @param file_name is the path to some shader program
 /// @return suitable shader type in gl form
-GLenum Shader::GLShaderTypeFromFileName(const char* fileName)
+GLenum Shader::gl_shader_type_from_file_name(const char* file_name) const
 {
-	if (endsWith(fileName, ".vert"))
+	if (ends_with(file_name, ".vert"))
 		return GL_VERTEX_SHADER;
-	if (endsWith(fileName, ".frag"))
+	if (ends_with(file_name, ".frag"))
 		return GL_FRAGMENT_SHADER;
-	if (endsWith(fileName, ".geom"))
+	if (ends_with(file_name, ".geom"))
 		return GL_GEOMETRY_SHADER;
-	if (endsWith(fileName, ".tesc"))
+	if (ends_with(file_name, ".tesc"))
 		return GL_TESS_CONTROL_SHADER;
-	if (endsWith(fileName, ".tese"))
+	if (ends_with(file_name, ".tese"))
 		return GL_TESS_EVALUATION_SHADER;
-	if (endsWith(fileName, ".comp"))
+	if (ends_with(file_name, ".comp"))
 		return GL_COMPUTE_SHADER;
 	assert(false);
 	return 0;
@@ -55,71 +55,72 @@ GLenum Shader::GLShaderTypeFromFileName(const char* fileName)
 /// @param s is the file path eg. "/assets/shader.vert"
 /// @param part is the file type eg. ".vert"
 /// @return 1 if the condition is true
-int Shader::endsWith(const char* s, const char* part) {
+int Shader::ends_with(const char* s, const char* part) const
+{
 	return (strstr(s, part) - s) == (strlen(s) - strlen(part));
 }
 
 /// @brief loads and compiles a shader from a file location
-/// @param fileName is the location of the shader file
-Shader::Shader(const char* fileName)
+/// @param file_name is the location of the shader file
+Shader::Shader(const char* file_name)
 {
-	hasLights = false;
+	has_lights = false;
 
-	type = GLShaderTypeFromFileName(fileName);
-	shader_ID = glCreateShader(type);
+	type = gl_shader_type_from_file_name(file_name);
+	shader_id = glCreateShader(type);
 
-	std::string shader = read_code_from(fileName);
-	const char* shaderCode = shader.c_str();
+	const std::string shader = read_code_from(file_name);
+	const char* shader_code = shader.c_str();
 
-	glShaderSource(shader_ID, 1, &shaderCode, nullptr);
-	glCompileShader(shader_ID);
+	glShaderSource(shader_id, 1, &shader_code, nullptr);
+	glCompileShader(shader_id);
 
-	compileErrors();
+	compile_errors();
 }
 
 /// @brief loads and compiles a shader from a file location
-/// @param fileName is the location of the shader file
+/// @param file_name is the location of the shader file
 /// @param lights is the number of lights (dir,point,spot)
-Shader::Shader(const char* fileName, glm::ivec3 lights)
+Shader::Shader(const char* file_name, const glm::ivec3 lights)
 {
-	hasLights = true;
-	setLightCounts(lights.x, lights.y);
+	has_lights = true;
+	set_light_counts(lights.x, lights.y);
 
-	type = GLShaderTypeFromFileName(fileName);
-	shader_ID = glCreateShader(type);
+	type = gl_shader_type_from_file_name(file_name);
+	shader_id = glCreateShader(type);
 
-	std::string shader = read_code_from(fileName);
-	shader = insertLightcount(shader);
-	const char* shaderCode = shader.c_str();
+	std::string shader = read_code_from(file_name);
+	shader = insert_lightcount(shader);
+	const char* shader_code = shader.c_str();
 
 
-	glShaderSource(shader_ID, 1, &shaderCode, nullptr);
-	glCompileShader(shader_ID);
+	glShaderSource(shader_id, 1, &shader_code, nullptr);
+	glCompileShader(shader_id);
 
-	compileErrors();
+	compile_errors();
 }
 
 /// @brief set number of light sources to insert in some shader
 /// @param dir number of directional lights
 /// @param pos number of positional/point lights
-void Shader::setLightCounts(int dir, int pos)
+void Shader::set_light_counts(const int dir, const int pos)
 {
-	dLights = std::to_string(dir);
-	pLights = std::to_string(pos);
+	d_lights = std::to_string(dir);
+	p_lights = std::to_string(pos);
 }
 
 /// @brief check for shader compilation errors
-void Shader::compileErrors()
+void Shader::compile_errors() const
 {
-	GLint succeded;
+	GLint succeed;
 
-	glGetShaderiv(shader_ID, GL_COMPILE_STATUS, &succeded);
-	if (succeded == GL_FALSE)
+	glGetShaderiv(shader_id, GL_COMPILE_STATUS, &succeed);
+	if (succeed == GL_FALSE)
 	{
 		GLint logSize;
-		glGetShaderiv(shader_ID, GL_INFO_LOG_LENGTH, &logSize);
-		GLchar* message = new char[logSize];
-		glGetShaderInfoLog(shader_ID, logSize, nullptr, message);
+		glGetShaderiv(shader_id, GL_INFO_LOG_LENGTH, &logSize);
+		const auto message = new char[logSize];
+		glGetShaderInfoLog(shader_id, logSize, nullptr, message);
 		std::cerr << message;
 		delete[] message;
 	}

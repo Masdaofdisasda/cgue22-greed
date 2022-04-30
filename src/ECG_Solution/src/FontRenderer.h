@@ -2,32 +2,32 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H 
 
-struct Letter {
-    unsigned int TextureID;  
-    glm::ivec2   Size;       
-    glm::ivec2   Bearing;    
-    unsigned int Advance;    
+struct letter {
+    unsigned int texture_id{};  
+    glm::ivec2   size;       
+    glm::ivec2   bearing;    
+    unsigned int advance{};    
 };
 
 /// @brief 
 /// https://learnopengl.com/In-Practice/Text-Rendering
-class FontRenderer
+class font_renderer
 {
 public:
-    FontRenderer() = default;
-	~FontRenderer();
+    font_renderer() = default;
+	~font_renderer();
 
-    void init(const char* texPath, int w, int h);
+    void init(const char* tex_path, int w, int h);
     void print(std::string, float x, float y, float size, glm::vec3 color);
 
 private:
-    std::map<char, Letter> letters;
-    Program printer;
-    glm::mat4 proj;
-    GLuint vao = 0, vbo = 0;
+    std::map<char, letter> letters_;
+    program printer_;
+    glm::mat4 proj_;
+    GLuint vao_ = 0, vbo_ = 0;
 };
 
-void FontRenderer::init(const char* texPath, int w, int h)
+inline void font_renderer::init(const char* tex_path, const int w, const int h)
 {
     FT_Library ft;
     if (FT_Init_FreeType(&ft))
@@ -36,7 +36,7 @@ void FontRenderer::init(const char* texPath, int w, int h)
     }
 
     FT_Face face;
-    if (FT_New_Face(ft, texPath, 0, &face))
+    if (FT_New_Face(ft, tex_path, 0, &face))
     {
         std::cout << "Error: Failed to load font" << std::endl;
     }
@@ -74,59 +74,57 @@ void FontRenderer::init(const char* texPath, int w, int h)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         // now store character for later use
-        Letter l = {
+        letter l = {
             texture,
             glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
             glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
             static_cast<unsigned int>(face->glyph->advance.x)
         };
-        letters.insert(std::pair<char, Letter>(c, l));
+        letters_.insert(std::pair<char, letter>(c, l));
     }
     glBindTexture(GL_TEXTURE_2D, 0);
 
     FT_Done_Face(face);
     FT_Done_FreeType(ft);
 
-    Shader textVert("../../assets/shaders/HUD/textPrinter.vert");
-    Shader textFrag("../../assets/shaders/HUD/textPrinter.frag");
-    printer.buildFrom(textVert, textFrag);
+    Shader text_vert("../../assets/shaders/HUD/textPrinter.vert");
+    Shader text_frag("../../assets/shaders/HUD/textPrinter.frag");
+    printer_.buildFrom(text_vert, text_frag);
 
-    proj = glm::ortho(0.0f, (float)w, 0.0f, (float)h);
+    proj_ = glm::ortho(0.0f, static_cast<float>(w), 0.0f, static_cast<float>(h));
 
-    glGenVertexArrays(1, &vao);
-    glGenBuffers(1, &vbo);
-    glBindVertexArray(vao);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
+    glGenVertexArrays(1, &vao_);
+    glGenBuffers(1, &vbo_);
+    glBindVertexArray(vao_);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, nullptr, GL_DYNAMIC_DRAW);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), nullptr);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 }
 
-void FontRenderer::print(std::string msg, float x, float y, float size, glm::vec3 color)
+inline void font_renderer::print(std::string msg, float x, const float y, const float size, const glm::vec3 color)
 {
     // activate corresponding render state	
-    printer.Use();
-    printer.setVec3("color", color);
-    printer.setMat4("projection", proj);
+    printer_.Use();
+    printer_.setVec3("color", color);
+    printer_.setMat4("projection", proj_);
 
     glActiveTexture(GL_TEXTURE13);
-    glBindVertexArray(vao);
+    glBindVertexArray(vao_);
 
-    // iterate through all characters
-    std::string::const_iterator c;
-    for (c = msg.begin(); c != msg.end(); c++)
+    for (std::string::const_iterator c = msg.begin(); c != msg.end(); ++c)
     {
-        Letter l = letters[*c];
+	    const letter l = letters_[*c];
 
-        float xpos = x + l.Bearing.x * size;
-        float ypos = y - (l.Size.y - l.Bearing.y) * size;
+	    const float xpos = x + l.bearing.x * size;
+	    const float ypos = y - (l.size.y - l.bearing.y) * size;
 
-        float w = l.Size.x * size;
-        float h = l.Size.y * size;
+	    const float w = l.size.x * size;
+	    const float h = l.size.y * size;
         // update VBO for each character
-        float vertices[6][4] = {
+	    const float vertices[6][4] = {
             { xpos,     ypos + h,   0.0f, 0.0f },
             { xpos,     ypos,       0.0f, 1.0f },
             { xpos + w, ypos,       1.0f, 1.0f },
@@ -136,18 +134,17 @@ void FontRenderer::print(std::string msg, float x, float y, float size, glm::vec
             { xpos + w, ypos + h,   1.0f, 0.0f }
         };
         // render glyph texture over quad
-        glBindTextureUnit(13, l.TextureID);
+        glBindTextureUnit(13, l.texture_id);
         // update content of VBO memory
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo_);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         // render quad
         glDrawArrays(GL_TRIANGLES, 0, 6);
         // now advance cursors for next glyph (note that advance is number of 1/64 pixels)
-        x += (l.Advance >> 6) * size; // bitshift by 6 to get value in pixels (2^6 = 64)
+        x += (l.advance >> 6) * size; // bitshift by 6 to get value in pixels (2^6 = 64)
     }
 }
 
-FontRenderer::~FontRenderer()
-{
-}
+inline font_renderer::~font_renderer()
+= default;

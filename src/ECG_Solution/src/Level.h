@@ -6,20 +6,22 @@
 #include "Camera.h"
 #include "LevelStructs.h"
 #include "FrustumCulling.h"
-#include <glm/gtx/matrix_decompose.hpp> 
-#include <assimp/Importer.hpp>      
-#include <assimp/scene.h>           
+#include <glm/gtx/matrix_decompose.hpp>
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
 
 //---------------------------------------------------------------------------------------------------------------//
 
-class Program;
+class program;
+
 /// @brief Level is primarily a data structure for complex 3D scenes
 /// loads and manages geometry, textures and model matrices from some fbx file
-class Level {
+class level
+{
 private:
-	static constexpr auto vtx_stride = sizeof(Vertex);
+	static constexpr auto vtx_stride = sizeof(vertex);
 
 	uint32_t global_vertex_offset_ = 0;
 	uint32_t global_index_offset_ = 0;
@@ -31,65 +33,64 @@ private:
 	GLuint matrix_ssbo_ = 0; // transformations
 
 	// mesh data - a loaded scene is entirely contained in these data structures
-	std::vector <subMesh> meshes_;			// contains mesh offsets for glDraw 
-	std::vector<float> vertices;			// contains a stream of vertices in (px,py,pz,ny,ny,nz,u,v)-form
-	std::vector <unsigned int> indices;			// contains the indices that make triangles
-	std::vector <Material> materials;		// contains all needed textures
-	std::vector<RenderItem> renderQueue;	
-	Hierarchy sceneGraph;					// saves scene hierarchy and transformations
-	Hierarchy* dynamicNode;
-	std::vector<PhysicsMesh> rigid;
-	std::vector<PhysicsMesh> dynamic;
+	std::vector<sub_mesh> meshes_; // contains mesh offsets for glDraw 
+	std::vector<float> vertices; // contains a stream of vertices in (px,py,pz,ny,ny,nz,u,v)-form
+	std::vector<unsigned int> indices_; // contains the indices that make triangles
+	std::vector<Material> materials_; // contains all needed textures
+	std::vector<render_item> render_queue_;
+	hierarchy scene_graph_; // saves scene hierarchy and transformations
+	hierarchy* dynamic_node_;
+	std::vector<physics_mesh> rigid_;
+	std::vector<physics_mesh> dynamic_;
 
 	/// frustum culling
-	std::shared_ptr<Program> AABBviewer;	// shader for debugging AABBs, toggle with F2
-	std::shared_ptr<Program> Frustumviewer;	// shader for debugging AABBs, toggle with F2
-	glm::mat4 cullViewProj;
-	glm::vec4 frustumPlanes[6];
-	glm::vec4 frustumCorners[8];
-	uint32_t ModelsLoaded = 0;
-	uint32_t ModelsVisible = 0;
-	double secondsSinceFlush = 0;
+	std::shared_ptr<program> aabb_viewer_; // shader for debugging AABBs, toggle with F2
+	std::shared_ptr<program> frustumviewer_; // shader for debugging AABBs, toggle with F2
+	glm::mat4 cull_view_proj_;
+	glm::vec4 frustum_planes_[6];
+	glm::vec4 frustum_corners_[8];
+	uint32_t models_loaded_ = 0;
+	uint32_t models_visible_ = 0;
+	double seconds_since_flush_ = 0;
 
-	LightSources lights;
+	light_sources lights;
 
-	std::shared_ptr<GlobalState> state;
-	PerFrameData* perframeData;
+	std::shared_ptr<GlobalState> state_;
+	PerFrameData* perframe_data_{};
 
-	void loadMeshes(const aiScene* scene);
-	subMesh extractMesh(const aiMesh* mesh);
-	void generateLODs(std::vector<unsigned int>& indices, const std::vector<float>& vertices, std::vector<std::vector<unsigned int>>& LODs);
-	BoundingBox computeBoundsOfMesh(subMesh mesh);
-	void loadMaterials(const aiScene* scene);
-	void traverseTree(aiNode* n, Hierarchy* parent, Hierarchy* child);
-	void loadShaders();
-	void setupVertexBuffers();
-	void setupDrawBuffers();
-	void loadLights(const aiScene* scene);
-	glm::mat4 toGlmMat4(const aiMatrix4x4& mat);
-	void buildRenderQueue(const Hierarchy* node, glm::mat4 globalTransform);
-	uint32_t decideLOD(uint32_t lods, BoundingBox aabb) const;
-	void DrawAABBs(Hierarchy node);
-	void transformBoundingBoxes(Hierarchy* node, glm::mat4 globalTransform);
-	void collectRigidPhysicMeshes(Hierarchy* node, glm::mat4 globalTransform);
-	void collectDynamicPhysicMeshes(Hierarchy* node, glm::mat4 globalTransform);
+	void load_meshes(const aiScene* scene);
+	sub_mesh extract_mesh(const aiMesh* mesh);
+	void generate_lods(std::vector<unsigned int>& indices, const std::vector<float>& vertices,
+	                  std::vector<std::vector<unsigned int>>& LODs);
+	bounding_box compute_bounds_of_mesh(const sub_mesh& mesh) const;
+	void load_materials(const aiScene* scene);
+	void traverse_tree(aiNode* n, hierarchy* parent, hierarchy* child);
+	void load_shaders();
+	void setup_vertex_buffers();
+	void setup_draw_buffers();
+	void load_lights(const aiScene* scene);
+	static glm::mat4 to_glm_mat4(const aiMatrix4x4& mat);
+	void build_render_queue(const hierarchy* node, glm::mat4 global_transform);
+	uint32_t decide_lod(uint32_t lods, bounding_box aabb) const;
+	void draw_aabbs(hierarchy node);
+	void transform_bounding_boxes(hierarchy* node, glm::mat4 global_transform);
+	void collect_rigid_physic_meshes(hierarchy* node, glm::mat4 global_transform);
+	void collect_dynamic_physic_meshes(hierarchy* node, glm::mat4 global_transform);
 
 
-	void resetQueue();
-	void Release();
-	
+	void reset_queue();
+	void release();
+
 public:
-	Level(const char* scenePath, std::shared_ptr<GlobalState> state, PerFrameData& pfdata);
-	~Level() { Release(); }
+	level(const char* scene_path, std::shared_ptr<GlobalState> state, PerFrameData& perframe_data);
+	~level() { release(); }
 
-	void DrawScene();
-	void DrawSceneFromLightSource();
+	void draw_scene();
+	void draw_scene_shadow_map();
 
 
-	std::vector<PhysicsMesh> getRigid();
-	std::vector<PhysicsMesh> getDynamic();
-	glm::mat4 getTightSceneFrustum();
-	LightSources* getLights() { return &lights; }
-	std::vector <DirectionalLight> getDirectionalLights() { return lights.directional; }
-	std::vector <PositionalLight> getPointLights() { return lights.point; }
+	std::vector<physics_mesh> get_rigid();
+	std::vector<physics_mesh> get_dynamic();
+	glm::mat4 get_tight_scene_frustum() const;
+	light_sources* get_lights() { return &lights; }
 };

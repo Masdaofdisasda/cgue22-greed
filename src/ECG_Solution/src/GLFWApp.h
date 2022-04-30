@@ -3,53 +3,53 @@
 #include <GLFW/glfw3.h>
 
 /// @brief GLFW window managemnt, handles most of the functions for glfw
-class GLFWApp
+class glfw_app
 {
 public:
-	GLFWApp(std::shared_ptr<GlobalState> state);
-	~GLFWApp();
-	GLFWwindow* getWindow() const { return window_; }
-	float getDeltaSeconds() const { return deltaSeconds_; }
+	explicit glfw_app(const std::shared_ptr<GlobalState>& state);
+	~glfw_app();
+	GLFWwindow* get_window() const { return window_; }
+	float get_delta_seconds() const { return delta_seconds_; }
 
 	/// @brief swaps back & front buffer and checks for errors
-	void swapBuffers()
+	void swap_buffers()
 	{
 		glfwSwapBuffers(window_);
 		glfwPollEvents();
 		assert(glGetError() == GL_NO_ERROR);
 
-		const double newTimeStamp = glfwGetTime();
-		deltaSeconds_ = static_cast<float>(newTimeStamp - timeStamp_);
-		timeStamp_ = newTimeStamp;
+		const double new_time_stamp = glfwGetTime();
+		delta_seconds_ = static_cast<float>(new_time_stamp - time_stamp_);
+		time_stamp_ = new_time_stamp;
 	}
 
 	/// @brief should toggle between fullscreen and window mode
-	void updateWindow()
+	void update_window() const
 	{
 		
-		if (state->fullscreen_)
+		if (state_->fullscreen_)
 		{
 			const GLFWvidmode* info = glfwGetVideoMode(glfwGetPrimaryMonitor());
-			state->width = info->width;
-			state->height = info->height;
-			glfwSetWindowSize(window_, state->width, state->height);
+			state_->width = info->width;
+			state_->height = info->height;
+			glfwSetWindowSize(window_, state_->width, state_->height);
 			glfwSetWindowPos(window_, 0, 0);
 		}else{
 			int w, h;
 			glfwGetFramebufferSize(window_, &w, &h);
-			state->width = w;
-			state->height = h;
+			state_->width = w;
+			state_->height = h;
 			}
 	}
 
 private:
-	std::shared_ptr<GlobalState> state;
+	std::shared_ptr<GlobalState> state_;
 	GLFWwindow* window_ = nullptr;
-	double timeStamp_ = glfwGetTime();
-	float deltaSeconds_ = 0.0f;
+	double time_stamp_ = glfwGetTime();
+	float delta_seconds_ = 0.0f;
 };
 
-inline GLFWApp::GLFWApp(std::shared_ptr<GlobalState> state)
+inline glfw_app::glfw_app(const std::shared_ptr<GlobalState>& state)
 {
 	glfwSetErrorCallback(
 		[](int error, const char* description)
@@ -61,7 +61,7 @@ inline GLFWApp::GLFWApp(std::shared_ptr<GlobalState> state)
 	if (!glfwInit())
 		exit(EXIT_FAILURE);
 
-	this->state = state;
+	this->state_ = state;
 
 	// GLFW should use OpenGL Version 4.6 with core functions
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -88,7 +88,7 @@ inline GLFWApp::GLFWApp(std::shared_ptr<GlobalState> state)
 	glfwSwapBuffers(window_);
 }
 
-GLFWApp::~GLFWApp()
+inline glfw_app::~glfw_app()
 {
 	glfwDestroyWindow(window_);
 	glfwTerminate();

@@ -8,18 +8,18 @@
 #include <glm/gtx/matrix_decompose.hpp>
 
 /// @brief describes the position of a mesh in an index and vertex array 
-struct subMesh
+struct sub_mesh
 {
 	std::string name;						// name of the mesh, for debugging
-	std::vector<uint32_t> indexOffset;		// start of mesh in vector indices, [0] being original index count, [8] being lowest LOD
-	uint32_t vertexOffset;					// start of mesh in vector vertices
-	std::vector<uint32_t> indexCount;		// number of indices to render, [0] being original index count, [8] being lowest LOD
-	uint32_t vertexCount;					// number of vertices to render
-	uint32_t materialIndex;					// associated material
+	std::vector<uint32_t> index_offset;		// start of mesh in vector indices_, [0] being original index count, [8] being lowest LOD
+	uint32_t vertex_offset{};					// start of mesh in vector vertices
+	std::vector<uint32_t> index_count;		// number of indices to render, [0] being original index count, [8] being lowest LOD
+	uint32_t vertex_count{};					// number of vertices to render
+	uint32_t material_index{};				// associated material
 };
 
-/// @brief deascribes one indirect command for GlDraw_Indrect calls
-struct DrawElementsIndirectCommand
+/// @brief describes one indirect command for GlDraw_Indrect calls
+struct draw_elements_indirect_command
 {
 	uint32_t count_;
 	uint32_t instanceCount_;
@@ -29,83 +29,83 @@ struct DrawElementsIndirectCommand
 };
 
 /// @brief describes the bounding box of a mesh, can be used for frustum culling or physics simlution
-struct BoundingBox
+struct bounding_box
 {
 	glm::vec3 min_;
 	glm::vec3 max_;
 
-	BoundingBox() = default;
-	BoundingBox(const glm::vec3& min, const glm::vec3& max) : min_(glm::min(min, max)), max_(glm::max(min, max)) {}
+	bounding_box() = default;
+	bounding_box(const glm::vec3& min, const glm::vec3& max) : min_(glm::min(min, max)), max_(glm::max(min, max)) {}
 };
 
 /// @brief memory efficient TRS data capsule
-struct Transformation
+struct transformation
 {
-	glm::vec3 Translate;				
-	glm::quat Rotation;
-	glm::vec3 Scale;
+	glm::vec3 translate;				
+	glm::quat rotation;
+	glm::vec3 scale;
 
-	glm::mat4 getMatrix() const { return glm::translate(Translate) * glm::toMat4(Rotation) * glm::scale(Scale); }
+	glm::mat4 get_matrix() const { return glm::translate(translate) * glm::toMat4(rotation) * glm::scale(scale); }
 };
 
 /// @brief a collection of settings for collectable items in the world
-struct CollectableItemProperties {
+struct collectable_item_properties {
 	float worth = 100;
 	float weight = 1;
 };
 
 /// @brief a collection of settings for an object in the game world
-struct GameProperties {
-	string displayName = "Gameobject";
-	bool isActive = true; // only active items are rendered. only active items are allowed to interact with the physics world
-	bool isCollectable = false; // determines if the player can collect it
-	bool isGround = true; // determines wether the player can jump off of it
-	CollectableItemProperties collectableItemProperties; // if the gamobject is collectable this determines some extra properties
+struct game_properties {
+	string display_name = "Gameobject";
+	bool is_active = true; // only active items are rendered. only active items are allowed to interact with the physics world
+	bool is_collectable = false; // determines if the player can collect it
+	bool is_ground = true; // determines wether the player can jump off of it
+	collectable_item_properties collectableItemProperties; // if the gamobject is collectable this determines some extra properties
 };
 
 /// @brief implements a simple scene graph for hierarchical tranforamtions
-struct Hierarchy
+struct hierarchy
 {
 	std::string name;
-	Hierarchy* parent = nullptr;			// parent node
-	std::vector <Hierarchy> children;		// children nodes
-	std::vector<uint32_t> modelIndices;		// models in this node
+	hierarchy* parent = nullptr;			// parent node
+	std::vector <hierarchy> children;		// children nodes
+	std::vector<uint32_t> model_indices;		// models in this node
 
-	Transformation TRS;
+	transformation TRS;
 
-	BoundingBox nodeBounds;					// pretransformed bounds
-	BoundingBox modelBounds;				// bounds in model space
+	bounding_box node_bounds;					// pretransformed bounds
+	bounding_box model_bounds;				// bounds in model space
 
-	GameProperties gameProperties;
+	game_properties game_properties;
 
 	/// return TRS "model matrix" of the node
-	glm::mat4 getNodeMatrix() const { return TRS.getMatrix(); }
+	glm::mat4 get_node_matrix() const { return TRS.get_matrix(); }
 
 	/// @return memory efficient TRS data
-	Transformation getNodeTRS() const { return TRS; }
+	transformation get_node_trs() const { return TRS; }
 
 	/// @brief set TRS "model matrix" of the node
-	void setNodeTRS(glm::vec3 T, glm::quat R, glm::vec3 S) { TRS.Translate = T; TRS.Rotation = R; TRS.Scale = S; }
+	void set_node_trs(const glm::vec3 T, const glm::quat R, const glm::vec3 S) { TRS.translate = T; TRS.rotation = R; TRS.scale = S; }
 };
 
 /// @brief contains a list of draw commands and matching model matrices for models of the same material
-struct RenderItem
+struct render_item
 {
 	std::string material;
-	std::vector<DrawElementsIndirectCommand> commands;
-	std::vector<glm::mat4> modelMatrices;
+	std::vector<draw_elements_indirect_command> commands;
+	std::vector<glm::mat4> model_matrices;
 };
 
 /// @brief contains single mesh for bullet physics simulation
-struct PhysicsMesh
+struct physics_mesh
 {
-	std::vector<float> vtxPositions;		// all positions (x,y,z) in model space
-	Transformation modelTRS;						// model tranformation into world space
-	Hierarchy* node;			// pointer to set node matrices, only for dynamic objects
+	std::vector<float> vtx_positions;		// all positions (x,y,z) in model space
+	transformation model_trs;						// model tranformation into world space
+	hierarchy* node{};			// pointer to set node matrices, only for dynamic objects
 };
 
 /// @brief needed for mesh optimizer
-struct Vertex
+struct vertex
 {
 	float px, py, pz;
 	float nx, ny, nz;

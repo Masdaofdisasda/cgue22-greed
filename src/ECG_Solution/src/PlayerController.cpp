@@ -1,6 +1,6 @@
 #include "PlayerController.h"
 
-PlayerController::PlayerController(Physics& physics, CameraPositioner_Player& camera, glm::vec3 startPosition)
+PlayerController::PlayerController(Physics& physics, camera_positioner_player& camera, glm::vec3 startPosition)
 	: physics(physics), cameraPositioner(camera)
 {
 	btCollisionShape* collisionShape = new btCapsuleShape(0.5, 1);
@@ -33,7 +33,7 @@ void PlayerController::move(KeyboardInputState inputs, float deltatime)
 void PlayerController::updateCameraPositioner()
 {
 	glm::vec3 rbPosition = physics.getObjectPosition(playerObject);
-	cameraPositioner.setPosition(rbPosition + rigidbodyToCameraOffset);
+	cameraPositioner.set_position(rbPosition + rigidbodyToCameraOffset);
 }
 
 bool PlayerController::hasCollectableItemInReach() {
@@ -59,8 +59,8 @@ void PlayerController::tryCollectItem(MouseState mouseState, KeyboardInputState 
 }
 
 Physics::PhysicsObject* PlayerController::geCollectableInFrontOfPlayer() {
-	glm::vec3 cameraPosition = cameraPositioner.getPosition();
-	const glm::mat4 v = glm::mat4_cast(cameraPositioner.getOrientation());
+	glm::vec3 cameraPosition = cameraPositioner.get_position();
+	const glm::mat4 v = glm::mat4_cast(cameraPositioner.get_orientation());
 	const glm::vec3 cameraAimDirection = -glm::vec3(v[0][2], v[1][2], v[2][2]);
 
 	btVector3 rayCastStartPoint = physics.glmToBt(cameraPosition);
@@ -69,9 +69,9 @@ Physics::PhysicsObject* PlayerController::geCollectableInFrontOfPlayer() {
 
 	if (hitObject == nullptr || hitObject->modelGraphics == nullptr)
 		return nullptr;
-	if (!hitObject->modelGraphics->gameProperties.isActive)
+	if (!hitObject->modelGraphics->game_properties.is_active)
 		return nullptr;
-	if (hitObject->modelGraphics->gameProperties.isCollectable)
+	if (hitObject->modelGraphics->game_properties.is_collectable)
 		return hitObject;
 	return nullptr;
 }
@@ -90,7 +90,7 @@ PlayerController::Movement* PlayerController::inputToMovementState(KeyboardInput
 
 glm::vec3 PlayerController::movementStateToDirection(Movement* movement)
 {
-	const glm::mat4 v = glm::mat4_cast(cameraPositioner.getOrientation());
+	const glm::mat4 v = glm::mat4_cast(cameraPositioner.get_orientation());
 	const glm::vec3 forward = -glm::vec3(v[0][2], 0, v[2][2]);
 	const glm::vec3 right = glm::vec3(v[0][0], 0, v[2][0]);
 

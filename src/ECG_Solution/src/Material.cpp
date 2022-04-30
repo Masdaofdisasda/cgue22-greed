@@ -3,41 +3,41 @@
 // expects path to be "textures/rockground/albedo.jpg"
 
 /// @brief loads five textures from a texture folder
-/// @param texPath should be of the form "textures/(Material_1)/albedo.jpg"
+/// @param tex_path should be of the form "textures/(Material_1)/albedo.jpg"
 /// @param name the name of the material, eg. Material_1
-Material::Material(const char* texPath, const char* name) {
+Material::Material(const char* tex_path, const char* name) {
 
-	id = name;
+	id_ = name;
 
 	// remove "/albedo.jpg" from path end
-	std::string path = texPath;
-	size_t start = path.length() - 11;
+	std::string path = tex_path;
+	const size_t start = path.length() - 11;
 	path.erase(start, 11);
 
 	// append "../../assets/" to the start of the string
-	char* file = new char[path.length() + 1];
+	const auto file = new char[path.length() + 1];
 	strcpy(file, path.c_str());
 	char c[100];
 	strcpy(c, "../../assets/");
 	strcat(c, file);
 
-	// load textures multithreaded
+	// load textures multi-threaded
 	GLuint handles[5];
-	Texture::loadTextureMT(c, handles);
-	albedo = handles[0];
-	normal = handles[1];
-	metal = handles[2];
-	rough = handles[3];
-	ao = handles[4];
+	Texture::load_texture_mt(c, handles);
+	albedo_ = handles[0];
+	normal_ = handles[1];
+	metal_ = handles[2];
+	rough_ = handles[3];
+	ao_ = handles[4];
 }
 
 /// @brief explicitly deletes every texture in this material
-void Material::clear()
+void Material::clear() const
 {
 	
-	glDeleteTextures(1, &albedo);
-	glDeleteTextures(1, &normal);
-	glDeleteTextures(1, &metal);
-	glDeleteTextures(1, &rough);
-	glDeleteTextures(1, &ao);
+	glDeleteTextures(1, &albedo_);
+	glDeleteTextures(1, &normal_);
+	glDeleteTextures(1, &metal_);
+	glDeleteTextures(1, &rough_);
+	glDeleteTextures(1, &ao_);
 }

@@ -16,13 +16,13 @@ Physics::Physics() {
 }
 
 Physics::PhysicsObject& Physics::createPhysicsObject(
-	Hierarchy* modelGraphics,
-	Transformation modelMatrix,
+	hierarchy* modelGraphics,
+	transformation modelMatrix,
 	std::vector<float> colliderVerticePositions,
 	ObjectMode mode)
 {
 	float mass = getMassFromObjectMode(mode);
-	btVector3 scale = glmToBt(scaleFromTransform(modelMatrix.getMatrix()));
+	btVector3 scale = glmToBt(scaleFromTransform(modelMatrix.get_matrix()));
 	btCollisionShape* collider = getCollisionShapeFromMesh(colliderVerticePositions, scale);
 	btRigidBody* rigidbody = makeRigidbody(modelMatrix, collider, mass);
 	if (mode == Physics::ObjectMode::Dynamic_NoRotation)
@@ -56,7 +56,7 @@ void Physics::excludeAndIncludePhysicsObject(Physics::PhysicsObject &obj) {
 		return;
 	//if(physicsObjects[i].mode == Physics::ObjectMode::Dynamic)
 
-	if (!obj.modelGraphics->gameProperties.isActive) {
+	if (!obj.modelGraphics->game_properties.is_active) {
 		obj.rigidbody->setActivationState(ISLAND_SLEEPING);
 		obj.rigidbody->setCollisionFlags(btCollisionObject::CF_NO_CONTACT_RESPONSE);
 	}
@@ -100,10 +100,10 @@ void Physics::updateModelTransform(PhysicsObject* physicsObject) {
 
 	glm::quat rot = glm::angleAxis(deg, axis);
 
-	physicsObject->modelGraphics->setNodeTRS(pos, rot, scale);
+	physicsObject->modelGraphics->set_node_trs(pos, rot, scale);
 }
 
-Physics::PhysicsObject& Physics::addPhysicsObject(btRigidBody* rigidbody, Hierarchy* modelGraphics, Physics::ObjectMode mode) {
+Physics::PhysicsObject& Physics::addPhysicsObject(btRigidBody* rigidbody, hierarchy* modelGraphics, Physics::ObjectMode mode) {
 	// add it to physics world
 	dynamics_world->addRigidBody(rigidbody);
 
@@ -155,9 +155,9 @@ btRigidBody* Physics::makeRigidbody(btVector3 pos, btCollisionShape* col, btQuat
 	return new btRigidBody(mass, motionSate, col, inertia);
 }
 
-btRigidBody* Physics::makeRigidbody(Transformation transform, btCollisionShape* col, btScalar mass) {
-	glm::vec3 translation = transform.Translate;
-	glm::quat rotation = transform.Rotation;
+btRigidBody* Physics::makeRigidbody(transformation transform, btCollisionShape* col, btScalar mass) {
+	glm::vec3 translation = transform.translate;
+	glm::quat rotation = transform.rotation;
 	btTransform* startTransform = new btTransform(glmToBt(rotation), glmToBt(translation));
 	btMotionState* motionSate = new btDefaultMotionState(*startTransform);
 	btVector3 inertia;

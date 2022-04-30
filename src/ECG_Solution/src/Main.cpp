@@ -10,7 +10,6 @@
  contains initialization, resource loading and render loop
 */
 
-#pragma once
 #include <sstream>
 #include <thread>
 #include "Camera.h"
@@ -29,16 +28,16 @@
 /* --------------------------------------------- */
 
 std::shared_ptr<GlobalState> state;
-KeyboardInputState keyboardInput;
-PerFrameData perframeData;
-MouseState mouseState;
+KeyboardInputState keyboard_input;
+PerFrameData perframe_data;
+MouseState mouse_state;
 
-CameraPositionerInterface* cameraPositioner;
-CameraPositioner_FirstPerson floatingPositioner(glm::vec3(0.0f, 1.85f, 70.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-CameraPositioner_Player playerCameraPositioner;
-Camera camera(*cameraPositioner);
+camera_positioner_interface* camera_positioner;
+camera_positioner_first_person floating_positioner(glm::vec3(0.0f, 1.85f, 70.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+camera_positioner_player player_camera_positioner;
+camera camera(*camera_positioner);
 
-void registerInputCallbacks(GLFWApp& app);
+void registerInputCallbacks(glfw_app& app);
 
 /* --------------------------------------------- */
 // Main
@@ -58,7 +57,7 @@ int main(int argc, char** argv)
 	assert(file.is_open());
 	file.close();
 
-	state = Renderer::getState();
+	state = renderer::get_state();
 
 	/* --------------------------------------------- */
 	// Init framework
@@ -66,8 +65,8 @@ int main(int argc, char** argv)
 
 	// setup GLFW window
 	printf("Initializing GLFW...");
-	GLFWApp GLFWapp(state);
-	registerInputCallbacks(GLFWapp);
+	glfw_app glfw_app(state);
+	registerInputCallbacks(glfw_app);
 
 	// load all OpenGL function pointers with GLEW
 	printf("Initializing GLEW...\n");
@@ -78,8 +77,8 @@ int main(int argc, char** argv)
 	glEnable(GL_DEBUG_OUTPUT);
 	glDebugMessageCallback(Debugger::DebugCallbackDefault, 0);
 
-	LoadingScreen loadingScreen = LoadingScreen(&GLFWapp, state->width, state->height);
-	loadingScreen.DrawProgress();
+	LoadingScreen loading_screen = LoadingScreen(&glfw_app, state->width, state->height);
+	loading_screen.draw_progress();
 
 	/* --------------------------------------------- */
 	// Initialize scene and render loop
@@ -87,137 +86,136 @@ int main(int argc, char** argv)
 
 	printf("Initializing scene and render loop...\n");
 
-	printf("Intializing audio...\n");
+	printf("Initializing audio...\n");
 	irrklang::ISoundEngine* engine = irrklang::createIrrKlangDevice();
 	irrklang::ISound* snd = engine->play2D("../../assets/media/EQ07 Prc Fantasy Perc 060.wav", true);
 
-	loadingScreen.DrawProgress();
+	loading_screen.draw_progress();
 	printf("Loading level...\n");
-	Level level("../../assets/submission1.fbx", state, perframeData);
+	level level("../../assets/submission1.fbx", state, perframe_data);
 
-	loadingScreen.DrawProgress();
-	printf("Intializing renderer...\n");
-	Renderer renderer(perframeData, *level.getLights());
+	loading_screen.draw_progress();
+	printf("Initializing renderer...\n");
+	renderer renderer(perframe_data, *level.get_lights());
 
-	loadingScreen.DrawProgress();
+	loading_screen.draw_progress();
 	//Physics Initialization
 	printf("Initializing physics...\n");
 	Physics physics;
 
 	// Integrate level meshes into physics world
-	std::vector<PhysicsMesh> dynamicMeshes = level.getDynamic();
-	for (int i = 0; i < dynamicMeshes.size(); i++) {
+	std::vector<physics_mesh> dynamicMeshes = level.get_dynamic();
+	for (auto& dynamicMeshe : dynamicMeshes)
+	{
 		Physics::PhysicsObject obj = physics.createPhysicsObject(
-			dynamicMeshes[i].node,
-			dynamicMeshes[i].modelTRS,
-			dynamicMeshes[i].vtxPositions,
+			dynamicMeshe.node,
+			dynamicMeshe.model_trs,
+			dynamicMeshe.vtx_positions,
 			Physics::ObjectMode::Dynamic
 		);
-		obj.modelGraphics->gameProperties.isCollectable = true; // temporary solution
+		obj.modelGraphics->game_properties.is_collectable = true; // temporary solution
 	}
 
-	std::vector<PhysicsMesh> staticMeshes = level.getRigid();
-	for (int i = 0; i < staticMeshes.size(); i++)
+	std::vector<physics_mesh> staticMeshes = level.get_rigid();
+	for (auto& staticMeshe : staticMeshes)
 		physics.createPhysicsObject(
-			staticMeshes[i].node,
-			staticMeshes[i].modelTRS,
-			staticMeshes[i].vtxPositions,
+			staticMeshe.node,
+			staticMeshe.model_trs,
+			staticMeshe.vtx_positions,
 			Physics::ObjectMode::Static
 		);
 
 	// Setup camera
-	cameraPositioner = &playerCameraPositioner;
-	camera.setPositioner(cameraPositioner);
-	playerCameraPositioner.setPosition(glm::vec3(0, 10, 0));
+	camera_positioner = &player_camera_positioner;
+	camera.set_positioner(camera_positioner);
+	player_camera_positioner.set_position(glm::vec3(0, 10, 0));
 
-	PlayerController player(physics, playerCameraPositioner, glm::vec3(0, 20, 0));
+	PlayerController player(physics, player_camera_positioner, glm::vec3(0, 20, 0));
 
-	ItemCollection* itemCollection = new ItemCollection();
+	auto* item_collection = new ItemCollection();
 
-	glm::vec3 lavaPosition = glm::vec3(0.0f, -5.0f, 0.0f); // TODO
+	auto lava_position = glm::vec3(0.0f, -5.0f, 0.0f);
 
 	glViewport(0, 0, state->width, state->height);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glLineWidth(2.0f);
-	//glEnable(GL_CULL_FACE);
+	glEnable(GL_CULL_FACE);
 
 	engine->stopAllSounds();
 	snd = engine->play2D("../../assets/media/Wolum - Greed Collecting.mp3", true);
 
-	double timeStamp = glfwGetTime();
-	float deltaSeconds = 0.0f;
-	FPSCounter fpsCounter = FPSCounter();
+	double time_stamp = glfwGetTime();
+	float delta_seconds = 0.0f;
+	fps_counter fps_counter{};
 
-	glfwSetInputMode(GLFWapp.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetInputMode(glfw_app.get_window(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	//---------------------------------- RENDER LOOP ----------------------------------//
 
 	printf("Entering render loop...");
-	while (!glfwWindowShouldClose(GLFWapp.getWindow()))
+	while (!glfwWindowShouldClose(glfw_app.get_window()))
 	{
-		fpsCounter.tick(deltaSeconds);
+		fps_counter.tick(delta_seconds);
 
 		// fps counter
-		const double newTimeStamp = glfwGetTime();
-		deltaSeconds = static_cast<float>(newTimeStamp - timeStamp);
-		timeStamp = newTimeStamp;
-		std::string title = state->window_title + " " + fpsCounter.getFPS() + " fps";
-		glfwSetWindowTitle(GLFWapp.getWindow(), title.c_str());
+		delta_seconds = glfw_app.get_delta_seconds();
+		std::string title = state->window_title + " " + fps_counter.get_fps() + " fps";
+		glfwSetWindowTitle(glfw_app.get_window(), title.c_str());
 
 		// variable window size
 		glViewport(0, 0, state->width, state->height);
-		GLFWapp.updateWindow();
+		glfw_app.update_window();
 
 		// player actions
 		if (state->usingDebugCamera_)
-			floatingPositioner.setMovementState(keyboardInput);
+			floating_positioner.set_movement_state(keyboard_input);
 		else {
-			player.move(keyboardInput, deltaSeconds);
+			player.move(keyboard_input, delta_seconds);
 			state->displayCollectItemHint_ = player.hasCollectableItemInReach();
-			player.tryCollectItem(mouseState, keyboardInput, *itemCollection);
+			player.tryCollectItem(mouse_state, keyboard_input, *item_collection);
 		}
 
 		// calculate physics
-		physics.simulateOneStep(deltaSeconds);
+		physics.simulateOneStep(delta_seconds);
 
 		// update camera
 		player.updateCameraPositioner();
-		cameraPositioner->update(deltaSeconds, mouseState.pos, mouseState.pressedLeft);
+		camera_positioner->update(delta_seconds, mouse_state.pos, mouse_state.pressedLeft);
 
 		// calculate and set per frame matrices
-		const float ratio = state->width / (float)state->height;
+		const float ratio = static_cast<float>(state->width) / static_cast<float>(state->height);
 		const glm::mat4 projection = glm::perspective(glm::radians(state->fov), ratio, state->Znear, state->Zfar);
-		const glm::mat4 view = camera.getViewMatrix();
-		perframeData.ViewProj = projection * view;
-		if (perframeData.deltaTime.y > 60.0f) lavaPosition.y += deltaSeconds * 1.0f; //TODO
-		perframeData.lavaLevel = glm::translate(lavaPosition);
-		perframeData.viewPos = glm::vec4(camera.getPosition(), 1.0f);
-		perframeData.viewInv = glm::inverse(view);
-		perframeData.projInv = glm::inverse(projection);
-		perframeData.deltaTime.x = deltaSeconds;
-		perframeData.deltaTime.y += deltaSeconds;
+		const glm::mat4 view = camera.get_view_matrix();
+		perframe_data.ViewProj = projection * view;
+		if (perframe_data.deltaTime.y > 60.0f) lava_position.y += delta_seconds * 1.0f; //TODO
+		perframe_data.lavaLevel = glm::translate(lava_position);
+		perframe_data.viewPos = glm::vec4(camera.get_position(), 1.0f);
+		perframe_data.viewInv = glm::inverse(view);
+		perframe_data.projInv = glm::inverse(projection);
+		perframe_data.deltaTime.x = delta_seconds;
+		perframe_data.deltaTime.y += delta_seconds;
 
 		// simple game logic WIP
-		state->totalCash = itemCollection->getTotalMonetaryValue();
-		state->collectedItems = itemCollection->size();
-		if (perframeData.viewPos.y > 127.0f)
+		state->totalCash = item_collection->getTotalMonetaryValue();
+		state->collectedItems = item_collection->size();
+		if (perframe_data.viewPos.y > 127.0f)
 		{
 			state->won_ = true;
 		}
-		if (perframeData.viewPos.y < lavaPosition.y)
+		if (perframe_data.viewPos.y < lava_position.y)
 		{
 			state->lost_ = true;
 		}
 
 		// actual draw call
-		renderer.Draw(&level);
+		renderer.draw(&level);
 		if (state->debugDrawPhysics_)
 			physics.debugDraw();
 
 		// swap buffers
-		GLFWapp.swapBuffers();
-		renderer.swapLuminance();
+		glfw_app.swap_buffers();
+		renderer.swap_luminance();
 	}
 
 
@@ -225,32 +223,32 @@ int main(int argc, char** argv)
 	// Destroy context and exit
 	/* --------------------------------------------- */
 
-	printf("Exiting programm...");
+	printf("Exiting program...");
 	return EXIT_SUCCESS;
 }
 
-void registerInputCallbacks(GLFWApp& app) {
-	glfwSetKeyCallback(app.getWindow(),
+void registerInputCallbacks(glfw_app& app) {
+	glfwSetKeyCallback(app.get_window(),
 		[](GLFWwindow* window, int key, int scancode, int action, int mods)
 		{
 			// Movement
 			const bool press = action != GLFW_RELEASE;
 			if (key == GLFW_KEY_W)
-				keyboardInput.pressingW = press;
+				keyboard_input.pressingW = press;
 			if (key == GLFW_KEY_S)
-				keyboardInput.pressingS = press;
+				keyboard_input.pressingS = press;
 			if (key == GLFW_KEY_A)
-				keyboardInput.pressingA = press;
+				keyboard_input.pressingA = press;
 			if (key == GLFW_KEY_D)
-				keyboardInput.pressingD = press;
+				keyboard_input.pressingD = press;
 			if (key == GLFW_KEY_1)
-				keyboardInput.pressing1 = press;
+				keyboard_input.pressing1 = press;
 			if (key == GLFW_KEY_2)
-				keyboardInput.pressing2 = press;
+				keyboard_input.pressing2 = press;
 			if (mods & GLFW_MOD_SHIFT)
-				keyboardInput.pressingShift = press;
+				keyboard_input.pressingShift = press;
 			if (key == GLFW_KEY_SPACE)
-				keyboardInput.pressingSpace = press;
+				keyboard_input.pressingSpace = press;
 
 			// Window management, Debug, Effects
 			if (key == GLFW_KEY_ESCAPE)
@@ -286,28 +284,28 @@ void registerInputCallbacks(GLFWApp& app) {
 			}
 			if (key == GLFW_KEY_F5 && action == GLFW_PRESS)
 			{
-				if (perframeData.normalMap.x > 0.0f)
+				if (perframe_data.normalMap.x > 0.0f)
 					printf("normal mapping off");
 				else
 					printf("normal mapping on");
 
-				perframeData.normalMap.x *= -1.0f;
+				perframe_data.normalMap.x *= -1.0f;
 			}
 			if (key == GLFW_KEY_F6 && action == GLFW_PRESS) {
 				if (state->usingDebugCamera_) {
 					printf("Switch camera to player");
-					cameraPositioner = &playerCameraPositioner;
+					camera_positioner = &player_camera_positioner;
 					state->debugDrawPhysics_ = false;
 					glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 				}
 				else {
 					printf("Switch camera to debug camera");
-					cameraPositioner = &floatingPositioner;
+					camera_positioner = &floating_positioner;
 					state->debugDrawPhysics_ = true;
 					glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 				}
 				state->usingDebugCamera_ = !state->usingDebugCamera_;
-				camera.setPositioner(cameraPositioner);
+				camera.set_positioner(camera_positioner);
 			}
 			if (key == GLFW_KEY_F7 && action == GLFW_PRESS)
 			{
@@ -346,22 +344,22 @@ void registerInputCallbacks(GLFWApp& app) {
 				}
 			}
 		});
-	glfwSetMouseButtonCallback(app.getWindow(),
+	glfwSetMouseButtonCallback(app.get_window(),
 		[](auto* window, int button, int action, int mods)
 		{
 			if (button == GLFW_MOUSE_BUTTON_LEFT)
-				mouseState.pressedLeft = action == GLFW_PRESS;
+				mouse_state.pressedLeft = action == GLFW_PRESS;
 
 			if (button == GLFW_MOUSE_BUTTON_RIGHT)
-				mouseState.pressedRight = action == GLFW_PRESS;
+				mouse_state.pressedRight = action == GLFW_PRESS;
 
 		});
 	glfwSetCursorPosCallback(
-		app.getWindow(), [](auto* window, double x, double y) {
+		app.get_window(), [](auto* window, double x, double y) {
 			int w, h;
 			glfwGetFramebufferSize(window, &w, &h);
-			mouseState.pos.x = static_cast<float>(x / w);
-			mouseState.pos.y = static_cast<float>(y / h);
+			mouse_state.pos.x = static_cast<float>(x / w);
+			mouse_state.pos.y = static_cast<float>(y / h);
 		}
 	);
 }

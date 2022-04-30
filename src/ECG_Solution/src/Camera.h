@@ -7,124 +7,120 @@
 /* Camera Interface
 * every camera has to give a view matrix and position vector for rendering and shading
 */
-class CameraPositionerInterface
+class camera_positioner_interface
 {
 public:
-	virtual ~CameraPositionerInterface() = default;
-	virtual glm::mat4 getViewMatrix() const = 0;
-	virtual glm::vec3 getPosition() const = 0;
-	virtual glm::quat getOrientation() const = 0;
-	virtual void update(double deltaSeconds, const glm::vec2& mousePos, bool mousePressed) = 0;
+	virtual ~camera_positioner_interface() = default;
+	virtual glm::mat4 get_view_matrix() const = 0;
+	virtual glm::vec3 get_position() const = 0;
+	virtual glm::quat get_orientation() const = 0;
+	virtual void update(double delta_seconds, const glm::vec2& mouse_pos, bool mouse_pressed) = 0;
 };
 
-class Camera final
+class camera final
 {
 public:
-	explicit Camera(CameraPositionerInterface& positioner)
+	explicit camera(camera_positioner_interface& positioner)
 		: positioner_(&positioner)
 	{}
 
-	Camera(const Camera&) = default;
-	Camera& operator = (const Camera&) = default;
+	camera(const camera&) = default;
+	camera& operator = (const camera&) = default;
 
-	glm::mat4 getViewMatrix() const { return positioner_->getViewMatrix(); }
-	glm::vec3 getPosition() const { return positioner_->getPosition(); }
-	glm::quat getOrientation() const { return positioner_->getOrientation(); }
-	void setPositioner(CameraPositionerInterface* newPositioner) {
-		positioner_ = newPositioner;
+	glm::mat4 get_view_matrix() const { return positioner_->get_view_matrix(); }
+	glm::vec3 get_position() const { return positioner_->get_position(); }
+	glm::quat get_orientation() const { return positioner_->get_orientation(); }
+	void set_positioner(camera_positioner_interface* new_positioner) {
+		positioner_ = new_positioner;
 	}
 
 
 private:
-	CameraPositionerInterface* positioner_;
+	camera_positioner_interface* positioner_;
 };
 
 /* Camera with first person view
 * view position can be moved in all 6 directions
 * the player can only add accelertion to the camera, if the player stops pressing a key, the movement slowly stops
 */
-class CameraPositioner_FirstPerson final : public CameraPositionerInterface
+class camera_positioner_first_person final : public camera_positioner_interface
 {
 	public:
-		struct Movement
+		struct movement
 		{
-			bool forward_ = false;
-			bool backward_ = false;
-			bool left_ = false;
-			bool right_ = false;
-			bool up_ = false;
-			bool down_ = false;
+			bool forward = false;
+			bool backward = false;
+			bool left = false;
+			bool right = false;
+			bool up = false;
+			bool down = false;
 
-			bool fastSpeed_ = false;
-		} movement_;
+			bool fast_speed = false;
+		} movement;
 
-		float mouseSpeed_ = 4.0f;
-		float acceleration_ = 150.0f;
-		float damping_ = 0.2f; // changes deceleration speed
-		float maxSpeed_ = 10.0f; // clamps movement
-		float fastCoef_ = 5.0f; // l-shift mode uses this
-
-
-
-		glm::mat4 glmlookAt(glm::vec3 pos, glm::vec3 target, glm::vec3 up); // according to the book "real time rendering" (breaks camera)
-		glm::mat4 glmlookAt2(glm::vec3 eye, glm::vec3 target, glm::vec3 up); //actual glm implementation
-		CameraPositioner_FirstPerson(const glm::vec3& pos, const glm::vec3& target, const glm::vec3& up)
-			: cameraPosition_(pos)
-			, cameraOrientation_(glmlookAt2(pos, target, up))
+		float mouse_speed = 4.0f;
+		float acceleration = 150.0f;
+		float damping = 0.2f; // changes deceleration speed
+		float max_speed = 10.0f; // clamps movement
+		float fast_coef = 5.0f; // l-shift mode uses this
+		
+		camera_positioner_first_person(const glm::vec3& pos, const glm::vec3& target, const glm::vec3& up)
+			: camera_position_(pos)
+			, camera_orientation_(glm_look_at(pos, target, up))
 			, up_(up)
 		{}
-		void setMovementState(KeyboardInputState input);
-		void update(double deltaSeconds, const glm::vec2& mousePos, bool mousePressed) override;
-		virtual glm::mat4 getViewMatrix() const override
+		void set_movement_state(KeyboardInputState input);
+		void update(double delta_seconds, const glm::vec2& mouse_pos, bool mouse_pressed) override;
+		virtual glm::mat4 get_view_matrix() const override
 		{
-			const glm::mat4 t = glm::translate(glm::mat4(1.0f), -cameraPosition_);
-			const glm::mat4 r = glm::mat4_cast(cameraOrientation_);
+			const glm::mat4 t = glm::translate(glm::mat4(1.0f), -camera_position_);
+			const glm::mat4 r = glm::mat4_cast(camera_orientation_);
 			return r * t;
 		};
-		virtual glm::vec3 getPosition() const override
+		virtual glm::vec3 get_position() const override
 		{
-			return cameraPosition_;
+			return camera_position_;
 		};
-		void setPosition(const glm::vec3& pos);
-		void resetMousePosition(const glm::vec2& p) { mousePos_ = p; };
-		void setUpVector(const glm::vec3& up);
-		inline void flookAt(const glm::vec3& pos, const glm::vec3& target, const glm::vec3& up);
-		glm::quat getOrientation() const override {
-			return cameraOrientation_;
+		void set_position(const glm::vec3& pos);
+		void reset_mouse_position(const glm::vec2& p) { mouse_pos_ = p; };
+		void set_up_vector(const glm::vec3& up);
+		inline void flook_at(const glm::vec3& pos, const glm::vec3& target, const glm::vec3& up);
+		glm::quat get_orientation() const override {
+			return camera_orientation_;
 		}
 
 	private:
-		glm::vec2 mousePos_ = glm::vec2(0);
-		glm::vec3 cameraPosition_ = glm::vec3(0.0f, 10.0f, 10.0f);
-		glm::quat cameraOrientation_ = glm::quat(glm::vec3(0));
-		glm::vec3 moveSpeed_ = glm::vec3(0.0f);
+		glm::vec2 mouse_pos_ = glm::vec2(0);
+		glm::vec3 camera_position_ = glm::vec3(0.0f, 10.0f, 10.0f);
+		glm::quat camera_orientation_ = glm::quat(glm::vec3(0));
+		glm::vec3 move_speed_ = glm::vec3(0.0f);
 		glm::vec3 up_ = glm::vec3(0.0f, 0.0f, 1.0f);
 
 };
 
-class CameraPositioner_Player final : public CameraPositionerInterface {
+class camera_positioner_player final : public camera_positioner_interface {
 public:
-	virtual glm::mat4 getViewMatrix() const override
+	virtual glm::mat4 get_view_matrix() const override
 	{
-		const glm::mat4 t = glm::translate(glm::mat4(1.0f), -cameraPosition);
-		const glm::mat4 r = glm::mat4_cast(cameraOrientation);
+		const glm::mat4 t = glm::translate(glm::mat4(1.0f), -camera_position_);
+		const glm::mat4 r = glm::mat4_cast(camera_orientation_);
 		return r * t;
 	};
-	virtual glm::vec3 getPosition() const override
+	virtual glm::vec3 get_position() const override
 	{
-		return cameraPosition;
+		return camera_position_;
 	};
-	void setPosition(glm::vec3 pos);
-	void update(double deltaSeconds, const glm::vec2& mousePos, bool mousePressed) override;
-	glm::mat4 lookAt(glm::vec3 pos, glm::vec3 target, glm::vec3 up);
-	glm::quat getOrientation() const override {
-		return cameraOrientation;
+	void set_position(glm::vec3 pos);
+	void update(double delta_seconds, const glm::vec2& mouse_pos, bool mouse_pressed) override;
+	glm::mat4 look_at(glm::vec3 pos, glm::vec3 target, glm::vec3 up);
+	glm::quat get_orientation() const override {
+		return camera_orientation_;
 	}
 private:
-	glm::vec3 cameraPosition = glm::vec3(0.0f, 0.0f, 0.0f);
-	glm::quat cameraOrientation = glm::quat(glm::vec3(0));
-	glm::vec2 lastMousePos = glm::vec2(0);
-	float mouseSpeed = 4.0f;
+	glm::vec3 camera_position_ = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::quat camera_orientation_ = glm::quat(glm::vec3(0));
+	glm::vec2 last_mouse_pos_ = glm::vec2(0);
+	float mouse_speed_ = 4.0f;
 
-	glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+	glm::vec3 up_ = glm::vec3(0.0f, 1.0f, 0.0f);
 };

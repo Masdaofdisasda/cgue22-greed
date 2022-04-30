@@ -9,31 +9,31 @@ class LoadingScreen
 {
 public:
 	 void start();
-	 void stop() { end = true; }
-	LoadingScreen(GLFWApp* app, int width, int height);
+	 void stop() { end_ = true; }
+	LoadingScreen(glfw_app* app, int width, int height);
 	~LoadingScreen();
-	 void DrawProgress();
+	 void draw_progress();
 
 private:
 	
 	 void init();
 
-	 std::shared_ptr<GLFWApp> window;
-	    int w;
-	    int h;
-		bool end = false;
+	 std::shared_ptr<glfw_app> window_;
+	    int w_;
+	    int h_;
+		bool end_ = false;
 
-	    int step = 0;
+	    int step_ = 0;
 
-		GLuint emptyVAO = 0;
+		GLuint empty_vao_ = 0;
 
-	    GLuint scrn0 = 0;
-	    GLuint scrn25 = 0;
-	    GLuint scrn50 = 0;
-	    GLuint scrn75 = 0;
-	    GLuint scrn100 = 0;
+	    GLuint scrn0_ = 0;
+	    GLuint scrn25_ = 0;
+	    GLuint scrn50_ = 0;
+	    GLuint scrn75_ = 0;
+	    GLuint scrn100_ = 0;
 
-		GLuint* screens[5] = { &scrn0,&scrn25, &scrn50,&scrn75, &scrn100 };
+		GLuint* screens_[5] = { &scrn0_,&scrn25_, &scrn50_,&scrn75_, &scrn100_ };
 
-		std::shared_ptr<Program> renderImage;
+		std::shared_ptr<program> render_image_;
 };

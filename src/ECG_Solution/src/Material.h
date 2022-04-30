@@ -11,28 +11,28 @@
 class Material
 {
 public:
-	Material(const char* texPath, const char* name);
-	~Material() { Release(); };
+	Material(const char* tex_path, const char* name);
+	~Material() { release(); };
 
-	GLuint getAlbedo() const { return albedo; }
-	GLuint getNormalmap() const { return normal; }
-	GLuint getMetallic() const { return metal; }
-	GLuint getRoughness() const { return rough; }
-	GLuint getAOmap() const { return ao; }
+	GLuint get_albedo() const { return albedo_; }
+	GLuint get_normal_map() const { return normal_; }
+	GLuint get_metallic() const { return metal_; }
+	GLuint get_roughness() const { return rough_; }
+	GLuint get_ao_map() const { return ao_; }
 
-	void clear();
+	void clear() const;
 
 private:
-	std::string id;
+	std::string id_;
 
-	GLuint albedo = 0;
-	GLuint normal = 0;
-	GLuint metal = 0;
-	GLuint rough = 0;
-	GLuint ao = 0;
+	GLuint albedo_ = 0;
+	GLuint normal_ = 0;
+	GLuint metal_ = 0;
+	GLuint rough_ = 0;
+	GLuint ao_ = 0;
 
 
-	void Release()
+	void release()
 	{
 		// do not delete textures here
 	}

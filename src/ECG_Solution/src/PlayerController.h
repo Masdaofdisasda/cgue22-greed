@@ -11,7 +11,7 @@
 class PlayerController
 {
 public:
-	PlayerController(Physics& physics, CameraPositioner_Player& camera, glm::vec3 startPosition);
+	PlayerController(Physics& physics, camera_positioner_player& camera, glm::vec3 startPosition);
 	
 	/// <summary>
 	/// Tries to move the rigidbody in the desired direction. 
@@ -39,7 +39,7 @@ private:
 	};
 
 	Physics& physics;
-	CameraPositioner_Player& cameraPositioner;
+	camera_positioner_player& cameraPositioner;
 	Physics::PhysicsObject* playerObject;
 
 	// settings

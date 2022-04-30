@@ -4,11 +4,11 @@
 #include "Cubemap.h"
 #include "Level.h"
 
-class Level;
+class level;
 /// @brief Program is a shader program compiled from 1 to 5 shaders
 /// contains a handle, builds and error checks the programm
 /// can set unfiform variables for a shader
-class Program
+class program
 {
 private:
 	// Reference ID of the Shader Program
@@ -33,26 +33,26 @@ public:
 	void buildFrom(Shader& a, Shader& b, Shader& c);
 	void buildFrom(Shader& a, Shader& b, Shader& c, Shader& d);
 	void buildFrom(Shader& a, Shader& b, Shader& c, Shader& d, Shader& e);
-	Program();
+	program();
 
-	~Program() { Release(); }
+	~program() { Release(); }
 
 	void Use();
 
 	void uploadIBL (GLuint Irradiance, GLuint PreFilter, GLuint BdrfLut, GLuint Enviroment) const;
 
 	// ensure RAII compliance
-	Program(const Program&) = delete;
-	Program& operator=(const Program&) = delete;
+	program(const program&) = delete;
+	program& operator=(const program&) = delete;
 
-	Program(Program&& other)noexcept : program_ID(other.program_ID)
+	program(program&& other)noexcept : program_ID(other.program_ID)
 	{
 		other.program_ID = 0; //Use the "null" ID for the old object.
 		other.dirLoc = 0;
 		other.posLoc = 0;
 	}
 
-	Program& operator=(Program&& other)
+	program& operator=(program&& other)
 	{
 		//ALWAYS check for self-assignment.
 		if (this != &other)

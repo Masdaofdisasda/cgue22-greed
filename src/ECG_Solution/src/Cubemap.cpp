@@ -6,23 +6,23 @@
 /// @brief initalize the handles, caution: using the cubemap without actually
 /// assigned textures breaks the program. this was only done to allow member
 /// cubemaps in Renderer.h
-Cubemap::Cubemap()
+cubemap::cubemap()
 {
-    glGenTextures(1, &env_ID);
-    glGenTextures(1, &irrad_ID);
-    glGenTextures(1, &prefilt_ID);
-    glGenTextures(1, &brdfLut_ID);
+    glGenTextures(1, &env_id_);
+    glGenTextures(1, &irrad_id_);
+    glGenTextures(1, &prefilt_id_);
+    glGenTextures(1, &brdf_lut_id_);
 }
 
 // https://learnopengl.com/PBR/IBL/Diffuse-irradiance
 
 /// @brief loads an hdr panorama image and generates an irradiance map, a filtered map
 /// and look up texture for the BDRF
-/// @param texPath is the location of the hdr image
-void Cubemap::loadHDR(const char* texPath)
+/// @param tex_path is the location of the hdr image
+void cubemap::load_hdr(const char* tex_path)
 {
-    GLuint hdr_ID = 0;
-    glGenTextures(1, &hdr_ID);
+    GLuint hdr_id = 0;
+    glGenTextures(1, &hdr_id);
 
     // pbr: setup framebuffer
     // ----------------------
@@ -41,10 +41,10 @@ void Cubemap::loadHDR(const char* texPath)
     stbi_set_flip_vertically_on_load(true);
     int width, height, nrComponents;
 
-    float* data = stbi_loadf(texPath, &width, &height, &nrComponents, 0);
+    float* data = stbi_loadf(tex_path, &width, &height, &nrComponents, 0);
     if (data)
     {
-        glBindTexture(GL_TEXTURE_2D, hdr_ID);
+        glBindTexture(GL_TEXTURE_2D, hdr_id);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, data); // note how we specify the texture's data value to be float
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -56,12 +56,12 @@ void Cubemap::loadHDR(const char* texPath)
     }
     else
     {
-        std::cout << "Failed to load HDR image: " << texPath << std::endl;
+        std::cout << "Failed to load HDR image: " << tex_path << std::endl;
     }
 
     // pbr: setup cubemap to render to and attach to framebuffer
     // ---------------------------------------------------------
-    glBindTexture(GL_TEXTURE_CUBE_MAP, env_ID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, env_id_);
     for (unsigned int i = 0; i < 6; ++i)
     {
         glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 512, 512, 0, GL_RGB, GL_FLOAT, nullptr);
@@ -77,46 +77,46 @@ void Cubemap::loadHDR(const char* texPath)
     glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
     glm::mat4 captureViews[6] =
     {
-        glmlookAt2(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
-        glmlookAt2(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(-1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
-        glmlookAt2(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  1.0f,  0.0f), glm::vec3(0.0f,  0.0f,  1.0f)),
-        glmlookAt2(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f,  0.0f), glm::vec3(0.0f,  0.0f, -1.0f)),
-        glmlookAt2(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f,  1.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
-        glmlookAt2(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f, -1.0f), glm::vec3(0.0f, -1.0f,  0.0f))
+        glm_look_at(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+        glm_look_at(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(-1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+        glm_look_at(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  1.0f,  0.0f), glm::vec3(0.0f,  0.0f,  1.0f)),
+        glm_look_at(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f,  0.0f), glm::vec3(0.0f,  0.0f, -1.0f)),
+        glm_look_at(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f,  1.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+        glm_look_at(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f, -1.0f), glm::vec3(0.0f, -1.0f,  0.0f))
     };
 
     // pbr: convert HDR equirectangular environment map to cubemap equivalent
     // ----------------------------------------------------------------------
     Shader rect2cubeVert("../../assets/shaders/IBL/rectangleToCubemap.vert");
     Shader rect2cubeFrag("../../assets/shaders/IBL/rectangleToCubemap.frag");
-    Program rectangleToCubemap;
+    program rectangleToCubemap;
     rectangleToCubemap.buildFrom(rect2cubeVert, rect2cubeFrag);
 
     rectangleToCubemap.Use();
     rectangleToCubemap.setInt("equirectangularMap", 0);
     rectangleToCubemap.setMat4("projection", captureProjection);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, hdr_ID);
+    glBindTexture(GL_TEXTURE_2D, hdr_id);
 
     glViewport(0, 0, 512, 512); // don't forget to configure the viewport to the capture dimensions.
     glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
     for (unsigned int i = 0; i < 6; ++i)
     {
         rectangleToCubemap.setMat4("view", captureViews[i]);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, env_ID, 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, env_id_, 0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        renderCube();
+        render_cube();
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     // then let OpenGL generate mipmaps from first mip face (combatting visible dots artifact)
-    glBindTexture(GL_TEXTURE_CUBE_MAP, env_ID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, env_id_);
     glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
 
     // pbr: create an irradiance cubemap, and re-scale capture FBO to irradiance scale.
     // --------------------------------------------------------------------------------
-    glBindTexture(GL_TEXTURE_CUBE_MAP, irrad_ID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, irrad_id_);
     for (unsigned int i = 0; i < 6; ++i)
     {
         glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 32, 32, 0, GL_RGB, GL_FLOAT, nullptr);
@@ -135,30 +135,30 @@ void Cubemap::loadHDR(const char* texPath)
     // -----------------------------------------------------------------------------
     Shader irradianceVert("../../assets/shaders/IBL/irradiance.vert");
     Shader irradianceFrag("../../assets/shaders/IBL/irradiance.frag");
-    Program irradiance;
+    program irradiance;
     irradiance.buildFrom(irradianceVert, irradianceFrag);
 
     irradiance.Use();
     irradiance.setInt("environmentMap", 0);
     irradiance.setMat4("projection", captureProjection);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, env_ID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, env_id_);
 
     glViewport(0, 0, 32, 32); // don't forget to configure the viewport to the capture dimensions.
     glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
     for (unsigned int i = 0; i < 6; ++i)
     {
         irradiance.setMat4("view", captureViews[i]);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, irrad_ID, 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, irrad_id_, 0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        renderCube();
+        render_cube();
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     // pbr: create a pre-filter cubemap, and re-scale capture FBO to pre-filter scale.
     // --------------------------------------------------------------------------------
-    glBindTexture(GL_TEXTURE_CUBE_MAP, prefilt_ID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, prefilt_id_);
     for (unsigned int i = 0; i < 6; ++i)
     {
         glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 128, 128, 0, GL_RGB, GL_FLOAT, nullptr);
@@ -175,14 +175,14 @@ void Cubemap::loadHDR(const char* texPath)
     // ----------------------------------------------------------------------------------------------------
     Shader preFilterVert("../../assets/shaders/IBL/preFilter.vert");
     Shader preFilterFrag("../../assets/shaders/IBL/preFilter.frag");
-    Program preFilter;
+    program preFilter;
     preFilter.buildFrom(preFilterVert, preFilterFrag);
 
     preFilter.Use();
     preFilter.setInt("environmentMap", 0);
     preFilter.setMat4("projection", captureProjection);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, env_ID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, env_id_);
 
     glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
     unsigned int maxMipLevels = 5;
@@ -200,10 +200,10 @@ void Cubemap::loadHDR(const char* texPath)
         for (unsigned int i = 0; i < 6; ++i)
         {
             preFilter.setMat4("view", captureViews[i]);
-            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, prefilt_ID, mip);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, prefilt_id_, mip);
 
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            renderCube();
+            render_cube();
         }
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -213,7 +213,7 @@ void Cubemap::loadHDR(const char* texPath)
 
 
     // pre-allocate enough memory for the LUT texture.
-    glBindTexture(GL_TEXTURE_2D, brdfLut_ID);
+    glBindTexture(GL_TEXTURE_2D, brdf_lut_id_);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, 512, 512, 0, GL_RG, GL_FLOAT, 0);
     // be sure to set wrapping mode to GL_CLAMP_TO_EDGE
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -225,31 +225,31 @@ void Cubemap::loadHDR(const char* texPath)
     glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
     glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, brdfLut_ID, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, brdf_lut_id_, 0);
 
     Shader brdfLutVert("../../assets/shaders/IBL/brdfLut.vert");
     Shader brdfLutFrag("../../assets/shaders/IBL/brdfLut.frag");
-    Program brdfLut;
+    program brdfLut;
     brdfLut.buildFrom(brdfLutVert, brdfLutFrag);
 
     glViewport(0, 0, 512, 512);
     brdfLut.Use();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    renderQuad();
+    render_quad();
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    glDeleteTextures(1, &hdr_ID);
+    glDeleteTextures(1, &hdr_id);
 }
 
-void Cubemap::renderCube()
+void cubemap::render_cube()
 {
     unsigned int cubeVAO = 0;
     unsigned int cubeVBO = 0;
     // initialize (if necessary)
     if (cubeVAO == 0)
     {
-        float vertices[] = {
+	    const float vertices[] = {
             // back face
             -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f, // bottom-left
              1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 1.0f, // top-right
@@ -316,7 +316,7 @@ void Cubemap::renderCube()
 }
 
 
-void Cubemap::renderQuad()
+void cubemap::render_quad()
 {
     unsigned int quadVAO = 0;
     unsigned int quadVBO;
@@ -343,34 +343,4 @@ void Cubemap::renderQuad()
     glBindVertexArray(quadVAO);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glBindVertexArray(0);
-}
-
-/// @brief an implementation of the glm::lookat() function, because this framework
-/// makes it impossible to use, same code as in the Camera class
-/// @param pos is the position aka eye or view of the camera
-/// @param target to "look at" from the position
-/// @param up is the up vetor of the world
-/// @return a view matrix according to the input vectors
-glm::mat4 Cubemap::glmlookAt2(glm::vec3 pos, glm::vec3 target, glm::vec3 up)
-{
-    glm::vec3 zaxis = glm::normalize(pos - target);
-    glm::vec3 xaxis = glm::normalize(glm::cross(glm::normalize(up), zaxis));
-    glm::vec3 yaxis = glm::cross(zaxis, xaxis);
-
-    glm::mat4 translation;
-    translation[3][0] = -pos.x;
-    translation[3][1] = -pos.y;
-    translation[3][2] = -pos.z;
-    glm::mat4 rotation;
-    rotation[0][0] = xaxis.x; 
-    rotation[1][0] = xaxis.y;
-    rotation[2][0] = xaxis.z;
-    rotation[0][1] = yaxis.x; 
-    rotation[1][1] = yaxis.y;
-    rotation[2][1] = yaxis.z;
-    rotation[0][2] = zaxis.x; 
-    rotation[1][2] = zaxis.y;
-    rotation[2][2] = zaxis.z;
-
-    return rotation * translation;
 }

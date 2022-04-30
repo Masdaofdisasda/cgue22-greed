@@ -2,35 +2,35 @@
 
 UBO::UBO()
 {
-	glGenBuffers(1, &ubo_ID);
+	glGenBuffers(1, &ubo_id_);
 }
 
 
 // lights
-void UBO::fillBuffer(std::vector<DirectionalLight>& bufferData)
+void UBO::fill_buffer(std::vector<directional_light>& buffer_data) const
 {
-	glBindBuffer(GL_UNIFORM_BUFFER, ubo_ID);
-	glBufferData(GL_UNIFORM_BUFFER, bufferData.size() * sizeof(DirectionalLight), bufferData.data(), GL_STATIC_READ);
+	glBindBuffer(GL_UNIFORM_BUFFER, ubo_id_);
+	glBufferData(GL_UNIFORM_BUFFER, buffer_data.size() * sizeof(directional_light), buffer_data.data(), GL_STATIC_READ);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
-void UBO::fillBuffer(std::vector<PositionalLight>& bufferData)
+void UBO::fill_buffer(std::vector<positional_light>& buffer_data) const
 {
-	glBindBuffer(GL_UNIFORM_BUFFER, ubo_ID);
-	glBufferData(GL_UNIFORM_BUFFER, bufferData.size() * sizeof(PositionalLight), bufferData.data(), GL_STATIC_READ);
+	glBindBuffer(GL_UNIFORM_BUFFER, ubo_id_);
+	glBufferData(GL_UNIFORM_BUFFER, buffer_data.size() * sizeof(positional_light), buffer_data.data(), GL_STATIC_READ);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
 // Per Frame Data
-void UBO::fillBuffer(PerFrameData pfbuffer)
+void UBO::fill_buffer(PerFrameData pfbuffer)
 {
-	glBindBuffer(GL_UNIFORM_BUFFER, ubo_ID);
-	glNamedBufferStorage(ubo_ID, sizeof(PerFrameData), nullptr, GL_DYNAMIC_STORAGE_BIT);
-	glBindBufferRange(GL_UNIFORM_BUFFER, 0, ubo_ID, 0, sizeof(PerFrameData));
-	Update(pfbuffer);
+	glBindBuffer(GL_UNIFORM_BUFFER, ubo_id_);
+	glNamedBufferStorage(ubo_id_, sizeof(PerFrameData), nullptr, GL_DYNAMIC_STORAGE_BIT);
+	glBindBufferRange(GL_UNIFORM_BUFFER, 0, ubo_id_, 0, sizeof(PerFrameData));
+	update(pfbuffer);
 }
 
-void UBO::Update(PerFrameData pfbuffer)
+void UBO::update(PerFrameData pfbuffer) const
 {
-	glNamedBufferSubData(ubo_ID, 0, sizeof(PerFrameData), &pfbuffer);
+	glNamedBufferSubData(ubo_id_, 0, sizeof(PerFrameData), &pfbuffer);
 }

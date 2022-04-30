@@ -24,7 +24,7 @@ public:
 	/// </summary>
 	struct PhysicsObject {
 		btRigidBody* rigidbody;
-		Hierarchy* modelGraphics;
+		hierarchy* modelGraphics;
 		Physics::ObjectMode mode;
 	};
 
@@ -47,8 +47,8 @@ public:
 	/// The object mode determines if the object will move at all
 	/// </summary>
 	PhysicsObject& createPhysicsObject(
-		Hierarchy* modelGraphics,
-		Transformation modelMatrix,
+		hierarchy* modelGraphics,
+		transformation modelMatrix,
 		std::vector<float> colliderVerticePositions,
 		ObjectMode mode
 	);
@@ -76,7 +76,7 @@ private:
 	/// Creates and returns a bullet rigidbody
 	/// </summary>
 	btRigidBody* makeRigidbody(btVector3 pos, btCollisionShape* col, btQuaternion rot, btScalar mass);
-	btRigidBody* makeRigidbody(Transformation transform, btCollisionShape* col, btScalar mass);
+	btRigidBody* makeRigidbody(transformation transform, btCollisionShape* col, btScalar mass);
 
 	/// <summary>
 	/// Returns a collision shape generated from the input mesh
@@ -93,7 +93,7 @@ private:
 	/// Adds a rigidbody (created from the input parameters) to the physics world.
 	/// Also adds the rigidbody and the modelGraphics to a list to keep track of them.
 	/// </summary>
-	PhysicsObject& addPhysicsObject(btRigidBody* rigidbody, Hierarchy* modelGraphics, Physics::ObjectMode mode);
+	PhysicsObject& addPhysicsObject(btRigidBody* rigidbody, hierarchy* modelGraphics, Physics::ObjectMode mode);
 
 	/// <summary>
 	/// Sets the transformation matrix of the visual representation

@@ -3,51 +3,51 @@
 /// @brief build a shader program from shaders and check for compile errors
 /// all buildFrom() functions do the same thing but with more shaders
 /// @param a is a valid shader
-void Program::buildFrom(Shader& a)
+void program::buildFrom(Shader& a)
 {
-	glAttachShader(program_ID, *a.getID());
+	glAttachShader(program_ID, *a.get_id());
 	glLinkProgram(program_ID);
 
 	compileErrors();
 	getUniformLocations();
 }
-void Program::buildFrom(Shader& a, Shader& b)
+void program::buildFrom(Shader& a, Shader& b)
 {
-	glAttachShader(program_ID, *a.getID());
-	glAttachShader(program_ID, *b.getID());
+	glAttachShader(program_ID, *a.get_id());
+	glAttachShader(program_ID, *b.get_id());
 	glLinkProgram(program_ID);
 
 	compileErrors();
 	getUniformLocations();
 }
-void Program::buildFrom(Shader& a, Shader& b, Shader& c)
+void program::buildFrom(Shader& a, Shader& b, Shader& c)
 {
-	glAttachShader(program_ID, *a.getID());
-	glAttachShader(program_ID, *b.getID());
-	glAttachShader(program_ID, *c.getID());
+	glAttachShader(program_ID, *a.get_id());
+	glAttachShader(program_ID, *b.get_id());
+	glAttachShader(program_ID, *c.get_id());
 	glLinkProgram(program_ID);
 
 	compileErrors();
 	getUniformLocations();
 }
-void Program::buildFrom(Shader& a, Shader& b, Shader& c, Shader& d)
+void program::buildFrom(Shader& a, Shader& b, Shader& c, Shader& d)
 {
-	glAttachShader(program_ID, *a.getID());
-	glAttachShader(program_ID, *b.getID());
-	glAttachShader(program_ID, *c.getID());
-	glAttachShader(program_ID, *d.getID());
+	glAttachShader(program_ID, *a.get_id());
+	glAttachShader(program_ID, *b.get_id());
+	glAttachShader(program_ID, *c.get_id());
+	glAttachShader(program_ID, *d.get_id());
 	glLinkProgram(program_ID);
 
 	compileErrors();
 	getUniformLocations();
 }
-void Program::buildFrom(Shader& a, Shader& b, Shader& c, Shader& d, Shader& e)
+void program::buildFrom(Shader& a, Shader& b, Shader& c, Shader& d, Shader& e)
 {
-	glAttachShader(program_ID, *a.getID());
-	glAttachShader(program_ID, *b.getID());
-	glAttachShader(program_ID, *c.getID());
-	glAttachShader(program_ID, *d.getID());
-	glAttachShader(program_ID, *e.getID());
+	glAttachShader(program_ID, *a.get_id());
+	glAttachShader(program_ID, *b.get_id());
+	glAttachShader(program_ID, *c.get_id());
+	glAttachShader(program_ID, *d.get_id());
+	glAttachShader(program_ID, *e.get_id());
 	glLinkProgram(program_ID);
 
 	compileErrors();
@@ -58,13 +58,13 @@ void Program::buildFrom(Shader& a, Shader& b, Shader& c, Shader& d, Shader& e)
 /// @brief creates an OpenGL handle, program needs to call some of the buildfrom()
 /// functions before Use(), otherwise the app may crash, this constructor makes
 /// member programs possible
-Program::Program()
+program::program()
 {
 	program_ID = glCreateProgram();
 }
 
 /// @brief makes this the currently active shader program, called before glDraw()
-void Program::Use()
+void program::Use()
 {
 	glUseProgram(program_ID);
 }
@@ -74,7 +74,7 @@ void Program::Use()
 /// @param PreFilter is the texture handle for the prefilter map
 /// @param BdrfLut is the texture handle for the bdrflut map
 /// @param Enviroment  is the texture handle for the enviroment map
-void Program::uploadIBL(GLuint Irradiance, GLuint PreFilter, GLuint BdrfLut, GLuint Enviroment) const
+void program::uploadIBL(GLuint Irradiance, GLuint PreFilter, GLuint BdrfLut, GLuint Enviroment) const
 {
 	const GLuint textures[] = {
 				Irradiance,
@@ -85,7 +85,7 @@ void Program::uploadIBL(GLuint Irradiance, GLuint PreFilter, GLuint BdrfLut, GLu
 }
 
 // TODO
-void Program::getUniformLocations()
+void program::getUniformLocations()
 {
 
 	dirLoc = glGetUniformBlockIndex(program_ID, "dLightUBlock");
@@ -94,45 +94,45 @@ void Program::getUniformLocations()
 }
 
 // TODO
-void Program::bindLightBuffers(UBO* directional, UBO* positional)
+void program::bindLightBuffers(UBO* directional, UBO* positional)
 {
-	glBindBufferBase(GL_UNIFORM_BUFFER, 1, directional->getID());
-	glBindBufferBase(GL_UNIFORM_BUFFER, 2, positional->getID());
+	glBindBufferBase(GL_UNIFORM_BUFFER, 1, directional->get_id());
+	glBindBufferBase(GL_UNIFORM_BUFFER, 2, positional->get_id());
 }
 
-void Program::setuInt(const std::string& name, int value)
+void program::setuInt(const std::string& name, int value)
 {
 	glUniform1ui(glGetUniformLocation(program_ID, name.c_str()), value);
 }
 
-void Program::setInt(const std::string& name, int value)
+void program::setInt(const std::string& name, int value)
 {
 	glUniform1i(glGetUniformLocation(program_ID, name.c_str()), value);
 }
 
 
-void Program::setFloat(const std::string& name, float value)
+void program::setFloat(const std::string& name, float value)
 {
 	glUniform1f(glGetUniformLocation(program_ID, name.c_str()), value);
 }
 
-void Program::setVec3(const std::string& name, glm::vec3 value)
+void program::setVec3(const std::string& name, glm::vec3 value)
 {
 	glUniform3fv(glGetUniformLocation(program_ID, name.c_str()), 1, &value[0]);
 }
 
-void Program::setVec4(const std::string& name, glm::vec4 value)
+void program::setVec4(const std::string& name, glm::vec4 value)
 {
 	glUniform4fv(glGetUniformLocation(program_ID, name.c_str()), 1, &value[0]);
 }
 
-void Program::setMat4(const std::string& name, glm::mat4 value)
+void program::setMat4(const std::string& name, glm::mat4 value)
 {
 	glUniformMatrix4fv(glGetUniformLocation(program_ID, name.c_str()), 1, GL_FALSE, &value[0][0]);
 }
 
 /// @brief check for compile errors
-void Program::compileErrors()
+void program::compileErrors()
 {
 	GLint succeded;
 
