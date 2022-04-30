@@ -11,24 +11,24 @@
 struct sub_mesh
 {
 	std::string name;						// name of the mesh, for debugging
-	std::vector<uint32_t> index_offset;		// start of mesh in vector indices_, [0] being original index count, [8] being lowest LOD
-	uint32_t vertex_offset{};					// start of mesh in vector vertices
-	std::vector<uint32_t> index_count;		// number of indices to render, [0] being original index count, [8] being lowest LOD
-	uint32_t vertex_count{};					// number of vertices to render
+	std::vector<uint32_t> index_offset;		// start of mesh in vector indices_, [0] offset to original index - [8] offset to lowest LOD 
+	uint32_t vertex_offset{};				// start of mesh in vector vertices
+	std::vector<uint32_t> index_count;		// number of indices to render, [0] original index count - [8] lowest LOD
+	uint32_t vertex_count{};				// number of vertices to render
 	uint32_t material_index{};				// associated material
 };
 
-/// @brief describes one indirect command for GlDraw_Indrect calls
+/// @brief describes one indirect command for glDraw_Indirect calls
 struct draw_elements_indirect_command
 {
-	uint32_t count_;
-	uint32_t instanceCount_;
-	uint32_t firstIndex_;
-	uint32_t baseVertex_;
-	uint32_t baseInstance_;
+	uint32_t count_;			// number of indices that get drawn, eg for single quad = 6
+	uint32_t instanceCount_;	// number of instanced that get drawn, 0 means none, this programm doesn't use instanced rendering
+	uint32_t firstIndex_;		// index offset, eg for LOD0 = 0, LOD1 = LOD0.idxcount, LOD1 = LOD0.idxcount + LOD1.idxcount, etc
+	uint32_t baseVertex_;		// offset added before selecting vertices
+	uint32_t baseInstance_;		// accessible in GLSL as "gl_BaseInstance", used for model matrix
 };
 
-/// @brief describes the bounding box of a mesh, can be used for frustum culling or physics simlution
+/// @brief describes the bounding box of a mesh, can be used for frustum culling or physics simulation
 struct bounding_box
 {
 	glm::vec3 min_;
@@ -56,25 +56,25 @@ struct collectable_item_properties {
 
 /// @brief a collection of settings for an object in the game world
 struct game_properties {
-	string display_name = "Gameobject";
+	std::string display_name = "Gameobject";
 	bool is_active = true; // only active items are rendered. only active items are allowed to interact with the physics world
 	bool is_collectable = false; // determines if the player can collect it
 	bool is_ground = true; // determines wether the player can jump off of it
 	collectable_item_properties collectableItemProperties; // if the gamobject is collectable this determines some extra properties
 };
 
-/// @brief implements a simple scene graph for hierarchical tranforamtions
+/// @brief implements a simple scene graph of hierarchical transformations
 struct hierarchy
 {
 	std::string name;
-	hierarchy* parent = nullptr;			// parent node
-	std::vector <hierarchy> children;		// children nodes
-	std::vector<uint32_t> model_indices;		// models in this node
+	hierarchy* parent = nullptr;
+	std::vector <hierarchy> children;
+	std::vector<uint32_t> model_indices;		// assumed to only hold one model
 
 	transformation TRS;
 
 	bounding_box node_bounds;					// pretransformed bounds
-	bounding_box model_bounds;				// bounds in model space
+	bounding_box model_bounds;					// bounds in model space
 
 	game_properties game_properties;
 
@@ -100,8 +100,8 @@ struct render_item
 struct physics_mesh
 {
 	std::vector<float> vtx_positions;		// all positions (x,y,z) in model space
-	transformation model_trs;						// model tranformation into world space
-	hierarchy* node{};			// pointer to set node matrices, only for dynamic objects
+	transformation model_trs;				// model tranformation into world space
+	hierarchy* node{};						// pointer to set node matrices, only for dynamic objects
 };
 
 /// @brief needed for mesh optimizer

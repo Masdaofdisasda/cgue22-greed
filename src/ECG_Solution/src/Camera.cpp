@@ -21,8 +21,14 @@ void camera_positioner_first_person::update(double delta_seconds, const glm::vec
 	if (mouse_pressed)
 	{
 		const glm::vec2 delta = mouse_pos - mouse_pos_;
-		const glm::quat deltaQuat = glm::quat(glm::vec3(mouse_speed * delta.y, mouse_speed * delta.x, 0.0f));
-		camera_orientation_ = deltaQuat * camera_orientation_;
+		glm::quat deltaQuat = glm::quat(glm::vec3(mouse_speed * delta.y, mouse_speed * delta.x, 0.0f));
+		glm::quat unclamped_rotation = deltaQuat * camera_orientation_;
+		float pitch = glm::pitch(unclamped_rotation);
+		float yaw = glm::yaw(unclamped_rotation);
+		
+		if ((std::abs(yaw) >= 0.01 || (std::abs(pitch) <= glm::half_pi<float>()))) // clamp y-rotation
+			camera_orientation_ = unclamped_rotation;
+		
 		camera_orientation_ = glm::normalize(camera_orientation_);
 		set_up_vector(up_);
 	}

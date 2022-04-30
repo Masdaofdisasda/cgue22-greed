@@ -126,3 +126,9 @@ glm::vec3 scaleFromTransform(glm::mat4 transform);
 /// @param up is the up vector of the world
 /// @return a view matrix according to the input vectors
 glm::mat4 glm_look_at(const glm::vec3 pos, const glm::vec3 target, const glm::vec3 up);
+
+/**
+ * \brief loads settings from settings.ini, should only be called at startup
+ * \return the loaded settings
+ */
+GlobalState load_settings();

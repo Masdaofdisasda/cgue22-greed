@@ -53,3 +53,35 @@ glm::mat4 glm_look_at(const glm::vec3 pos, const glm::vec3 target, const glm::ve
 
 	return rotation * translation;
 }
+
+GlobalState load_settings()
+{
+	GlobalState state;
+	std::cout << "reading setting from settings.ini..." << std::endl;
+	INIReader reader("../../assets/settings.ini");
+
+	// first param: section [window], second param: property name, third param: default value
+	state.width = reader.GetInteger("window", "width", 800);
+	state.height = reader.GetInteger("window", "height", 800);
+	state.refresh_rate = reader.GetInteger("window", "refresh_rate", 60);
+	state.fullscreen_ = reader.GetBoolean("window", "fullscreen", false);
+	state.window_title = "Greed";
+	state.fov = reader.GetReal("camera", "fov", 60.0f);
+	state.Znear = 0.1f;
+	state.Zfar = 1000.0f;
+
+	state.bloom_ = reader.GetBoolean("image", "bloom", true);
+	state.exposure_ = reader.GetReal("image", "exposure", 0.9f);
+	state.maxWhite_ = reader.GetReal("image", "maxWhite", 1.07f);
+	state.bloomStrength_ = reader.GetReal("image", "bloomStrength", 0.2f);
+	state.adaptationSpeed_ = reader.GetReal("image", "lightAdaption", 0.1f);
+	state.ssao_ = reader.GetBoolean("image", "ssao", true);
+	state.scale_ = reader.GetReal("image", "scale", 1.0f);
+	state.bias_ = reader.GetReal("image", "bias", 0.2f);
+	state.radius = reader.GetReal("image", "radius", 0.2f);
+	state.attScale = reader.GetReal("image", "attScale", 1.0f);
+	state.distScale = reader.GetReal("image", "distScale", 0.5f);
+	state.shadowRes_ = reader.GetInteger("image", "shadowRes", 4);
+
+	return state;
+}

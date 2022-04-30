@@ -4,15 +4,9 @@
 #include <unordered_map>
 #include <thread>
 
-/// @brief loads an fbx file from the given path and converts it to GL data structures
-/// @param scene_path location of the fbx file, expected to be in "assets"
-/// @param state global state of the program, needed for screen resolution, etc
-/// @param perframe_data camera uniforms, needed for frustum culling
 level::level(const char* scene_path, const std::shared_ptr<GlobalState> state, PerFrameData& perframe_data)
 : state_(std::move(state)), perframe_data_(&perframe_data)
 {
-
-	// 1. load fbx file into assimps internal data structures and apply various preprocessing to the data
 	std::cout << "import scene from fbx file..." << std::endl;
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(scene_path,
@@ -33,10 +27,7 @@ level::level(const char* scene_path, const std::shared_ptr<GlobalState> state, P
 	}
 
 	std::thread mesh(&level::load_meshes, this, std::ref(scene));
-
 	std::thread light(&level::load_lights, this, std::ref(scene));
-
-
 	load_materials(scene);
 
 	// build scene graph and calculate AABBs
@@ -53,7 +44,7 @@ level::level(const char* scene_path, const std::shared_ptr<GlobalState> state, P
 	load_shaders();
 	dynamic_node_ = nullptr;
 
-	std::cout << std::endl;
+	std::cout << std::endl; // debug breakpoint
 }
 
 void level::load_meshes(const aiScene* scene)
@@ -72,9 +63,6 @@ void level::load_meshes(const aiScene* scene)
 	models_loaded_ = meshes_.size();
 }
 
-/// @brief extracts position, normal and uvs with the correlating indices from an assimp mesh
-/// @param mesh is a single meshm with a unique material
-/// @return a mesh but in usable structures for drawing it
 sub_mesh level::extract_mesh(const aiMesh* mesh)
 {
 
@@ -221,7 +209,6 @@ void level::generate_lods(std::vector<unsigned int>& indices,const std::vector<f
 	}
 }
 
-/// @brief finds the maximum and minimum vertex positions of all meshes, which should define the bounds
 bounding_box level::compute_bounds_of_mesh(const sub_mesh& mesh) const
 {
 	const auto num_indices = mesh.vertex_count;
@@ -280,8 +267,6 @@ void level::transform_bounding_boxes(hierarchy* node, glm::mat4 global_transform
 	}
 }
 
-/// @brief loads all materials (textures) from the material assimp provides
-/// @param scene contains the pointer to the material list
 void level::load_materials(const aiScene* scene)
 {
 	std::cout << "loading materials..." << std::endl;
@@ -309,10 +294,6 @@ void level::load_materials(const aiScene* scene)
 	}
 }
 
-/// @brief recursive function that builds a scenegraph with hierarchical transformation, similiar to assimps scene
-/// @param n is an assimp node that holds transformations, nodes or meshes
-/// @param parent is the parent node of the currently created node, mainly used for debugging
-/// @param node is the current node from the view of the parent node
 void level::traverse_tree(aiNode* n, hierarchy* parent, hierarchy* node)
 {
 	// set trivial node variables
@@ -344,10 +325,6 @@ void level::traverse_tree(aiNode* n, hierarchy* parent, hierarchy* node)
 	}
 }
 
-
-/// @brief simple helper function for converting the assimp 4x4 matrices to 4x4 glm matrices
-/// @param mat is a 4x4 matrix from assimp
-/// @return a 4x4 matrix in glm format
 glm::mat4 level::to_glm_mat4(const aiMatrix4x4& mat)
 {
 	glm::mat4 result;
@@ -358,7 +335,6 @@ glm::mat4 level::to_glm_mat4(const aiMatrix4x4& mat)
 	return result;
 }
 
-/// @brief Creates and fills vertex and index buffers and sets up the "big" vao which will suffice to render all meshes
 void level::setup_vertex_buffers()
 {
 	std::cout << "setup buffers..." << std::endl;
@@ -385,7 +361,6 @@ void level::setup_vertex_buffers()
 	glVertexArrayAttribBinding(vao_, 2, 0);
 }
 
-/// @brief sets up indirect command and shader storage buffers for efficient und reduced render calls
 void level::setup_draw_buffers()
 {
 
@@ -399,8 +374,6 @@ void level::setup_draw_buffers()
 	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, ibo_);
 }
 
-/// @brief loads all directional and positional lights in the assimp scene, corrects position for positional lights by traversing the tree
-/// @param scene is the scene containing the lights and root node
 void level::load_lights(const aiScene* scene) {
 
 	std::cout << "loading lights..." << std::endl;
@@ -584,15 +557,14 @@ void level::collect_dynamic_physic_meshes(hierarchy* node, glm::mat4 global_tran
 	}
 }
 
-/// @brief sets up indirect render calls, binds the data and calls the actual draw routine
 void level::draw_scene() {
 
 	// update view frustum
 	if (!state_->freezeCull_)
 	{
 		cull_view_proj_ = perframe_data_->ViewProj;
-		frustum_culling::get_frustum_planes(cull_view_proj_, frustum_planes_);
-		frustum_culling::get_frustum_corners(cull_view_proj_, frustum_corners_);
+		frustum_culler::get_frustum_planes(cull_view_proj_, frustum_planes_);
+		frustum_culler::get_frustum_corners(cull_view_proj_, frustum_corners_);
 	}
 
 	transform_bounding_boxes(dynamic_node_, glm::mat4(1));
@@ -613,12 +585,12 @@ void level::draw_scene() {
 
 		glBindTextures(0, 5, textures);
 		glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, static_cast<GLvoid*>(nullptr), static_cast<GLsizei>(render_queue_[i].commands.size()), 0);
-		/// explaination:
-		/// GL_TRIANGLES - draw triangles from every 3 indices
-		/// GL_UNSIGNED_INT - data type of the indices vector
-		/// (GLvoid*)0 - offset into commands buffer, which is zero
-		/// (GLsizei)render_queue_[i].commands.size() - is the number of draw calls that should be generated
-		/// 0 - because the commands are packed tightly aka just as descriped in the GL specs
+		/// explanation:
+		/// mode - draw triangles from every 3 indices
+		/// type - data type of the indices vector
+		/// indirect - offset into commands buffer, which is zero
+		/// drawcount - is the number of draw calls that should be generated
+		/// stride - because the commands are packed tightly aka just as descriped in the GL specs
 	}
 
 	if (state_->cullDebug_) // bounding box & frustum culling debug view
@@ -683,16 +655,13 @@ void level::draw_scene_shadow_map()
 	state_->cull_ = cull;
 }
 
-/// @brief recursively travels the tree and adds any models it finds, according to its material, to the render queue
-/// @param node that gets checked for models
-/// @param global_transform the summed tranformation matrices of all parent nodes
 void level::build_render_queue(const hierarchy* node, const glm::mat4 global_transform) {
 	if (!node->game_properties.is_active)
 		return;
 
 	if (state_->cull_)
 	{
-		if (!frustum_culling::is_box_in_frustum(frustum_planes_, frustum_corners_, node->node_bounds))
+		if (!frustum_culler::is_box_in_frustum(frustum_planes_, frustum_corners_, node->node_bounds))
 			return;
 
 	}
@@ -705,11 +674,11 @@ void level::build_render_queue(const hierarchy* node, const glm::mat4 global_tra
 
 		const uint32_t LOD = decide_lod(meshes_[mesh_index].index_count.size(), node->node_bounds);
 
-		const uint32_t count = meshes_[mesh_index].index_count[LOD];	// number of indices that get drawn, eg for single quad = 6
-		const uint32_t instanceCount = 1;	// number of instanced that get drawn, 0 means none, this programm doesn't use instanced rendering
-		const uint32_t firstIndex = meshes_[mesh_index].index_offset[LOD]; // index offset, eg for first mesh = 0, sec mesh = firstIndexOffs + 0, etc
-		const uint32_t baseVertex = meshes_[mesh_index].vertex_offset; // offset added before chosing vertices
-		const uint32_t baseInstance = render_queue_[material_index].model_matrices.size(); // model matrix id, could be used for bindless textures
+		const uint32_t count = meshes_[mesh_index].index_count[LOD];	
+		const uint32_t instanceCount = 1;	
+		const uint32_t firstIndex = meshes_[mesh_index].index_offset[LOD]; 
+		const uint32_t baseVertex = meshes_[mesh_index].vertex_offset; 
+		const uint32_t baseInstance = render_queue_[material_index].model_matrices.size(); 
 
 		draw_elements_indirect_command cmd= draw_elements_indirect_command{
 			count,
@@ -730,7 +699,6 @@ void level::build_render_queue(const hierarchy* node, const glm::mat4 global_tra
 	}
 }
 
-/// @brief removes all render commands and model matrices of the render queue, should be done after each draw call
 void level::reset_queue()
 {
 	for (auto& item : render_queue_)
@@ -742,13 +710,7 @@ void level::reset_queue()
 	models_visible_ = 0;
 }
 
-/**
- * \brief selects a LOD based on the projected area of an estimated bounding sphere of a mesh
- * formula from : Real-Time Rendering, p862
- * \param lods number of lod meshes to select from
- * \param aabb the AABB bounds of the mesh
- * \return a number between 0 and lods
- */
+
 uint32_t level::decide_lod(uint32_t lods, const bounding_box aabb) const
 {
 	const auto c = glm::vec4((aabb.max_ + aabb.min_)/2, 1.0f);
@@ -792,8 +754,7 @@ glm::mat4 level::get_tight_scene_frustum() const
 	return glm::ortho(min.x, max.x, min.y, max.y, -max.z, -min.z); 
 }
 
-/// @brief cleans up all buffers and textures
-void level::release()
+void level::release() const
 {
 	glDeleteVertexArrays(1, &vao_);
 	glDeleteBuffers(1, &vbo_);

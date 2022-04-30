@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <ClCompile Include="src\FontRenderer.cpp" />
+    <ClCompile Include="src\FrustumCuller.cpp" />
     <ClCompile Include="src\ItemCollection.cpp" />
+    <ClCompile Include="src\Lava.cpp" />
     <ClCompile Include="src\LoadingScreen.cpp" />
     <ClCompile Include="src\PlayerController.cpp" />
     <ClCompile Include="src\BulletDebugDrawer.cpp" />
@@ -28,7 +31,7 @@
     <ClInclude Include="src\Cubemap.h" />
     <ClInclude Include="src\Framebuffer.h" />
     <ClInclude Include="src\FPSCounter.h" />
-    <ClInclude Include="src\FrustumCulling.h" />
+    <ClInclude Include="src\FrustumCuller.h" />
     <ClInclude Include="src\GLFWApp.h" />
     <ClInclude Include="src\Level.h" />
     <ClInclude Include="src\LevelStructs.h" />

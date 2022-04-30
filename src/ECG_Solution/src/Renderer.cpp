@@ -1,80 +1,32 @@
 #include "Renderer.h"
 
-/// @brief sets up shaders for rendering and post processing and also enviroment maps
-/// @param state is the global state of the program at runtime
-/// @param perframe_data is per render cycle static data
-/// @param sources are the light sources of some level
+std::shared_ptr<GlobalState> renderer::state = std::make_shared<GlobalState>(load_settings());
+std::shared_ptr<GlobalState> renderer::get_state() { return state; }
+
 renderer::renderer(PerFrameData& perframe_data, light_sources& sources)
 : perframe_data_(&perframe_data), lights_(sources)
 {
 	assert(renderer::state != nullptr);
-	build_shader_programs(); // build shader programs
-	set_render_settings();	// set effect settings 
-	fill_lightsources(); // binds lights to binding points in shader
-	perframe_buffer_.fill_buffer(perframe_data); // load UBO to shader;
 
-	prepare_framebuffers(); // for hdr rendering and tonemapping
+	build_shader_programs(); 
+	set_render_settings();
+	fill_lightsources(); 
+	perframe_buffer_.fill_buffer(perframe_data);
+	prepare_framebuffers();
+
 	std::cout << "load Enviroment Map.." << std::endl;
 	ibl_.load_hdr("../../assets/textures/cubemap/env.hdr");
 	std::cout << "load Skybox.." << std::endl;
 	sky_tex_.load_hdr("../../assets/textures/cubemap/beach.hdr");
+	pbr_shader_.uploadIBL(ibl_.get_irradiance_id(), ibl_.get_pre_filter_id(), ibl_.get_bdrf_lut_id(), sky_tex_.get_environment());
 	lut_3d_ = Texture::load_3dlut("../../assets/textures/look32.CUBE");
+
 	glCreateVertexArrays(1, &empty_vao_);
-	pbr_shader_.uploadIBL(ibl_.get_irradiance_id(),ibl_.get_pre_filter_id(), ibl_.get_bdrf_lut_id(), sky_tex_.get_environment());
 	glBindTextureUnit(13, lut_3d_);
 
 	font_renderer_.init("../../assets/fonts/Quasimoda/Quasimoda-Regular.otf", state->width, state->height);
-
 	lava_sim_.init(glm::ivec3(lights_.directional.size(), lights_.point.size(), 0));
 }
-
-std::shared_ptr<GlobalState> renderer::get_state()
-{
-	return state;
-}
-/// @brief loads settings from settings.ini, called in main
-/// @return a globalstate from settings.ini
-GlobalState renderer::load_settings()
-{
-	if (state == nullptr)
-	{
-
-	GlobalState state;
-	std::cout << "reading setting from settings.ini..." << std::endl;
-	INIReader reader("../../assets/settings.ini");
-
-	// first param: section [window], second param: property name, third param: default value
-	state.width = reader.GetInteger("window", "width", 800);
-	state.height = reader.GetInteger("window", "height", 800);
-	state.refresh_rate = reader.GetInteger("window", "refresh_rate", 60);
-	state.fullscreen_ = reader.GetBoolean("window", "fullscreen", false);
-	state.window_title = "Greed";
-	state.fov = reader.GetReal("camera", "fov", 60.0f);
-	state.Znear = 0.1f;
-	state.Zfar = 1000.0f;
-
-	state.bloom_ = reader.GetBoolean("image", "bloom", true);
-	state.exposure_ = reader.GetReal("image", "exposure", 0.9f);
-	state.maxWhite_ = reader.GetReal("image", "maxWhite", 1.07f);
-	state.bloomStrength_ = reader.GetReal("image", "bloomStrength", 0.2f);
-	state.adaptationSpeed_ = reader.GetReal("image", "lightAdaption", 0.1f);
-	state.ssao_ = reader.GetBoolean("image", "ssao", true);
-	state.scale_ = reader.GetReal("image", "scale", 1.0f);
-	state.bias_ = reader.GetReal("image", "bias", 0.2f);
-	state.radius = reader.GetReal("image", "radius", 0.2f);
-	state.attScale = reader.GetReal("image", "attScale", 1.0f);
-	state.distScale = reader.GetReal("image", "distScale", 0.5f);
-	state.shadowRes_ = reader.GetInteger("image", "shadowRes", 4);
-
-	return state;
-	}
-
-	// TODO 
-	return *renderer::state;
-}
-
-
-std::shared_ptr<GlobalState> renderer::state = std::make_shared<GlobalState>(renderer::load_settings());
 
 // TODO
 void renderer::fill_lightsources()
@@ -90,7 +42,6 @@ void renderer::fill_lightsources()
 	pbr_shader_.setuInt("pLightCount", lights_.point.size());
 }
 
-/// @brief initializes settings for post processing and rendering
 void renderer::set_render_settings() const
 {
 	perframe_data_->bloom = glm::vec4(
@@ -115,7 +66,6 @@ void renderer::set_render_settings() const
 	perframe_data_->deltaTime = glm::vec4(0);
 }
 
-/// @brief compiles all needed shaders for the render loop
 void renderer::build_shader_programs()
 {
 	Shader pbr_vert("../../assets/shaders/PBR/pbr.vert");
@@ -176,8 +126,6 @@ void renderer::build_shader_programs()
 	pbr_shader_.Use();
 }
 
-
-/// @brief sets OpenGL states before first draw call, which can't be done in header file
 void renderer::prepare_framebuffers() {
 
 	glGenTextures(1, &luminance1x1_);
@@ -191,8 +139,6 @@ void renderer::prepare_framebuffers() {
 	hud_ = Texture::load_texture_transparent("../../assets/textures/loading/alpha HUD.png");
 }
 
-/// @brief implements the pipeline for HDR, tonemapping and shadows
-/// @param level is the geometry which should be drawn
 void renderer::draw(level* level)
 {
 	
@@ -200,7 +146,7 @@ void renderer::draw(level* level)
 	glClearNamedFramebufferfi(framebuffer1_.get_handle(), GL_DEPTH_STENCIL, 0, 1.0f, 0);
 
 	const glm::vec3 dir = glm::vec3(lights_.directional[0].direction);
-	const glm::mat4 light_view = glmlook_at2(glm::vec3(0, 0, 0), dir, glm::vec3(0, 0, 1));
+	const glm::mat4 light_view = glm_look_at(glm::vec3(0, 0, 0), dir, glm::vec3(0, 0, 1));
 	const glm::mat4 light_proj = level->get_tight_scene_frustum();
 	perframe_data_->lightViewProj = light_proj * light_view;
 
@@ -440,44 +386,11 @@ void renderer::draw(level* level)
 	glDisable(GL_BLEND);
 }
 
-/// @brief swaps framebuffers for light adaption computation
 void renderer::swap_luminance()
 {
 	std::swap(luminances_[0], luminances_[1]);
 }
 
-
-/// @brief an implementation of the glm::lookat() function, because this framework
-/// makes it impossible to use, same code as in the Camera class
-/// @param pos is the position aka eye or view of the camera
-/// @param target to "look at" from the position
-/// @param up is the up vetor of the world
-/// @return a view matrix according to the input vectors
-glm::mat4 renderer::glmlook_at2(glm::vec3 pos, glm::vec3 target, glm::vec3 up)
-{
-	const glm::vec3 zaxis = glm::normalize(pos - target);
-	const glm::vec3 xaxis = glm::normalize(glm::cross(glm::normalize(up), zaxis));
-	const glm::vec3 yaxis = glm::cross(zaxis, xaxis);
-
-	glm::mat4 translation;
-	translation[3][0] = -pos.x;
-	translation[3][1] = -pos.y;
-	translation[3][2] = -pos.z;
-	glm::mat4 rotation;
-	rotation[0][0] = xaxis.x;
-	rotation[1][0] = xaxis.y;
-	rotation[2][0] = xaxis.z;
-	rotation[0][1] = yaxis.x;
-	rotation[1][1] = yaxis.y;
-	rotation[2][1] = yaxis.z;
-	rotation[0][2] = zaxis.x;
-	rotation[1][2] = zaxis.y;
-	rotation[2][2] = zaxis.z;
-
-	return rotation * translation;
-}
-
-/// @brief frees resources
 renderer::~renderer()
 {
 	perframe_data_ = nullptr;
