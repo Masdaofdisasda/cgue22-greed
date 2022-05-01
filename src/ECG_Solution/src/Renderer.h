@@ -69,7 +69,6 @@ private:
 	// global Textures
 	cubemap ibl_, sky_tex_;
 	GLuint lut_3d_ = 0;
-	GLuint empty_vao_ = 0;		// for skybox drawing
 
 	// Framebuffers for HDR/Bloom
 	GLuint luminance1x1_{};

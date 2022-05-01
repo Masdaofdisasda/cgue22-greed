@@ -71,8 +71,8 @@ sub_mesh level::extract_mesh(const aiMesh* mesh)
 	m.vertex_offset = global_vertex_offset_;
 	m.material_index = mesh->mMaterialIndex;
 			
-	std::vector<vertex> rawVertices;
-	std::vector <unsigned int> rawIndices;			
+	std::vector<vertex> raw_vertices;
+	std::vector <unsigned int> raw_indices;			
 
 	// extract vertices from the aimesh
 	for (size_t j = 0; j < mesh->mNumVertices; j++)
@@ -88,7 +88,7 @@ sub_mesh level::extract_mesh(const aiMesh* mesh)
 			t.x, t.y
 		};
 
-		rawVertices.push_back(vtx);
+		raw_vertices.push_back(vtx);
 	}
 
 	//extract indices from the aimesh
@@ -97,46 +97,39 @@ sub_mesh level::extract_mesh(const aiMesh* mesh)
 		for (unsigned k = 0; k != mesh->mFaces[j].mNumIndices; k++)
 		{
 			GLuint index = mesh->mFaces[j].mIndices[k];
-			rawIndices.push_back(index);
+			raw_indices.push_back(index);
 		}
 	}
 
 	// re-index geometry
-	std::vector<unsigned int> remap(rawIndices.size());
-	size_t vertex_count = meshopt_generateVertexRemap(remap.data(), rawIndices.data(), rawIndices.size(), rawVertices.data(), rawIndices.size(), vtx_stride);
+	std::vector<unsigned int> remap(raw_indices.size());
+	size_t vertex_count = meshopt_generateVertexRemap(remap.data(), raw_indices.data(), raw_indices.size(), raw_vertices.data(), raw_indices.size(), vtx_stride);
 
-	std::vector <unsigned int> opt_indices(rawIndices.size());
+	std::vector <unsigned int> opt_indices(raw_indices.size());
 	std::vector<vertex> opt_vertices(vertex_count);
 
-	meshopt_remapIndexBuffer(opt_indices.data(), rawIndices.data(), rawIndices.size(), remap.data());
-	meshopt_remapVertexBuffer(opt_vertices.data(), rawVertices.data(), rawVertices.size(), vtx_stride, remap.data());
+	meshopt_remapIndexBuffer(opt_indices.data(), raw_indices.data(), raw_indices.size(), remap.data());
+	meshopt_remapVertexBuffer(opt_vertices.data(), raw_vertices.data(), raw_vertices.size(), vtx_stride, remap.data());
 
 	// further optimize geometry
-	meshopt_optimizeVertexCache(opt_indices.data(), opt_indices.data(), rawIndices.size(), vertex_count);
-	meshopt_optimizeOverdraw(opt_indices.data(), opt_indices.data(), rawIndices.size(), &opt_vertices[0].px, vertex_count, vtx_stride, 1.05f);
-	meshopt_optimizeVertexFetch(opt_vertices.data(), opt_indices.data(), rawIndices.size(), opt_vertices.data(), vertex_count, vtx_stride);
-	
+	meshopt_optimizeVertexCache(opt_indices.data(), opt_indices.data(), raw_indices.size(), vertex_count);
+	meshopt_optimizeOverdraw(opt_indices.data(), opt_indices.data(), raw_indices.size(), &opt_vertices[0].px, vertex_count, vtx_stride, 1.05f);
+	meshopt_optimizeVertexFetch(opt_vertices.data(), opt_indices.data(), raw_indices.size(), opt_vertices.data(), vertex_count, vtx_stride);
 
 	m.vertex_count = opt_vertices.size();
 
-	std::vector<float> resultVertices;
+	std::vector<float> result_vertices;
 	for (const auto& vertex : opt_vertices)
 	{
-		resultVertices.push_back(vertex.px);
-		resultVertices.push_back(vertex.py);
-		resultVertices.push_back(vertex.pz);
-		resultVertices.push_back(vertex.nx);
-		resultVertices.push_back(vertex.ny);
-		resultVertices.push_back(vertex.nz);
-		resultVertices.push_back(vertex.tx);
-		resultVertices.push_back(vertex.ty);
+		result_vertices.push_back(vertex.px); result_vertices.push_back(vertex.py); result_vertices.push_back(vertex.pz);
+		result_vertices.push_back(vertex.nx); result_vertices.push_back(vertex.ny); result_vertices.push_back(vertex.nz);
+		result_vertices.push_back(vertex.tx); result_vertices.push_back(vertex.ty);
 	}
 
 	std::vector<std::vector<unsigned int>> LODs;
-	generate_lods(opt_indices, resultVertices, LODs);
+	generate_lods(opt_indices, result_vertices, LODs);
 
-
-	vertices.insert(vertices.end(), resultVertices.begin(), resultVertices.end());
+	vertices.insert(vertices.end(), result_vertices.begin(), result_vertices.end());
 
 	auto index_sum = 0;
 	for (auto& LOD : LODs)
@@ -276,16 +269,16 @@ void level::load_materials(const aiScene* scene)
 
 		printf("Material [%s] %u\n", mm->GetName().C_Str(), m + 1);
 
-		aiString Path;
+		aiString path;
 
-		if (aiGetMaterialTexture(mm, aiTextureType_BASE_COLOR, 0, &Path) == AI_SUCCESS)
+		if (aiGetMaterialTexture(mm, aiTextureType_BASE_COLOR, 0, &path) == AI_SUCCESS)
 		{
-			const std::string albedoMap = std::string(Path.C_Str());
+			const auto albedo_map = std::string(path.C_Str());
 		}
 
 		//	all other materials can be found with: aiTextureType_NORMAL_CAMERA/_METALNESS/_DIFFUSE_ROUGHNESS/_AMBIENT_OCCLUSION
 
-		auto mat = Material(Path.C_Str(), mm->GetName().C_Str());
+		auto mat = Material(path.C_Str(), mm->GetName().C_Str());
 		materials_.push_back(mat);
 		render_item item;
 		item.material = mm->GetName().C_Str();
@@ -293,7 +286,7 @@ void level::load_materials(const aiScene* scene)
 	}
 }
 
-void level::traverse_tree(aiNode* n, hierarchy* parent, hierarchy* node)
+void level::traverse_tree(const aiNode* n, hierarchy* parent, hierarchy* node)
 {
 	// set trivial node variables
 	const glm::mat4 M = to_glm_mat4(n->mTransformation);
@@ -556,29 +549,25 @@ void level::draw_scene() {
 		frustum_culler::get_frustum_corners(frustum_culler::cull_view_proj, frustum_culler::frustum_corners);
 	}
 
-	transform_bounding_boxes(dynamic_node_, glm::mat4(1));
 	// flatten tree
 	reset_queue();
-	build_render_queue(&scene_graph_, glm::mat4(1));
+	build_render_queue(&scene_graph_, glm::mat4(1), true);
 
 	// draw mesh
-	glBindVertexArray(vao_);
-
 	for (size_t i = 0; i < render_queue_.size(); i++)
 	{
 		ssbo_.update(static_cast<GLsizeiptr>(sizeof(glm::mat4) * render_queue_[i].model_matrices.size()), render_queue_[i].model_matrices.data());
 		ibo_.update(static_cast<GLsizeiptr>(render_queue_[i].commands.size() * sizeof(draw_elements_indirect_command)), render_queue_[i].commands.data());
 
 		const GLuint textures[] = {materials_[i].get_albedo(), materials_[i].get_normal_map(), materials_[i].get_metallic(), materials_[i].get_roughness(), materials_[i].get_ao_map() };
-
 		glBindTextures(0, 5, textures);
-		glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, static_cast<GLvoid*>(nullptr), static_cast<GLsizei>(render_queue_[i].commands.size()), 0);
-		/// explanation:
+		
 		/// mode - draw triangles from every 3 indices
 		/// type - data type of the indices vector
 		/// indirect - offset into commands buffer, which is zero
 		/// drawcount - is the number of draw calls that should be generated
 		/// stride - because the commands are packed tightly aka just as descriped in the GL specs
+		glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, static_cast<GLvoid*>(nullptr), static_cast<GLsizei>(render_queue_[i].commands.size()), 0);
 	}
 
 	if (state_->cull_debug) // bounding box & frustum culling debug view
@@ -621,12 +610,19 @@ void level::draw_scene() {
 
 void level::draw_scene_shadow_map()
 {
-	const boolean cull = state_->cull;
+	const boolean cull = state_->cull; // cull nothing
 	state_->cull = false;
+
+	// recalculate bounds & set lod uniforms
+	transform_bounding_boxes(dynamic_node_, glm::mat4(1));
+	lod_system::near_plane = perframe_data_->ssao1.z;
+	lod_system::view_pos = perframe_data_->view_pos;
+	glm::mat4 vp = glm::transpose(perframe_data_->view_proj);
+	lod_system::view_dir = vp[3];
 
 	// flatten tree
 	reset_queue();
-	build_render_queue(&scene_graph_, glm::mat4(1));
+	build_render_queue(&scene_graph_, glm::mat4(1), false);
 
 	// draw mesh
 	glBindVertexArray(vao_);
@@ -635,14 +631,12 @@ void level::draw_scene_shadow_map()
 	{
 		ssbo_.update(static_cast<GLsizeiptr>(sizeof(glm::mat4) * item.model_matrices.size()), item.model_matrices.data());
 		ibo_.update(static_cast<GLsizeiptr>(item.commands.size() * sizeof(draw_elements_indirect_command)), item.commands.data());
-		glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, static_cast<GLvoid*>(nullptr), static_cast<GLsizei>(item
-			                            .commands.size()), 0);
-
+		glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, static_cast<GLvoid*>(nullptr), static_cast<GLsizei>(item.commands.size()), 0);
 	}
 	state_->cull = cull;
 }
 
-void level::build_render_queue(const hierarchy* node, const glm::mat4 global_transform) {
+void level::build_render_queue(const hierarchy* node, const glm::mat4 global_transform, bool high_quality) {
 	if (!node->game_properties.is_active)
 		return;
 
@@ -650,7 +644,6 @@ void level::build_render_queue(const hierarchy* node, const glm::mat4 global_tra
 	{
 		if (!frustum_culler::is_box_in_frustum(frustum_culler::frustum_planes, frustum_culler::frustum_corners, node->node_bounds))
 			return;
-
 	}
 
 	const glm::mat4 node_matrix = global_transform * node->get_node_matrix();
@@ -659,7 +652,15 @@ void level::build_render_queue(const hierarchy* node, const glm::mat4 global_tra
 		const uint32_t mesh_index = node->model_indices[i];
 		const uint32_t material_index = meshes_[mesh_index].material_index;
 
-		const uint32_t LOD = decide_lod(meshes_[mesh_index].index_count.size(), node->node_bounds);
+		uint32_t LOD;
+		if (high_quality)
+		{
+			LOD = lod_system::decide_lod(meshes_[mesh_index].index_count.size(), node->node_bounds);
+		}
+		else
+		{
+			LOD = meshes_[mesh_index].index_count.size() - 1;
+		}
 
 		const uint32_t count = meshes_[mesh_index].index_count[LOD];	
 		const uint32_t instanceCount = 1;	
@@ -682,7 +683,7 @@ void level::build_render_queue(const hierarchy* node, const glm::mat4 global_tra
 
 	for (const auto& hierarchy : node->children)
 	{
-		build_render_queue(&hierarchy, node_matrix);
+		build_render_queue(&hierarchy, node_matrix, high_quality);
 	}
 }
 
@@ -698,22 +699,6 @@ void level::reset_queue()
 }
 
 
-uint32_t level::decide_lod(uint32_t lods, const bounding_box aabb) const
-{
-	const auto c = glm::vec4((aabb.max_ + aabb.min_)/2, 1.0f);
-	const auto r = glm::length(aabb.max_ - aabb.min_)/2;
-	const auto n = perframe_data_->ssao1.z;
-	const auto v = perframe_data_->view_pos;
-	glm::mat4 vp = glm::transpose(perframe_data_->view_proj);
-	const auto d = vp[3];
-	auto m = perframe_data_->view_proj;
-	const auto p = (n * r) / glm::dot(d ,(v - c));
-
-	auto area = glm::pi<float>() * p * p * static_cast<float>(state_->width) * static_cast<float>(state_->height);
-	auto AreaTotal = static_cast<float>(state_->width) * static_cast<float>(state_->height);
-
-	return 0;
-}
 
 void level::draw_aabbs(const hierarchy node)
 {

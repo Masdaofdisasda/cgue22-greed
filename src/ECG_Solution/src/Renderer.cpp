@@ -19,8 +19,6 @@ renderer::renderer(PerFrameData& perframe_data, light_sources& sources)
 	sky_tex_.load_hdr("../../assets/textures/cubemap/beach.hdr");
 	program::upload_ibl(ibl_.get_irradiance_id(), ibl_.get_pre_filter_id(), ibl_.get_bdrf_lut_id(), sky_tex_.get_environment());
 	lut_3d_ = Texture::load_3dlut("../../assets/textures/look32.CUBE");
-
-	glCreateVertexArrays(1, &empty_vao_);
 	glBindTextureUnit(13, lut_3d_);
 
 	font_renderer_.init("../../assets/fonts/Quasimoda/Quasimoda-Regular.otf", state->width, state->height);
@@ -163,7 +161,6 @@ void renderer::draw(level* level)
 		// 2.1 - draw skybox (background)    
 		skybox_shader_.use();
 		glDepthMask(false);
-		glBindVertexArray(empty_vao_);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 		glDepthMask(true);
 

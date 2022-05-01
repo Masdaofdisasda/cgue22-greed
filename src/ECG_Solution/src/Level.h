@@ -6,6 +6,7 @@
 #include "Camera.h"
 #include "LevelStructs.h"
 #include "FrustumCuller.h"
+#include "LodSystem.h"
 #include "buffer.h"
 #include <glm/gtx/matrix_decompose.hpp>
 #include <assimp/Importer.hpp>
@@ -36,7 +37,8 @@ private:
 	std::vector<sub_mesh> meshes_; 
 	std::vector<float> vertices; 
 	std::vector<unsigned int> indices_; 
-	std::vector<Material> materials_; 
+	std::vector<Material> materials_;
+	light_sources lights_;
 	std::vector<render_item> render_queue_;
 	hierarchy scene_graph_; 
 	hierarchy* dynamic_node_;
@@ -46,9 +48,6 @@ private:
 	/// frustum culling
 	std::unique_ptr<program> aabb_viewer_; 
 	std::unique_ptr<program> frustumviewer_;
-	
-
-	light_sources lights_;
 
 	std::shared_ptr<global_state> state_;
 	PerFrameData* perframe_data_{};
@@ -94,7 +93,7 @@ private:
 	 * \param parent is the parent node of the currently created node, mainly used for debugging
 	 * \param node  is the current node from the view of the parent node
 	 */
-	void traverse_tree(aiNode* n, hierarchy* parent, hierarchy* node);
+	void traverse_tree(const aiNode* n, hierarchy* parent, hierarchy* node);
 
 	/**
 	 * \brief loads and compiles shaders for debugging the AABBs and the frustum culler
@@ -123,17 +122,10 @@ private:
 	 * \brief recursively builds for every material a render command list by adding all unculled objects
 	 * \param node that gets checked for models/culling
 	 * \param global_transform is the accumulation of parent transforms
+	 * \param high_quality only uses lowest LOD if false, uses normal LOD decision heuristic if true
 	 */
-	void build_render_queue(const hierarchy* node, glm::mat4 global_transform);
+	void build_render_queue(const hierarchy* node, glm::mat4 global_transform, bool high_quality);
 
-	/** TODO
-	 * \brief selects a LOD based on the projected area of an estimated bounding sphere of a mesh
-	 * formula from : Real-Time Rendering, p862
-	 * \param lods number of lod meshes to select from
-	 * \param aabb the AABB bounds of the mesh
-	 * \return a number between 0 and lods
- */
-	uint32_t decide_lod(uint32_t lods, bounding_box aabb) const;
 
 	/**
 	 * \brief recursively renders every AABB as a wireframe box
@@ -182,6 +174,7 @@ public:
 
 	/**
 	 * \brief sets up indirect render calls, binds the data and calls the actual draw routine
+	 * it is assumed that draw_scene_shadow_map was called prior and no other vao was bound
 	 */
 	void draw_scene();
 

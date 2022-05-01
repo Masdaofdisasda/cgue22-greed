@@ -6,6 +6,7 @@
     <ClCompile Include="src\ItemCollection.cpp" />
     <ClCompile Include="src\Lava.cpp" />
     <ClCompile Include="src\LoadingScreen.cpp" />
+    <ClCompile Include="src\LodSystem.cpp" />
     <ClCompile Include="src\PlayerController.cpp" />
     <ClCompile Include="src\BulletDebugDrawer.cpp" />
     <ClCompile Include="src\Debugger.cpp" />
@@ -24,6 +25,7 @@
     <ClInclude Include="src\FontRenderer.h" />
     <ClInclude Include="src\ItemCollection.h" />
     <ClInclude Include="src\Lava.h" />
+    <ClInclude Include="src\LodSystem.h" />
     <ClInclude Include="src\PlayerController.h" />
     <ClInclude Include="src\BulletDebugDrawer.h" />
     <ClInclude Include="src\Debugger.h" />
