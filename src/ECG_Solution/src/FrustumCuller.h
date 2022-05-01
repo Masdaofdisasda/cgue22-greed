@@ -7,6 +7,13 @@ class frustum_culler
 {
 public:
 
+	static glm::mat4 cull_view_proj;
+	static glm::vec4 frustum_planes[6];
+	static glm::vec4 frustum_corners[8];
+	static uint32_t models_loaded;
+	static uint32_t models_visible;
+	static double seconds_since_flush;
+
 	/// @brief extracts 6 viewing planes from a view prjectio matrix of a right handed coordinate system
 	/// https://fgiesen.wordpress.com/2012/08/31/frustum-planes-from-the-projection-matrix/
 	/// https://www.gamedevs.org/uploads/fast-extraction-viewing-frustum-planes-from-world-view-projection-matrix.pdf

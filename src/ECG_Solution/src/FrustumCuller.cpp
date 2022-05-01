@@ -1,5 +1,12 @@
 #include "FrustumCuller.h"
 
+glm::mat4 frustum_culler::cull_view_proj = glm::mat4(1);
+glm::vec4 frustum_culler::frustum_planes[6];
+glm::vec4 frustum_culler::frustum_corners[8];
+uint32_t frustum_culler::models_loaded = 0;
+uint32_t frustum_culler::models_visible = 0;
+double frustum_culler::seconds_since_flush = 0;
+
 void frustum_culler::get_frustum_planes(glm::mat4 vp, glm::vec4* planes)
 {
 	vp = glm::transpose(vp); // creat row vectors

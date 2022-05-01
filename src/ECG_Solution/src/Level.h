@@ -28,9 +28,7 @@ private:
 	uint32_t global_index_offset_ = 0;
 
 	// buffers
-	GLuint vao_ = 0; 
-	//GLuint vbo_ = 0; 
-	//GLuint ebo_ = 0; 
+	GLuint vao_ = 0;
 	buffer ibo_{ GL_DRAW_INDIRECT_BUFFER };
 	buffer ssbo_{ GL_SHADER_STORAGE_BUFFER };
 
@@ -46,16 +44,11 @@ private:
 	std::vector<physics_mesh> dynamic_;
 
 	/// frustum culling
-	std::shared_ptr<program> aabb_viewer_; 
-	std::shared_ptr<program> frustumviewer_; 
-	glm::mat4 cull_view_proj_;
-	glm::vec4 frustum_planes_[6];
-	glm::vec4 frustum_corners_[8];
-	uint32_t models_loaded_ = 0;
-	uint32_t models_visible_ = 0;
-	double seconds_since_flush_ = 0;
+	std::unique_ptr<program> aabb_viewer_; 
+	std::unique_ptr<program> frustumviewer_;
+	
 
-	light_sources lights;
+	light_sources lights_;
 
 	std::shared_ptr<global_state> state_;
 	PerFrameData* perframe_data_{};
@@ -99,9 +92,9 @@ private:
 	 * \brief recursive function that builds a scenegraph with hierarchical transformation, similiar to assimps scene
 	 * \param n is an assimp node that holds transformations, nodes or meshes
 	 * \param parent is the parent node of the currently created node, mainly used for debugging
-	 * \param child  is the current node from the view of the parent node
+	 * \param node  is the current node from the view of the parent node
 	 */
-	void traverse_tree(aiNode* n, hierarchy* parent, hierarchy* child);
+	void traverse_tree(aiNode* n, hierarchy* parent, hierarchy* node);
 
 	/**
 	 * \brief loads and compiles shaders for debugging the AABBs and the frustum culler
@@ -215,5 +208,5 @@ public:
 	 */
 	glm::mat4 get_tight_scene_frustum() const;
 	
-	light_sources* get_lights() { return &lights; }
+	light_sources* get_lights() { return &lights_; }
 };

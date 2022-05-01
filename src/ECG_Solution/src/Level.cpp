@@ -59,7 +59,7 @@ void level::load_meshes(const aiScene* scene)
 		const aiMesh* mesh = scene->mMeshes[i];
 		meshes_.push_back(extract_mesh(mesh));
 	}
-	models_loaded_ = meshes_.size();
+	frustum_culler::models_loaded = meshes_.size();
 }
 
 sub_mesh level::extract_mesh(const aiMesh* mesh)
@@ -416,7 +416,7 @@ void level::load_lights(const aiScene* scene) {
 			direction = glm::vec3(0.0001, 1, 0); // todo
 			glm::vec4 intensity = glm::vec4(col.r, col.g, col.b, 1.0f) * 3.0f; // increase light intensity (maya normalizes it)
 
-			this->lights.directional.push_back(directional_light{glm::vec4(direction,1.0f), intensity});
+			this->lights_.directional.push_back(directional_light{glm::vec4(direction,1.0f), intensity});
 		}
 		else // point light
 		{
@@ -431,7 +431,7 @@ void level::load_lights(const aiScene* scene) {
 			position = M * position;
 			glm::vec4 intensity = glm::vec4(col.r, col.g, col.b, 1.0f);
 
-			this->lights.point.push_back(positional_light{ position, intensity });
+			this->lights_.point.push_back(positional_light{ position, intensity });
 		}
 	}
 }
@@ -551,9 +551,9 @@ void level::draw_scene() {
 	// update view frustum
 	if (!state_->freeze_cull)
 	{
-		cull_view_proj_ = perframe_data_->view_proj;
-		frustum_culler::get_frustum_planes(cull_view_proj_, frustum_planes_);
-		frustum_culler::get_frustum_corners(cull_view_proj_, frustum_corners_);
+		frustum_culler::cull_view_proj = perframe_data_->view_proj;
+		frustum_culler::get_frustum_planes(frustum_culler::cull_view_proj, frustum_culler::frustum_planes);
+		frustum_culler::get_frustum_corners(frustum_culler::cull_view_proj, frustum_culler::frustum_corners);
 	}
 
 	transform_bounding_boxes(dynamic_node_, glm::mat4(1));
@@ -591,14 +591,14 @@ void level::draw_scene() {
 			draw_aabbs(scene_graph_); // draw AABBs
 		frustumviewer_->use();
 		frustumviewer_->set_vec4("lineColor", glm::vec4(1.0f, 1.0f, 0.0f, .1f));
-		frustumviewer_->set_vec3("corner0", frustum_corners_[0]);
-		frustumviewer_->set_vec3("corner1", frustum_corners_[1]);
-		frustumviewer_->set_vec3("corner2", frustum_corners_[2]);
-		frustumviewer_->set_vec3("corner3", frustum_corners_[3]);
-		frustumviewer_->set_vec3("corner4", frustum_corners_[4]);
-		frustumviewer_->set_vec3("corner5", frustum_corners_[5]);
-		frustumviewer_->set_vec3("corner6", frustum_corners_[6]);
-		frustumviewer_->set_vec3("corner7", frustum_corners_[7]);
+		frustumviewer_->set_vec3("corner0", frustum_culler::frustum_corners[0]);
+		frustumviewer_->set_vec3("corner1", frustum_culler::frustum_corners[1]);
+		frustumviewer_->set_vec3("corner2", frustum_culler::frustum_corners[2]);
+		frustumviewer_->set_vec3("corner3", frustum_culler::frustum_corners[3]);
+		frustumviewer_->set_vec3("corner4", frustum_culler::frustum_corners[4]);
+		frustumviewer_->set_vec3("corner5", frustum_culler::frustum_corners[5]);
+		frustumviewer_->set_vec3("corner6", frustum_culler::frustum_corners[6]);
+		frustumviewer_->set_vec3("corner7", frustum_culler::frustum_corners[7]);
 			glDrawArrays(GL_TRIANGLES, 0, 36); // draw frustum
 		glDisable(GL_BLEND);
 		glEnable(GL_CULL_FACE);
@@ -607,12 +607,12 @@ void level::draw_scene() {
 		// output frustum culling information for debugging every 2 seconds
 		if (state_->cull)
 		{
-			seconds_since_flush_ += perframe_data_->delta_time.x;
-			if (seconds_since_flush_ >= 2)
+			frustum_culler::seconds_since_flush += perframe_data_->delta_time.x;
+			if (frustum_culler::seconds_since_flush >= 2)
 			{
-				std::cout << "Models Loaded: " << models_loaded_ << ", Models rendered: " << models_visible_
-					<< ", Models culled: " << models_loaded_ - models_visible_ << "\n";
-				seconds_since_flush_ = 0;
+				std::cout << "Models Loaded: " << frustum_culler::models_loaded << ", Models rendered: " << frustum_culler::models_visible
+					<< ", Models culled: " << frustum_culler::models_loaded - frustum_culler::models_visible << "\n";
+				frustum_culler::seconds_since_flush = 0;
 			}
 		}
 	}
@@ -648,7 +648,7 @@ void level::build_render_queue(const hierarchy* node, const glm::mat4 global_tra
 
 	if (state_->cull)
 	{
-		if (!frustum_culler::is_box_in_frustum(frustum_planes_, frustum_corners_, node->node_bounds))
+		if (!frustum_culler::is_box_in_frustum(frustum_culler::frustum_planes, frustum_culler::frustum_corners, node->node_bounds))
 			return;
 
 	}
@@ -676,7 +676,7 @@ void level::build_render_queue(const hierarchy* node, const glm::mat4 global_tra
 
 		render_queue_[material_index].commands.push_back(cmd);
 		render_queue_[material_index].model_matrices.push_back(node_matrix);
-		models_visible_++;
+		frustum_culler::models_visible++;
 	}
 	
 
@@ -694,7 +694,7 @@ void level::reset_queue()
 		item.model_matrices.clear();
 	}
 
-	models_visible_ = 0;
+	frustum_culler::models_visible = 0;
 }
 
 
@@ -732,7 +732,7 @@ void level::draw_aabbs(const hierarchy node)
 glm::mat4 level::get_tight_scene_frustum() const
 {
 	// rotate scene bounds from opengl view direction to camera direction
-	const glm::vec3 ldir = lights.directional[0].direction;
+	const glm::vec3 ldir = lights_.directional[0].direction;
 	const auto vdir = glm::vec3(0.0f, 0.0f, 1.0f);
 	const glm::quat r = glm::rotation(vdir, ldir);
 	const glm::vec3 min = glm::rotate(r, scene_graph_.node_bounds.min_);
