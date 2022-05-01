@@ -10,7 +10,7 @@ Physics::Physics() {
 	dynamics_world = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collision_configuration);
 	dynamics_world->setGravity(btVector3(0, -10, 0));
 
-	bulletDebugDrawer = new BulletDebugDrawer();
+	bulletDebugDrawer = new bullet_debug_drawer();
 	bulletDebugDrawer->setDebugMode(btIDebugDraw::DBG_DrawWireframe);
 	dynamics_world->setDebugDrawer(bulletDebugDrawer);
 }
@@ -40,15 +40,15 @@ Physics::PhysicsObject& Physics::createPhysicsObject(btVector3 pos, btCollisionS
 
 void Physics::simulateOneStep(float secondsBetweenFrames) {
 	// look which items are allowed to take part
-	for (int i = 0; i < physicsObjects.size(); i++)
-		excludeAndIncludePhysicsObject(physicsObjects[i]);
+	for (auto& physics_object : physicsObjects)
+		excludeAndIncludePhysicsObject(physics_object);
 
 	// simulate
 	dynamics_world->stepSimulation(secondsBetweenFrames);
 
 	// update positions of all dynamic objects for rendering
-	for (int i = 0; i < physicsObjects.size(); i++)
-		updateModelTransform(&physicsObjects[i]);
+	for (auto& physics_object : physicsObjects)
+		updateModelTransform(&physics_object);
 }
 
 void Physics::excludeAndIncludePhysicsObject(Physics::PhysicsObject &obj) {
@@ -80,9 +80,9 @@ Physics::PhysicsObject* Physics::rayCast(btVector3 start, btVector3 end) {
 }
 
 Physics::PhysicsObject* Physics::getPhysicsObjectByCollisionObject(const btCollisionObject* collider) {
-	for (int i = 0; i < physicsObjects.size(); i++)
-		if (physicsObjects[i].rigidbody->getCollisionShape() == collider->getCollisionShape())
-			return &physicsObjects[i];
+	for (auto& physics_object : physicsObjects)
+		if (physics_object.rigidbody->getCollisionShape() == collider->getCollisionShape())
+			return &physics_object;
 	return nullptr;
 }
 
@@ -94,7 +94,7 @@ void Physics::updateModelTransform(PhysicsObject* physicsObject) {
 	btRigidBody rb = *physicsObject->rigidbody;
 	glm::vec3 pos = btToGlm(rb.getCenterOfMassTransform().getOrigin());
 	//float deg = (float)(rb.getOrientation().getAngle() * 180 / Physics::PI);
-	float deg = (float)rb.getOrientation().getAngle();
+	float deg = static_cast<float>(rb.getOrientation().getAngle());
 	glm::vec3 axis = btToGlm(rb.getOrientation().getAxis());
 	glm::vec3 scale = glm::vec3(1.0);
 
@@ -108,7 +108,7 @@ Physics::PhysicsObject& Physics::addPhysicsObject(btRigidBody* rigidbody, hierar
 	dynamics_world->addRigidBody(rigidbody);
 
 	// save rigidbody and graphical model representation in one struct
-	PhysicsObject physicsObject;
+	PhysicsObject physicsObject{};
 	physicsObject.modelGraphics = modelGraphics;
 	physicsObject.rigidbody = rigidbody;
 	physicsObject.mode = mode;

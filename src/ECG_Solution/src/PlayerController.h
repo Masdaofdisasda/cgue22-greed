@@ -8,28 +8,28 @@
 /// Creates a rigidbody, that can be moved around. Positions the camera as if it was a part of the rigidbody.
 /// The camera can rotate freely, it is only translated by this object.
 /// </summary>
-class PlayerController
+class player_controller
 {
 public:
-	PlayerController(Physics& physics, camera_positioner_player& camera, glm::vec3 startPosition);
+	player_controller(Physics& physics, camera_positioner_player& camera, glm::vec3 start_position);
 	
 	/// <summary>
 	/// Tries to move the rigidbody in the desired direction. 
 	/// Forwards and backwards depend on the orientation of the camera.
 	/// </summary>
-	void move(keyboard_input_state inputs, float deltaTime);
+	void move(keyboard_input_state inputs, float delta_time);
 
 	/// <summary>
 	/// Sets the camera position to be on top of the player rigidbody
 	/// </summary>
-	void updateCameraPositioner();
+	void update_camera_positioner();
 
-	bool hasCollectableItemInReach();
+	bool has_collectable_item_in_reach() const;
 
-	void tryCollectItem(mouse_state mouseState, keyboard_input_state keyboardState, ItemCollection& itemCollection);
+	void try_collect_item(mouse_state mouse_state, keyboard_input_state keyboard_state, item_collection& item_collection);
 
 private:
-	struct Movement
+	struct movement
 	{
 		bool forwards = false;
 		bool backwards = false;
@@ -38,23 +38,23 @@ private:
 		bool jump = false;
 	};
 
-	Physics& physics;
-	camera_positioner_player& cameraPositioner;
-	Physics::PhysicsObject* playerObject;
+	Physics& physics_;
+	camera_positioner_player& camera_positioner_;
+	Physics::PhysicsObject* player_object_;
 
 	// settings
-	glm::vec3 rigidbodyToCameraOffset = glm::vec3(0,1,0);
-	float playerSpeed = 20.0f; // how fast the player accelerates (x,z axis)
-	float jumpStrength = 0.1f; // how high the player can jump (y axis)
-	float stopSpeed = 5.0f; // how fast the player decelerates when not giving input (x,z axis)
-	float maxSpeed = 15.0f; // how fast the player is allowed to run at max (x,z axis)
-	float reach = 5.0f; // maximum distance that items can be away and still be collected
-	float itemWeight = 0; // how much all the items weigh together (influences movement)
+	glm::vec3 rigidbody_to_camera_offset_ = glm::vec3(0,1,0);
+	float player_speed_ = 20.0f; // how fast the player accelerates (x,z axis)
+	float jump_strength_ = 0.1f; // how high the player can jump (y axis)
+	float stop_speed_ = 5.0f; // how fast the player decelerates when not giving input (x,z axis)
+	float max_speed_ = 15.0f; // how fast the player is allowed to run at max (x,z axis)
+	float reach_ = 5.0f; // maximum distance that items can be away and still be collected
+	float item_weight_ = 0; // how much all the items weigh together (influences movement)
 
-	Physics::PhysicsObject* geCollectableInFrontOfPlayer();
-	Movement* inputToMovementState(keyboard_input_state inputs);
-	glm::vec3 movementStateToDirection(Movement* movement);
-	void decelerateXZ(float deltatime);
-	void enforceSpeedLimit();
+	Physics::PhysicsObject* get_collectable_in_front_of_player() const;
+	static void input_to_movement_state(keyboard_input_state inputs, movement& movement);
+	glm::vec3 movement_state_to_direction(const movement* movement) const;
+	void decelerate_xz(float delta_time) const;
+	void enforce_speed_limit() const;
 };
 

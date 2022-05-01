@@ -1,13 +1,13 @@
 #include "Debugger.h"
 
 
-void APIENTRY Debugger::DebugCallbackDefault(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const GLvoid* userParam) {
+void APIENTRY debugger::debug_callback_default(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const GLvoid* userParam) {
 	if (id == 131185 || id == 131218) return; // ignore performance warnings from nvidia
-	std::string error = FormatDebugOutput(source, type, id, severity, message);
+	std::string error = format_debug_output(source, type, id, severity, message);
 	std::cout << error << std::endl;
 }
 
-std::string Debugger::FormatDebugOutput(GLenum source, GLenum type, GLuint id, GLenum severity, const char* msg) {
+std::string debugger::format_debug_output(GLenum source, GLenum type, GLuint id, GLenum severity, const char* msg) {
 	std::stringstream stringStream;
 	std::string sourceString;
 	std::string typeString;

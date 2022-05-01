@@ -1,6 +1,6 @@
 #include "Camera.h"
 
-void camera_positioner_player::set_position(glm::vec3 pos) {
+void camera_positioner_player::set_position(const glm::vec3 pos) {
 	camera_position_ = pos;
 }
 
@@ -9,10 +9,10 @@ void camera_positioner_player::update(double delta_seconds, const glm::vec2& mou
 	const glm::vec2 delta = mouse_pos - last_mouse_pos_;
 	last_mouse_pos_ = mouse_pos;
 
-	const glm::quat deltaQuat = glm::quat(mouse_speed_ * glm::vec3(delta.y, delta.x, 0.0f));
-	glm::quat unclamped_rotation = deltaQuat * camera_orientation_;
-	float pitch = glm::pitch(unclamped_rotation);
-	float yaw = glm::yaw(unclamped_rotation);
+	const auto delta_quat = glm::quat(mouse_speed_ * glm::vec3(delta.y, delta.x, 0.0f));
+	const glm::quat unclamped_rotation = delta_quat * camera_orientation_;
+	const float pitch = glm::pitch(unclamped_rotation);
+	const float yaw = glm::yaw(unclamped_rotation);
 
 	if ((std::abs(yaw) >= 0.01 || (std::abs(pitch) <= glm::half_pi<float>()))) // clamp y-rotation
 		camera_orientation_ = unclamped_rotation;

@@ -1,37 +1,38 @@
 #include "ItemCollection.h"
 
-void ItemCollection::collect(Physics::PhysicsObject* object)
+void item_collection::collect(Physics::PhysicsObject* object)
 {
 	collectedItems.push_back(object);
-	game_properties* itemProperties = &object->modelGraphics->game_properties;
-	itemProperties->is_active = false;
-	totalMonetaryValue += itemProperties->collectableItemProperties.worth;
-	totalWeight += itemProperties->collectableItemProperties.weight;
+	game_properties* item_properties = &object->modelGraphics->game_properties;
+	item_properties->is_active = false;
+	total_monetary_value_ += item_properties->collectableItemProperties.worth;
+	total_weight_ += item_properties->collectableItemProperties.weight;
 }
 
-float ItemCollection::getTotalMonetaryValue()
+float item_collection::get_total_monetary_value() const
 {
-	return totalMonetaryValue;
+	return total_monetary_value_;
 }
 
-float ItemCollection::getTotalWeight()
+float item_collection::get_total_weight() const
 {
-	return totalWeight;
+	return total_weight_;
 }
 
-std::vector<ItemCollection::ItemInfo> ItemCollection::getListOfItems()
+std::vector<item_collection::item_info> item_collection::get_list_of_items() const
 {
-	std::vector<ItemInfo> itemList;
-	for (int i = 0; i < collectedItems.size(); i++) {
-		ItemInfo item;
-		item.name = collectedItems[i]->modelGraphics->game_properties.display_name;
-		item.price = std::to_string(collectedItems[i]->modelGraphics->game_properties.collectableItemProperties.worth);
+	std::vector<item_info> itemList;
+	for (const auto collected_item : collectedItems)
+	{
+		item_info item;
+		item.name = collected_item->modelGraphics->game_properties.display_name;
+		item.price = std::to_string(collected_item->modelGraphics->game_properties.collectableItemProperties.worth);
 		itemList.push_back(item);
 	}
 	return itemList;
 }
 
-int ItemCollection::size()
+size_t item_collection::size() const
 {
 	return collectedItems.size();
 }

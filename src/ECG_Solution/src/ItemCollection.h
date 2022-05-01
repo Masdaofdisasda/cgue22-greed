@@ -2,22 +2,22 @@
 #include "Physics.h"
 #include <vector>
 
-class ItemCollection
+class item_collection
 {
 public:
-	struct ItemInfo {
+	struct item_info {
 		string name;
 		string price;
 	};
 
 	void collect(Physics::PhysicsObject* object);
-	float getTotalMonetaryValue();
-	float getTotalWeight();
-	std::vector<ItemInfo> getListOfItems();
-	int size();
+	float get_total_monetary_value() const;
+	float get_total_weight() const;
+	std::vector<item_info> get_list_of_items() const;
+	size_t size() const;
 private:
 	std::vector<Physics::PhysicsObject*> collectedItems;
-	float totalWeight;
-	float totalMonetaryValue;
+	float total_weight_ = 0;
+	float total_monetary_value_ = 0;
 };
 

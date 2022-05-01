@@ -69,7 +69,7 @@ public:
 	btQuaternion glmToBt(glm::quat input);
 private:
 	btDiscreteDynamicsWorld* dynamics_world;
-	BulletDebugDrawer* bulletDebugDrawer;
+	bullet_debug_drawer* bulletDebugDrawer;
 	std::vector <PhysicsObject> physicsObjects;
 
 	/// <summary>

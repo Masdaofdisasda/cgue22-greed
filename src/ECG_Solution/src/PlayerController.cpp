@@ -1,52 +1,54 @@
 #include "PlayerController.h"
 
-PlayerController::PlayerController(Physics& physics, camera_positioner_player& camera, glm::vec3 startPosition)
-	: physics(physics), cameraPositioner(camera)
+player_controller::player_controller(Physics& physics, camera_positioner_player& camera, glm::vec3 start_position)
+	: physics_(physics), camera_positioner_(camera)
 {
 	btCollisionShape* collisionShape = new btCapsuleShape(0.5, 1);
-	playerObject = &physics.createPhysicsObject(
-		physics.glmToBt(startPosition),
+	player_object_ = &physics.createPhysicsObject(
+		physics.glmToBt(start_position),
 		collisionShape,
-		*physics.emptyQuaternion(),
+		*Physics::emptyQuaternion(),
 		Physics::ObjectMode::Dynamic_NoRotation
 	);
 }
 
-void PlayerController::move(keyboard_input_state inputs, float deltatime)
+void player_controller::move(const keyboard_input_state inputs, const float delta_time)
 {
-	Movement* movement = inputToMovementState(inputs);
+	movement movement;
+	input_to_movement_state(inputs, movement);
 
 	// running
-	glm::vec3 movementDirection = movementStateToDirection(movement);
-	bool accelerate = glm::length(movementDirection) > 0;
+	const glm::vec3 movement_direction = movement_state_to_direction(&movement);
+	const bool accelerate = glm::length(movement_direction) > 0;
 	if (accelerate) 
-		playerObject->rigidbody->applyCentralImpulse(playerSpeed * (double)deltatime * physics.glmToBt(movementDirection));
+		player_object_->rigidbody->applyCentralImpulse(player_speed_ * static_cast<double>(delta_time) * physics_.glmToBt(movement_direction));
 	else
-		decelerateXZ(deltatime);
-	enforceSpeedLimit();
+		decelerate_xz(delta_time);
+	enforce_speed_limit();
 
 	// jumping
-	if (movement->jump)
-		playerObject->rigidbody->applyCentralImpulse(btVector3(0, jumpStrength, 0));
+	if (movement.jump)
+		player_object_->rigidbody->applyCentralImpulse(btVector3(0, jump_strength_, 0));
 }
 
-void PlayerController::updateCameraPositioner()
+void player_controller::update_camera_positioner()
 {
-	glm::vec3 rbPosition = physics.getObjectPosition(playerObject);
-	cameraPositioner.set_position(rbPosition + rigidbodyToCameraOffset);
+	const glm::vec3 rb_position = physics_.getObjectPosition(player_object_);
+	camera_positioner_.set_position(rb_position + rigidbody_to_camera_offset_);
 }
 
-bool PlayerController::hasCollectableItemInReach() {
-	return geCollectableInFrontOfPlayer() != nullptr;
-}
-
-void PlayerController::tryCollectItem(mouse_state mouseState, keyboard_input_state keyboardState, ItemCollection& itemCollection)
+bool player_controller::has_collectable_item_in_reach() const
 {
-	bool wantToCollect = mouseState.pressed_left || keyboardState.pressing_e;
-	if (!wantToCollect)
+	return get_collectable_in_front_of_player() != nullptr;
+}
+
+void player_controller::try_collect_item(const mouse_state mouse_state, const keyboard_input_state keyboard_state, item_collection& item_collection)
+{
+	const bool want_to_collect = mouse_state.pressed_left || keyboard_state.pressing_e;
+	if (!want_to_collect)
 		return;
 
-	Physics::PhysicsObject* item = geCollectableInFrontOfPlayer();
+	Physics::PhysicsObject* item = get_collectable_in_front_of_player();
 
 	// item there?
 	if (item == nullptr)
@@ -54,47 +56,46 @@ void PlayerController::tryCollectItem(mouse_state mouseState, keyboard_input_sta
 
 	// collect
 	printf("collected item\n");
-	itemCollection.collect(item);
-	itemWeight = itemCollection.getTotalWeight();
+	item_collection.collect(item);
+	item_weight_ = item_collection.get_total_weight();
 }
 
-Physics::PhysicsObject* PlayerController::geCollectableInFrontOfPlayer() {
-	glm::vec3 cameraPosition = cameraPositioner.get_position();
-	const glm::mat4 v = glm::mat4_cast(cameraPositioner.get_orientation());
-	const glm::vec3 cameraAimDirection = -glm::vec3(v[0][2], v[1][2], v[2][2]);
+Physics::PhysicsObject* player_controller::get_collectable_in_front_of_player() const
+{
+	const glm::vec3 camera_position = camera_positioner_.get_position();
+	const glm::mat4 v = glm::mat4_cast(camera_positioner_.get_orientation());
+	const glm::vec3 camera_aim_direction = -glm::vec3(v[0][2], v[1][2], v[2][2]);
 
-	btVector3 rayCastStartPoint = physics.glmToBt(cameraPosition);
-	btVector3 rayCastEndPoint = physics.glmToBt(cameraPosition + cameraAimDirection * reach);
-	Physics::PhysicsObject* hitObject = physics.rayCast(rayCastStartPoint, rayCastEndPoint);
+	const btVector3 ray_cast_start_point = physics_.glmToBt(camera_position);
+	const btVector3 ray_cast_end_point = physics_.glmToBt(camera_position + camera_aim_direction * reach_);
+	Physics::PhysicsObject* hit_object = physics_.rayCast(ray_cast_start_point, ray_cast_end_point);
 
-	if (hitObject == nullptr || hitObject->modelGraphics == nullptr)
+	if (hit_object == nullptr || hit_object->modelGraphics == nullptr)
 		return nullptr;
-	if (!hitObject->modelGraphics->game_properties.is_active)
+	if (!hit_object->modelGraphics->game_properties.is_active)
 		return nullptr;
-	if (hitObject->modelGraphics->game_properties.is_collectable)
-		return hitObject;
+	if (hit_object->modelGraphics->game_properties.is_collectable)
+		return hit_object;
 	return nullptr;
 }
 
-PlayerController::Movement* PlayerController::inputToMovementState(keyboard_input_state inputs)
+void player_controller::input_to_movement_state(const keyboard_input_state inputs, movement& movement)
 {
-	Movement* movement = new Movement;
-	movement->forwards = inputs.pressing_w;
-	movement->backwards = inputs.pressing_s;
-	movement->left = inputs.pressing_a;
-	movement->right = inputs.pressing_d;
-	movement->jump = inputs.pressing_space;
-
-	return movement;
+	movement.forwards = inputs.pressing_w;
+	movement.backwards = inputs.pressing_s;
+	movement.left = inputs.pressing_a;
+	movement.right = inputs.pressing_d;
+	movement.jump = inputs.pressing_space;
+	
 }
 
-glm::vec3 PlayerController::movementStateToDirection(Movement* movement)
+glm::vec3 player_controller::movement_state_to_direction(const movement* movement) const
 {
-	const glm::mat4 v = glm::mat4_cast(cameraPositioner.get_orientation());
-	const glm::vec3 forward = -glm::vec3(v[0][2], 0, v[2][2]);
-	const glm::vec3 right = glm::vec3(v[0][0], 0, v[2][0]);
+	const auto v = glm::mat4_cast(camera_positioner_.get_orientation());
+	const auto forward = -glm::vec3(v[0][2], 0, v[2][2]);
+	const auto right = glm::vec3(v[0][0], 0, v[2][0]);
 
-	glm::vec3 result = glm::vec3(0, 0, 0);
+	auto result = glm::vec3(0, 0, 0);
 	if (movement->forwards)
 		result += forward;
 	if (movement->backwards)
@@ -109,40 +110,40 @@ glm::vec3 PlayerController::movementStateToDirection(Movement* movement)
 	return result;
 }
 
-void PlayerController::decelerateXZ(float deltatime)
+void player_controller::decelerate_xz(float delta_time) const
 {
-	btVector3 velocity = playerObject->rigidbody->getLinearVelocity();
-	glm::vec2 xzVelocity = glm::vec2((float)velocity.getX(), (float)velocity.getZ());
+	const btVector3 velocity = player_object_->rigidbody->getLinearVelocity();
+	const auto xz_velocity = glm::vec2(static_cast<float>(velocity.getX()), static_cast<float>(velocity.getZ()));
 
-	bool playerIsStanding = glm::length(xzVelocity) <= 0;
-	if (playerIsStanding)
+	const bool player_is_standing = glm::length(xz_velocity) <= 0;
+	if (player_is_standing)
 		return;
 
-	float newXZMagnitude = glm::length(xzVelocity) / (1 + stopSpeed * deltatime);
-	glm::vec2 newXZVelocity = glm::normalize(xzVelocity) * newXZMagnitude;
-	playerObject->rigidbody->setLinearVelocity(btVector3(
-		newXZVelocity.x,
+	const float new_xz_magnitude = glm::length(xz_velocity) / (1 + stop_speed_ * delta_time);
+	const glm::vec2 new_xz_velocity = glm::normalize(xz_velocity) * new_xz_magnitude;
+	player_object_->rigidbody->setLinearVelocity(btVector3(
+		new_xz_velocity.x,
 		velocity.getY(),
-		newXZVelocity.y
+		new_xz_velocity.y
 	));
 }
 
-void PlayerController::enforceSpeedLimit()
+void player_controller::enforce_speed_limit() const
 {
-	btVector3 velocity = playerObject->rigidbody->getLinearVelocity();
-	glm::vec2 xzVelocity = glm::vec2((float)velocity.getX(), (float)velocity.getZ());
-	float currentSpeed = glm::length(xzVelocity);
-	float newMaxSpeed = maxSpeed - itemWeight;
+	const btVector3 velocity = player_object_->rigidbody->getLinearVelocity();
+	const auto xz_velocity = glm::vec2(static_cast<float>(velocity.getX()), static_cast<float>(velocity.getZ()));
+	const float current_speed = glm::length(xz_velocity);
+	const float new_max_speed = max_speed_ - item_weight_;
 
-	bool playerIsStanding = currentSpeed <= 0;
-	bool speedIsTooHigh = currentSpeed > newMaxSpeed;
-	if (playerIsStanding || !speedIsTooHigh)
+	const bool player_is_standing = current_speed <= 0;
+	const bool speed_is_too_high = current_speed > new_max_speed;
+	if (player_is_standing || !speed_is_too_high)
 		return;
 
-	glm::vec2 newXZVelocity = glm::normalize(xzVelocity) * newMaxSpeed;
-	playerObject->rigidbody->setLinearVelocity(btVector3(
-		newXZVelocity.x,
+	const glm::vec2 new_xz_velocity = glm::normalize(xz_velocity) * new_max_speed;
+	player_object_->rigidbody->setLinearVelocity(btVector3(
+		new_xz_velocity.x,
 		velocity.getY(),
-		newXZVelocity.y
+		new_xz_velocity.y
 	));
 }

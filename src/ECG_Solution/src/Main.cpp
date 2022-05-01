@@ -51,7 +51,7 @@ int main(int argc, char** argv)
 	// Load settings.ini
 	/* --------------------------------------------- */
 
-	std::ifstream file("../../assets/demo.fbx");
+	std::ifstream file("../../assets/submission1.fbx");
 	// if this assertion fails, and you cloned this project from Github,
 	// try setting your working directory of the debugger to "$(TargetDir)"
 	assert(file.is_open());
@@ -64,7 +64,7 @@ int main(int argc, char** argv)
 	/* --------------------------------------------- */
 
 	// setup GLFW window
-	printf("Initializing GLFW...");
+	printf("Initializing GLFW...\n");
 	glfw_app glfw_app(state_);
 	registerInputCallbacks(glfw_app);
 
@@ -72,10 +72,10 @@ int main(int argc, char** argv)
 	printf("Initializing GLEW...\n");
 	glewExperimental = GL_TRUE;
 	if (glewInit() != GLEW_OK)
-		EXIT_WITH_ERROR("Failed to load GLEW");
+		EXIT_WITH_ERROR("Failed to load GLEW\n");
 
 	glEnable(GL_DEBUG_OUTPUT);
-	glDebugMessageCallback(Debugger::DebugCallbackDefault, 0);
+	glDebugMessageCallback(debugger::debug_callback_default, 0);
 
 	LoadingScreen loading_screen = LoadingScreen(&glfw_app, state_->width, state_->height);
 	loading_screen.draw_progress();
@@ -130,9 +130,9 @@ int main(int argc, char** argv)
 	camera_.set_positioner(camera_positioner_);
 	player_camera_positioner_.set_position(glm::vec3(0, 10, 0));
 
-	PlayerController player(physics, player_camera_positioner_, glm::vec3(0, 20, 0));
+	player_controller player(physics, player_camera_positioner_, glm::vec3(0, 20, 0));
 
-	auto* item_collection = new ItemCollection();
+	item_collection item_collection;
 
 	auto lava_position = glm::vec3(0.0f, -5.0f, 0.0f);
 
@@ -153,7 +153,7 @@ int main(int argc, char** argv)
 
 	//---------------------------------- RENDER LOOP ----------------------------------//
 
-	printf("Entering render loop...");
+	printf("Entering render loop...\n");
 	while (!glfwWindowShouldClose(glfw_app.get_window()))
 	{
 		fps_counter.tick(delta_seconds);
@@ -172,15 +172,15 @@ int main(int argc, char** argv)
 			floating_positioner_.set_movement_state(keyboard_input_);
 		else {
 			player.move(keyboard_input_, delta_seconds);
-			state_->display_collect_item_hint = player.hasCollectableItemInReach();
-			player.tryCollectItem(mouse_state_, keyboard_input_, *item_collection);
+			state_->display_collect_item_hint = player.has_collectable_item_in_reach();
+			player.try_collect_item(mouse_state_, keyboard_input_, item_collection);
 		}
 
 		// calculate physics
 		physics.simulateOneStep(delta_seconds);
 
 		// update camera
-		player.updateCameraPositioner();
+		player.update_camera_positioner();
 		camera_positioner_->update(delta_seconds, mouse_state_.pos, mouse_state_.pressed_left);
 
 		// calculate and set per frame matrices
@@ -197,8 +197,8 @@ int main(int argc, char** argv)
 		perframe_data_.delta_time.y += delta_seconds;
 
 		// simple game logic WIP
-		state_->total_cash = item_collection->getTotalMonetaryValue();
-		state_->collected_items = item_collection->size();
+		state_->total_cash = item_collection.get_total_monetary_value();
+		state_->collected_items = static_cast<int>(item_collection.size());
 		if (perframe_data_.view_pos.y > 127.0f)
 		{
 			state_->won = true;
