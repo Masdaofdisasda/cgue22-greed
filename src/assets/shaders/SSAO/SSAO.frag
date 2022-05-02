@@ -4,8 +4,8 @@ layout(location = 0) in vec2 uv;
 
 layout(location = 0) out vec4 outColor;
 
-layout(binding = 9) uniform sampler2D texDepth;
-layout(binding = 10) uniform sampler2D texRotation;
+layout(binding = 16) uniform sampler2D texDepth;
+layout(binding = 17) uniform sampler2D texRotation;
 
 const vec3 offsets[8] = vec3[8] 
 (

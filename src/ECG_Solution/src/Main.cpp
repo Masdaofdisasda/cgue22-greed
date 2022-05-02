@@ -134,8 +134,6 @@ int main(int argc, char** argv)
 
 	item_collection item_collection;
 
-	auto lava_position = glm::vec3(0.0f, -5.0f, 0.0f);
-
 	glViewport(0, 0, state_->width, state_->height);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -188,8 +186,6 @@ int main(int argc, char** argv)
 		const glm::mat4 projection = glm::perspective(glm::radians(state_->fov), ratio, state_->znear, state_->zfar);
 		const glm::mat4 view = camera_.get_view_matrix();
 		perframe_data_.view_proj = projection * view;
-		if (perframe_data_.delta_time.y > 60.0f) lava_position.y += delta_seconds * 1.0f; //TODO
-		perframe_data_.lava_level = glm::translate(lava_position);
 		perframe_data_.view_pos = glm::vec4(camera_.get_position(), 1.0f);
 		perframe_data_.view_inv = glm::inverse(view);
 		perframe_data_.proj_inv = glm::inverse(projection);
@@ -203,10 +199,10 @@ int main(int argc, char** argv)
 		{
 			state_->won = true;
 		}
-		if (perframe_data_.view_pos.y-1.8f < lava_position.y)
+		/*if (perframe_data_.view_pos.y - 1.8f < lava_position.y)
 		{
 			state_->lost = true;
-		}
+		}*/
 
 		// actual draw call
 		renderer.draw(&level);

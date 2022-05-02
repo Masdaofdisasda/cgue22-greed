@@ -19,7 +19,7 @@ layout(std140, binding = 0) uniform PerFrameData
     vec4 ssao2;
 };
 
-layout (binding = 8) uniform samplerCube environmentTex;
+layout (binding = 11) uniform samplerCube environmentTex;
 
 void main()
 {

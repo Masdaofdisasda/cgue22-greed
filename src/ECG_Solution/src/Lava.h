@@ -20,10 +20,6 @@ public:
 private:
     program sim_update_;
     program sim_render_;
-    program lava_floor_;		
-
-    Material lava_ = Material("textures/Lava_1/albedo.jpg", "Lava"); //temp file, replace with procedural texture
-    GLuint lava_vao_ = 0;
     int count_ = 0;
 
     glm::ivec3 n_particles_ = glm::ivec3(20,20,20);
@@ -35,7 +31,6 @@ private:
     glm::vec4 bh1_ = glm::vec4(-85, -5, -85, 1);
 
 	void setup_buffers();
-    void load_lava();
 
 };
 

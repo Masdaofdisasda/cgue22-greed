@@ -51,10 +51,11 @@ layout (binding = 1) uniform sampler2D normalTex;
 layout (binding = 2) uniform sampler2D metallicTex;
 layout (binding = 3) uniform sampler2D roughnessTex;
 layout (binding = 4) uniform sampler2D aoTex;
+layout (binding = 5) uniform sampler2D emissiveTex;
 
-layout (binding = 5) uniform samplerCube irradianceTex;
-layout (binding = 6) uniform samplerCube prefilterTex;
-layout (binding = 7) uniform sampler2D brdfLutTex;
+layout (binding = 8) uniform samplerCube irradianceTex;
+layout (binding = 9) uniform samplerCube prefilterTex;
+layout (binding = 10) uniform sampler2D brdfLutTex;
 
 layout (binding = 12) uniform sampler2D depthTex;
 
@@ -63,6 +64,7 @@ vec3 albedo = pow(texture(albedoTex, fUV).rgb, vec3(2.2));
 float metallic = texture(metallicTex, fUV).r;
 float roughness = texture(roughnessTex, fUV).r;
 float ao = texture(aoTex,fUV).r;
+vec3 emissive  = pow(texture(emissiveTex, fUV).rgb, vec3(2.2)) * bloom.y;
 
 const float PI = 3.14159265359;
 
@@ -251,6 +253,8 @@ vec3 calculateLight() {
 	for(int i = 0; i < dLights.length; i++)
 	Lo += Idirectional(dLights[i], N, fPosition, V, F0);
 
+    Lo = Lo * shadow; // make point lights still visible
+
 	// do the same for all point lights
 	for(int i = 0; i < pLights.length(); i++)
   	Lo += Ipoint(pLights[i], N, fPosition, V, F0);
@@ -272,9 +276,9 @@ vec3 calculateLight() {
     
     vec3 ambient = (kD * diffuse + specular* shadow) * ao;
     
-    vec3 color = ambient + Lo * shadow;
+    vec3 color = ambient + Lo;
     
-    return color;
+    return color + emissive;
 }
 
 

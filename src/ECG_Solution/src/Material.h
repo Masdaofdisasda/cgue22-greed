@@ -13,23 +13,25 @@ class Material
 public:
 	Material(const char* tex_path, const char* name);
 	~Material() { release(); };
+	std::string name;
 
 	GLuint get_albedo() const { return albedo_; }
 	GLuint get_normal_map() const { return normal_; }
 	GLuint get_metallic() const { return metal_; }
 	GLuint get_roughness() const { return rough_; }
 	GLuint get_ao_map() const { return ao_; }
+	GLuint get_emissive() const { return emissive_; }
 
 	void clear() const;
 
 private:
-	std::string id_;
 
 	GLuint albedo_ = 0;
 	GLuint normal_ = 0;
 	GLuint metal_ = 0;
 	GLuint rough_ = 0;
 	GLuint ao_ = 0;
+	GLuint emissive_ = 0;
 
 
 	void release()

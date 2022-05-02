@@ -7,7 +7,7 @@
 /// @param name the name of the material, eg. Material_1
 Material::Material(const char* tex_path, const char* name) {
 
-	id_ = name;
+	this->name = name;
 
 	// remove "/albedo.jpg" from path end
 	std::string path = tex_path;
@@ -22,13 +22,14 @@ Material::Material(const char* tex_path, const char* name) {
 	strcat(c, file);
 
 	// load textures multi-threaded
-	GLuint handles[5];
+	GLuint handles[6];
 	Texture::load_texture_mt(c, handles);
 	albedo_ = handles[0];
 	normal_ = handles[1];
 	metal_ = handles[2];
 	rough_ = handles[3];
 	ao_ = handles[4];
+	emissive_ = handles[5];
 }
 
 /// @brief explicitly deletes every texture in this material
@@ -40,4 +41,5 @@ void Material::clear() const
 	glDeleteTextures(1, &metal_);
 	glDeleteTextures(1, &rough_);
 	glDeleteTextures(1, &ao_);
+	glDeleteTextures(1, &emissive_);
 }

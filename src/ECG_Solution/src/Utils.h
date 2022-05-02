@@ -134,23 +134,6 @@ glm::mat4 glm_look_at(const glm::vec3 pos, const glm::vec3 target, const glm::ve
 global_state load_settings();
 
 /// texture bindings in shader:
-///	0 - albedo
-///	1 - normal
-///	2 - metal
-///	3 - roughness
-///	4 - ao
-///	5 - irradiance
-///	6 - preFilter
-///	7 - brdfLut
-///	8 - skybox
-///	9 - ssao / bloom postprocessing
-///	10 - ssao / bloom postprocessing
-///	11 - bloom postprocessing
-///	12 - depth map
-///	13 - 3D LUT look
-
-///	NEW:
-/// texture bindings in shader:
 ///	model material
 ///	0 - albedo
 ///	1 - normal
@@ -170,10 +153,10 @@ global_state load_settings();
 /// 14 -
 ///	15 -
 ///	postprocessing
-///	16 - ssao / bloom 
+///	16 - ssao / bloom / fullscreen images
 ///	17 - ssao / bloom 
 ///	18 - bloom postprocessing
-///	19 - 
+///	19 - text
 ///	20 - 
 ///	21 - 
 ///	22 - 

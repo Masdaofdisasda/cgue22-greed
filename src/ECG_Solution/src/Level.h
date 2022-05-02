@@ -40,7 +40,8 @@ private:
 	std::vector<Material> materials_;
 	light_sources lights_;
 	std::vector<render_item> render_queue_;
-	hierarchy scene_graph_; 
+	hierarchy scene_graph_;
+	hierarchy* lava_;
 	hierarchy* dynamic_node_;
 	std::vector<physics_mesh> rigid_;
 	std::vector<physics_mesh> dynamic_;

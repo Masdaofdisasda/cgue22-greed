@@ -108,7 +108,7 @@ void font_renderer::print(std::string msg, float x, const float y, const float s
             { xpos + w, ypos + h,   1.0f, 0.0f }
         };
         // render glyph texture over quad
-        glBindTextureUnit(13, l.texture_id);
+        glBindTextureUnit(19, l.texture_id);
         // update content of VBO memory
         glBindBuffer(GL_ARRAY_BUFFER, vbo_);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);

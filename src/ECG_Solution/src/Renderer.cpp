@@ -141,6 +141,10 @@ void renderer::draw(level* level)
 	const glm::mat4 light_proj = level->get_tight_scene_frustum();
 	perframe_data_->light_view_proj = light_proj * light_view;
 
+	// TODO
+	lights_.point[0].position = perframe_data_->view_pos;
+	positional_lights_.update(lights_.point.size() * sizeof(positional_light), lights_.point.data());
+
 	perframe_buffer_.update(sizeof(PerFrameData), perframe_data_);
 
 	glEnable(GL_DEPTH_TEST);
@@ -237,8 +241,8 @@ void renderer::draw(level* level)
 		glClearNamedFramebufferfv(ssao_fb_.get_handle(), GL_COLOR, 0, &(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)[0]));
 		ssao_fb_.bind();
 			ssao_.use();
-			glBindTextureUnit(9, framebuffer1_.get_texture_depth().get_handle());
-			glBindTextureUnit(10, pattern_);
+			glBindTextureUnit(16, framebuffer1_.get_texture_depth().get_handle());
+			glBindTextureUnit(17, pattern_);
 			glDrawArrays(GL_TRIANGLES, 0, 3);
 		ssao_fb_.unbind();
 
@@ -246,13 +250,13 @@ void renderer::draw(level* level)
 		// Blur X
 		blur_.bind();
 			blur_x_.use();
-			glBindTextureUnit(9, ssao_fb_.get_texture_color().get_handle());
+			glBindTextureUnit(16, ssao_fb_.get_texture_color().get_handle());
 			glDrawArrays(GL_TRIANGLES, 0, 3);
 		blur_.unbind();
 		// Blur Y
 		ssao_fb_.bind();
 			blur_y_.use();
-			glBindTextureUnit(9, blur_.get_texture_color().get_handle());
+			glBindTextureUnit(16, blur_.get_texture_color().get_handle());
 			glDrawArrays(GL_TRIANGLES, 0, 3);
 		ssao_fb_.unbind();
 
@@ -263,8 +267,8 @@ void renderer::draw(level* level)
 
 		framebuffer2_.bind();
 			combine_ssao_.use();
-			glBindTextureUnit(9, framebuffer1_.get_texture_color().get_handle());
-			glBindTextureUnit(10, ssao_fb_.get_texture_color().get_handle());
+			glBindTextureUnit(16, framebuffer1_.get_texture_color().get_handle());
+			glBindTextureUnit(17, ssao_fb_.get_texture_color().get_handle());
 			glDrawArrays(GL_TRIANGLES, 0, 3);
 		framebuffer2_.unbind();
 	}
@@ -281,7 +285,7 @@ void renderer::draw(level* level)
 		// 4.1 - downscale for addiational blur and convert framebuffer to luminance
 		luminance_.bind();
 			to_luminance_.use();
-			glBindTextureUnit(9, framebuffer2_.get_texture_color().get_handle());
+			glBindTextureUnit(16, framebuffer2_.get_texture_color().get_handle());
 			glDrawArrays(GL_TRIANGLES, 0, 3);
 		luminance_.unbind();
 		glGenerateTextureMipmap(luminance_.get_texture_color().get_handle());
@@ -298,7 +302,7 @@ void renderer::draw(level* level)
 		// 4.3 - filter bright spots from framebuffer
 		bright_pass_fb_.bind();
 			bright_pass_.use();
-			glBindTextureUnit(9, framebuffer2_.get_texture_color().get_handle());
+			glBindTextureUnit(16, framebuffer2_.get_texture_color().get_handle());
 			glDrawArrays(GL_TRIANGLES, 0, 3);
 		bright_pass_fb_.unbind();
 		glBlitNamedFramebuffer(bright_pass_fb_.get_handle(), bloom1_.get_handle(), 0, 0, 256, 256, 0, 0, 256, 256, GL_COLOR_BUFFER_BIT, GL_LINEAR);
@@ -309,13 +313,13 @@ void renderer::draw(level* level)
 			// blur x
 			bloom0_.bind();
 				blur_x_.use();
-				glBindTextureUnit(9, bloom1_.get_texture_color().get_handle());
+				glBindTextureUnit(16, bloom1_.get_texture_color().get_handle());
 				glDrawArrays(GL_TRIANGLES, 0, 3);
 			bloom0_.unbind();
 			// blur y
 			bloom1_.bind();
 				blur_y_.use();
-				glBindTextureUnit(9, bloom0_.get_texture_color().get_handle());
+				glBindTextureUnit(16, bloom0_.get_texture_color().get_handle());
 				glDrawArrays(GL_TRIANGLES, 0, 3);
 			bloom1_.unbind();
 		}
@@ -324,9 +328,9 @@ void renderer::draw(level* level)
 		glViewport(0, 0, state->width, state->height);
 
 		combine_hdr_.use();
-		glBindTextureUnit(9, framebuffer2_.get_texture_color().get_handle());
-		glBindTextureUnit(10, luminances_[1]->get_handle());
-		glBindTextureUnit(11, bloom1_.get_texture_color().get_handle());
+		glBindTextureUnit(16, framebuffer2_.get_texture_color().get_handle());
+		glBindTextureUnit(17, luminances_[1]->get_handle());
+		glBindTextureUnit(18, bloom1_.get_texture_color().get_handle());
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 	}
 	else
@@ -338,7 +342,7 @@ void renderer::draw(level* level)
 	// 5 - render HUD
 	render_image_.use();
 	glEnable(GL_BLEND);
-	glBindTextureUnit(9, hud_);
+	glBindTextureUnit(16, hud_);
 	glDrawArrays(GL_TRIANGLES, 0, 3);
 	font_renderer_.print("CLOSED BETA FOOTAGE", state->width * 0.8f, state->height * 0.08f, .5f, glm::vec3(.7f, .7f, .7f));
 	font_renderer_.print("all content is subject to change", state->width * 0.78f, state->height * 0.05f, .5f, glm::vec3(.5f, .5f, .5f));

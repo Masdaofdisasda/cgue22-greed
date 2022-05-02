@@ -53,10 +53,11 @@ layout (binding = 1) uniform sampler2D normalTex;
 layout (binding = 2) uniform sampler2D metallicTex;
 layout (binding = 3) uniform sampler2D roughnessTex;
 layout (binding = 4) uniform sampler2D aoTex;
+layout (binding = 5) uniform sampler2D emissiveTex;
 
-layout (binding = 5) uniform samplerCube irradianceTex;
-layout (binding = 6) uniform samplerCube prefilterTex;
-layout (binding = 7) uniform sampler2D brdfLutTex;
+layout (binding = 8) uniform samplerCube irradianceTex;
+layout (binding = 9) uniform samplerCube prefilterTex;
+layout (binding = 10) uniform sampler2D brdfLutTex;
 
 layout (binding = 12) uniform sampler2D depthTex;
 

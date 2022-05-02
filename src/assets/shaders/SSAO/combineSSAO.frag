@@ -4,8 +4,8 @@ layout(location = 0) in vec2 uv;
 
 layout(location = 0) out vec4 outColor;
 
-layout(binding = 9) uniform sampler2D texScene;
-layout(binding = 10) uniform sampler2D texSSAO;
+layout(binding = 16) uniform sampler2D texScene;
+layout(binding = 17) uniform sampler2D texSSAO;
 
 layout(std140, binding = 0) uniform PerFrameData
 {

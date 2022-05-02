@@ -64,7 +64,7 @@ void program::upload_ibl(const GLuint irradiance, const GLuint pre_filter, const
 				pre_filter,
 				bdrf_lut,
 				enviroment };
-	glBindTextures(5, 4, textures);
+	glBindTextures(8, 4, textures);
 }
 
 void program::setu_int(const std::string& name, int value) const

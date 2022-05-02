@@ -41,7 +41,13 @@ level::level(const char* scene_path, const std::shared_ptr<global_state> state, 
 	// finalize
 	light.join();
 	load_shaders();
-	dynamic_node_ = nullptr;
+	for (auto& i : scene_graph_.children)
+	{
+		if (i.name == "Dynamic")
+			dynamic_node_ = &i;
+		if (i.name == "Lava1")
+			lava_ = &i;
+	}
 
 	std::cout << std::endl; // debug breakpoint
 }
@@ -456,13 +462,6 @@ std::vector<physics_mesh> level::get_rigid()
 
 std::vector<physics_mesh> level::get_dynamic()
 {
-	dynamic_node_ = nullptr;
-	for (auto& i : scene_graph_.children)
-	{
-		if (i.name == "Dynamic") {
-			dynamic_node_ = &i;
-		}
-	}
 	collect_dynamic_physic_meshes(dynamic_node_, glm::mat4(1));
 	return dynamic_;
 }
@@ -553,14 +552,24 @@ void level::draw_scene() {
 	reset_queue();
 	build_render_queue(&scene_graph_, glm::mat4(1), true);
 
+
+
 	// draw mesh
 	for (size_t i = 0; i < render_queue_.size(); i++)
 	{
 		ssbo_.update(static_cast<GLsizeiptr>(sizeof(glm::mat4) * render_queue_[i].model_matrices.size()), render_queue_[i].model_matrices.data());
 		ibo_.update(static_cast<GLsizeiptr>(render_queue_[i].commands.size() * sizeof(draw_elements_indirect_command)), render_queue_[i].commands.data());
 
-		const GLuint textures[] = {materials_[i].get_albedo(), materials_[i].get_normal_map(), materials_[i].get_metallic(), materials_[i].get_roughness(), materials_[i].get_ao_map() };
-		glBindTextures(0, 5, textures);
+		const GLuint textures[] = {materials_[i].get_albedo(), materials_[i].get_normal_map(), materials_[i].get_metallic(),
+			materials_[i].get_roughness(), materials_[i].get_ao_map(), materials_[i].get_emissive() };
+		glBindTextures(0, 6, textures);
+
+		if (materials_[i].name == "Lava_1") // may the GL gods have mercy with this monstrosity TODO
+		{
+			GLint prog = 0;
+			glGetIntegerv(GL_CURRENT_PROGRAM, &prog);
+			glUniform1i(glGetUniformLocation(prog, "vtx_animation"), 1);
+		}
 		
 		/// mode - draw triangles from every 3 indices
 		/// type - data type of the indices vector
@@ -568,6 +577,13 @@ void level::draw_scene() {
 		/// drawcount - is the number of draw calls that should be generated
 		/// stride - because the commands are packed tightly aka just as descriped in the GL specs
 		glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, static_cast<GLvoid*>(nullptr), static_cast<GLsizei>(render_queue_[i].commands.size()), 0);
+
+		if (materials_[i].name == "Lava_1") // may the GL gods have mercy with this monstrosity TODO
+		{
+			GLint prog = 0;
+			glGetIntegerv(GL_CURRENT_PROGRAM, &prog);
+			glUniform1i(glGetUniformLocation(prog, "vtx_animation"), 0);
+		}
 	}
 
 	if (state_->cull_debug) // bounding box & frustum culling debug view
@@ -614,7 +630,9 @@ void level::draw_scene_shadow_map()
 	state_->cull = false;
 
 	// recalculate bounds & set lod uniforms
+	if (perframe_data_->delta_time.y > 60.0f) lava_->TRS.translate.y += perframe_data_->delta_time.x * 1.0f; //TODO
 	transform_bounding_boxes(dynamic_node_, glm::mat4(1));
+	transform_bounding_boxes(lava_, glm::mat4(1));
 	lod_system::near_plane = perframe_data_->ssao1.z;
 	lod_system::view_pos = perframe_data_->view_pos;
 	glm::mat4 vp = glm::transpose(perframe_data_->view_proj);
@@ -622,7 +640,7 @@ void level::draw_scene_shadow_map()
 
 	// flatten tree
 	reset_queue();
-	build_render_queue(&scene_graph_, glm::mat4(1), false);
+	build_render_queue(&scene_graph_, glm::mat4(1), true);
 
 	// draw mesh
 	glBindVertexArray(vao_);

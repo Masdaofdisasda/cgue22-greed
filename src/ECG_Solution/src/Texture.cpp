@@ -52,12 +52,12 @@ GLuint Texture::load_texture(const char* tex_path)
 	return handle;
 }
 
-/// @brief load 5 pbr textures using multiple threads
+/// @brief load 6 pbr textures using multiple threads
 /// @param tex_path folder location of the material
 /// @param handles target containing the texture handles after call
 void Texture::load_texture_mt(const char* tex_path, GLuint handles[])
 {
-	stbiData img_data[5]; std::thread workers[5];
+	stbiData img_data[6]; std::thread workers[6];
 
 	std::string albedo = append(tex_path, "/albedo.jpg");
 	workers[0] = std::thread (Texture::stbi_load_single, albedo, &img_data[0]);
@@ -68,21 +68,24 @@ void Texture::load_texture_mt(const char* tex_path, GLuint handles[])
 	std::string rough = append(tex_path, "/rough.jpg");
 	workers[3] = std::thread (Texture::stbi_load_single, rough, &img_data[3]);
 	std::string ao = append(tex_path, "/ao.jpg");
-	workers[4] = std::thread (Texture::stbi_load_single, ao, &img_data[4]);
+	workers[4] = std::thread(Texture::stbi_load_single, ao, &img_data[4]);
+	std::string emissive = append(tex_path, "/emissive.jpg");
+	workers[5] = std::thread(Texture::stbi_load_single, emissive, &img_data[5]);
 
-	for (size_t i = 0; i < 5; i++)
+	for (size_t i = 0; i < 6; i++)
 	{
 		workers[i].join();
-		const int mipMapLevel = get_num_mip_map_levels_2d(img_data[i].w, img_data[i].h);
-		glCreateTextures(GL_TEXTURE_2D, 1, &handles[i]);
-
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		
 		if (img_data[i].data > nullptr)
 		{
+			const int mipMapLevel = get_num_mip_map_levels_2d(img_data[i].w, img_data[i].h);
+			glCreateTextures(GL_TEXTURE_2D, 1, &handles[i]);
+
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
 			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 			glTextureStorage2D(handles[i], mipMapLevel, GL_RGB8, img_data[i].w, img_data[i].h);
 			glTextureSubImage2D(handles[i], 0, 0, 0, img_data[i].w, img_data[i].h, GL_RGB, GL_UNSIGNED_BYTE, img_data[i].data);
@@ -94,7 +97,8 @@ void Texture::load_texture_mt(const char* tex_path, GLuint handles[])
 		}
 		else
 		{
-			std::cout << "could not load texture" << tex_path << std::endl;
+			std::cout << "could not load texture nr " <<i << " from " << tex_path << "\n"<<"using fallback...\n";
+			handles[i] = 0;
 		}
 	}
 	glBindTexture(GL_TEXTURE_2D, 0);

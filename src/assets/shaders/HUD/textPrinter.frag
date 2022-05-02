@@ -4,7 +4,7 @@ layout(location = 0) in vec2 uv;
 
 layout(location = 0) out vec4 outColor;
 
-layout (binding = 13) uniform sampler2D text;
+layout (binding = 19) uniform sampler2D text;
 uniform vec3 color;
 
 void main()

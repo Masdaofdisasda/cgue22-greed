@@ -35,14 +35,38 @@ const mat4 scaleBias = mat4(
 0.0, 0.0, 0.5, 0.0,
 0.5, 0.5, 0.5, 1.0);
 
+// vertex wave animation
+float x_freq = 0.7;
+float x_velo = 2.0;
+float x_amp = 0.5;
+float z_freq = 0.8;
+float z_velo = 2.1;
+float z_amp = 0.4;
+uniform bool vtx_animation = false;
+
 void main()
 {
 	mat4 model = modelMatrix[gl_BaseInstance];
-	gl_Position = ViewProj * model * vec4(vPosition, 1.0);
+	
+	vec3 position =  vPosition;
+	vec3 normal = vNormal;
+	if(vtx_animation)
+	{
+		float u = x_freq * position.x -x_velo * deltaTime.y;
+		float v = z_freq * position.z - z_velo * deltaTime.y;
+		position.y = x_amp * sin(u);
+		position.y += z_amp * sin(v);
+		
+		vec3 normal =  vec3(0.0);
+		normal.xy = normalize(vec2(cos(u), 1.0));
+		//n.xz = normalize(vec2(cos(v), 1.0));
+	}
+
+	gl_Position = ViewProj * model * vec4(position, 1.0);
 	//gl_Position = lightViewProj * model * vec4(vPosition, 1.0);
 	fUV = vUV;
-	fPosition = vec3(model * vec4(vPosition, 1.0));
-	fNormal = mat3(transpose(inverse(model))) * vNormal;
+	fPosition = vec3(model * vec4(position, 1.0));
+	fNormal = mat3(transpose(inverse(model))) * normal;
 	
-	fShadow = scaleBias * lightViewProj * model * vec4(vPosition, 1.0);
+	fShadow = scaleBias * lightViewProj * model * vec4(position, 1.0);
 }
