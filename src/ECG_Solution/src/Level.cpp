@@ -627,12 +627,14 @@ void level::draw_scene_shadow_map()
 	// draw mesh
 	glBindVertexArray(vao_);
 
+	glDisable(GL_CULL_FACE);
 	for (auto& item : render_queue_)
 	{
 		ssbo_.update(static_cast<GLsizeiptr>(sizeof(glm::mat4) * item.model_matrices.size()), item.model_matrices.data());
 		ibo_.update(static_cast<GLsizeiptr>(item.commands.size() * sizeof(draw_elements_indirect_command)), item.commands.data());
 		glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, static_cast<GLvoid*>(nullptr), static_cast<GLsizei>(item.commands.size()), 0);
 	}
+	glEnable(GL_CULL_FACE);
 	state_->cull = cull;
 }
 

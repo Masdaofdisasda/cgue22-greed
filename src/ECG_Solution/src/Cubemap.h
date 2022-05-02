@@ -33,6 +33,11 @@ public:
 
 	void load_hdr(const char* tex_path);
 
+	/**
+	 * \brief https://lencerf.github.io/post/2019-09-21-save-the-opengl-rendering-to-image-file/
+	 */
+	void save_image() const;
+
 	// ensure RAII compliance
 	cubemap(const cubemap&) = delete;
 	cubemap& operator=(const cubemap&) = delete;
