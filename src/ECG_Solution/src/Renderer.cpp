@@ -1,4 +1,5 @@
 #include "Renderer.h"
+#include <optick/optick.h>
 
 std::shared_ptr<global_state> renderer::state = std::make_shared<global_state>(load_settings());
 std::shared_ptr<global_state> renderer::get_state() { return state; }
@@ -8,7 +9,10 @@ renderer::renderer(PerFrameData& perframe_data, light_sources& sources)
 {
 	assert(renderer::state != nullptr);
 
-	build_shader_programs(); 
+	OPTICK_PUSH("build shaders")
+	build_shader_programs();
+	OPTICK_POP()
+	OPTICK_PUSH("prepare renderer")
 	set_render_settings();
 	fill_buffers(); 
 	prepare_framebuffers();
@@ -23,6 +27,7 @@ renderer::renderer(PerFrameData& perframe_data, light_sources& sources)
 
 	font_renderer_.init("../../assets/fonts/Quasimoda/Quasimoda-Regular.otf", state->width, state->height);
 	lava_sim_.init(glm::ivec3(lights_.directional.size(), lights_.point.size(), 0));
+	OPTICK_POP()
 }
 
 void renderer::fill_buffers() const
@@ -151,15 +156,18 @@ void renderer::draw(level* level)
 
 	// 1 - depth mapping
 #if 1 // under construction
+	OPTICK_PUSH("depth pass")
 	depth_map_fb_.bind();
 		glClearNamedFramebufferfi(depth_map_fb_.get_handle(), GL_DEPTH_STENCIL, 0, 1.0f, 0);
 		depth_map_.use();
 		level->draw_scene_shadow_map();
 	depth_map_fb_.unbind();
 	glBindTextureUnit(12, depth_map_fb_.get_texture_depth().get_handle());
+	OPTICK_POP()
 #endif // constructions ends
 
 	// 2 - render scene to framebuffer
+	OPTICK_PUSH("scene pass")
 	framebuffer1_.bind();
 
 		// 2.1 - draw skybox (background)    
@@ -182,6 +190,7 @@ void renderer::draw(level* level)
 	glTextureParameteri(framebuffer1_.get_texture_color().get_handle(), GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
 	glDisable(GL_DEPTH_TEST);
+	OPTICK_POP()
 
 	// Volumetric Light
 	// https://github.com/metzzo/ezg17-transition
@@ -235,6 +244,7 @@ void renderer::draw(level* level)
 
 	
 	// 3 - Apply SSAO
+	OPTICK_PUSH("SSAO pass")
 	if (state->ssao)
 	{
 		//3.1 - render scene with ssao pattern
@@ -277,8 +287,10 @@ void renderer::draw(level* level)
 		glBlitNamedFramebuffer(framebuffer1_.get_handle(), framebuffer2_.get_handle(), 0, 0, state->width, state->height,
 			0, 0, state->width, state->height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 	}
+	OPTICK_POP()
 
 	// 4 - Apply Bloom
+	OPTICK_PUSH("Bloom pass")
 	if (state->bloom)
 	{
 
@@ -338,8 +350,10 @@ void renderer::draw(level* level)
 		glBlitNamedFramebuffer(framebuffer2_.get_handle(), 0, 0, 0, state->width, state->height, 0, 0, 
 			state->width, state->height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 	}
+	OPTICK_POP()
 	
 	// 5 - render HUD
+	OPTICK_PUSH("HUD pass")
 	render_image_.use();
 	glEnable(GL_BLEND);
 	glBindTextureUnit(16, hud_);
@@ -378,6 +392,7 @@ void renderer::draw(level* level)
 		font_renderer_.print("Click to collect", state->width * 0.42f, state->height * 0.60f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f));
 	}
 	glDisable(GL_BLEND);
+	OPTICK_POP()
 }
 
 void renderer::swap_luminance()

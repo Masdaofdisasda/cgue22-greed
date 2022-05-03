@@ -3,11 +3,13 @@
 #include <meshoptimizer/meshoptimizer.h>
 #include <unordered_map>
 #include <thread>
+#include <optick/optick.h>
 
 level::level(const char* scene_path, const std::shared_ptr<global_state> state, PerFrameData& perframe_data)
 : state_(state), perframe_data_(&perframe_data)
 {
 	std::cout << "import scene from fbx file..." << std::endl;
+	OPTICK_PUSH("parse fbx file")
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(scene_path,
 	                                         aiProcess_GenSmoothNormals |
@@ -25,18 +27,28 @@ level::level(const char* scene_path, const std::shared_ptr<global_state> state, 
 		std::cerr << "ERROR: Couldn't load scene" << std::endl;
 		exit(EXIT_FAILURE);
 	}
+	OPTICK_POP()
 
+	OPTICK_PUSH("load meshes")
 	std::thread mesh(&level::load_meshes, this, std::ref(scene));
 	std::thread light(&level::load_lights, this, std::ref(scene));
+
+	OPTICK_PUSH("load materials")
 	load_materials(scene);
+	OPTICK_POP()
 
 	// build scene graph and calculate AABBs
 	std::cout << "build scene hierarchy..." << std::endl;
 	mesh.join();
+	OPTICK_POP()
+	OPTICK_PUSH("build scene graph")
 	traverse_tree(scene->mRootNode, nullptr, &scene_graph_);
 	transform_bounding_boxes(&scene_graph_, glm::mat4(1));
+	OPTICK_POP()
 
+	OPTICK_PUSH("setup level buffers")
 	setup_buffers();
+	OPTICK_POP()
 
 	// finalize
 	light.join();
@@ -539,29 +551,37 @@ void level::collect_dynamic_physic_meshes(hierarchy* node, glm::mat4 global_tran
 
 void level::draw_scene() {
 
+	OPTICK_PUSH("update scene")
 	// update view frustum
 	if (!state_->freeze_cull)
 	{
+		OPTICK_PUSH("update frustum culler")
 		frustum_culler::cull_view_proj = perframe_data_->view_proj;
 		frustum_culler::get_frustum_planes(frustum_culler::cull_view_proj, frustum_culler::frustum_planes);
 		frustum_culler::get_frustum_corners(frustum_culler::cull_view_proj, frustum_culler::frustum_corners);
+		OPTICK_POP()
 	}
 
 	// flatten tree
+	OPTICK_PUSH("build render queue")
 	reset_queue();
 	build_render_queue(&scene_graph_, glm::mat4(1), true);
-
+	OPTICK_POP()
+	OPTICK_POP()
 
 
 	// draw mesh
+	OPTICK_PUSH("draw scene")
 	for (size_t i = 0; i < render_queue_.size(); i++)
 	{
+		OPTICK_PUSH("change material")
 		ssbo_.update(static_cast<GLsizeiptr>(sizeof(glm::mat4) * render_queue_[i].model_matrices.size()), render_queue_[i].model_matrices.data());
 		ibo_.update(static_cast<GLsizeiptr>(render_queue_[i].commands.size() * sizeof(draw_elements_indirect_command)), render_queue_[i].commands.data());
 
 		const GLuint textures[] = {materials_[i].get_albedo(), materials_[i].get_normal_map(), materials_[i].get_metallic(),
 			materials_[i].get_roughness(), materials_[i].get_ao_map(), materials_[i].get_emissive() };
 		glBindTextures(0, 6, textures);
+		OPTICK_POP()
 
 		if (materials_[i].name == "Lava_1") // may the GL gods have mercy with this monstrosity TODO
 		{
@@ -584,9 +604,11 @@ void level::draw_scene() {
 			glUniform1i(glGetUniformLocation(prog, "vtx_animation"), 0);
 		}
 	}
+	OPTICK_POP()
 
 	if (state_->cull_debug) // bounding box & frustum culling debug view
 	{
+		OPTICK_PUSH("draw debug AABB")
 		glDisable(GL_CULL_FACE);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		glEnable(GL_BLEND);
@@ -619,29 +641,39 @@ void level::draw_scene() {
 				frustum_culler::seconds_since_flush = 0;
 			}
 		}
+		OPTICK_POP()
 	}
 
 }
 
 void level::draw_scene_shadow_map()
 {
+	OPTICK_PUSH("update scene")
 	const boolean cull = state_->cull; // cull nothing
 	state_->cull = false;
 
 	// recalculate bounds & set lod uniforms
 	if (perframe_data_->delta_time.y > 60.0f) lava_->TRS.translate.y += perframe_data_->delta_time.x * 1.0f; //TODO
+	OPTICK_PUSH("transform bounding boxes")
 	transform_bounding_boxes(dynamic_node_, glm::mat4(1));
 	transform_bounding_boxes(lava_, glm::mat4(1));
+	OPTICK_POP()
+	OPTICK_PUSH("update frustum culler uniform")
 	lod_system::near_plane = perframe_data_->ssao1.z;
 	lod_system::view_pos = perframe_data_->view_pos;
 	glm::mat4 vp = glm::transpose(perframe_data_->view_proj);
 	lod_system::view_dir = vp[3];
+	OPTICK_POP()
 
 	// flatten tree
+	OPTICK_PUSH("build render queue")
 	reset_queue();
 	build_render_queue(&scene_graph_, glm::mat4(1), true);
+	OPTICK_POP()
+	OPTICK_POP()
 
 	// draw mesh
+	OPTICK_PUSH("draw scene")
 	glBindVertexArray(vao_);
 
 	glDisable(GL_CULL_FACE);
@@ -653,12 +685,13 @@ void level::draw_scene_shadow_map()
 	}
 	glEnable(GL_CULL_FACE);
 	state_->cull = cull;
+	OPTICK_POP()
 }
 
 void level::build_render_queue(const hierarchy* node, const glm::mat4 global_transform, bool high_quality) {
 	if (!node->game_properties.is_active)
 		return;
-
+	
 	if (state_->cull)
 	{
 		if (!frustum_culler::is_box_in_frustum(frustum_culler::frustum_planes, frustum_culler::frustum_corners, node->node_bounds))
@@ -668,6 +701,7 @@ void level::build_render_queue(const hierarchy* node, const glm::mat4 global_tra
 	const glm::mat4 node_matrix = global_transform * node->get_node_matrix();
 	for (size_t i = 0; i < node->model_indices.size(); i++)
 	{
+		OPTICK_PUSH("add model to queue")
 		const uint32_t mesh_index = node->model_indices[i];
 		const uint32_t material_index = meshes_[mesh_index].material_index;
 
@@ -697,6 +731,7 @@ void level::build_render_queue(const hierarchy* node, const glm::mat4 global_tra
 		render_queue_[material_index].commands.push_back(cmd);
 		render_queue_[material_index].model_matrices.push_back(node_matrix);
 		frustum_culler::models_visible++;
+		OPTICK_POP()
 	}
 	
 

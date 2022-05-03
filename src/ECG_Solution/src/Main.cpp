@@ -22,6 +22,7 @@
 #include "PlayerController.h"
 #include "LoadingScreen.h"
 #include <irrKlang/irrKlang.h>
+#include <optick/optick.h>
 
 /* --------------------------------------------- */
 // Global variables
@@ -46,7 +47,9 @@ void registerInputCallbacks(glfw_app& app);
 int main(int argc, char** argv)
 {
 	printf("Starting program...\n");
-
+	OPTICK_THREAD("MainThread")
+	OPTICK_START_CAPTURE()
+	OPTICK_PUSH("init program")
 	/* --------------------------------------------- */
 	// Load settings.ini
 	/* --------------------------------------------- */
@@ -76,7 +79,7 @@ int main(int argc, char** argv)
 
 	glEnable(GL_DEBUG_OUTPUT);
 	glDebugMessageCallback(debugger::debug_callback_default, 0);
-
+	
 	LoadingScreen loading_screen = LoadingScreen(&glfw_app, state_->width, state_->height);
 	loading_screen.draw_progress();
 
@@ -86,22 +89,28 @@ int main(int argc, char** argv)
 
 	printf("Initializing scene and render loop...\n");
 
-	printf("Initializing audio...\n");
+	printf("Initializing audio...\n"); 
 	irrklang::ISoundEngine* engine = irrklang::createIrrKlangDevice();
 	irrklang::ISound* snd = engine->play2D("../../assets/media/EQ07 Prc Fantasy Perc 060.wav", true);
-
+	
 	loading_screen.draw_progress();
 	printf("Loading level...\n");
+	OPTICK_PUSH("load level")
 	level level("../../assets/submission1.fbx", state_, perframe_data_);
+	OPTICK_POP()
 
 	loading_screen.draw_progress();
 	printf("Initializing renderer...\n");
+	OPTICK_PUSH("load renderer")
 	renderer renderer(perframe_data_, *level.get_lights());
+	OPTICK_POP()
 
 	loading_screen.draw_progress();
 	//Physics Initialization
 	printf("Initializing physics...\n");
+	OPTICK_PUSH("init physics")
 	Physics physics;
+	OPTICK_POP()
 
 	// Integrate level meshes into physics world
 	std::vector<physics_mesh> dynamicMeshes = level.get_dynamic();
@@ -148,12 +157,15 @@ int main(int argc, char** argv)
 	fps_counter fps_counter{};
 
 	glfwSetInputMode(glfw_app.get_window(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	OPTICK_POP()
 
 	//---------------------------------- RENDER LOOP ----------------------------------//
 
 	printf("Entering render loop...\n");
 	while (!glfwWindowShouldClose(glfw_app.get_window()))
 	{
+		OPTICK_PUSH("render loop")
+		OPTICK_PUSH("game logic")
 		fps_counter.tick(delta_seconds);
 
 		// fps counter
@@ -173,10 +185,14 @@ int main(int argc, char** argv)
 			state_->display_collect_item_hint = player.has_collectable_item_in_reach();
 			player.try_collect_item(mouse_state_, keyboard_input_, item_collection);
 		}
+		OPTICK_POP()
 
 		// calculate physics
+		OPTICK_PUSH("physics simulation")
 		physics.simulateOneStep(delta_seconds);
+		OPTICK_POP()
 
+		OPTICK_PUSH("draw routine")
 		// update camera
 		player.update_camera_positioner();
 		camera_positioner_->update(delta_seconds, mouse_state_.pos, mouse_state_.pressed_left);
@@ -212,13 +228,16 @@ int main(int argc, char** argv)
 		// swap buffers
 		glfw_app.swap_buffers();
 		renderer.swap_luminance();
+		OPTICK_POP()
+		OPTICK_POP()
 	}
 
 
 	/* --------------------------------------------- */
 	// Destroy context and exit
 	/* --------------------------------------------- */
-
+	OPTICK_STOP_CAPTURE()
+	OPTICK_SAVE_CAPTURE("profiler_dump")
 	printf("Exiting program...\n");
 	return EXIT_SUCCESS;
 }
