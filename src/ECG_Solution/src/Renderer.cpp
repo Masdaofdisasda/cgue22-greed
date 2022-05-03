@@ -136,9 +136,9 @@ void renderer::draw(level* level)
 	glClearNamedFramebufferfv(framebuffer1_.get_handle(), GL_COLOR, 0, &(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)[0]));
 	glClearNamedFramebufferfi(framebuffer1_.get_handle(), GL_DEPTH_STENCIL, 0, 1.0f, 0);
 
-	const glm::vec3 dir = glm::vec3(lights_.directional[0].direction);
-	const glm::mat4 light_view = glm_look_at(glm::vec3(0, 0, 0), dir, glm::vec3(0, 0, 1));
-	const glm::mat4 light_proj = level->get_tight_scene_frustum();
+	const glm::vec3 dir = glm::normalize(lights_.directional[0].direction);
+	const glm::mat4 light_view = glm_look_at(glm::vec3(0, 0, 0), -dir, glm::vec3(0, 0, 1));
+	const glm::mat4 light_proj = level->get_tight_scene_frustum(light_view);
 	perframe_data_->light_view_proj = light_proj * light_view;
 
 	// TODO

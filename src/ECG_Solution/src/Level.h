@@ -197,10 +197,10 @@ public:
 	std::vector<physics_mesh> get_dynamic();
 
 	/** TODO
-	 * \brief calculates the tightes possible orthogonal view frustum of the whole scene, used for directional shadow mapping
+	 * \brief calculates the tightest possible orthogonal view frustum of the whole scene, used for directional shadow mapping
 	 * \return an orthogonal projection of the level
 	 */
-	glm::mat4 get_tight_scene_frustum() const;
+	glm::mat4 get_tight_scene_frustum(glm::mat4 light_view) const;
 	
 	light_sources* get_lights() { return &lights_; }
 };

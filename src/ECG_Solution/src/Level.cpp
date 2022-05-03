@@ -412,7 +412,6 @@ void level::load_lights(const aiScene* scene) {
 
 			glm::vec3 direction = glm::vec3(dir.x, dir.y, dir.z);	
 			direction = -glm::rotate(finalRot, direction);	// light direction gets inverted in shader
-			direction = glm::vec3(0.0001, 1, 0); // todo
 			glm::vec4 intensity = glm::vec4(col.r, col.g, col.b, 1.0f) * 3.0f; // increase light intensity (maya normalizes it)
 
 			this->lights_.directional.push_back(directional_light{glm::vec4(direction,1.0f), intensity});
@@ -734,16 +733,36 @@ void level::draw_aabbs(const hierarchy node)
 	}
 }
 
-glm::mat4 level::get_tight_scene_frustum() const
+glm::mat4 level::get_tight_scene_frustum(glm::mat4 light_view) const
 {
-	// rotate scene bounds from opengl view direction to camera direction
-	const glm::vec3 ldir = lights_.directional[0].direction;
-	const auto vdir = glm::vec3(0.0f, 0.0f, 1.0f);
-	const glm::quat r = glm::rotation(vdir, ldir);
-	const glm::vec3 min = glm::rotate(r, scene_graph_.node_bounds.min_);
-	const glm::vec3 max = glm::rotate(r, scene_graph_.node_bounds.max_);
+	glm::vec3 min = scene_graph_.node_bounds.min_;
+	glm::vec3 max = scene_graph_.node_bounds.max_;
 
-	return glm::ortho(min.x, max.x, min.y, max.y, -max.z, -min.z); 
+	glm::vec3 corners[] = {
+			glm::vec3(min.x, min.y, min.z),
+			glm::vec3(min.x, max.y, min.z),
+			glm::vec3(min.x, min.y, max.z),
+			glm::vec3(min.x, max.y, max.z),
+			glm::vec3(max.x, min.y, min.z),
+			glm::vec3(max.x, max.y, min.z),
+			glm::vec3(max.x, min.y, max.z),
+			glm::vec3(max.x, max.y, max.z),
+	};
+	for (auto& v : corners)
+		v = glm::vec3(light_view * glm::vec4(v, 1.0f));
+
+	glm::vec3 vmin(std::numeric_limits<float>::max());
+	glm::vec3 vmax(std::numeric_limits<float>::lowest());
+
+	for (auto& corner : corners)
+	{
+		vmin = glm::min(vmin, corner);
+		vmax = glm::max(vmax, corner);
+	}
+	min = vmin;
+	max = vmax;
+
+	return glm::ortho(min.x, max.x, min.y, max.y, -max.z, -min.z);
 }
 
 void level::release() const
