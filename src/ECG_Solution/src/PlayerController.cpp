@@ -14,23 +14,53 @@ player_controller::player_controller(Physics& physics, camera_positioner_player&
 
 void player_controller::move(const keyboard_input_state inputs, const float delta_time)
 {
-	player_object_->rigidbody->activate(true); // hinder rigidbody from sleeping
+	// hinder rigidbody from sleeping
+	player_object_->rigidbody->activate(true);
 
+	// translate movement input
 	movement movement;
 	input_to_movement_state(inputs, movement);
 
 	// running
 	const glm::vec3 movement_direction = movement_state_to_direction(&movement);
-	const bool accelerate = glm::length(movement_direction) > 0;
-	if (accelerate) 
-		player_object_->rigidbody->applyCentralImpulse(player_speed_ * static_cast<double>(delta_time) * physics_.glmToBt(movement_direction));
+	const bool shouldAccelerate = glm::length(movement_direction) > 0;
+	if (shouldAccelerate)
+		accelerate(movement_direction, delta_time);
 	else
 		decelerate_xz(delta_time);
 	enforce_speed_limit();
 
 	// jumping
-	if (movement.jump)
-		player_object_->rigidbody->applyCentralImpulse(btVector3(0, jump_strength_, 0));
+	is_grounded_ = is_ground_under_player();
+	jump_cooldown_time_ = jump_cooldown_time_ > 0 ? jump_cooldown_time_ - delta_time : 0;
+	const bool allowedToJump = is_grounded_ && jump_cooldown_time_ <= 0;
+	if (movement.jump && allowedToJump) {
+		jump();
+		jump_cooldown_time_ = jump_max_cooldown_time_;
+	}
+}
+
+void player_controller::accelerate(glm::vec3 movement_direction, const float delta_time) {
+	player_object_->rigidbody->applyCentralImpulse(player_speed_ * static_cast<double>(delta_time) * physics_.glmToBt(movement_direction));
+}
+
+void player_controller::jump() {
+	printf("jump");
+	player_object_->rigidbody->applyCentralImpulse(btVector3(0, jump_strength_, 0));
+}
+
+bool player_controller::is_ground_under_player() {
+	const btVector3 ray_cast_start_point = player_object_->rigidbody->getCenterOfMassTransform().getOrigin();
+	const btVector3 ray_cast_end_point = ray_cast_start_point + btVector3(0, -max_ground_distance_, 0);
+	Physics::PhysicsObject* hit_object = physics_.rayCast(ray_cast_start_point, ray_cast_end_point);
+
+	if (hit_object == nullptr || hit_object->modelGraphics == nullptr)
+		return false;
+	if (!hit_object->modelGraphics->game_properties.is_active)
+		return false;
+	if (hit_object->modelGraphics->game_properties.is_ground)
+		return true;
+	return false;
 }
 
 void player_controller::update_camera_positioner()
@@ -88,7 +118,7 @@ void player_controller::input_to_movement_state(const keyboard_input_state input
 	movement.left = inputs.pressing_a;
 	movement.right = inputs.pressing_d;
 	movement.jump = inputs.pressing_space;
-	
+
 }
 
 glm::vec3 player_controller::movement_state_to_direction(const movement* movement) const

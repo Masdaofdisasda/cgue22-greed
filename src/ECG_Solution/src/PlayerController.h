@@ -41,20 +41,27 @@ private:
 	Physics& physics_;
 	camera_positioner_player& camera_positioner_;
 	Physics::PhysicsObject* player_object_;
+	bool is_grounded_ = false; // is the player standing on a surface, he can jump off of?
+	float jump_cooldown_time_ = 0; // how much time is left until the jump is usable again
 
 	// settings
 	glm::vec3 rigidbody_to_camera_offset_ = glm::vec3(0,1,0);
 	float player_speed_ = 20.0f; // how fast the player accelerates (x,z axis)
-	float jump_strength_ = 0.1f; // how high the player can jump (y axis)
+	float jump_strength_ = 8.0f; // how high the player can jump (y axis)
 	float stop_speed_ = 5.0f; // how fast the player decelerates when not giving input (x,z axis)
 	float max_speed_ = 15.0f; // how fast the player is allowed to run at max (x,z axis)
 	float reach_ = 5.0f; // maximum distance that items can be away and still be collected
 	float item_weight_ = 0; // how much all the items weigh together (influences movement)
+	float jump_max_cooldown_time_ = 1.0f; // how long the jump will be on cooldown after initialization
+	float max_ground_distance_ = 1.25f; // how far the ground can be away, so that the player can still jump off of it.
 
 	Physics::PhysicsObject* get_collectable_in_front_of_player() const;
 	static void input_to_movement_state(keyboard_input_state inputs, movement& movement);
 	glm::vec3 movement_state_to_direction(const movement* movement) const;
 	void decelerate_xz(float delta_time) const;
 	void enforce_speed_limit() const;
+	void accelerate(glm::vec3 movement_direction, const float delta_time);
+	void jump();
+	bool is_ground_under_player();
 };
 
