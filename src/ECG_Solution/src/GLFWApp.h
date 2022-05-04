@@ -1,6 +1,8 @@
 #pragma once
+
 #include "Utils.h"
 #include <GLFW/glfw3.h>
+#include <optick/optick.h>
 
 /// @brief GLFW window managemnt, handles most of the functions for glfw
 class glfw_app
@@ -11,12 +13,18 @@ public:
 	GLFWwindow* get_window() const { return window_; }
 	float get_delta_seconds() const { return delta_seconds_; }
 
-	/// @brief swaps back & front buffer and checks for errors
+	/// @brief swaps back & front buffer and checks for errors (for performance reasons only in debug build)
 	void swap_buffers()
 	{
+		OPTICK_PUSH("swap draw buffers")
 		glfwSwapBuffers(window_);
+		OPTICK_POP()
 		glfwPollEvents();
-		assert(glGetError() == GL_NO_ERROR);
+#ifdef _DEBUG
+		OPTICK_PUSH("check glGetError")
+			assert(glGetError() == GL_NO_ERROR);
+		OPTICK_POP()
+#endif
 
 		const double new_time_stamp = glfwGetTime();
 		delta_seconds_ = static_cast<float>(new_time_stamp - time_stamp_);

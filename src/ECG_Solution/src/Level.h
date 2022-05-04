@@ -39,7 +39,8 @@ private:
 	std::vector<unsigned int> indices_; 
 	std::vector<Material> materials_;
 	light_sources lights_;
-	std::vector<render_item> render_queue_;
+	std::vector<render_item> render_queue_shadow_;
+	std::vector<render_item> render_queue_scene_;
 	hierarchy scene_graph_;
 	hierarchy* lava_;
 	hierarchy* dynamic_node_;
@@ -125,7 +126,7 @@ private:
 	 * \param global_transform is the accumulation of parent transforms
 	 * \param high_quality only uses lowest LOD if false, uses normal LOD decision heuristic if true
 	 */
-	void build_render_queue(const hierarchy* node, glm::mat4 global_transform, bool high_quality);
+	void build_render_queue(const hierarchy* node, glm::mat4 global_transform);
 
 
 	/**

@@ -222,12 +222,16 @@ int main(int argc, char** argv)
 
 		// actual draw call
 		renderer.draw(&level);
+		OPTICK_PUSH("debug physics")
 		if (state_->debug_draw_physics)
 			physics.debugDraw();
 
 		// swap buffers
+		OPTICK_POP()
+		OPTICK_PUSH("buffer swap")
 		glfw_app.swap_buffers();
 		renderer.swap_luminance();
+		OPTICK_POP()
 		OPTICK_POP()
 		OPTICK_POP()
 	}

@@ -239,7 +239,7 @@ bounding_box level::compute_bounds_of_mesh(const sub_mesh& mesh) const
 
 void level::transform_bounding_boxes(hierarchy* node, glm::mat4 global_transform)
 {
-	boolean is_leaf = !node->model_indices.empty();
+	boolean is_leaf = !(node->model_index == -1);
 	glm::mat4 M = global_transform * node->get_node_matrix();
 
 	if (is_leaf) // transform model bounds to world coordinates
@@ -300,7 +300,8 @@ void level::load_materials(const aiScene* scene)
 		materials_.push_back(mat);
 		render_item item;
 		item.material = mm->GetName().C_Str();
-		render_queue_.push_back(item);
+		render_queue_shadow_.push_back(item);
+		render_queue_scene_.push_back(item);
 	}
 }
 
@@ -312,10 +313,10 @@ void level::traverse_tree(const aiNode* n, hierarchy* parent, hierarchy* node)
 	node->parent = parent;
 
 	// add a all mesh indices to this node (assumes only 1 mesh per node) and calculate bounds in model space
-	for (unsigned int i = 0; i < n->mNumMeshes; i++)
+	if (n->mNumMeshes > 0)
 	{
-		node->model_indices.push_back(n->mMeshes[i]);
-		node->model_bounds = compute_bounds_of_mesh(meshes_[n->mMeshes[i]]);
+		node->model_index = n->mMeshes[0];
+		node->model_bounds = compute_bounds_of_mesh(meshes_[n->mMeshes[0]]);
 	}
 
 	// set translation, rotation and scale of this node
@@ -480,10 +481,10 @@ std::vector<physics_mesh> level::get_dynamic()
 void level::collect_rigid_physic_meshes(hierarchy* node, glm::mat4 global_transform)
 {
 	glm::mat4 node_matrix = global_transform * node->get_node_matrix();
-
-	for (uint32_t i = 0; i < node->model_indices.size(); i++)
+	
+	if (node->model_index != -1)
 	{
-		uint32_t model_index = node->model_indices[i];
+		uint32_t model_index = node->model_index;
 		uint32_t vtx_offset = meshes_[model_index].vertex_offset;
 		uint32_t vtx_count = meshes_[model_index].vertex_count;
 		physics_mesh phy_mesh;
@@ -517,9 +518,9 @@ void level::collect_dynamic_physic_meshes(hierarchy* node, glm::mat4 global_tran
 {
 	glm::mat4 node_matrix = global_transform * node->get_node_matrix();
 
-	for (uint32_t i = 0; i < node->model_indices.size(); i++)
+	if (node->model_index != -1)
 	{
-		uint32_t model_index = node->model_indices[i];
+		uint32_t model_index = node->model_index;
 		uint32_t vtx_offset = meshes_[model_index].vertex_offset;
 		uint32_t vtx_count = meshes_[model_index].vertex_count;
 		physics_mesh phy_mesh;
@@ -561,22 +562,16 @@ void level::draw_scene() {
 		frustum_culler::get_frustum_corners(frustum_culler::cull_view_proj, frustum_culler::frustum_corners);
 		OPTICK_POP()
 	}
-
-	// flatten tree
-	OPTICK_PUSH("build render queue")
-	reset_queue();
-	build_render_queue(&scene_graph_, glm::mat4(1), true);
-	OPTICK_POP()
 	OPTICK_POP()
 
 
 	// draw mesh
 	OPTICK_PUSH("draw scene")
-	for (size_t i = 0; i < render_queue_.size(); i++)
+	for (size_t i = 0; i < render_queue_scene_.size(); i++)
 	{
 		OPTICK_PUSH("change material")
-		ssbo_.update(static_cast<GLsizeiptr>(sizeof(glm::mat4) * render_queue_[i].model_matrices.size()), render_queue_[i].model_matrices.data());
-		ibo_.update(static_cast<GLsizeiptr>(render_queue_[i].commands.size() * sizeof(draw_elements_indirect_command)), render_queue_[i].commands.data());
+		ssbo_.update(static_cast<GLsizeiptr>(sizeof(glm::mat4) * render_queue_scene_[i].model_matrices.size()), render_queue_scene_[i].model_matrices.data());
+		ibo_.update(static_cast<GLsizeiptr>(render_queue_scene_[i].commands.size() * sizeof(draw_elements_indirect_command)), render_queue_scene_[i].commands.data());
 
 		const GLuint textures[] = {materials_[i].get_albedo(), materials_[i].get_normal_map(), materials_[i].get_metallic(),
 			materials_[i].get_roughness(), materials_[i].get_ao_map(), materials_[i].get_emissive() };
@@ -595,7 +590,7 @@ void level::draw_scene() {
 		/// indirect - offset into commands buffer, which is zero
 		/// drawcount - is the number of draw calls that should be generated
 		/// stride - because the commands are packed tightly aka just as descriped in the GL specs
-		glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, static_cast<GLvoid*>(nullptr), static_cast<GLsizei>(render_queue_[i].commands.size()), 0);
+		glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, static_cast<GLvoid*>(nullptr), static_cast<GLsizei>(render_queue_scene_[i].commands.size()), 0);
 
 		if (materials_[i].name == "Lava_1") // may the GL gods have mercy with this monstrosity TODO
 		{
@@ -655,7 +650,6 @@ void level::draw_scene_shadow_map()
 	// recalculate bounds & set lod uniforms
 	if (perframe_data_->delta_time.y > 60.0f) lava_->TRS.translate.y += perframe_data_->delta_time.x * 1.0f; //TODO
 	OPTICK_PUSH("transform bounding boxes")
-	transform_bounding_boxes(dynamic_node_, glm::mat4(1));
 	transform_bounding_boxes(lava_, glm::mat4(1));
 	OPTICK_POP()
 	OPTICK_PUSH("update frustum culler uniform")
@@ -668,7 +662,7 @@ void level::draw_scene_shadow_map()
 	// flatten tree
 	OPTICK_PUSH("build render queue")
 	reset_queue();
-	build_render_queue(&scene_graph_, glm::mat4(1), true);
+	build_render_queue(&scene_graph_, glm::mat4(1));
 	OPTICK_POP()
 	OPTICK_POP()
 
@@ -677,7 +671,7 @@ void level::draw_scene_shadow_map()
 	glBindVertexArray(vao_);
 
 	glDisable(GL_CULL_FACE);
-	for (auto& item : render_queue_)
+	for (auto& item : render_queue_shadow_)
 	{
 		ssbo_.update(static_cast<GLsizeiptr>(sizeof(glm::mat4) * item.model_matrices.size()), item.model_matrices.data());
 		ibo_.update(static_cast<GLsizeiptr>(item.commands.size() * sizeof(draw_elements_indirect_command)), item.commands.data());
@@ -688,38 +682,27 @@ void level::draw_scene_shadow_map()
 	OPTICK_POP()
 }
 
-void level::build_render_queue(const hierarchy* node, const glm::mat4 global_transform, bool high_quality) {
+void level::build_render_queue(const hierarchy* node, const glm::mat4 global_transform) {
 	if (!node->game_properties.is_active)
 		return;
 	
-	if (state_->cull)
-	{
-		if (!frustum_culler::is_box_in_frustum(frustum_culler::frustum_planes, frustum_culler::frustum_corners, node->node_bounds))
-			return;
-	}
 
 	const glm::mat4 node_matrix = global_transform * node->get_node_matrix();
-	for (size_t i = 0; i < node->model_indices.size(); i++)
+	if (node->model_index != -1)
 	{
 		OPTICK_PUSH("add model to queue")
-		const uint32_t mesh_index = node->model_indices[i];
+		const uint32_t mesh_index = node->model_index;
 		const uint32_t material_index = meshes_[mesh_index].material_index;
 
-		uint32_t LOD;
-		if (high_quality)
-		{
-			LOD = lod_system::decide_lod(meshes_[mesh_index].index_count.size(), node->node_bounds);
-		}
-		else
-		{
-			LOD = meshes_[mesh_index].index_count.size() - 1;
-		}
+		uint32_t LOD = 0;
+		
 
+		// add to shadow queue ------------------------------------------
 		const uint32_t count = meshes_[mesh_index].index_count[LOD];	
 		const uint32_t instanceCount = 1;	
 		const uint32_t firstIndex = meshes_[mesh_index].index_offset[LOD]; 
 		const uint32_t baseVertex = meshes_[mesh_index].vertex_offset; 
-		const uint32_t baseInstance = render_queue_[material_index].model_matrices.size(); 
+		const uint32_t baseInstance = render_queue_shadow_[material_index].model_matrices.size();
 
 		draw_elements_indirect_command cmd= draw_elements_indirect_command{
 			count,
@@ -728,26 +711,53 @@ void level::build_render_queue(const hierarchy* node, const glm::mat4 global_tra
 			baseVertex,
 			baseInstance };
 
-		render_queue_[material_index].commands.push_back(cmd);
-		render_queue_[material_index].model_matrices.push_back(node_matrix);
-		frustum_culler::models_visible++;
+		render_queue_shadow_[material_index].commands.push_back(cmd);
+		render_queue_shadow_[material_index].model_matrices.push_back(node_matrix);
+
+		// add to scene queue ---------------------------------------------
+		if (state_->cull)
+		{
+			if (!frustum_culler::is_box_in_frustum(frustum_culler::frustum_planes, frustum_culler::frustum_corners, node->node_bounds))
+				cmd.instanceCount_ = 0;
+		}
+		
+		LOD = lod_system::decide_lod(meshes_[mesh_index].index_count.size(), node->node_bounds);
+		cmd.count_ = meshes_[mesh_index].index_count[LOD];
+		cmd.firstIndex_ = meshes_[mesh_index].index_offset[LOD];
+
+		render_queue_scene_[material_index].commands.push_back(cmd);
+		render_queue_scene_[material_index].model_matrices.push_back(node_matrix);
+
+
+		frustum_culler::models_visible += cmd.instanceCount_;
 		OPTICK_POP()
 	}
 	
 
 	for (const auto& hierarchy : node->children)
 	{
-		build_render_queue(&hierarchy, node_matrix, high_quality);
+		build_render_queue(&hierarchy, node_matrix);
 	}
 }
 
 void level::reset_queue()
 {
-	for (auto& item : render_queue_)
+
+	for (auto& item : render_queue_shadow_)
 	{
 		item.commands.clear();
+		item.commands.reserve(frustum_culler::models_visible);
 		item.model_matrices.clear();
+		item.model_matrices.reserve(frustum_culler::models_visible);
 	}
+	for (auto& item : render_queue_scene_)
+	{
+		item.commands.clear();
+		item.commands.reserve(frustum_culler::models_visible);
+		item.model_matrices.clear();
+		item.model_matrices.reserve(frustum_culler::models_visible);
+	}
+	
 
 	frustum_culler::models_visible = 0;
 }

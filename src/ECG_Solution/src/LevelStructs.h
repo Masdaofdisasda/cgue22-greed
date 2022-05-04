@@ -45,6 +45,9 @@ struct transformation
 	glm::quat rotation;
 	glm::vec3 scale;
 
+	glm::mat4 local;
+	glm::mat4 global;
+
 	glm::mat4 get_matrix() const { return glm::translate(translate) * glm::toMat4(rotation) * glm::scale(scale); }
 };
 
@@ -69,7 +72,7 @@ struct hierarchy
 	std::string name;
 	hierarchy* parent = nullptr;
 	std::vector <hierarchy> children;
-	std::vector<uint32_t> model_indices;		// assumed to only hold one model
+	int32_t model_index = -1;		// assumed to only hold one model
 
 	transformation TRS;
 
@@ -85,7 +88,14 @@ struct hierarchy
 	transformation get_node_trs() const { return TRS; }
 
 	/// @brief set TRS "model matrix" of the node
-	void set_node_trs(const glm::vec3 T, const glm::quat R, const glm::vec3 S) { TRS.translate = T; TRS.rotation = R; TRS.scale = S; }
+	void set_node_trs(const glm::vec3 T, const glm::quat R, const glm::vec3 S)
+	{
+		TRS.translate = T; TRS.rotation = R; TRS.scale = S;
+		auto M = get_node_matrix();
+		auto min = M * glm::vec4(model_bounds.min_, 1.0f);
+		auto max = M * glm::vec4(model_bounds.max_, 1.0f);
+		node_bounds ={ min, max};
+	}
 };
 
 /// @brief contains a list of draw commands and matching model matrices for models of the same material
