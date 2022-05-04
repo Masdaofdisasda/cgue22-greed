@@ -22,12 +22,12 @@ void player_controller::move(const keyboard_input_state inputs, const float delt
 	input_to_movement_state(inputs, movement);
 
 	// running
+	decelerate_xz(delta_time);
+
 	const glm::vec3 movement_direction = movement_state_to_direction(&movement);
 	const bool shouldAccelerate = glm::length(movement_direction) > 0;
 	if (shouldAccelerate)
-		accelerate(movement_direction, delta_time);
-	else
-		decelerate_xz(delta_time);
+		accelerate(movement_direction, delta_time);		
 	enforce_speed_limit();
 
 	// jumping

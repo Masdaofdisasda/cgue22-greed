@@ -54,12 +54,12 @@ void Physics::simulateOneStep(float secondsBetweenFrames) {
 void Physics::excludeAndIncludePhysicsObject(Physics::PhysicsObject &obj) {
 	if (obj.modelGraphics == nullptr)
 		return;
-	//if(physicsObjects[i].mode == Physics::ObjectMode::Dynamic)
 
 	if (!obj.modelGraphics->game_properties.is_active) {
 		obj.rigidbody->setActivationState(ISLAND_SLEEPING);
 		obj.rigidbody->setCollisionFlags(btCollisionObject::CF_NO_CONTACT_RESPONSE);
 	}
+	//TODO: add settings for reactivating if ever needed
 }
 
 void Physics::debugDraw() {
@@ -93,12 +93,11 @@ void Physics::updateModelTransform(PhysicsObject* physicsObject) {
 
 	btRigidBody rb = *physicsObject->rigidbody;
 	glm::vec3 pos = btToGlm(rb.getCenterOfMassTransform().getOrigin());
-	//float deg = (float)(rb.getOrientation().getAngle() * 180 / Physics::PI);
-	float deg = static_cast<float>(rb.getOrientation().getAngle());
+	float angle = static_cast<float>(rb.getOrientation().getAngle());
 	glm::vec3 axis = btToGlm(rb.getOrientation().getAxis());
 	glm::vec3 scale = glm::vec3(1.0);
 
-	glm::quat rot = glm::angleAxis(deg, axis);
+	glm::quat rot = glm::angleAxis(angle, axis);
 
 	physicsObject->modelGraphics->set_node_trs(pos, rot, scale);
 }
