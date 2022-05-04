@@ -14,6 +14,8 @@ player_controller::player_controller(Physics& physics, camera_positioner_player&
 
 void player_controller::move(const keyboard_input_state inputs, const float delta_time)
 {
+	player_object_->rigidbody->activate(true); // hinder rigidbody from sleeping
+
 	movement movement;
 	input_to_movement_state(inputs, movement);
 
