@@ -13,6 +13,8 @@ bullet_debug_drawer::bullet_debug_drawer(){
 }
 
 void bullet_debug_drawer::draw() {
+
+#ifdef _DEBUG
 	if (vertices_.empty())
 		return;
 
@@ -33,7 +35,8 @@ void bullet_debug_drawer::draw() {
 
 	// cleanup
 	
-	vertices_.clear();
+	vertices_.clear(); 
+#endif
 }
 
 void bullet_debug_drawer::drawLine(const btVector3& from, const btVector3& to, const btVector3& color) {

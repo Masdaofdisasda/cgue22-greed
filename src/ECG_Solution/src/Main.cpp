@@ -96,7 +96,7 @@ int main(int argc, char** argv)
 	loading_screen.draw_progress();
 	printf("Loading level...\n");
 	OPTICK_PUSH("load level")
-	level level("../../assets/submission1.fbx", state_, perframe_data_);
+	level level("../../assets/demo.fbx", state_, perframe_data_);
 	OPTICK_POP()
 
 	loading_screen.draw_progress();

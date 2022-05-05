@@ -3,6 +3,8 @@
 #include <stb/stb_image.h>
 #include <thread>
 
+GLuint Texture::defaults_[6] = {0,0,0,0,0,0};
+
 /// @brief create a new texture, used in Framebuffer.h
 /// @param type GL Texture type, eg GL_TEXTURE_2D
 /// @param width of the texture (same as framebuffer)
@@ -57,6 +59,7 @@ GLuint Texture::load_texture(const char* tex_path)
 /// @param handles target containing the texture handles after call
 void Texture::load_texture_mt(const char* tex_path, GLuint handles[])
 {
+	
 	stbiData img_data[6]; std::thread workers[6];
 
 	std::string albedo = append(tex_path, "/albedo.jpg");
@@ -97,8 +100,14 @@ void Texture::load_texture_mt(const char* tex_path, GLuint handles[])
 		}
 		else
 		{
+#ifdef _DEBUG
 			std::cout << "could not load texture nr " <<i << " from " << tex_path << "\n"<<"using fallback...\n";
-			handles[i] = 0;
+#endif
+			if (defaults_[0] == 0)
+			{
+				load_texture_mt("../../assets/textures/default", defaults_);
+			}
+			handles[i] = defaults_[i];
 		}
 	}
 	glBindTexture(GL_TEXTURE_2D, 0);

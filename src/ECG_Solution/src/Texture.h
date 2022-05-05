@@ -16,6 +16,7 @@ class Texture
 private:
 	GLuint tex_id_ = 0;
 	GLenum type_ = 0;
+	static GLuint defaults_[6];
 
 	void release()
 	{

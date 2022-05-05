@@ -170,11 +170,13 @@ void level::generate_lods(std::vector<unsigned int>& indices,const std::vector<f
 
 	uint8_t lod = 1;
 
+#ifdef _DEBUG
 	printf("LOD0: %i indices   \n", static_cast<int>(indices.size()));
+#endif
 
 	LODs.push_back(indices);
 
-	constexpr auto target = 256; // for testing, final should be 1024
+	constexpr auto target = 1024; // for testing, final should be 1024
 	while (target_indices_count > target && lod < 8)
 	{
 		target_indices_count = indices.size() / 2;
@@ -211,7 +213,9 @@ void level::generate_lods(std::vector<unsigned int>& indices,const std::vector<f
 
 		meshopt_optimizeVertexCache(indices.data(), indices.data(), indices.size(), vertices_count_in);
 
+#ifdef _DEBUG
 		printf("LOD%i: %i indices %s   \n", static_cast<int>(lod), static_cast<int>(num_opt_indices), sloppy ? "[sloppy]" : "");
+#endif
 
 		lod++;
 
@@ -296,12 +300,23 @@ void level::load_materials(const aiScene* scene)
 
 		//	all other materials can be found with: aiTextureType_NORMAL_CAMERA/_METALNESS/_DIFFUSE_ROUGHNESS/_AMBIENT_OCCLUSION
 
-		auto mat = Material(path.C_Str(), mm->GetName().C_Str());
-		materials_.push_back(mat);
-		render_item item;
-		item.material = mm->GetName().C_Str();
-		render_queue_shadow_.push_back(item);
-		render_queue_scene_.push_back(item);
+		if(path.length != 0)
+		{
+			auto mat = Material(path.C_Str(), mm->GetName().C_Str());
+			materials_.push_back(mat);
+			render_item item;
+			item.material = mm->GetName().C_Str();
+			render_queue_shadow_.push_back(item);
+			render_queue_scene_.push_back(item);
+		} else //default
+		{
+			auto mat = Material("textures/default/albedo.jpg", "default");
+			materials_.push_back(mat);
+			render_item item;
+			item.material = mm->GetName().C_Str();
+			render_queue_shadow_.push_back(item);
+			render_queue_scene_.push_back(item);
+		}
 	}
 }
 
@@ -569,6 +584,7 @@ void level::draw_scene() {
 	OPTICK_PUSH("draw scene")
 	for (size_t i = 0; i < render_queue_scene_.size(); i++)
 	{
+		if(materials_[i].name == "default") continue;
 		OPTICK_PUSH("change material")
 		ssbo_.update(static_cast<GLsizeiptr>(sizeof(glm::mat4) * render_queue_scene_[i].model_matrices.size()), render_queue_scene_[i].model_matrices.data());
 		ibo_.update(static_cast<GLsizeiptr>(render_queue_scene_[i].commands.size() * sizeof(draw_elements_indirect_command)), render_queue_scene_[i].commands.data());
@@ -601,6 +617,7 @@ void level::draw_scene() {
 	}
 	OPTICK_POP()
 
+#ifdef _DEBUG
 	if (state_->cull_debug) // bounding box & frustum culling debug view
 	{
 		OPTICK_PUSH("draw debug AABB")
@@ -638,14 +655,12 @@ void level::draw_scene() {
 		}
 		OPTICK_POP()
 	}
-
+#endif
 }
 
 void level::draw_scene_shadow_map()
 {
 	OPTICK_PUSH("update scene")
-	const boolean cull = state_->cull; // cull nothing
-	state_->cull = false;
 
 	// recalculate bounds & set lod uniforms
 	if (perframe_data_->delta_time.y > 60.0f) lava_->TRS.translate.y += perframe_data_->delta_time.x * 1.0f; //TODO
@@ -678,7 +693,6 @@ void level::draw_scene_shadow_map()
 		glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, static_cast<GLvoid*>(nullptr), static_cast<GLsizei>(item.commands.size()), 0);
 	}
 	glEnable(GL_CULL_FACE);
-	state_->cull = cull;
 	OPTICK_POP()
 }
 
@@ -699,7 +713,7 @@ void level::build_render_queue(const hierarchy* node, const glm::mat4 global_tra
 
 		// add to shadow queue ------------------------------------------
 		const uint32_t count = meshes_[mesh_index].index_count[LOD];	
-		const uint32_t instanceCount = 1;	
+		const uint32_t instanceCount = 1;
 		const uint32_t firstIndex = meshes_[mesh_index].index_offset[LOD]; 
 		const uint32_t baseVertex = meshes_[mesh_index].vertex_offset; 
 		const uint32_t baseInstance = render_queue_shadow_[material_index].model_matrices.size();
