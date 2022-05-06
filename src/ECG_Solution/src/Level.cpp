@@ -592,10 +592,6 @@ void level::draw_scene() {
 		matrix_ssbo_.update(static_cast<GLsizeiptr>(sizeof(glm::mat4) * render_queue_scene_[i].model_matrices.size()), render_queue_scene_[i].model_matrices.data());
 		ibo_.update(static_cast<GLsizeiptr>(render_queue_scene_[i].commands.size() * sizeof(draw_elements_indirect_command)), render_queue_scene_[i].commands.data());
 
-		const GLuint textures[] = {materials_[i].albedo_, materials_[i].normal_, materials_[i].metal_,
-			materials_[i].rough_, materials_[i].ao_, materials_[i].emissive_ };
-		glBindTextures(0, 6, textures);
-
 		if (render_queue_scene_[i].material == "Lava_1") // may the GL gods have mercy with this monstrosity TODO
 		{
 			GLint prog = 0;
@@ -710,7 +706,8 @@ void level::build_render_queue(const hierarchy* node, const glm::mat4 global_tra
 		const uint32_t mesh_index = node->model_index;
 		const uint32_t material_index = meshes_[mesh_index].material_index;
 		const uint32_t model_index = render_queue_shadow_[material_index].model_matrices.size();
-
+		if (materials_[material_index].type == invisible)
+			return;
 		uint32_t LOD = 0;
 		
 
@@ -732,7 +729,7 @@ void level::build_render_queue(const hierarchy* node, const glm::mat4 global_tra
 		render_queue_shadow_[material_index].model_matrices.push_back(node_matrix);
 
 		// add to scene queue ---------------------------------------------
-		if (state_->cull)
+		if (state_->cull && cmd.instanceCount_ == 1)
 		{
 			if (!frustum_culler::is_box_in_frustum(frustum_culler::frustum_planes, frustum_culler::frustum_corners, node->node_bounds))
 				cmd.instanceCount_ = 0;

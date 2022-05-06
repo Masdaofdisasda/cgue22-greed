@@ -9,7 +9,7 @@ in vec3 fNormal;
 in vec3 fPosition;
 in vec2 fUV;
 in vec4 fShadow;
-in uint mat_id;
+in flat uint mat_id;
 
 // light sources
 struct DirectionalLight
@@ -87,11 +87,14 @@ layout (binding = 10) uniform sampler2D brdfLutTex;
 layout (binding = 12) uniform sampler2D depthTex;
 
 // Global variables
-vec3 albedo = pow(texture(albedoTex, fUV).rgb, vec3(2.2));
-float metallic = texture(metallicTex, fUV).r;
-float roughness = texture(roughnessTex, fUV).r;
-float ao = texture(aoTex,fUV).r;
-vec3 emissive  = pow(texture(emissiveTex, fUV).rgb, vec3(2.2)) * bloom.y;
+
+Material mat = materials[mat_id];
+
+vec3 albedo = texture(sampler2D(unpackUint2x32(mat.albedo_map_)), fUV).rgb;
+float metallic = texture(sampler2D(unpackUint2x32(mat.metal_map_)), fUV).r;
+float roughness = texture(sampler2D(unpackUint2x32(mat.rough_map_)), fUV).r;
+float ao = texture(sampler2D(unpackUint2x32(mat.ao_map_)),fUV).r;
+vec3 emissive  = texture(sampler2D(unpackUint2x32(mat.emissive_map_)), fUV).rgb * bloom.y;
 
 const float PI = 3.14159265359;
 
