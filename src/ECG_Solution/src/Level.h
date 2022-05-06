@@ -40,8 +40,8 @@ private:
 	std::vector<unsigned int> indices_; 
 	std::vector<material> materials_;
 	light_sources lights_;
-	std::vector<render_item> render_queue_shadow_;
-	std::vector<render_item> render_queue_scene_;
+	render_item render_queue_shadow_;
+	render_item render_queue_scene_;
 	hierarchy scene_graph_;
 	hierarchy* lava_;
 	hierarchy* dynamic_node_;

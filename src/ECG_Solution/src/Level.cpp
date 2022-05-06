@@ -305,20 +305,12 @@ void level::load_materials(const aiScene* scene)
 			material mat;
 			material::create(path.C_Str(), mm->GetName().C_Str(), mat);
 			materials_.push_back(mat);
-			render_item item;
-			item.material = mm->GetName().C_Str();
-			render_queue_shadow_.push_back(item);
-			render_queue_scene_.push_back(item);
 		} else //default
 		{
 			material mat;
 			mat.type = invisible;
 			//create("textures/default/albedo.jpg", "default", mat);
 			materials_.push_back(mat);
-			render_item item;
-			item.material = mm->GetName().C_Str();
-			render_queue_shadow_.push_back(item);
-			render_queue_scene_.push_back(item);
 		}
 	}
 }
@@ -586,33 +578,16 @@ void level::draw_scene() {
 
 	// draw mesh
 	OPTICK_PUSH("draw scene")
-	for (size_t i = 0; i < render_queue_scene_.size(); i++)
-	{
-		if(materials_[i].type == invisible) continue;
-		matrix_ssbo_.update(static_cast<GLsizeiptr>(sizeof(glm::mat4) * render_queue_scene_[i].model_matrices.size()), render_queue_scene_[i].model_matrices.data());
-		ibo_.update(static_cast<GLsizeiptr>(render_queue_scene_[i].commands.size() * sizeof(draw_elements_indirect_command)), render_queue_scene_[i].commands.data());
-
-		if (render_queue_scene_[i].material == "Lava_1") // may the GL gods have mercy with this monstrosity TODO
-		{
-			GLint prog = 0;
-			glGetIntegerv(GL_CURRENT_PROGRAM, &prog);
-			glUniform1i(glGetUniformLocation(prog, "vtx_animation"), 1);
-		}
-		
-		/// mode - draw triangles from every 3 indices
-		/// type - data type of the indices vector
-		/// indirect - offset into commands buffer, which is zero
-		/// drawcount - is the number of draw calls that should be generated
-		/// stride - because the commands are packed tightly aka just as descriped in the GL specs
-		glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, static_cast<GLvoid*>(nullptr), static_cast<GLsizei>(render_queue_scene_[i].commands.size()), 0);
-
-		if (render_queue_scene_[i].material == "Lava_1") // may the GL gods have mercy with this monstrosity TODO
-		{
-			GLint prog = 0;
-			glGetIntegerv(GL_CURRENT_PROGRAM, &prog);
-			glUniform1i(glGetUniformLocation(prog, "vtx_animation"), 0);
-		}
-	}
+	matrix_ssbo_.update(static_cast<GLsizeiptr>(sizeof(glm::mat4) * render_queue_scene_.model_matrices.size()), render_queue_scene_.model_matrices.data());
+	ibo_.update(static_cast<GLsizeiptr>(render_queue_scene_.commands.size() * sizeof(draw_elements_indirect_command)), render_queue_scene_.commands.data());
+	
+	/// mode - draw triangles from every 3 indices
+	/// type - data type of the indices vector
+	/// indirect - offset into commands buffer, which is zero
+	/// drawcount - is the number of draw calls that should be generated
+	/// stride - because the commands are packed tightly aka just as descriped in the GL specs
+	glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, static_cast<GLvoid*>(nullptr), static_cast<GLsizei>(render_queue_scene_.commands.size()), 0);
+	
 	OPTICK_POP()
 
 #ifdef _DEBUG
@@ -684,12 +659,10 @@ void level::draw_scene_shadow_map()
 	glBindVertexArray(vao_);
 
 	glDisable(GL_CULL_FACE);
-	for (auto& item : render_queue_shadow_)
-	{
-		matrix_ssbo_.update(static_cast<GLsizeiptr>(sizeof(glm::mat4) * item.model_matrices.size()), item.model_matrices.data());
-		ibo_.update(static_cast<GLsizeiptr>(item.commands.size() * sizeof(draw_elements_indirect_command)), item.commands.data());
-		glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, static_cast<GLvoid*>(nullptr), static_cast<GLsizei>(item.commands.size()), 0);
-	}
+	matrix_ssbo_.update(static_cast<GLsizeiptr>(sizeof(glm::mat4) * render_queue_shadow_.model_matrices.size()), render_queue_shadow_.model_matrices.data());
+	ibo_.update(static_cast<GLsizeiptr>(render_queue_shadow_.commands.size() * sizeof(draw_elements_indirect_command)), render_queue_shadow_.commands.data());
+	glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, static_cast<GLvoid*>(nullptr), static_cast<GLsizei>(render_queue_shadow_.commands.size()), 0);
+	
 	glEnable(GL_CULL_FACE);
 	OPTICK_POP()
 }
@@ -705,7 +678,7 @@ void level::build_render_queue(const hierarchy* node, const glm::mat4 global_tra
 		OPTICK_PUSH("add model to queue")
 		const uint32_t mesh_index = node->model_index;
 		const uint32_t material_index = meshes_[mesh_index].material_index;
-		const uint32_t model_index = render_queue_shadow_[material_index].model_matrices.size();
+		const uint32_t model_index = render_queue_shadow_.model_matrices.size();
 		if (materials_[material_index].type == invisible)
 			return;
 		uint32_t LOD = 0;
@@ -725,8 +698,8 @@ void level::build_render_queue(const hierarchy* node, const glm::mat4 global_tra
 			baseVertex,
 			baseInstance };
 
-		render_queue_shadow_[material_index].commands.push_back(cmd);
-		render_queue_shadow_[material_index].model_matrices.push_back(node_matrix);
+		render_queue_shadow_.commands.push_back(cmd);
+		render_queue_shadow_.model_matrices.push_back(node_matrix);
 
 		// add to scene queue ---------------------------------------------
 		if (state_->cull && cmd.instanceCount_ == 1)
@@ -739,8 +712,8 @@ void level::build_render_queue(const hierarchy* node, const glm::mat4 global_tra
 		cmd.count_ = meshes_[mesh_index].index_count[LOD];
 		cmd.firstIndex_ = meshes_[mesh_index].index_offset[LOD];
 
-		render_queue_scene_[material_index].commands.push_back(cmd);
-		render_queue_scene_[material_index].model_matrices.push_back(node_matrix);
+		render_queue_scene_.commands.push_back(cmd);
+		render_queue_scene_.model_matrices.push_back(node_matrix);
 
 
 		frustum_culler::models_visible += cmd.instanceCount_;
@@ -756,22 +729,15 @@ void level::build_render_queue(const hierarchy* node, const glm::mat4 global_tra
 
 void level::reset_queue()
 {
+	render_queue_shadow_.commands.clear();
+	render_queue_shadow_.commands.reserve(frustum_culler::models_visible);
+	render_queue_shadow_.model_matrices.clear();
+	render_queue_shadow_.model_matrices.reserve(frustum_culler::models_visible);
 
-	for (auto& item : render_queue_shadow_)
-	{
-		item.commands.clear();
-		item.commands.reserve(frustum_culler::models_visible);
-		item.model_matrices.clear();
-		item.model_matrices.reserve(frustum_culler::models_visible);
-	}
-	for (auto& item : render_queue_scene_)
-	{
-		item.commands.clear();
-		item.commands.reserve(frustum_culler::models_visible);
-		item.model_matrices.clear();
-		item.model_matrices.reserve(frustum_culler::models_visible);
-	}
-	
+	render_queue_scene_.commands.clear();
+	render_queue_scene_.commands.reserve(frustum_culler::models_visible);
+	render_queue_scene_.model_matrices.clear();
+	render_queue_scene_.model_matrices.reserve(frustum_culler::models_visible);
 
 	frustum_culler::models_visible = 0;
 }
