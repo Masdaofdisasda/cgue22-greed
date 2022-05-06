@@ -6,6 +6,17 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
+#include <optick/optick.h>
+
+/// @brief describes the bounding box of a mesh, can be used for frustum culling or physics simulation
+struct bounding_box
+{
+	glm::vec3 min_;
+	glm::vec3 max_;
+
+	bounding_box() = default;
+	bounding_box(const glm::vec3& min, const glm::vec3& max) : min_(glm::min(min, max)), max_(glm::max(min, max)) {}
+};
 
 /// @brief describes the position of a mesh in an index and vertex array 
 struct sub_mesh
@@ -28,15 +39,6 @@ struct draw_elements_indirect_command
 	uint32_t baseInstance_;		// accessible in GLSL as "gl_BaseInstance", used for model matrix
 };
 
-/// @brief describes the bounding box of a mesh, can be used for frustum culling or physics simulation
-struct bounding_box
-{
-	glm::vec3 min_;
-	glm::vec3 max_;
-
-	bounding_box() = default;
-	bounding_box(const glm::vec3& min, const glm::vec3& max) : min_(glm::min(min, max)), max_(glm::max(min, max)) {}
-};
 
 /// @brief memory efficient TRS data capsule
 struct transformation
@@ -48,7 +50,7 @@ struct transformation
 	glm::mat4 local;
 	glm::mat4 global;
 
-	glm::mat4 get_matrix() const { return glm::translate(translate) * glm::toMat4(rotation) * glm::scale(scale); }
+	glm::mat4 get_matrix() const { return glm::translate(translate) * glm::toMat4(rotation); }
 };
 
 /// @brief a collection of settings for collectable items in the world
@@ -72,11 +74,11 @@ struct hierarchy
 	std::string name;
 	hierarchy* parent = nullptr;
 	std::vector <hierarchy> children;
-	int32_t model_index = -1;		// assumed to only hold one model
+	int32_t mesh_index = -1;		// assumed to only hold one model
 
 	transformation TRS;
 
-	bounding_box node_bounds;					// pretransformed bounds
+	bounding_box world_bounds;					// pretransformed bounds
 	bounding_box model_bounds;					// bounds in model space
 
 	game_properties game_properties;
@@ -90,16 +92,18 @@ struct hierarchy
 	/// @brief set TRS "model matrix" of the node
 	void set_node_trs(const glm::vec3 T, const glm::quat R, const glm::vec3 S)
 	{
+		OPTICK_PUSH("set trs")
 		TRS.translate = T; TRS.rotation = R; TRS.scale = S;
 		auto M = get_node_matrix();
 		auto min = M * glm::vec4(model_bounds.min_, 1.0f);
 		auto max = M * glm::vec4(model_bounds.max_, 1.0f);
-		node_bounds ={ min, max};
+		world_bounds ={ min, max};
+		OPTICK_POP()
 	}
 };
 
 /// @brief contains a list of draw commands and matching model matrices for models of the same material
-struct render_item
+struct render_queue
 {
 	std::string material;
 	std::vector<draw_elements_indirect_command> commands;

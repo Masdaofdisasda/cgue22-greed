@@ -243,7 +243,7 @@ bounding_box level::compute_bounds_of_mesh(const sub_mesh& mesh) const
 
 void level::transform_bounding_boxes(hierarchy* node, glm::mat4 global_transform)
 {
-	boolean is_leaf = !(node->model_index == -1);
+	boolean is_leaf = !(node->mesh_index == -1);
 	glm::mat4 M = global_transform * node->get_node_matrix();
 
 	if (is_leaf) // transform model bounds to world coordinates
@@ -251,7 +251,7 @@ void level::transform_bounding_boxes(hierarchy* node, glm::mat4 global_transform
 		bounding_box bounds = node->model_bounds;
 		bounds.min_ = M * glm::vec4(bounds.min_, 1.0f);
 		bounds.max_ = M * glm::vec4(bounds.max_, 1.0f);
-		node->node_bounds = bounding_box(bounds.min_, bounds.max_);
+		node->world_bounds = bounding_box(bounds.min_, bounds.max_);
 	}
 
 	// transform all child nodes bounds
@@ -267,8 +267,8 @@ void level::transform_bounding_boxes(hierarchy* node, glm::mat4 global_transform
 
 		for (auto& i : node->children)
 		{
-			glm::vec3 cmin = i.node_bounds.min_;
-			glm::vec3 cmax = i.node_bounds.max_;
+			glm::vec3 cmin = i.world_bounds.min_;
+			glm::vec3 cmax = i.world_bounds.max_;
 
 			vmin = glm::min(vmin, cmin);
 			vmax = glm::max(vmax, cmax);
@@ -277,7 +277,7 @@ void level::transform_bounding_boxes(hierarchy* node, glm::mat4 global_transform
 		auto bounds = bounding_box(vmin, vmax);
 		bounds.min_ = M * glm::vec4(bounds.min_, 1.0f);
 		bounds.max_ = M * glm::vec4(bounds.max_, 1.0f);
-		node->node_bounds = bounding_box(bounds.min_, bounds.max_);
+		node->world_bounds = bounding_box(bounds.min_, bounds.max_);
 	}
 }
 
@@ -325,7 +325,7 @@ void level::traverse_tree(const aiNode* n, hierarchy* parent, hierarchy* node)
 	// add a all mesh indices to this node (assumes only 1 mesh per node) and calculate bounds in model space
 	if (n->mNumMeshes > 0)
 	{
-		node->model_index = n->mMeshes[0];
+		node->mesh_index = n->mMeshes[0];
 		node->model_bounds = compute_bounds_of_mesh(meshes_[n->mMeshes[0]]);
 	}
 
@@ -493,9 +493,9 @@ void level::collect_rigid_physic_meshes(hierarchy* node, glm::mat4 global_transf
 {
 	glm::mat4 node_matrix = global_transform * node->get_node_matrix();
 	
-	if (node->model_index != -1)
+	if (node->mesh_index != -1)
 	{
-		uint32_t model_index = node->model_index;
+		uint32_t model_index = node->mesh_index;
 		uint32_t vtx_offset = meshes_[model_index].vertex_offset;
 		uint32_t vtx_count = meshes_[model_index].vertex_count;
 		physics_mesh phy_mesh;
@@ -529,9 +529,9 @@ void level::collect_dynamic_physic_meshes(hierarchy* node, glm::mat4 global_tran
 {
 	glm::mat4 node_matrix = global_transform * node->get_node_matrix();
 
-	if (node->model_index != -1)
+	if (node->mesh_index != -1)
 	{
-		uint32_t model_index = node->model_index;
+		uint32_t model_index = node->mesh_index;
 		uint32_t vtx_offset = meshes_[model_index].vertex_offset;
 		uint32_t vtx_count = meshes_[model_index].vertex_count;
 		physics_mesh phy_mesh;
@@ -578,15 +578,15 @@ void level::draw_scene() {
 
 	// draw mesh
 	OPTICK_PUSH("draw scene")
-	matrix_ssbo_.update(static_cast<GLsizeiptr>(sizeof(glm::mat4) * render_queue_scene_.model_matrices.size()), render_queue_scene_.model_matrices.data());
-	ibo_.update(static_cast<GLsizeiptr>(render_queue_scene_.commands.size() * sizeof(draw_elements_indirect_command)), render_queue_scene_.commands.data());
+	matrix_ssbo_.update(static_cast<GLsizeiptr>(sizeof(glm::mat4) * queue_scene_.model_matrices.size()), queue_scene_.model_matrices.data());
+	ibo_.update(static_cast<GLsizeiptr>(queue_scene_.commands.size() * sizeof(draw_elements_indirect_command)), queue_scene_.commands.data());
 	
 	/// mode - draw triangles from every 3 indices
 	/// type - data type of the indices vector
 	/// indirect - offset into commands buffer, which is zero
 	/// drawcount - is the number of draw calls that should be generated
 	/// stride - because the commands are packed tightly aka just as descriped in the GL specs
-	glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, static_cast<GLvoid*>(nullptr), static_cast<GLsizei>(render_queue_scene_.commands.size()), 0);
+	glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, static_cast<GLvoid*>(nullptr), static_cast<GLsizei>(queue_scene_.commands.size()), 0);
 	
 	OPTICK_POP()
 
@@ -659,9 +659,9 @@ void level::draw_scene_shadow_map()
 	glBindVertexArray(vao_);
 
 	glDisable(GL_CULL_FACE);
-	matrix_ssbo_.update(static_cast<GLsizeiptr>(sizeof(glm::mat4) * render_queue_shadow_.model_matrices.size()), render_queue_shadow_.model_matrices.data());
-	ibo_.update(static_cast<GLsizeiptr>(render_queue_shadow_.commands.size() * sizeof(draw_elements_indirect_command)), render_queue_shadow_.commands.data());
-	glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, static_cast<GLvoid*>(nullptr), static_cast<GLsizei>(render_queue_shadow_.commands.size()), 0);
+	matrix_ssbo_.update(static_cast<GLsizeiptr>(sizeof(glm::mat4) * queue_shadow_.model_matrices.size()), queue_shadow_.model_matrices.data());
+	ibo_.update(static_cast<GLsizeiptr>(queue_shadow_.commands.size() * sizeof(draw_elements_indirect_command)), queue_shadow_.commands.data());
+	glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, static_cast<GLvoid*>(nullptr), static_cast<GLsizei>(queue_shadow_.commands.size()), 0);
 	
 	glEnable(GL_CULL_FACE);
 	OPTICK_POP()
@@ -673,12 +673,11 @@ void level::build_render_queue(const hierarchy* node, const glm::mat4 global_tra
 	
 
 	const glm::mat4 node_matrix = global_transform * node->get_node_matrix();
-	if (node->model_index != -1)
+	if (node->mesh_index != -1)
 	{
-		OPTICK_PUSH("add model to queue")
-		const uint32_t mesh_index = node->model_index;
+		const uint32_t mesh_index = node->mesh_index;
 		const uint32_t material_index = meshes_[mesh_index].material_index;
-		const uint32_t model_index = render_queue_shadow_.model_matrices.size();
+		const uint32_t model_index = queue_shadow_.model_matrices.size();
 		if (materials_[material_index].type == invisible)
 			return;
 		uint32_t LOD = 0;
@@ -698,26 +697,25 @@ void level::build_render_queue(const hierarchy* node, const glm::mat4 global_tra
 			baseVertex,
 			baseInstance };
 
-		render_queue_shadow_.commands.push_back(cmd);
-		render_queue_shadow_.model_matrices.push_back(node_matrix);
+		queue_shadow_.commands.push_back(cmd);
+		queue_shadow_.model_matrices.push_back(node_matrix);
 
 		// add to scene queue ---------------------------------------------
 		if (state_->cull && cmd.instanceCount_ == 1)
 		{
-			if (!frustum_culler::is_box_in_frustum(frustum_culler::frustum_planes, frustum_culler::frustum_corners, node->node_bounds))
+			if (!frustum_culler::is_box_in_frustum(frustum_culler::frustum_planes, frustum_culler::frustum_corners, node->world_bounds))
 				cmd.instanceCount_ = 0;
 		}
 		
-		LOD = lod_system::decide_lod(meshes_[mesh_index].index_count.size(), node->node_bounds);
+		LOD = lod_system::decide_lod(meshes_[mesh_index].index_count.size(), node->world_bounds);
 		cmd.count_ = meshes_[mesh_index].index_count[LOD];
 		cmd.firstIndex_ = meshes_[mesh_index].index_offset[LOD];
 
-		render_queue_scene_.commands.push_back(cmd);
-		render_queue_scene_.model_matrices.push_back(node_matrix);
+		queue_scene_.commands.push_back(cmd);
+		queue_scene_.model_matrices.push_back(node_matrix);
 
 
 		frustum_culler::models_visible += cmd.instanceCount_;
-		OPTICK_POP()
 	}
 	
 
@@ -729,15 +727,15 @@ void level::build_render_queue(const hierarchy* node, const glm::mat4 global_tra
 
 void level::reset_queue()
 {
-	render_queue_shadow_.commands.clear();
-	render_queue_shadow_.commands.reserve(frustum_culler::models_visible);
-	render_queue_shadow_.model_matrices.clear();
-	render_queue_shadow_.model_matrices.reserve(frustum_culler::models_visible);
+	queue_shadow_.commands.clear();
+	queue_shadow_.commands.reserve(frustum_culler::models_visible);
+	queue_shadow_.model_matrices.clear();
+	queue_shadow_.model_matrices.reserve(frustum_culler::models_visible);
 
-	render_queue_scene_.commands.clear();
-	render_queue_scene_.commands.reserve(frustum_culler::models_visible);
-	render_queue_scene_.model_matrices.clear();
-	render_queue_scene_.model_matrices.reserve(frustum_culler::models_visible);
+	queue_scene_.commands.clear();
+	queue_scene_.commands.reserve(frustum_culler::models_visible);
+	queue_scene_.model_matrices.clear();
+	queue_scene_.model_matrices.reserve(frustum_culler::models_visible);
 
 	frustum_culler::models_visible = 0;
 }
@@ -746,11 +744,11 @@ void level::reset_queue()
 
 void level::draw_aabbs(const hierarchy node)
 {
-	if (node.model_index != -1)
+	if (node.mesh_index != -1)
 	{
-		bounding_box bounds = node.node_bounds;
-		aabb_viewer_->set_vec3("min", node.node_bounds.min_);
-		aabb_viewer_->set_vec3("max", node.node_bounds.max_);
+		bounding_box bounds = node.world_bounds;
+		aabb_viewer_->set_vec3("min", node.world_bounds.min_);
+		aabb_viewer_->set_vec3("max", node.world_bounds.max_);
 
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 	}
@@ -763,8 +761,8 @@ void level::draw_aabbs(const hierarchy node)
 
 glm::mat4 level::get_tight_scene_frustum(glm::mat4 light_view) const
 {
-	glm::vec3 min = scene_graph_.node_bounds.min_;
-	glm::vec3 max = scene_graph_.node_bounds.max_;
+	glm::vec3 min = scene_graph_.world_bounds.min_;
+	glm::vec3 max = scene_graph_.world_bounds.max_;
 
 	glm::vec3 corners[] = {
 			glm::vec3(min.x, min.y, min.z),
