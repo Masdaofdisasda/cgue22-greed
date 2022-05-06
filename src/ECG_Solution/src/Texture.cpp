@@ -3,7 +3,8 @@
 #include <stb/stb_image.h>
 #include <thread>
 
-GLuint Texture::defaults_[6] = {0,0,0,0,0,0};
+GLuint Texture::defaults_[6] = { 0,0,0,0,0,0 };
+uint64_t Texture::defaults64_[6] = { 0,0,0,0,0,0 };
 
 /// @brief create a new texture, used in Framebuffer.h
 /// @param type GL Texture type, eg GL_TEXTURE_2D
@@ -57,7 +58,7 @@ GLuint Texture::load_texture(const char* tex_path)
 /// @brief load 6 pbr textures using multiple threads
 /// @param tex_path folder location of the material
 /// @param handles target containing the texture handles after call
-void Texture::load_texture_mt(const char* tex_path, GLuint handles[])
+void Texture::load_texture_mt(const char* tex_path, GLuint handles[], uint64_t bindless[])
 {
 	
 	stbiData img_data[6]; std::thread workers[6];
@@ -95,7 +96,9 @@ void Texture::load_texture_mt(const char* tex_path, GLuint handles[])
 			glGenerateTextureMipmap(handles[i]);
 			glTextureParameteri(handles[i], GL_TEXTURE_MAX_LEVEL, mipMapLevel - 1);
 			glTextureParameteri(handles[i], GL_TEXTURE_MAX_ANISOTROPY, 16);
-			glBindTextures(0, 1, &handles[i]);
+			bindless[i] = glGetTextureHandleARB(handles[i]);
+			glMakeTextureHandleResidentARB(bindless[i]);
+			//glBindTextures(0, 1, &handles[i]);
 			delete img_data[i].data;
 		}
 		else
@@ -105,7 +108,7 @@ void Texture::load_texture_mt(const char* tex_path, GLuint handles[])
 #endif
 			if (defaults_[0] == 0)
 			{
-				load_texture_mt("../../assets/textures/default", defaults_);
+				load_texture_mt("../../assets/textures/default", defaults_, defaults64_);
 			}
 			handles[i] = defaults_[i];
 		}

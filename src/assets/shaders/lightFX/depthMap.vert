@@ -26,6 +26,6 @@ layout(std430, binding = 4) restrict readonly buffer Matrices
 
 void main()
 {
-	mat4 model = modelMatrix[gl_BaseInstance];
+	mat4 model = modelMatrix[gl_BaseInstance >> 16];
 	gl_Position = lightViewProj * model * vec4(vPosition, 1.0);
 }

@@ -1,4 +1,6 @@
 #version 460
+#extension GL_ARB_bindless_texture : require
+#extension GL_ARB_gpu_shader_int64 : enable
 
 // in and out variables
 layout (location=0) out vec4 out_FragColor;
@@ -7,6 +9,7 @@ in vec3 fNormal;
 in vec3 fPosition;
 in vec2 fUV;
 in vec4 fShadow;
+in uint mat_id;
 
 // light sources
 struct DirectionalLight
@@ -43,6 +46,30 @@ layout(std140, binding = 0) uniform PerFrameData
     vec4 normalMap;
     vec4 ssao1;
     vec4 ssao2;
+};
+
+struct Material
+{
+	uint albedo_;
+	uint normal_;
+	uint metal_;
+	uint rough_;
+	uint ao_;
+	uint emissive_;
+
+	uint64_t albedo_map_;
+	uint64_t normal_map_;
+	uint64_t metal_map_;
+	uint64_t rough_map_;
+	uint64_t ao_map_;
+	uint64_t emissive_map_;
+
+	uint64_t flags;
+};
+
+layout(std430, binding = 5) restrict readonly buffer material
+{
+	Material materials[];
 };
 
 // model textures and ibl cubemaps

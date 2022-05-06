@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 #include <functional>
-#include "Material.h"
+#include "material.h"
 #include "LightSource.h"
 #include "Camera.h"
 #include "LevelStructs.h"
@@ -31,13 +31,14 @@ private:
 	// buffers
 	GLuint vao_ = 0;
 	buffer ibo_{ GL_DRAW_INDIRECT_BUFFER };
-	buffer ssbo_{ GL_SHADER_STORAGE_BUFFER };
+	buffer matrix_ssbo_{ GL_SHADER_STORAGE_BUFFER };
+	buffer tex_ssbo_{ GL_SHADER_STORAGE_BUFFER };
 
 	// mesh data - a loaded scene is entirely contained in these data structures
 	std::vector<sub_mesh> meshes_; 
 	std::vector<float> vertices; 
 	std::vector<unsigned int> indices_; 
-	std::vector<Material> materials_;
+	std::vector<material> materials_;
 	light_sources lights_;
 	std::vector<render_item> render_queue_shadow_;
 	std::vector<render_item> render_queue_scene_;

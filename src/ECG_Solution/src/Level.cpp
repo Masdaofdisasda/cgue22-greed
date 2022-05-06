@@ -302,7 +302,8 @@ void level::load_materials(const aiScene* scene)
 
 		if(path.length != 0)
 		{
-			auto mat = Material(path.C_Str(), mm->GetName().C_Str());
+			material mat;
+			material::create(path.C_Str(), mm->GetName().C_Str(), mat);
 			materials_.push_back(mat);
 			render_item item;
 			item.material = mm->GetName().C_Str();
@@ -310,7 +311,9 @@ void level::load_materials(const aiScene* scene)
 			render_queue_scene_.push_back(item);
 		} else //default
 		{
-			auto mat = Material("textures/default/albedo.jpg", "default");
+			material mat;
+			mat.type = invisible;
+			//create("textures/default/albedo.jpg", "default", mat);
 			materials_.push_back(mat);
 			render_item item;
 			item.material = mm->GetName().C_Str();
@@ -387,7 +390,8 @@ void level::setup_buffers()
 	glVertexArrayAttribBinding(vao_, 2, 0);
 
 	ibo_.reserve_memory(static_cast<GLsizeiptr>(meshes_.size() * sizeof(draw_elements_indirect_command)), nullptr);
-	ssbo_.reserve_memory(4, static_cast<GLsizeiptr>(meshes_.size() * sizeof(glm::mat4)), nullptr);
+	matrix_ssbo_.reserve_memory(4, static_cast<GLsizeiptr>(meshes_.size() * sizeof(glm::mat4)), nullptr);
+	tex_ssbo_.reserve_memory(5, static_cast<GLsizeiptr>(materials_.size() * sizeof(material)), materials_.data());
 }
 
 void level::load_lights(const aiScene* scene) {
@@ -584,17 +588,15 @@ void level::draw_scene() {
 	OPTICK_PUSH("draw scene")
 	for (size_t i = 0; i < render_queue_scene_.size(); i++)
 	{
-		if(materials_[i].name == "default") continue;
-		OPTICK_PUSH("change material")
-		ssbo_.update(static_cast<GLsizeiptr>(sizeof(glm::mat4) * render_queue_scene_[i].model_matrices.size()), render_queue_scene_[i].model_matrices.data());
+		if(materials_[i].type == invisible) continue;
+		matrix_ssbo_.update(static_cast<GLsizeiptr>(sizeof(glm::mat4) * render_queue_scene_[i].model_matrices.size()), render_queue_scene_[i].model_matrices.data());
 		ibo_.update(static_cast<GLsizeiptr>(render_queue_scene_[i].commands.size() * sizeof(draw_elements_indirect_command)), render_queue_scene_[i].commands.data());
 
-		const GLuint textures[] = {materials_[i].get_albedo(), materials_[i].get_normal_map(), materials_[i].get_metallic(),
-			materials_[i].get_roughness(), materials_[i].get_ao_map(), materials_[i].get_emissive() };
+		const GLuint textures[] = {materials_[i].albedo_, materials_[i].normal_, materials_[i].metal_,
+			materials_[i].rough_, materials_[i].ao_, materials_[i].emissive_ };
 		glBindTextures(0, 6, textures);
-		OPTICK_POP()
 
-		if (materials_[i].name == "Lava_1") // may the GL gods have mercy with this monstrosity TODO
+		if (render_queue_scene_[i].material == "Lava_1") // may the GL gods have mercy with this monstrosity TODO
 		{
 			GLint prog = 0;
 			glGetIntegerv(GL_CURRENT_PROGRAM, &prog);
@@ -608,7 +610,7 @@ void level::draw_scene() {
 		/// stride - because the commands are packed tightly aka just as descriped in the GL specs
 		glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, static_cast<GLvoid*>(nullptr), static_cast<GLsizei>(render_queue_scene_[i].commands.size()), 0);
 
-		if (materials_[i].name == "Lava_1") // may the GL gods have mercy with this monstrosity TODO
+		if (render_queue_scene_[i].material == "Lava_1") // may the GL gods have mercy with this monstrosity TODO
 		{
 			GLint prog = 0;
 			glGetIntegerv(GL_CURRENT_PROGRAM, &prog);
@@ -688,7 +690,7 @@ void level::draw_scene_shadow_map()
 	glDisable(GL_CULL_FACE);
 	for (auto& item : render_queue_shadow_)
 	{
-		ssbo_.update(static_cast<GLsizeiptr>(sizeof(glm::mat4) * item.model_matrices.size()), item.model_matrices.data());
+		matrix_ssbo_.update(static_cast<GLsizeiptr>(sizeof(glm::mat4) * item.model_matrices.size()), item.model_matrices.data());
 		ibo_.update(static_cast<GLsizeiptr>(item.commands.size() * sizeof(draw_elements_indirect_command)), item.commands.data());
 		glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, static_cast<GLvoid*>(nullptr), static_cast<GLsizei>(item.commands.size()), 0);
 	}
@@ -707,6 +709,7 @@ void level::build_render_queue(const hierarchy* node, const glm::mat4 global_tra
 		OPTICK_PUSH("add model to queue")
 		const uint32_t mesh_index = node->model_index;
 		const uint32_t material_index = meshes_[mesh_index].material_index;
+		const uint32_t model_index = render_queue_shadow_[material_index].model_matrices.size();
 
 		uint32_t LOD = 0;
 		
@@ -716,7 +719,7 @@ void level::build_render_queue(const hierarchy* node, const glm::mat4 global_tra
 		const uint32_t instanceCount = 1;
 		const uint32_t firstIndex = meshes_[mesh_index].index_offset[LOD]; 
 		const uint32_t baseVertex = meshes_[mesh_index].vertex_offset; 
-		const uint32_t baseInstance = render_queue_shadow_[material_index].model_matrices.size();
+		const uint32_t baseInstance = material_index + (static_cast<uint32_t>(model_index) << 16);
 
 		draw_elements_indirect_command cmd= draw_elements_indirect_command{
 			count,
@@ -780,11 +783,14 @@ void level::reset_queue()
 
 void level::draw_aabbs(const hierarchy node)
 {
-	bounding_box bounds = node.node_bounds;
-	aabb_viewer_->set_vec3("min", node.node_bounds.min_);
-	aabb_viewer_->set_vec3("max", node.node_bounds.max_);
+	if (node.model_index != -1)
+	{
+		bounding_box bounds = node.node_bounds;
+		aabb_viewer_->set_vec3("min", node.node_bounds.min_);
+		aabb_viewer_->set_vec3("max", node.node_bounds.max_);
 
-	glDrawArrays(GL_TRIANGLES, 0, 36);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+	}
 
 	for (const auto& hierarchy : node.children)
 	{
@@ -828,8 +834,8 @@ void level::release() const
 {
 	glDeleteVertexArrays(1, &vao_);
 
-	for (auto& material : materials_)
+	for (auto material : materials_)
 	{
-		material.clear();
+		material::clear(material);
 	}
 }

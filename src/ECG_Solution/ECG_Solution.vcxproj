@@ -13,7 +13,7 @@
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\Cubemap.cpp" />
     <ClCompile Include="src\Level.cpp" />
-    <ClCompile Include="src\Material.cpp" />
+    <ClCompile Include="src\material.cpp" />
     <ClCompile Include="src\PlayerCamera.cpp" />
     <ClCompile Include="src\Physics.cpp" />
     <ClCompile Include="src\Program.cpp" />
@@ -38,7 +38,7 @@
     <ClInclude Include="src\Level.h" />
     <ClInclude Include="src\LevelStructs.h" />
     <ClInclude Include="src\LoadingScreen.h" />
-    <ClInclude Include="src\Material.h" />
+    <ClInclude Include="src\material.h" />
     <ClInclude Include="src\Physics.h" />
     <ClInclude Include="src\Program.h" />
     <ClInclude Include="src\Renderer.h" />

@@ -28,6 +28,7 @@ out vec3 fNormal;
 out vec3 fPosition;
 out vec2 fUV;
 out vec4 fShadow;
+out flat uint mat_id;
 
 const mat4 scaleBias = mat4(
 0.5, 0.0, 0.0, 0.0,
@@ -46,7 +47,8 @@ uniform bool vtx_animation = false;
 
 void main()
 {
-	mat4 model = modelMatrix[gl_BaseInstance];
+	mat4 model = modelMatrix[gl_BaseInstance >> 16];
+	mat_id = gl_BaseInstance & 0xffff;
 	
 	vec3 position =  vPosition;
 	vec3 normal = vNormal;

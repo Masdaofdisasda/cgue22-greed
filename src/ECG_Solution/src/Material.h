@@ -4,27 +4,27 @@
 #include "Texture.h"
 #include <vector>
 
+#ifdef __GNUC__
+# define PACKED_STRUCT __attribute__((packed, aligned(1)))
+#else
+# define PACKED_STRUCT
+#endif
+
+constexpr const uint64_t INVALID_TEXTURE = 0xFFFFFFFF;
+
+enum MaterialFlags
+{
+	visible = 0x1,
+	invisible = 0x2,
+};
+
 /// @brief Material describes a material with five textures
 /// loads five textures from a path and manages their handles
-/// caution: this class is not RAII comliant, every created texure
+/// caution: this class is not RAII comliant, every created material
 /// needs to be manually deleted by calling clear() 
-class Material
+struct PACKED_STRUCT material final
 {
-public:
-	Material(const char* tex_path, const char* name);
-	~Material() { release(); };
-	std::string name;
-
-	GLuint get_albedo() const { return albedo_; }
-	GLuint get_normal_map() const { return normal_; }
-	GLuint get_metallic() const { return metal_; }
-	GLuint get_roughness() const { return rough_; }
-	GLuint get_ao_map() const { return ao_; }
-	GLuint get_emissive() const { return emissive_; }
-
-	void clear() const;
-
-private:
+	//std::string name;
 
 	GLuint albedo_ = 0;
 	GLuint normal_ = 0;
@@ -33,11 +33,17 @@ private:
 	GLuint ao_ = 0;
 	GLuint emissive_ = 0;
 
+	uint64_t albedo64_ = INVALID_TEXTURE;
+	uint64_t normal64_ = INVALID_TEXTURE;
+	uint64_t metal64_ = INVALID_TEXTURE;
+	uint64_t rough64_ = INVALID_TEXTURE;
+	uint64_t ao64_ = INVALID_TEXTURE;
+	uint64_t emissive64_ = INVALID_TEXTURE;
 
-	void release()
-	{
-		// do not delete textures here
-	}
+	uint64_t type = visible;
 
+	static void create(const char* tex_path, const char* name, material& mat);
+	static void clear(material& mat);
 };
 
+static_assert(sizeof(material) % 16 == 0, "material should be padded to 16 bytes");

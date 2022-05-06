@@ -17,6 +17,7 @@ private:
 	GLuint tex_id_ = 0;
 	GLenum type_ = 0;
 	static GLuint defaults_[6];
+	static uint64_t defaults64_[6];
 
 	void release()
 	{
@@ -32,7 +33,7 @@ public:
 	~Texture() { release(); }
 
 	static GLuint load_texture(const char* tex_path);
-	static void load_texture_mt(const char* tex_path, GLuint handles[]);
+	static void load_texture_mt(const char* tex_path, GLuint handles[], uint64_t bindless[]);
 	static GLuint load_texture_transparent(const char* tex_path);
 	static GLuint load_3dlut(const char* tex_path);
 	static void stbi_load_single(const std::string& tex_path, stbiData* img);
