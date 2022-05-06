@@ -57,15 +57,6 @@ void program::use() const
 	glUseProgram(program_id_);
 }
 
-void program::upload_ibl(const GLuint irradiance, const GLuint pre_filter, const GLuint bdrf_lut, const GLuint enviroment)
-{
-	const GLuint textures[] = {
-				irradiance,
-				pre_filter,
-				bdrf_lut,
-				enviroment };
-	glBindTextures(8, 4, textures);
-}
 
 void program::setu_int(const std::string& name, int value) const
 {

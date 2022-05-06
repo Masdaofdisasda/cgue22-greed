@@ -77,8 +77,12 @@ int main(int argc, char** argv)
 	if (glewInit() != GLEW_OK)
 		EXIT_WITH_ERROR("Failed to load GLEW\n");
 
+#ifdef _DEBUG
 	glEnable(GL_DEBUG_OUTPUT);
-	glDebugMessageCallback(debugger::debug_callback_default, 0);
+	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, nullptr, GL_FALSE);
+	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+	glDebugMessageCallback(debug::message_callback, nullptr);
+#endif
 	
 	LoadingScreen loading_screen = LoadingScreen(&glfw_app, state_->width, state_->height);
 	loading_screen.draw_progress();

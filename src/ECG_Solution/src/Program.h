@@ -42,13 +42,6 @@ public:
 	/// @brief makes this the currently active shader program, called before glDraw()
 	void use() const;
 
-	/// @brief binds IBL textures to uniforms 5,6,7 and 8 (same order as the parameters)
-	/// @param irradiance is the texture handle for the irradiance map
-	/// @param pre_filter is the texture handle for the prefilter map
-	/// @param bdrf_lut is the texture handle for the bdrflut map
-	/// @param enviroment  is the texture handle for the enviroment map
-	static void upload_ibl (GLuint irradiance, GLuint pre_filter, GLuint bdrf_lut, GLuint enviroment);
-
 	// ensure RAII compliance
 	program(const program&) = delete;
 	program& operator=(const program&) = delete;
