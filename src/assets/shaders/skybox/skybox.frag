@@ -19,9 +19,9 @@ layout(std140, binding = 0) uniform PerFrameData
     vec4 ssao2;
 };
 
-layout (binding = 11) uniform samplerCube environmentTex;
+layout (binding = 11) uniform samplerCube skyTex;
 
 void main()
 {
-    FragColor = texture(environmentTex, fPosition, 0.0);
+    FragColor = texture(skyTex, fPosition, 0.0);
 };

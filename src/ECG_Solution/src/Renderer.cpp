@@ -18,10 +18,10 @@ renderer::renderer(PerFrameData& perframe_data, light_sources& sources)
 	prepare_framebuffers();
 
 	std::cout << "load Enviroment Map.." << std::endl;
-	ibl_.load_hdr("../../assets/textures/cubemap/env.hdr");
+	ibl_.load_hdr("../../assets/textures/cubemap/cellar.hdr");
 	std::cout << "load Skybox.." << std::endl;
 	sky_tex_.load_hdr("../../assets/textures/cubemap/beach.hdr");
-	const GLuint textures[] = {ibl_.get_irradiance_id(), ibl_.get_pre_filter_id(), ibl_.get_bdrf_lut_id(), sky_tex_.get_environment() };
+	const GLuint textures[] = {ibl_.get_environment(), ibl_.get_pre_filter_id(), ibl_.get_bdrf_lut_id(), sky_tex_.get_environment() };
 	glBindTextures(8, 4, textures);
 
 	lut_3d_ = Texture::load_3dlut("../../assets/textures/look32.CUBE");
@@ -122,6 +122,8 @@ void renderer::build_shader_programs()
 	upsample_vl_.build_from(up_vl_vert, up_vl_frag);
 
 	pbr_shader_.use();
+	pbr_shader_.set_int("numDir", lights_.directional.size());
+	pbr_shader_.set_int("numPos", lights_.point.size());
 }
 
 void renderer::prepare_framebuffers() {
