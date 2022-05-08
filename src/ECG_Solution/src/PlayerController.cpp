@@ -1,5 +1,21 @@
 #include "PlayerController.h"
 
+void player_controller::add_observer(observer& observer)
+{
+	observer_list_.push_back(&observer);
+}
+
+void player_controller::remove_observer(observer& observer)
+{
+	// TODO
+}
+
+void player_controller::notify_observers(const event event)
+{
+	for(observer* obs : observer_list_)
+		obs->update(event);
+}
+
 player_controller::player_controller(Physics& physics, camera_positioner_player& camera, glm::vec3 start_position)
 	: physics_(physics), camera_positioner_(camera)
 {
@@ -46,6 +62,7 @@ void player_controller::accelerate(glm::vec3 movement_direction, const float del
 
 void player_controller::jump() {
 	printf("jump");
+	notify_observers(fx_jump);
 	player_object_->rigidbody->applyCentralImpulse(btVector3(0, jump_strength_, 0));
 }
 
@@ -179,3 +196,4 @@ void player_controller::enforce_speed_limit() const
 		new_xz_velocity.y
 	));
 }
+

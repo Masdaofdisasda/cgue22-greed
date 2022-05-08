@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <ClCompile Include="src\AudioEngine.cpp" />
     <ClCompile Include="src\FontRenderer.cpp" />
     <ClCompile Include="src\FrustumCuller.cpp" />
     <ClCompile Include="src\ItemCollection.cpp" />
@@ -23,6 +24,7 @@
     <ClCompile Include="src\buffer.cpp" />
     <ClCompile Include="src\Utils.cpp" />
     <ClInclude Include="src\AudioEngine.h" />
+    <ClInclude Include="src\observer.h" />
     <ClInclude Include="src\FontRenderer.h" />
     <ClInclude Include="src\ItemCollection.h" />
     <ClInclude Include="src\Lava.h" />

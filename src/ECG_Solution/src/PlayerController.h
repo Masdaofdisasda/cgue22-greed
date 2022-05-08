@@ -1,16 +1,23 @@
 #pragma once
+#include <list>
+
 #include "Camera.h"
 #include "Physics.h"
 #include <glm/ext.hpp>
 #include "ItemCollection.h"
+#include "observer.h"
 
 /// <summary>
 /// Creates a rigidbody, that can be moved around. Positions the camera as if it was a part of the rigidbody.
 /// The camera can rotate freely, it is only translated by this object.
 /// </summary>
-class player_controller
+class player_controller : subject
 {
 public:
+	void add_observer(observer& observer) override;
+	void remove_observer(observer& observer) override;
+	void notify_observers(event event) override;
+
 	player_controller(Physics& physics, camera_positioner_player& camera, glm::vec3 start_position);
 	
 	/// <summary>
@@ -37,6 +44,8 @@ private:
 		bool right = false;
 		bool jump = false;
 	};
+
+	std::list<observer*> observer_list_;
 
 	Physics& physics_;
 	camera_positioner_player& camera_positioner_;

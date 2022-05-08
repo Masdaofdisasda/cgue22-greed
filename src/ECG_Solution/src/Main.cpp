@@ -21,6 +21,7 @@
 #include "Physics.h"
 #include "PlayerController.h"
 #include "LoadingScreen.h"
+#include "AudioEngine.h"
 #include <irrKlang/irrKlang.h>
 #include <optick/optick.h>
 
@@ -94,8 +95,9 @@ int main(int argc, char** argv)
 	printf("Initializing scene and render loop...\n");
 
 	printf("Initializing audio...\n"); 
-	irrklang::ISoundEngine* engine = irrklang::createIrrKlangDevice();
-	irrklang::ISound* snd = engine->play2D("../../assets/media/EQ07 Prc Fantasy Perc 060.wav", true);
+	sound_fx fx_engine{};
+	music music_engine{};
+	music_engine.update(loading);
 	
 	loading_screen.draw_progress();
 	printf("Loading level...\n");
@@ -144,6 +146,7 @@ int main(int argc, char** argv)
 	player_camera_positioner_.set_position(glm::vec3(0, 10, 0));
 
 	player_controller player(physics, player_camera_positioner_, glm::vec3(0, 20, 0));
+	player.add_observer(fx_engine);
 
 	item_collection item_collection;
 
@@ -153,8 +156,7 @@ int main(int argc, char** argv)
 	glLineWidth(2.0f);
 	glEnable(GL_CULL_FACE);
 
-	engine->stopAllSounds();
-	snd = engine->play2D("../../assets/media/Wolum - Greed Collecting.mp3", true);
+	music_engine.update(collecting);
 
 	double time_stamp = glfwGetTime();
 	float delta_seconds = 0.0f;
