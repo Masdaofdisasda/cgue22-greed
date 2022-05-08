@@ -43,7 +43,6 @@ float x_amp = 0.5;
 float z_freq = 0.8;
 float z_velo = 2.1;
 float z_amp = 0.4;
-uniform bool vtx_animation = false;
 
 void main()
 {
@@ -52,7 +51,7 @@ void main()
 	
 	vec3 position =  vPosition;
 	vec3 normal = vNormal;
-	if(vtx_animation)
+	if(mat_id == normalMap.y)
 	{
 		float u = x_freq * position.x -x_velo * deltaTime.y;
 		float v = z_freq * position.z - z_velo * deltaTime.y;

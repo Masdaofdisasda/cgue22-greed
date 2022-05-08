@@ -22,6 +22,7 @@
     <ClCompile Include="src\Shader.cpp" />
     <ClCompile Include="src\buffer.cpp" />
     <ClCompile Include="src\Utils.cpp" />
+    <ClInclude Include="src\AudioEngine.h" />
     <ClInclude Include="src\FontRenderer.h" />
     <ClInclude Include="src\ItemCollection.h" />
     <ClInclude Include="src\Lava.h" />

@@ -12,7 +12,7 @@ by David Köppl (12022493) and Nicolas Eder (12020626)
 * OS: Windows 10 32 bit or 64 bit
 * CPU: 3.0 GHz
 * RAM: 2 GB
-* GPU: Nvidia/AMD with OpenGL 4.60 
+* GPU: Nvidia 600 series, latest driver 
 * DISK: 1 GB
 
 

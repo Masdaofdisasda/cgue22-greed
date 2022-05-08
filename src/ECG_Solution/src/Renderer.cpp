@@ -48,7 +48,7 @@ void renderer::set_render_settings() const
 		state->bloom_strength,
 		state->adaptation_speed);
 
-	perframe_data_->normal_map = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	perframe_data_->normal_map.x = 1.0f;
 
 	perframe_data_->ssao1 = glm::vec4(
 		state->scale,

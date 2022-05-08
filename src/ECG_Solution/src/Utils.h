@@ -93,13 +93,13 @@ struct PerFrameData
 {
 	glm::vec4 view_pos;		// view/eye vector
 	glm::mat4 view_proj;		// view projection matrix
-	glm::mat4 lava_level;	// lava translation matrix
+	glm::mat4 lava_level;	// ?
 	glm::mat4 light_view_proj;// light matrix for shadowmapping
 	glm::mat4 view_inv;		// todo
 	glm::mat4 proj_inv;		// todo
 	glm::vec4 bloom;		// x = exposure, y = maxWhite, z = bloomStrength, w = adaptionSpeed
 	glm::vec4 delta_time;	// x = deltaSeconds, y = summedTime, z = ?, w = ?
-	glm::vec4 normal_map;	// x = normalMapToogle, y = ?, z = ?, w = ?
+	glm::vec4 normal_map;	// x = normalMapToogle, y = lavaID, z = ?, w = ?
 	glm::vec4 ssao1;		// x = scale,, y = bias, z = znear, w = zfar
 	glm::vec4 ssao2;		// x = radius, y = attscale, z = distscale, w = ?
 };

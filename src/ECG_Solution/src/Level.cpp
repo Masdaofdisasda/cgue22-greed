@@ -312,6 +312,11 @@ void level::load_materials(const aiScene* scene)
 			//create("textures/default/albedo.jpg", "default", mat);
 			materials_.push_back(mat);
 		}
+
+		if (strcmp(mm->GetName().C_Str(),"Lava_1") == 0)
+		{
+			perframe_data_->normal_map.y = static_cast<float>(materials_.size()-1);
+		}
 	}
 }
 
