@@ -23,5 +23,5 @@ layout (binding = 11) uniform samplerCube skyTex;
 
 void main()
 {
-    FragColor = texture(skyTex, fPosition, 0.0);
+    FragColor = texture(skyTex, fPosition, 0.0)*4;
 };

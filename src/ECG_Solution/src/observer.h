@@ -17,7 +17,7 @@ enum event
 class observer
 {
 public:
-	virtual ~observer();
+	virtual ~observer() = default;
 
 	/**
 	 * \brief performs an action based on the event
@@ -25,10 +25,6 @@ public:
 	 */
 	virtual void update(event event);
 };
-
-inline observer::~observer()
-{
-}
 
 inline void observer::update(event event)
 {

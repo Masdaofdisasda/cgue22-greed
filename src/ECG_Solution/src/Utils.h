@@ -23,7 +23,7 @@ struct global_state
 	bool fullscreen = false;
 	std::string window_title = "Greed";
 	float fov = 60;
-	float znear = 0.1;
+	float znear = 0.1f;
 	float zfar = 1000.0;
 
 	bool bloom = true;
@@ -49,6 +49,7 @@ struct global_state
 	//game logic
 	bool won = false;
 	bool lost = false;
+	float lava_height = 0.0f;
 	//ui
 	bool display_collect_item_hint = false;
 	float total_cash = 0;

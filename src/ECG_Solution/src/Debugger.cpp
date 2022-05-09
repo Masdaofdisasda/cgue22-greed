@@ -36,5 +36,9 @@ void APIENTRY debug::message_callback(GLenum source, GLenum type, GLuint id, GLe
 		case GL_DEBUG_SEVERITY_HIGH: return "HIGH";
 		}
 	}();
+
+#ifdef _DEBUG
 	std::cout << src_str << ", " << type_str << ", " << severity_str << ", " << id << ": " << message << '\n';
+#endif
+
 }

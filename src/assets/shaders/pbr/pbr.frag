@@ -108,7 +108,6 @@ layout (binding = 12) uniform sampler2D depthTex;
 const float M_PI = 3.141592653589793;
 
 // helper functions
-
 float debugDepthmap()
 {
    float depth = texture(depthTex, fShadow.xy).r;
@@ -367,18 +366,18 @@ void main()
 	PBRInfo pbrInputs;
 
 	// IBL contribution
-	vec3 color = calculatePBRInputsMetallicRoughness(Kd, n, viewPos.xyz, fPosition, MeR, pbrInputs);
+	vec3 color = calculatePBRInputsMetallicRoughness(Kd, n, viewPos.xyz, fPosition, MeR, pbrInputs)* shadow;
 	
 	// directional light contribution
 	for(int i = 0; i < numDir; i++)
-		color += calculatePBRLightContributionDir( pbrInputs, dLights[i]);
+		color *= calculatePBRLightContributionDir( pbrInputs, dLights[i]) * shadow;
 
 	// point light contribution
 	for(int i = 0; i < numPos; i++)
   		color += calculatePBRLightContributionPoint(pbrInputs, pLights[i]);
 
 	color = color * (Kao.r < 0.01 ? 1.0 : Kao.r);
-	color = pow(Ke.rgb* bloom.y + color, vec3(1.0/2.2) ) ;
+	color = pow(Ke.rgb + color, vec3(1.0/2.2) ) ;
 	
-    out_FragColor = vec4(color * shadow, 1.0);
+    out_FragColor = vec4(color, 1.0);
 }

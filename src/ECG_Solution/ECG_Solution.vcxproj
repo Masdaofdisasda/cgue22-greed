@@ -24,6 +24,7 @@
     <ClCompile Include="src\buffer.cpp" />
     <ClCompile Include="src\Utils.cpp" />
     <ClInclude Include="src\AudioEngine.h" />
+    <ClInclude Include="src\GameLogic.h" />
     <ClInclude Include="src\observer.h" />
     <ClInclude Include="src\FontRenderer.h" />
     <ClInclude Include="src\ItemCollection.h" />

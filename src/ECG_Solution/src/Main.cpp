@@ -16,14 +16,17 @@
 #include "Renderer.h"
 #include "FPSCounter.h"
 #include "GLFWApp.h"
+#ifdef _DEBUG
 #include "Debugger.h"
+#endif
 #include "Level.h"
 #include "Physics.h"
 #include "PlayerController.h"
 #include "LoadingScreen.h"
 #include "AudioEngine.h"
-#include <irrKlang/irrKlang.h>
 #include <optick/optick.h>
+
+#include "GameLogic.h"
 
 /* --------------------------------------------- */
 // Global variables
@@ -102,7 +105,7 @@ int main(int argc, char** argv)
 	loading_screen.draw_progress();
 	printf("Loading level...\n");
 	OPTICK_PUSH("load level")
-	level level("../../assets/demo.fbx", state_, perframe_data_);
+	level level("../../assets/gameplay.fbx", state_, perframe_data_);
 	OPTICK_POP()
 
 	loading_screen.draw_progress();
@@ -149,6 +152,7 @@ int main(int argc, char** argv)
 	player.add_observer(fx_engine);
 
 	item_collection item_collection;
+	game_logic logic(state_, perframe_data_);
 
 	glViewport(0, 0, state_->width, state_->height);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -217,14 +221,7 @@ int main(int argc, char** argv)
 		// simple game logic WIP
 		state_->total_cash = item_collection.get_total_monetary_value();
 		state_->collected_items = static_cast<int>(item_collection.size());
-		if (perframe_data_.view_pos.y > 127.0f)
-		{
-			state_->won = true;
-		}
-		/*if (perframe_data_.view_pos.y - 1.8f < lava_position.y)
-		{
-			state_->lost = true;
-		}*/
+		logic.update();
 
 		// actual draw call
 		renderer.draw(&level);

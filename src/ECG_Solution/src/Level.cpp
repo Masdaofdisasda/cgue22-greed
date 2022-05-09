@@ -12,14 +12,9 @@ level::level(const char* scene_path, const std::shared_ptr<global_state> state, 
 	OPTICK_PUSH("parse fbx file")
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(scene_path,
-	                                         aiProcess_GenSmoothNormals |
-	                                         aiProcess_SplitLargeMeshes |
-	                                         aiProcess_ImproveCacheLocality |
 	                                         aiProcess_RemoveRedundantMaterials |
 	                                         aiProcess_FindInvalidData |
-	                                         aiProcess_GenUVCoords |
 	                                         aiProcess_FlipUVs |
-	                                         aiProcess_FixInfacingNormals |
 	                                         aiProcess_ValidateDataStructure | 
 	                                         0);
 
@@ -441,7 +436,7 @@ void level::load_lights(const aiScene* scene) {
 
 			glm::vec3 direction = glm::vec3(dir.x, dir.y, dir.z);	
 			direction = -glm::rotate(finalRot, direction);	// light direction gets inverted in shader
-			glm::vec4 intensity = glm::vec4(col.r, col.g, col.b, 1.0f) * 3.0f; // increase light intensity (maya normalizes it)
+			glm::vec4 intensity = glm::vec4(col.r, col.g, col.b, 1.0f) * 1.0f; // increase light intensity (maya normalizes it)
 
 			this->lights_.directional.push_back(directional_light{glm::vec4(direction,1.0f), intensity});
 		}
@@ -641,7 +636,11 @@ void level::draw_scene_shadow_map()
 	OPTICK_PUSH("update scene")
 
 	// recalculate bounds & set lod uniforms
-	if (perframe_data_->delta_time.y > 60.0f) lava_->TRS.translate.y += perframe_data_->delta_time.x * 1.0f; //TODO
+	if (perframe_data_->delta_time.y > 60.0f)
+	{
+		lava_->TRS.translate.y += perframe_data_->delta_time.x * 1.0f; //TODO
+		state_->lava_height = lava_->TRS.translate.y;
+	}
 	OPTICK_PUSH("transform bounding boxes")
 	transform_bounding_boxes(lava_, glm::mat4(1));
 	OPTICK_POP()
@@ -663,12 +662,14 @@ void level::draw_scene_shadow_map()
 	OPTICK_PUSH("draw scene")
 	glBindVertexArray(vao_);
 
-	glDisable(GL_CULL_FACE);
+	//glDisable(GL_CULL_FACE);
+	glCullFace(GL_FRONT);
 	matrix_ssbo_.update(static_cast<GLsizeiptr>(sizeof(glm::mat4) * queue_shadow_.model_matrices.size()), queue_shadow_.model_matrices.data());
 	ibo_.update(static_cast<GLsizeiptr>(queue_shadow_.commands.size() * sizeof(draw_elements_indirect_command)), queue_shadow_.commands.data());
 	glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, static_cast<GLvoid*>(nullptr), static_cast<GLsizei>(queue_shadow_.commands.size()), 0);
 	
-	glEnable(GL_CULL_FACE);
+	//glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
 	OPTICK_POP()
 }
 
@@ -712,7 +713,7 @@ void level::build_render_queue(const hierarchy* node, const glm::mat4 global_tra
 				cmd.instanceCount_ = 0;
 		}
 		
-		LOD = lod_system::decide_lod(meshes_[mesh_index].index_count.size(), node->world_bounds);
+		//LOD = lod_system::decide_lod(meshes_[mesh_index].index_count.size(), node->world_bounds);
 		cmd.count_ = meshes_[mesh_index].index_count[LOD];
 		cmd.firstIndex_ = meshes_[mesh_index].index_offset[LOD];
 
