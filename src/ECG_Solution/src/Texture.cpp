@@ -63,17 +63,17 @@ void Texture::load_texture_mt(const char* tex_path, GLuint handles[], uint64_t b
 	
 	stbiData img_data[6]; std::thread workers[6];
 
-	std::string albedo = append(tex_path, "/albedo.jpg");
+	std::string albedo = append(tex_path, "/albedo.png");
 	workers[0] = std::thread (Texture::stbi_load_single, albedo, &img_data[0]);
-	std::string normal = append(tex_path, "/normal.jpg");
+	std::string normal = append(tex_path, "/normal.png");
 	workers[1] = std::thread (Texture::stbi_load_single, normal, &img_data[1]);
-	std::string metal = append(tex_path, "/metal.jpg");
+	std::string metal = append(tex_path, "/metal.png");
 	workers[2] = std::thread (Texture::stbi_load_single, metal, &img_data[2]);
-	std::string rough = append(tex_path, "/rough.jpg");
+	std::string rough = append(tex_path, "/rough.png");
 	workers[3] = std::thread (Texture::stbi_load_single, rough, &img_data[3]);
-	std::string ao = append(tex_path, "/ao.jpg");
+	std::string ao = append(tex_path, "/ao.png");
 	workers[4] = std::thread(Texture::stbi_load_single, ao, &img_data[4]);
-	std::string emissive = append(tex_path, "/emissive.jpg");
+	std::string emissive = append(tex_path, "/emissive.png");
 	workers[5] = std::thread(Texture::stbi_load_single, emissive, &img_data[5]);
 
 	for (size_t i = 0; i < 6; i++)
@@ -90,15 +90,14 @@ void Texture::load_texture_mt(const char* tex_path, GLuint handles[], uint64_t b
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-			glTextureStorage2D(handles[i], mipMapLevel, GL_RGB8, img_data[i].w, img_data[i].h);
-			glTextureSubImage2D(handles[i], 0, 0, 0, img_data[i].w, img_data[i].h, GL_RGB, GL_UNSIGNED_BYTE, img_data[i].data);
+			glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+			glTextureStorage2D(handles[i], mipMapLevel, GL_RGBA8, img_data[i].w, img_data[i].h);
+			glTextureSubImage2D(handles[i], 0, 0, 0, img_data[i].w, img_data[i].h, GL_RGBA, GL_UNSIGNED_BYTE, img_data[i].data);
 			glGenerateTextureMipmap(handles[i]);
 			glTextureParameteri(handles[i], GL_TEXTURE_MAX_LEVEL, mipMapLevel - 1);
 			glTextureParameteri(handles[i], GL_TEXTURE_MAX_ANISOTROPY, 16);
 			bindless[i] = glGetTextureHandleARB(handles[i]);
 			glMakeTextureHandleResidentARB(bindless[i]);
-			//glBindTextures(0, 1, &handles[i]);
 			delete img_data[i].data;
 		}
 		else
@@ -243,7 +242,7 @@ void Texture::stbi_load_single(const std::string& tex_path, stbiData* img)
 {
 	stbi_set_flip_vertically_on_load(true);
 
-	img->data = stbi_load(tex_path.c_str(), &img->w, &img->h, &img->comp, 3);
+	img->data = stbi_load(tex_path.c_str(), &img->w, &img->h, &img->comp, STBI_rgb_alpha);
 }
 
 /// @brief adds a subfolder to a given path

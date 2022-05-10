@@ -86,8 +86,8 @@ struct PBRInfo
 	float alphaRoughness;         // roughness mapped to a more linear change in the roughness (proposed by [2])
 	vec3 diffuseColor;            // color contribution from diffuse lighting
 	vec3 specularColor;           // color contribution from specular lighting
-	vec3 n;								// normal at surface point
-	vec3 v;								// vector from surface point to camera
+	vec3 n;							// normal at surface point
+	vec3 v;							// vector from surface point to camera
 };
 
 // model textures and ibl cubemaps
@@ -99,7 +99,7 @@ layout (binding = 4) uniform sampler2D aoTex;
 layout (binding = 5) uniform sampler2D emissiveTex;
 
 layout (binding = 8) uniform samplerCube environmentTex; // use enviroment map instead of irradiance, because it looks better
-layout (binding = 9) uniform samplerCube prefilterTex;
+layout (binding = 9) uniform samplerCube irradianceTex;
 layout (binding = 10) uniform sampler2D brdfLutTex;
 
 layout (binding = 12) uniform sampler2D depthTex;
@@ -108,11 +108,10 @@ layout (binding = 12) uniform sampler2D depthTex;
 const float M_PI = 3.141592653589793;
 
 // helper functions
-
 float debugDepthmap()
 {
    float depth = texture(depthTex, fShadow.xy).r;
-   return depth < fShadow.z ? 0.1 : 1.0;
+   return depth < fShadow.z ? 0 : 1.0;
 }
 float shadow =  debugDepthmap();
 
@@ -135,13 +134,16 @@ vec3 getIBLContribution(PBRInfo pbrInputs, vec3 n, vec3 reflection)
 	vec3 brdf = textureLod(brdfLutTex, brdfSamplePoint, 0).rgb;
 	vec3 cm = vec3(1.0, 1.0, 1.0);
 	// HDR envmaps are already linear
-	vec3 diffuseLight = texture(prefilterTex, n.xyz * cm).rgb;
+	vec3 diffuseLight = texture(irradianceTex, n.xyz * cm).rgb;
 	vec3 specularLight = textureLod(environmentTex, reflection.xyz * cm, lod).rgb;
 
 	vec3 diffuse = diffuseLight * pbrInputs.diffuseColor;
 	vec3 specular = specularLight * (pbrInputs.specularColor * brdf.x + brdf.y);
 
+	if (shadow == 1)
 	return diffuse + specular;
+	else
+	return diffuse * 0.1 + specular * 0.01;
 }
 
 // Disney Implementation of diffuse from Physically-Based Shading at Disney by Brent Burley. See Section 5.3.
@@ -371,14 +373,14 @@ void main()
 	
 	// directional light contribution
 	for(int i = 0; i < numDir; i++)
-		color += calculatePBRLightContributionDir( pbrInputs, dLights[i]);
+		color += calculatePBRLightContributionDir( pbrInputs, dLights[i]) * shadow;
 
 	// point light contribution
 	for(int i = 0; i < numPos; i++)
   		color += calculatePBRLightContributionPoint(pbrInputs, pLights[i]);
 
 	color = color * (Kao.r < 0.01 ? 1.0 : Kao.r);
-	color = pow(Ke.rgb* bloom.y + color, vec3(1.0/2.2) ) ;
+	color = pow(Ke.rgb + color, vec3(1.0/2.2) ) ;
 	
-    out_FragColor = vec4(color * shadow, 1.0);
+    out_FragColor = vec4(color, 1.0);
 }
