@@ -140,10 +140,7 @@ vec3 getIBLContribution(PBRInfo pbrInputs, vec3 n, vec3 reflection)
 	vec3 diffuse = diffuseLight * pbrInputs.diffuseColor;
 	vec3 specular = specularLight * (pbrInputs.specularColor * brdf.x + brdf.y);
 
-	if (shadow == 1)
 	return diffuse + specular;
-	else
-	return diffuse * 0.1 + specular * 0.01;
 }
 
 // Disney Implementation of diffuse from Physically-Based Shading at Disney by Brent Burley. See Section 5.3.
@@ -370,10 +367,10 @@ void main()
 
 	// IBL contribution
 	vec3 color = calculatePBRInputsMetallicRoughness(Kd, n, viewPos.xyz, fPosition, MeR, pbrInputs);
-	
+
 	// directional light contribution
 	for(int i = 0; i < numDir; i++)
-		color += calculatePBRLightContributionDir( pbrInputs, dLights[i]) * shadow;
+		color *= calculatePBRLightContributionDir( pbrInputs, dLights[i]);
 
 	// point light contribution
 	for(int i = 0; i < numPos; i++)
