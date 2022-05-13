@@ -61,7 +61,7 @@ class camera_positioner_first_person final : public camera_positioner_interface
 		float mouse_speed = 4.0f;
 		float acceleration = 150.0f;
 		float damping = 0.2f; // changes deceleration speed
-		float max_speed = 10.0f; // clamps movement
+		float max_speed = 2.0f; // clamps movement
 		float fast_coef = 5.0f; // l-shift mode uses this
 		
 		camera_positioner_first_person(const glm::vec3& pos, const glm::vec3& target, const glm::vec3& up)

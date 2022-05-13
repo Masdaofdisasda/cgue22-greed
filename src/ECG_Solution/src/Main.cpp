@@ -38,7 +38,7 @@ PerFrameData perframe_data_;
 mouse_state mouse_state_;
 
 camera_positioner_interface* camera_positioner_;
-camera_positioner_first_person floating_positioner_(glm::vec3(0.0f, 1.85f, 70.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+camera_positioner_first_person floating_positioner_(glm::vec3(-30.0f, 6.0f, 30.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 camera_positioner_player player_camera_positioner_;
 camera camera_(*camera_positioner_);
 
@@ -146,9 +146,9 @@ int main(int argc, char** argv)
 	// Setup camera
 	camera_positioner_ = &player_camera_positioner_;
 	camera_.set_positioner(camera_positioner_);
-	player_camera_positioner_.set_position(glm::vec3(0, 10, 0));
+	player_camera_positioner_.set_position(glm::vec3(0,1,0));
 
-	player_controller player(physics, player_camera_positioner_, glm::vec3(0, 20, 0));
+	player_controller player(physics, player_camera_positioner_, glm::vec3(-20, 1, 20));
 	player.add_observer(fx_engine);
 
 	item_collection item_collection;

@@ -20,8 +20,8 @@ void material::create(const char* tex_path, const char* name, material& mat) {
 	strcat(c, file);
 
 	// load textures multi-threaded
-	GLuint handles[6];
-	uint64_t bindless[6];
+	GLuint handles[7];
+	uint64_t bindless[7];
 	Texture::load_texture_mt(c, handles, bindless);
 
 	mat.albedo_ = handles[0];
@@ -30,6 +30,7 @@ void material::create(const char* tex_path, const char* name, material& mat) {
 	mat.rough_ = handles[3];
 	mat.ao_ = handles[4];
 	mat.emissive_ = handles[5];
+	mat.height_ = handles[6];
 
 	mat.albedo64_ = bindless[0];
 	mat.normal64_ = bindless[1];
@@ -37,6 +38,7 @@ void material::create(const char* tex_path, const char* name, material& mat) {
 	mat.rough64_ = bindless[3];
 	mat.ao64_ = bindless[4];
 	mat.emissive64_ = bindless[5];
+	mat.height64_ = bindless[6];
 }
 
 /// @brief explicitly deletes every texture in this material
@@ -54,5 +56,7 @@ void material::clear(material& mat)
 	glDeleteTextures(1, &mat.ao_);
 	glMakeTextureHandleNonResidentARB(mat.emissive64_);
 	glDeleteTextures(1, &mat.emissive_);
+	glMakeTextureHandleNonResidentARB(mat.height64_);
+	glDeleteTextures(1, &mat.height_);
 }
 

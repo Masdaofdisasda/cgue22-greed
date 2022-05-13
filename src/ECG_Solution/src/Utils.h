@@ -142,7 +142,7 @@ global_state load_settings();
 ///	3 - roughness
 ///	4 - ao
 /// 5 - emissive
-/// 6 - 
+/// 6 - height
 /// 7 -
 ///	global textures
 ///	8 - irradiance

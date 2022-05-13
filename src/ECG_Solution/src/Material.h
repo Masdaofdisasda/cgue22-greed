@@ -32,6 +32,7 @@ struct PACKED_STRUCT material final
 	GLuint rough_ = 0;
 	GLuint ao_ = 0;
 	GLuint emissive_ = 0;
+	GLuint height_ = 0;
 
 	uint64_t albedo64_ = INVALID_TEXTURE;
 	uint64_t normal64_ = INVALID_TEXTURE;
@@ -39,6 +40,7 @@ struct PACKED_STRUCT material final
 	uint64_t rough64_ = INVALID_TEXTURE;
 	uint64_t ao64_ = INVALID_TEXTURE;
 	uint64_t emissive64_ = INVALID_TEXTURE;
+	uint64_t height64_ = INVALID_TEXTURE;
 
 	uint64_t type = visible;
 

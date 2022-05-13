@@ -37,12 +37,12 @@ const mat4 scaleBias = mat4(
 0.5, 0.5, 0.5, 1.0);
 
 // vertex wave animation
-float x_freq = 0.7;
+float x_freq = 0.1;
 float x_velo = 2.0;
-float x_amp = 0.5;
-float z_freq = 0.8;
+float x_amp = 0.05;
+float z_freq = 0.2;
 float z_velo = 2.1;
-float z_amp = 0.4;
+float z_amp = 0.07;
 
 void main()
 {

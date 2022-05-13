@@ -638,7 +638,7 @@ void level::draw_scene_shadow_map()
 	// recalculate bounds & set lod uniforms
 	if (perframe_data_->delta_time.y > 60.0f)
 	{
-		lava_->TRS.translate.y += perframe_data_->delta_time.x * 1.0f; //TODO
+		lava_->TRS.translate.y += perframe_data_->delta_time.x * .2f; //TODO
 		state_->lava_height = lava_->TRS.translate.y;
 	}
 	OPTICK_PUSH("transform bounding boxes")

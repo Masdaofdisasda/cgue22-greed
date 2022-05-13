@@ -61,7 +61,7 @@ GLuint Texture::load_texture(const char* tex_path)
 void Texture::load_texture_mt(const char* tex_path, GLuint handles[], uint64_t bindless[])
 {
 	
-	stbiData img_data[6]; std::thread workers[6];
+	stbiData img_data[7]; std::thread workers[7];
 
 	std::string albedo = append(tex_path, "/albedo.png");
 	workers[0] = std::thread (Texture::stbi_load_single, albedo, &img_data[0]);
@@ -75,8 +75,10 @@ void Texture::load_texture_mt(const char* tex_path, GLuint handles[], uint64_t b
 	workers[4] = std::thread(Texture::stbi_load_single, ao, &img_data[4]);
 	std::string emissive = append(tex_path, "/emissive.png");
 	workers[5] = std::thread(Texture::stbi_load_single, emissive, &img_data[5]);
+	std::string height = append(tex_path, "/emissive.png");
+	workers[6] = std::thread(Texture::stbi_load_single, height, &img_data[6]);
 
-	for (size_t i = 0; i < 6; i++)
+	for (size_t i = 0; i < 7; i++)
 	{
 		workers[i].join();
 		

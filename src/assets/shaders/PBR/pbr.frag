@@ -57,6 +57,7 @@ struct Material
 	uint rough_;
 	uint ao_;
 	uint emissive_;
+	uint height_;
 
 	uint64_t albedo_map_;
 	uint64_t normal_map_;
@@ -64,6 +65,7 @@ struct Material
 	uint64_t rough_map_;
 	uint64_t ao_map_;
 	uint64_t emissive_map_;
+	uint64_t height_map_;
 
 	uint64_t flags_;
 };
@@ -91,12 +93,6 @@ struct PBRInfo
 };
 
 // model textures and ibl cubemaps
-layout (binding = 0) uniform sampler2D albedoTex;
-layout (binding = 1) uniform sampler2D normalTex;
-layout (binding = 2) uniform sampler2D metallicTex;
-layout (binding = 3) uniform sampler2D roughnessTex;
-layout (binding = 4) uniform sampler2D aoTex;
-layout (binding = 5) uniform sampler2D emissiveTex;
 
 layout (binding = 8) uniform samplerCube environmentTex; // use enviroment map instead of irradiance, because it looks better
 layout (binding = 9) uniform samplerCube irradianceTex;
@@ -114,6 +110,46 @@ float debugDepthmap()
    return depth < fShadow.z ? 0 : 1.0;
 }
 float shadow =  debugDepthmap();
+
+vec2 ParallaxOcclusionMapping(vec3 viewDirection)
+{
+
+   // Variables that control parallax occlusion mapping quality
+	float heightScale = 0.05f;
+	const float minLayers = 8.0f;
+    const float maxLayers = 64.0f;
+    float numLayers = mix(maxLayers, minLayers, abs(dot(vec3(0.0f, 0.0f, 1.0f), viewDirection)));
+	float layerDepth = 1.0f / numLayers;
+	float currentLayerDepth = 0.0f;
+	
+	// Remove the z division if you want less aberated results
+	vec2 S = viewDirection.xy / viewDirection.z * heightScale; 
+    vec2 deltaUVs = S / numLayers;
+	
+	vec2 UVs = fUV;
+	float currentDepthMapValue = 1.0f - texture(sampler2D(unpackUint2x32(materials[mat_id].height_map_)), UVs).r;
+	
+	// Loop till the point on the heightmap is "hit"
+	while(currentLayerDepth < currentDepthMapValue)
+    {
+        UVs -= deltaUVs;
+        currentDepthMapValue = 1.0f - texture(sampler2D(unpackUint2x32(materials[mat_id].height_map_)), UVs).r;
+        currentLayerDepth += layerDepth;
+    }
+
+	// Apply Occlusion (interpolation with prev value)
+	vec2 prevTexCoords = UVs + deltaUVs;
+	float afterDepth  = currentDepthMapValue - currentLayerDepth;
+	float beforeDepth = 1.0f - texture(sampler2D(unpackUint2x32(materials[mat_id].height_map_)), prevTexCoords).r - currentLayerDepth + layerDepth;
+	float weight = afterDepth / (afterDepth - beforeDepth);
+	UVs = prevTexCoords * weight + UVs * (1.0f - weight);
+
+	// Get rid of anything outside the normal range
+	if(UVs.x > 1.0 || UVs.y > 1.0 || UVs.x < 0.0 || UVs.y < 0.0)
+		discard;
+
+	return UVs;
+}
 
 vec4 SRGBtoLINEAR(vec4 srgbIn)
 {
@@ -344,24 +380,26 @@ void main()
 {
 	// read textures
     Material mat = materials[mat_id];
+	
+	//vec2 UV = ParallaxOcclusionMapping(normalize(viewPos.xyz - fPosition));
+	vec2 UV = fUV;
     
-	vec4 Kd = texture(sampler2D(unpackUint2x32(mat.albedo_map_)), fUV);
-	//Kd.rgb = SRGBtoLINEAR(Kd).rgb;
+	vec4 Kd = texture(sampler2D(unpackUint2x32(mat.albedo_map_)), UV);
 
     vec3 normal_sample = vec3(0,0,0);
-    normal_sample = texture(sampler2D(unpackUint2x32(mat.normal_map_)), fUV).rgb;
+    normal_sample = texture(sampler2D(unpackUint2x32(mat.normal_map_)), UV).rgb;
     vec3 n = normalize(fNormal);
     if (length(normal_sample) > 0.5 && (normalMap.x > 0.0f))
-        n = perturbNormal(normalize(fNormal), normalize(viewPos.xyz - fPosition), normal_sample, fUV);
+        n = perturbNormal(normalize(fNormal), normalize(viewPos.xyz - fPosition), normal_sample, UV);
 
-	vec4 Ke = texture(sampler2D(unpackUint2x32(mat.emissive_map_)), fUV);
+	vec4 Ke = texture(sampler2D(unpackUint2x32(mat.emissive_map_)), UV);
 	Ke.rgb = SRGBtoLINEAR(Ke).rgb;
 
-	vec4 Kao = texture(sampler2D(unpackUint2x32(mat.ao_map_)),fUV);
+	vec4 Kao = texture(sampler2D(unpackUint2x32(mat.ao_map_)),UV);
 
 	vec4 MeR;
-	MeR.g = texture(sampler2D(unpackUint2x32(mat.rough_map_)), fUV).r;
-	MeR.b = texture(sampler2D(unpackUint2x32(mat.metal_map_)), fUV).r;
+	MeR.g = texture(sampler2D(unpackUint2x32(mat.rough_map_)), UV).r;
+	MeR.b = texture(sampler2D(unpackUint2x32(mat.metal_map_)), UV).r;
 
 	PBRInfo pbrInputs;
 
