@@ -48,9 +48,7 @@ struct transformation
 	glm::vec3 scale;
 
 	glm::mat4 local;
-	glm::mat4 global;
-
-	glm::mat4 get_matrix() const { return glm::translate(translate) * glm::toMat4(rotation); }
+	glm::mat4 get_matrix() const {return local; }
 };
 
 /// @brief a collection of settings for collectable items in the world
@@ -94,9 +92,9 @@ struct hierarchy
 	{
 		OPTICK_PUSH("set trs")
 		TRS.translate = T; TRS.rotation = R; TRS.scale = S;
-		auto M = get_node_matrix();
-		auto min = M * glm::vec4(model_bounds.min_, 1.0f);
-		auto max = M * glm::vec4(model_bounds.max_, 1.0f);
+		TRS.local = glm::translate(T) * glm::toMat4(R);
+		auto min = TRS.local * glm::vec4(model_bounds.min_, 1.0f);
+		auto max = TRS.local * glm::vec4(model_bounds.max_, 1.0f);
 		world_bounds ={ min, max};
 		OPTICK_POP()
 	}

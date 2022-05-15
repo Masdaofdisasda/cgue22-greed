@@ -332,6 +332,7 @@ void level::traverse_tree(const aiNode* n, hierarchy* parent, hierarchy* node)
 	// set translation, rotation and scale of this node
 	glm::decompose(M, node->TRS.scale, node->TRS.rotation, node->TRS.translate, glm::vec3(), glm::vec4());
 	node->TRS.rotation = glm::normalize(glm::conjugate(node->TRS.rotation));
+	node->TRS.local = M;
 
 	// travers child nodes
 	for (size_t i = 0; i < n->mNumChildren; i++)
