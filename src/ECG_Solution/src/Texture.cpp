@@ -3,8 +3,8 @@
 #include <stb/stb_image.h>
 #include <thread>
 
-GLuint Texture::defaults_[6] = { 0,0,0,0,0,0 };
-uint64_t Texture::defaults64_[6] = { 0,0,0,0,0,0 };
+GLuint Texture::defaults_[7] = { 0,0,0,0,0,0,0 };
+uint64_t Texture::defaults64_[7] = { 0,0,0,0,0,0,0 };
 
 /// @brief create a new texture, used in Framebuffer.h
 /// @param type GL Texture type, eg GL_TEXTURE_2D
@@ -75,7 +75,7 @@ void Texture::load_texture_mt(const char* tex_path, GLuint handles[], uint64_t b
 	workers[4] = std::thread(Texture::stbi_load_single, ao, &img_data[4]);
 	std::string emissive = append(tex_path, "/emissive.png");
 	workers[5] = std::thread(Texture::stbi_load_single, emissive, &img_data[5]);
-	std::string height = append(tex_path, "/emissive.png");
+	std::string height = append(tex_path, "/height.png");
 	workers[6] = std::thread(Texture::stbi_load_single, height, &img_data[6]);
 
 	for (size_t i = 0; i < 7; i++)

@@ -7,9 +7,19 @@ audio_engine::~audio_engine()
 
 sound_fx::sound_fx()
 {
-	steps->setDefaultVolume(0.3f);
-	jump->setDefaultVolume(0.3f);
-	collect->setDefaultVolume(0.3f);
+	steps_->setDefaultVolume(0.3f);
+	won_->setDefaultVolume(0.3f);
+	lost_->setDefaultVolume(0.3f);
+
+	for (irrklang::ISoundSource* src : drop_)
+		src->setDefaultVolume(0.3f);
+
+	for (irrklang::ISoundSource* src : jump_)
+		src->setDefaultVolume(0.3f);
+
+	for (irrklang::ISoundSource* src : loot_)
+		src->setDefaultVolume(0.3f);
+
 }
 
 void sound_fx::update(const event event)
@@ -17,16 +27,25 @@ void sound_fx::update(const event event)
 	switch (event)
 	{
 	case fx_step:
-		engine_->play2D(steps, true);
+		engine_->play2D(steps_, true);
 		break;
 	case fx_still:
 		engine_->stopAllSounds();
 		break;
+	case fx_drop:
+		engine_->play2D(drop_[rand() % drop_.size()]);
+		break;
 	case fx_jump:
-		engine_->play2D(jump);
+		engine_->play2D(jump_[rand() % jump_.size()]);
 		break;
 	case fx_collect:
-		engine_->play2D(collect);
+		engine_->play2D(loot_[rand() % loot_.size()]);
+		break;
+	case fx_won:
+		engine_->play2D(won_);
+		break;
+	case fx_lost:
+		engine_->play2D(lost_);
 		break;
 	default:;
 	}
@@ -34,8 +53,10 @@ void sound_fx::update(const event event)
 
 music::music()
 {
-	loading_music->setDefaultVolume(0.3f);
-	colleting_music->setDefaultVolume(0.3f);
+	ost_loading_->setDefaultVolume(0.3f);
+	ost_collecting_->setDefaultVolume(0.3f);
+
+	amb_drops_->setDefaultVolume(0.3f);
 }
 
 void music::update(const event event)
@@ -44,11 +65,15 @@ void music::update(const event event)
 	{
 	case loading:
 		engine_->stopAllSounds();
-		engine_->play2D(loading_music, true);
+		engine_->play2D(ost_loading_, true);
 		break;
 	case collecting:
 		engine_->stopAllSounds();
-		engine_->play2D(colleting_music, true);
+		engine_->play2D(ost_collecting_, true);
+		engine_->play2D(amb_drops_, true);
+		break;
+	case fx_lost:
+		engine_->stopAllSounds();
 		break;
 	default:;
 	}

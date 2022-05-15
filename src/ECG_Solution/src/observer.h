@@ -4,8 +4,11 @@ enum event
 {
 	fx_step,
 	fx_still,
+	fx_drop,
 	fx_jump,
 	fx_collect,
+	fx_won,
+	fx_lost,
 
 	loading,
 	collecting,

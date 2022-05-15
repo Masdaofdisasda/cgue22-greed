@@ -44,7 +44,7 @@ void main() {
 
   // Reset particles that get too far from the attractor
   if( Position[idx].y < BlackHolePos1.y || test > 25) {
-    Position[idx] = vec4(-85,150,-85,1);
+    Position[idx] = vec4(-8,150,-16,1);
 	if(length(Velocity[idx]) > 1){
 	 Velocity[idx] = Velocity[idx]/2;
 	}

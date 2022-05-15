@@ -170,6 +170,7 @@ void renderer::draw(level* level)
 	OPTICK_POP()
 #endif // constructions ends
 
+
 	// 2 - render scene to framebuffer
 	OPTICK_PUSH("scene pass")
 	framebuffer1_.bind();
@@ -388,9 +389,9 @@ void renderer::draw(level* level)
 	else if (state->lost)
 	{
 		render_color_.use();
-		render_color_.set_vec4("color", glm::vec4(0.710, 0.200, 0.180, 1.0f));
+		render_color_.set_vec4("color", glm::vec4(0,0,0, 1.0f));
 		glDrawArrays(GL_TRIANGLES, 0, 3);
-		font_renderer_.print(death_msgs_[0], state->width * 0.2f, state->height * 0.48f, 2.0f, glm::vec3(.0f, .0f, .0f));
+		font_renderer_.print("FAILED", state->width * 0.4f, state->height * 0.48f, 2.0f, glm::vec3(0.710, 0.200, 0.180));
 	}
 	if (state->display_collect_item_hint) {
 		font_renderer_.print("Click to collect", state->width * 0.42f, state->height * 0.60f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f));

@@ -97,13 +97,6 @@ private:
 
 	GLuint hud_ = 0;
 
-	std::vector<std::string> death_msgs_ =
-	{
-		"Mmhhh, smells like bacon",
-		"maybe try being less greedy next time?",
-		"YOU WERE THE CHOSEN ONE!"
-	};
-
 	/**
 	 * \brief bind light sources to binding points
 	 */

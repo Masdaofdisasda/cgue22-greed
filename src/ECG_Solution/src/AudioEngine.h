@@ -2,6 +2,7 @@
 
 #include <irrKlang/irrKlang.h>
 #include "observer.h"
+#include <vector>
 
 /**
  * \brief audio interface for every class that plays sound
@@ -30,9 +31,25 @@ public:
 	sound_fx();
 	void update(const event event) override;
 private:
-	irrklang::ISoundSource* steps = engine_->addSoundSourceFromFile("../../assets/media/steps.wav");
-	irrklang::ISoundSource* jump = engine_->addSoundSourceFromFile("../../assets/media/jump.wav");
-	irrklang::ISoundSource* collect = engine_->addSoundSourceFromFile("../../assets/media/fx_collect.wav");
+	irrklang::ISoundSource* steps_ = engine_->addSoundSourceFromFile("../../assets/media/fx_stepsLoop.mp3");
+	irrklang::ISoundSource* won_ = engine_->addSoundSourceFromFile("../../assets/media/fx_won.mp3");
+	irrklang::ISoundSource* lost_ = engine_->addSoundSourceFromFile("../../assets/media/fx_lost.mp3");
+
+	std::vector<irrklang::ISoundSource*> drop_ = {
+		engine_->addSoundSourceFromFile("../../assets/media/fx_drop1.mp3"),
+		engine_->addSoundSourceFromFile("../../assets/media/fx_drop2.mp3"),
+		engine_->addSoundSourceFromFile("../../assets/media/fx_drop3.mp3")
+	};
+	std::vector<irrklang::ISoundSource*> jump_ = {
+		engine_->addSoundSourceFromFile("../../assets/media/fx_jump1.mp3"),
+		engine_->addSoundSourceFromFile("../../assets/media/fx_jump2.mp3"),
+		engine_->addSoundSourceFromFile("../../assets/media/fx_jump3.mp3")
+	};
+	std::vector<irrklang::ISoundSource*> loot_ = {
+		engine_->addSoundSourceFromFile("../../assets/media/fx_loot1.mp3"),
+		engine_->addSoundSourceFromFile("../../assets/media/fx_loot2.mp3"),
+		engine_->addSoundSourceFromFile("../../assets/media/fx_loot3.mp3")
+	};
 };
 
 /**
@@ -45,8 +62,10 @@ public:
 
 	void update(const event event) override;
 private:
-	irrklang::ISoundSource* loading_music = engine_->addSoundSourceFromFile("../../assets/media/EQ07 Prc Fantasy Perc 060.wav");
-	irrklang::ISoundSource* colleting_music = engine_->addSoundSourceFromFile("../../assets/media/Wolum - Greed Collecting.mp3");
+	irrklang::ISoundSource* ost_loading_ = engine_->addSoundSourceFromFile("../../assets/media/ost_loading.mp3");
+	irrklang::ISoundSource* ost_collecting_ = engine_->addSoundSourceFromFile("../../assets/media/ost_collecting.mp3");
+
+	irrklang::ISoundSource* amb_drops_ = engine_->addSoundSourceFromFile("../../assets/media/amb_drops.mp3");
 };
 
 

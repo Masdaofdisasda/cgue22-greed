@@ -153,6 +153,8 @@ int main(int argc, char** argv)
 
 	item_collection item_collection;
 	game_logic logic(state_, perframe_data_);
+	logic.add_observer(fx_engine);
+	logic.add_observer(music_engine);
 
 	glViewport(0, 0, state_->width, state_->height);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);

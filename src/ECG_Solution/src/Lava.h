@@ -28,7 +28,7 @@ private:
     float time_ = 0.0f, delta_t_ = 0.0f, speed_ = 35.0f, angle_ = 0.0f;
     GLuint particles_vao_ = 0;
     GLuint bh_vao_ = 0, bh_buf_ = 0;  // black hole VAO and buffer
-    glm::vec4 bh1_ = glm::vec4(-85, -5, -85, 1);
+    glm::vec4 bh1_ = glm::vec4(-8, -5, -16, 1);
 
 	void setup_buffers();
 
