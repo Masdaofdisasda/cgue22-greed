@@ -50,6 +50,14 @@ private:
 		engine_->addSoundSourceFromFile("../../assets/media/fx_loot2.mp3"),
 		engine_->addSoundSourceFromFile("../../assets/media/fx_loot3.mp3")
 	};
+	std::vector<irrklang::ISoundSource*> mock_ = {
+		engine_->addSoundSourceFromFile("../../assets/media/mock1.mp3"),
+		engine_->addSoundSourceFromFile("../../assets/media/mock2.mp3"),
+		engine_->addSoundSourceFromFile("../../assets/media/mock3.mp3"),
+		engine_->addSoundSourceFromFile("../../assets/media/mock4.mp3"),
+		engine_->addSoundSourceFromFile("../../assets/media/mock5.mp3"),
+		engine_->addSoundSourceFromFile("../../assets/media/mock6.mp3")
+	};
 };
 
 /**

@@ -9,7 +9,7 @@ sound_fx::sound_fx()
 {
 	steps_->setDefaultVolume(0.3f);
 	won_->setDefaultVolume(0.3f);
-	lost_->setDefaultVolume(0.3f);
+	lost_->setDefaultVolume(0.2f);
 
 	for (irrklang::ISoundSource* src : drop_)
 		src->setDefaultVolume(0.3f);
@@ -19,6 +19,9 @@ sound_fx::sound_fx()
 
 	for (irrklang::ISoundSource* src : loot_)
 		src->setDefaultVolume(0.3f);
+
+	for (irrklang::ISoundSource* src : mock_)
+		src->setDefaultVolume(0.6f);
 
 }
 
@@ -46,6 +49,7 @@ void sound_fx::update(const event event)
 		break;
 	case fx_lost:
 		engine_->play2D(lost_);
+		engine_->play2D(mock_[rand() % mock_.size()]);
 		break;
 	default:;
 	}

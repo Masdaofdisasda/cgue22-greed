@@ -58,7 +58,7 @@ int main(int argc, char** argv)
 	// Load settings.ini
 	/* --------------------------------------------- */
 
-	std::ifstream file("../../assets/submission1.fbx");
+	std::ifstream file("../../assets/gameplay.fbx");
 	// if this assertion fails, and you cloned this project from Github,
 	// try setting your working directory of the debugger to "$(TargetDir)"
 	assert(file.is_open());

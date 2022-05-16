@@ -21,7 +21,7 @@ renderer::renderer(PerFrameData& perframe_data, light_sources& sources)
 	ibl_.load_hdr("../../assets/textures/cubemap/cellar.hdr");
 	std::cout << "load Skybox.." << std::endl;
 	sky_tex_.load_hdr("../../assets/textures/cubemap/beach.hdr");
-	const GLuint textures[] = {ibl_.get_pre_filter_id(), ibl_.get_irradiance_id(), ibl_.get_bdrf_lut_id(), sky_tex_.get_environment() };
+	const GLuint textures[] = {ibl_.get_environment(), ibl_.get_irradiance_id(), ibl_.get_bdrf_lut_id(), sky_tex_.get_environment() };
 	glBindTextures(8, 4, textures);
 	glBindTextureUnit(13, lut_3d_);
 
