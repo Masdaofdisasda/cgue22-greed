@@ -247,6 +247,29 @@ void Texture::stbi_load_single(const std::string& tex_path, stbiData* img)
 	img->data = stbi_load(tex_path.c_str(), &img->w, &img->h, &img->comp, STBI_rgb_alpha);
 }
 
+GLuint Texture::get_ssao_kernel()
+{
+	int size = 4;
+	std::vector<GLfloat> randDirections(3 * size * size);
+	for (int i = 0; i < size * size; i++) {
+		glm::vec3 v = uniform_circle();
+		randDirections[i * 3 + 0] = v.x;
+		randDirections[i * 3 + 1] = v.y;
+		randDirections[i * 3 + 2] = v.z;
+	}
+
+	GLuint tex;
+	glGenTextures(1, &tex);
+	glBindTexture(GL_TEXTURE_2D, tex);
+	glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB16F, size, size);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, size, size, GL_RGB, GL_FLOAT, randDirections.data());
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+
+	return tex;
+}
+
 /// @brief adds a subfolder to a given path
 /// @param tex_path is the path to the root folder
 /// @param tex_type is the name of the image file in the root folder

@@ -68,7 +68,7 @@ private:
 
 	// global Textures
 	cubemap ibl_, sky_tex_;
-	GLuint lut_3d_ = 0;
+	GLuint lut_3d_ = Texture::load_3dlut("../../assets/textures/look32.CUBE");
 
 	// Framebuffers for HDR/Bloom
 	GLuint luminance1x1_{};
@@ -87,7 +87,7 @@ private:
 	// Framebuffers for SSAO
 	framebuffer ssao_fb_ = framebuffer(1024, 1024, GL_RGBA8, 0);
 	framebuffer blur_ = framebuffer(1024, 1024, GL_RGBA8, 0);
-	GLuint pattern_ = 0;
+	GLuint pattern_ = Texture::get_ssao_kernel();
 
 	// Framebuffers for light/shadow
 	framebuffer depth_map_fb_ = framebuffer(1024 * state->shadow_res, 1024 * state->shadow_res, 0, GL_DEPTH_COMPONENT24);
@@ -95,7 +95,7 @@ private:
 	framebuffer blur1_ = framebuffer(state->width / 2, state->height / 2, GL_RGBA8, 0);
 	framebuffer depth_half_res_ = framebuffer(state->width / 2, state->height / 2, 0, GL_DEPTH_COMPONENT24);
 
-	GLuint hud_ = 0;
+	GLuint hud_ = Texture::load_texture_transparent("../../assets/textures/loading/alpha HUD.png");
 
 	/**
 	 * \brief bind light sources to binding points

@@ -1,5 +1,7 @@
 #include "Utils.h"
 
+#include <random>
+
 glm::vec3 translation_from_transform(const glm::mat4 transform) {
 	glm::vec3 scale;
 	glm::quat rotation;
@@ -84,4 +86,18 @@ global_state load_settings()
 	state.shadow_res = reader.GetInteger("image", "shadowRes", 4);
 
 	return state;
+}
+
+glm::vec3 uniform_circle()
+{
+	std::mt19937 generator;
+	const std::uniform_real_distribution<float> distr01(0.0f, 1.0f);
+	std::random_device rd;
+	generator.seed(rd());
+	
+	glm::vec3 result(0.0f);
+	float x = distr01(generator);
+	result.x = glm::cos(glm::two_pi<float>() * x);
+	result.y = glm::sin(glm::two_pi<float>() * x);
+	return result;
 }

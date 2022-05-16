@@ -134,6 +134,9 @@ glm::mat4 glm_look_at(const glm::vec3 pos, const glm::vec3 target, const glm::ve
  */
 global_state load_settings();
 
+
+glm::vec3 uniform_circle();
+
 /// texture bindings in shader:
 ///	model material
 ///	0 - albedo

@@ -23,8 +23,6 @@ renderer::renderer(PerFrameData& perframe_data, light_sources& sources)
 	sky_tex_.load_hdr("../../assets/textures/cubemap/beach.hdr");
 	const GLuint textures[] = {ibl_.get_pre_filter_id(), ibl_.get_irradiance_id(), ibl_.get_bdrf_lut_id(), sky_tex_.get_environment() };
 	glBindTextures(8, 4, textures);
-
-	lut_3d_ = Texture::load_3dlut("../../assets/textures/look32.CUBE");
 	glBindTextureUnit(13, lut_3d_);
 
 	font_renderer_.init("../../assets/fonts/Quasimoda/Quasimoda-Regular.otf", state->width, state->height);
@@ -133,10 +131,7 @@ void renderer::prepare_framebuffers() {
 
 	const glm::vec4 startingLuminance(glm::vec3(0.0f), 1.0f);
 	glTextureSubImage2D(luminance0_.get_handle(), 0, 0, 0, 1, 1, GL_RGBA, GL_FLOAT, &startingLuminance[0]);
-
-	pattern_ = Texture::load_texture("../../assets/shaders/SSAO/pattern.bmp");
-
-	hud_ = Texture::load_texture_transparent("../../assets/textures/loading/alpha HUD.png");
+	
 }
 
 void renderer::draw(level* level)

@@ -374,7 +374,7 @@ void main()
 
 	// directional light contribution
 	for(int i = 0; i < numDir; i++)
-		color *= calculatePBRLightContributionDir( pbrInputs, dLights[i]);
+		color *= calculatePBRLightContributionDir( pbrInputs, dLights[i])*shadow;
 
 	// point light contribution
 	for(int i = 0; i < numPos; i++)
