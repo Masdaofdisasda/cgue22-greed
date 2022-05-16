@@ -41,6 +41,8 @@ level::level(const char* scene_path, const std::shared_ptr<global_state> state, 
 	transform_bounding_boxes();
 	get_scene_bounds();
 	collect_physic_meshes();
+	build_render_queue();
+	assert(queue_scene_.commands.size() == scene_.size());
 	OPTICK_POP()
 
 	OPTICK_PUSH("setup level buffers")
@@ -241,27 +243,6 @@ void level::transform_bounding_boxes() const
 		bounds.max_ = M * glm::vec4(bounds.max_, 1.0f);
 		entity.world_bounds = bounding_box(bounds.min_, bounds.max_);
 	}
-
-	/*
-	if (!is_leaf) // calculate the node bound from childrens bounds
-	{
-		glm::vec3 vmin(std::numeric_limits<float>::max());
-		glm::vec3 vmax(std::numeric_limits<float>::lowest());
-
-		for (auto& i : node->children)
-		{
-			glm::vec3 cmin = i.world_bounds.min_;
-			glm::vec3 cmax = i.world_bounds.max_;
-
-			vmin = glm::min(vmin, cmin);
-			vmax = glm::max(vmax, cmax);
-		}
-
-		auto bounds = bounding_box(vmin, vmax);
-		bounds.min_ = M * glm::vec4(bounds.min_, 1.0f);
-		bounds.max_ = M * glm::vec4(bounds.max_, 1.0f);
-		node->world_bounds = bounding_box(bounds.min_, bounds.max_);
-	}*/
 }
 
 void level::get_scene_bounds()
@@ -547,10 +528,12 @@ void level::draw_scene() {
 	}
 	OPTICK_POP()
 
+	OPTICK_PUSH("build render queue")
+	update_render_queue(false);
+	OPTICK_POP()
 
 	// draw mesh
 	OPTICK_PUSH("draw scene")
-	matrix_ssbo_.update(static_cast<GLsizeiptr>(sizeof(glm::mat4) * queue_scene_.model_matrices.size()), queue_scene_.model_matrices.data());
 	ibo_.update(static_cast<GLsizeiptr>(queue_scene_.commands.size() * sizeof(draw_elements_indirect_command)), queue_scene_.commands.data());
 	
 	/// mode - draw triangles from every 3 indices
@@ -622,12 +605,11 @@ void level::draw_scene_shadow_map()
 	lod_system::view_pos = perframe_data_->view_pos;
 	glm::mat4 vp = glm::transpose(perframe_data_->view_proj);
 	lod_system::view_dir = vp[3];
+	frustum_culler::models_visible = 0;
 	OPTICK_POP()
-
-	// flatten tree
+		
 	OPTICK_PUSH("build render queue")
-	reset_queue();
-	build_render_queue();
+	update_render_queue(true);
 	OPTICK_POP()
 	OPTICK_POP()
 
@@ -637,9 +619,9 @@ void level::draw_scene_shadow_map()
 
 	//glDisable(GL_CULL_FACE);
 	glCullFace(GL_FRONT);
-	matrix_ssbo_.update(static_cast<GLsizeiptr>(sizeof(glm::mat4) * queue_shadow_.model_matrices.size()), queue_shadow_.model_matrices.data());
-	ibo_.update(static_cast<GLsizeiptr>(queue_shadow_.commands.size() * sizeof(draw_elements_indirect_command)), queue_shadow_.commands.data());
-	glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, static_cast<GLvoid*>(nullptr), static_cast<GLsizei>(queue_shadow_.commands.size()), 0);
+	matrix_ssbo_.update(static_cast<GLsizeiptr>(sizeof(glm::mat4) * queue_scene_.model_matrices.size()), queue_scene_.model_matrices.data());
+	ibo_.update(static_cast<GLsizeiptr>(queue_scene_.commands.size() * sizeof(draw_elements_indirect_command)), queue_scene_.commands.data());
+	glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, static_cast<GLvoid*>(nullptr), static_cast<GLsizei>(queue_scene_.commands.size()), 0);
 	
 	//glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
@@ -647,72 +629,75 @@ void level::draw_scene_shadow_map()
 }
 
 void level::build_render_queue() {
-	for (const entity& entity : scene_) 
+	for (const entity& entity : scene_)
 	{
+
+		uint32_t instanceCount = 1;
 		if (!entity.game_properties.is_active)
-			continue;
+			instanceCount = 0;
 
 		const glm::mat4 node_matrix = entity.get_node_matrix();
 		const uint32_t mesh_index = entity.mesh_index;
 		const uint32_t material_index = meshes_[mesh_index].material_index;
-		const uint32_t model_index = queue_shadow_.model_matrices.size();
+		const uint32_t model_index = queue_scene_.model_matrices.size();
 		if (materials_[material_index].type == invisible)
-			continue;
+			instanceCount = 0;
 		uint32_t LOD = 0;
 		
-
-		// add to shadow queue ------------------------------------------
-		const uint32_t count = meshes_[mesh_index].index_count[LOD];	
-		const uint32_t instanceCount = 1;
-		const uint32_t firstIndex = meshes_[mesh_index].index_offset[LOD]; 
-		const uint32_t baseVertex = meshes_[mesh_index].vertex_offset; 
+		const uint32_t count = meshes_[mesh_index].index_count[LOD];
+		const uint32_t firstIndex = meshes_[mesh_index].index_offset[LOD];
+		const uint32_t baseVertex = meshes_[mesh_index].vertex_offset;
 		const uint32_t baseInstance = material_index + (static_cast<uint32_t>(model_index) << 16);
 
-		draw_elements_indirect_command cmd= draw_elements_indirect_command{
+		draw_elements_indirect_command cmd = draw_elements_indirect_command{
 			count,
 			instanceCount,
 			firstIndex,
 			baseVertex,
 			baseInstance };
 
-		queue_shadow_.commands.push_back(cmd);
-		queue_shadow_.model_matrices.push_back(node_matrix);
-
-		// add to scene queue ---------------------------------------------
-		if (state_->cull && cmd.instanceCount_ == 1)
-		{
-			if (!frustum_culler::is_box_in_frustum(frustum_culler::frustum_planes, frustum_culler::frustum_corners, entity.world_bounds))
-				cmd.instanceCount_ = 0;
-		}
-		
-		//LOD = lod_system::decide_lod(meshes_[mesh_index].index_count.size(), node->world_bounds);
-		cmd.count_ = meshes_[mesh_index].index_count[LOD];
-		cmd.firstIndex_ = meshes_[mesh_index].index_offset[LOD];
-
 		queue_scene_.commands.push_back(cmd);
 		queue_scene_.model_matrices.push_back(node_matrix);
-
-
+		
 		frustum_culler::models_visible += cmd.instanceCount_;
 	}
 }
 
-void level::reset_queue()
-{
-	queue_shadow_.commands.clear();
-	queue_shadow_.commands.reserve(frustum_culler::models_visible);
-	queue_shadow_.model_matrices.clear();
-	queue_shadow_.model_matrices.reserve(frustum_culler::models_visible);
+void level::update_render_queue(const bool for_shadow) {
+	for (size_t i = 0; i < queue_scene_.commands.size(); i++)
+	{
+		entity& entity = scene_[i];
+		draw_elements_indirect_command& cmd = queue_scene_.commands[i];
 
-	queue_scene_.commands.clear();
-	queue_scene_.commands.reserve(frustum_culler::models_visible);
-	queue_scene_.model_matrices.clear();
-	queue_scene_.model_matrices.reserve(frustum_culler::models_visible);
+		if (for_shadow)
+		{
+			cmd.instanceCount_ = 1;
+			if (!entity.game_properties.is_active)
+				cmd.instanceCount_ = 0;
+			const glm::mat4 node_matrix = entity.get_node_matrix();
+			const uint32_t mesh_index = entity.mesh_index;
+			const uint32_t material_index = meshes_[mesh_index].material_index;
+			if (materials_[material_index].type == invisible)
+				cmd.instanceCount_ = 0;
+			cmd.baseInstance_ = material_index + (i << 16);
+			queue_scene_.model_matrices[i] = node_matrix;
+		}else
+		{
+			if (state_->cull && cmd.instanceCount_ == 1)
+			{
+				if (!frustum_culler::is_box_in_frustum(frustum_culler::frustum_planes, frustum_culler::frustum_corners, entity.world_bounds))
+					cmd.instanceCount_ = 0;
+			}
 
-	frustum_culler::models_visible = 0;
+			const uint32_t mesh_index = entity.mesh_index;
+			uint32_t LOD = lod_system::decide_lod(meshes_[mesh_index].index_count.size(), entity.world_bounds);
+			cmd.count_ = meshes_[mesh_index].index_count[LOD];
+			cmd.firstIndex_ = meshes_[mesh_index].index_offset[LOD];
+
+			frustum_culler::models_visible += cmd.instanceCount_;
+		}
+	}
 }
-
-
 
 void level::draw_aabbs() const
 {

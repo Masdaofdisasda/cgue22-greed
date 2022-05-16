@@ -40,7 +40,6 @@ private:
 	std::vector<unsigned int> indices_; 
 	std::vector<material> materials_;
 	light_sources lights_;
-	render_queue queue_shadow_;
 	render_queue queue_scene_;
 	std::vector<entity> scene_;
 	uint32_t lava_;
@@ -122,11 +121,13 @@ private:
 
 	/**
 	 * \brief recursively builds for every material a render command list by adding all unculled objects
-	 * \param node that gets checked for models/culling
-	 * \param global_transform is the accumulation of parent transforms
-	 * \param high_quality only uses lowest LOD if false, uses normal LOD decision heuristic if true
 	 */
 	void build_render_queue();
+
+	/**
+	 * \brief recursively builds for every material a render command list by adding all unculled objects
+	 */
+	void update_render_queue(bool for_shadow);
 
 
 	/**
@@ -150,12 +151,6 @@ private:
 	 * \param global_transform is the accumulation of parent transforms
 	 */
 	void collect_physic_meshes();
-	
-
-	/**
-	 * \brief deletes all entries in the render queue, call after a draw cycle
-	 */
-	void reset_queue();
 
 	/**
 	 * \brief release all resources, buffers and textures
