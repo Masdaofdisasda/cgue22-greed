@@ -67,11 +67,12 @@ struct game_properties {
 };
 
 /// @brief implements a simple scene graph of hierarchical transformations
-struct hierarchy_
+///	DEPRECATED
+struct hierarchy
 {
 	std::string name;
-	//hierarchy* parent = nullptr;
-	//std::vector <hierarchy> children;
+	hierarchy* parent = nullptr;
+	std::vector <hierarchy> children;
 	int32_t mesh_index = -1;		// assumed to only hold one model
 
 	transformation TRS;
