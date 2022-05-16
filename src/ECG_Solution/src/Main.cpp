@@ -126,7 +126,7 @@ int main(int argc, char** argv)
 	for (auto& dynamicMeshe : dynamicMeshes)
 	{
 		Physics::PhysicsObject obj = physics.createPhysicsObject(
-			dynamicMeshe.node,
+			dynamicMeshe.entity,
 			dynamicMeshe.model_trs,
 			dynamicMeshe.vtx_positions,
 			Physics::ObjectMode::Dynamic
@@ -137,7 +137,7 @@ int main(int argc, char** argv)
 	std::vector<physics_mesh> staticMeshes = level.get_rigid();
 	for (auto& staticMeshe : staticMeshes)
 		physics.createPhysicsObject(
-			staticMeshe.node,
+			staticMeshe.entity,
 			staticMeshe.model_trs,
 			staticMeshe.vtx_positions,
 			Physics::ObjectMode::Static

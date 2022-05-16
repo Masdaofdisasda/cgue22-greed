@@ -37,8 +37,10 @@ level::level(const char* scene_path, const std::shared_ptr<global_state> state, 
 	mesh.join();
 	OPTICK_POP()
 	OPTICK_PUSH("build scene graph")
-	traverse_tree(scene->mRootNode, nullptr, &scene_graph_);
-	transform_bounding_boxes(&scene_graph_, glm::mat4(1));
+	traverse_tree(scene->mRootNode, glm::mat4(1), lava);
+	transform_bounding_boxes();
+	get_scene_bounds();
+	collect_physic_meshes();
 	OPTICK_POP()
 
 	OPTICK_PUSH("setup level buffers")
@@ -48,13 +50,6 @@ level::level(const char* scene_path, const std::shared_ptr<global_state> state, 
 	// finalize
 	light.join();
 	load_shaders();
-	for (auto& i : scene_graph_.children)
-	{
-		if (i.name == "Dynamic")
-			dynamic_node_ = &i;
-		if (i.name == "Lava1")
-			lava_ = &i;
-	}
 
 	std::cout << std::endl; // debug breakpoint
 }
@@ -236,25 +231,18 @@ bounding_box level::compute_bounds_of_mesh(const sub_mesh& mesh) const
 	return {vmin, vmax };
 }
 
-void level::transform_bounding_boxes(hierarchy* node, glm::mat4 global_transform)
+void level::transform_bounding_boxes() const
 {
-	boolean is_leaf = !(node->mesh_index == -1);
-	glm::mat4 M = global_transform * node->get_node_matrix();
-
-	if (is_leaf) // transform model bounds to world coordinates
+	for (const entity& entity : scene_)
 	{
-		bounding_box bounds = node->model_bounds;
+		glm::mat4 M = entity.get_node_matrix();
+		bounding_box bounds = entity.model_bounds;
 		bounds.min_ = M * glm::vec4(bounds.min_, 1.0f);
 		bounds.max_ = M * glm::vec4(bounds.max_, 1.0f);
-		node->world_bounds = bounding_box(bounds.min_, bounds.max_);
+		entity.world_bounds = bounding_box(bounds.min_, bounds.max_);
 	}
 
-	// transform all child nodes bounds
-	for (auto& i : node->children)
-	{
-		transform_bounding_boxes(&i, M);
-	}
-	
+	/*
 	if (!is_leaf) // calculate the node bound from childrens bounds
 	{
 		glm::vec3 vmin(std::numeric_limits<float>::max());
@@ -273,7 +261,24 @@ void level::transform_bounding_boxes(hierarchy* node, glm::mat4 global_transform
 		bounds.min_ = M * glm::vec4(bounds.min_, 1.0f);
 		bounds.max_ = M * glm::vec4(bounds.max_, 1.0f);
 		node->world_bounds = bounding_box(bounds.min_, bounds.max_);
+	}*/
+}
+
+void level::get_scene_bounds()
+{
+	glm::vec3 vmin(std::numeric_limits<float>::max());
+	glm::vec3 vmax(std::numeric_limits<float>::lowest());
+
+	for (entity entity : scene_)
+	{
+		glm::vec3 cmin = entity.world_bounds.min_;
+		glm::vec3 cmax = entity.world_bounds.max_;
+
+		vmin = glm::min(vmin, cmin);
+		vmax = glm::max(vmax, cmax);
 	}
+
+	scene_bounds_ = bounding_box(vmin, vmax);
 }
 
 void level::load_materials(const aiScene* scene)
@@ -315,24 +320,32 @@ void level::load_materials(const aiScene* scene)
 	}
 }
 
-void level::traverse_tree(const aiNode* n, hierarchy* parent, hierarchy* node)
+void level::traverse_tree(const aiNode* n, const glm::mat4 mat, entity_type type)
 {
-	// set trivial node variables
-	const glm::mat4 M = to_glm_mat4(n->mTransformation);
-	node->name = n->mName.C_Str();
-	node->parent = parent;
+	if (strcmp(n->mName.C_Str(),"Rigid") == 0) type = rigid;
+	if (strcmp(n->mName.C_Str(), "Dynamic") == 0) type = dynamic;
+	if (strcmp(n->mName.C_Str(), "Deco") == 0) type = decoration;
+	if (strcmp(n->mName.C_Str(), "Lava1") == 0) lava_ = scene_.size();
 
-	// add a all mesh indices to this node (assumes only 1 mesh per node) and calculate bounds in model space
+	glm::mat4 M = mat * to_glm_mat4(n->mTransformation);
+
 	if (n->mNumMeshes > 0)
 	{
-		node->mesh_index = n->mMeshes[0];
-		node->model_bounds = compute_bounds_of_mesh(meshes_[n->mMeshes[0]]);
-	}
+		entity entity;
 
-	// set translation, rotation and scale of this node
-	glm::decompose(M, node->TRS.scale, node->TRS.rotation, node->TRS.translate, glm::vec3(), glm::vec4());
-	node->TRS.rotation = glm::normalize(glm::conjugate(node->TRS.rotation));
-	node->TRS.local = M;
+		// set trivial node variables
+		entity.name = n->mName.C_Str();
+		entity.type = type;
+		entity.mesh_index = n->mMeshes[0];
+		entity.model_bounds = compute_bounds_of_mesh(meshes_[n->mMeshes[0]]);
+
+		// set translation, rotation and scale of this node
+		glm::decompose(M, entity.TRS.scale, entity.TRS.rotation, entity.TRS.translate, glm::vec3(), glm::vec4());
+		entity.TRS.rotation = glm::normalize(glm::conjugate(entity.TRS.rotation));
+		entity.TRS.local = M;
+
+		scene_.push_back(entity);
+	}
 
 	// travers child nodes
 	for (size_t i = 0; i < n->mNumChildren; i++)
@@ -340,9 +353,7 @@ void level::traverse_tree(const aiNode* n, hierarchy* parent, hierarchy* node)
 		if (strcmp(n->mChildren[i]->mName.C_Str(),"Lights") != 0 && // skip lights
 			(n->mChildren[i]->mNumChildren > 0 || n->mChildren[i]->mNumMeshes > 0)) // skip empty nodes
 		{
-		hierarchy child;
-		traverse_tree(n->mChildren[i], node, &child);
-		node->children.push_back(child);
+		traverse_tree(n->mChildren[i], M, type);
 		}
 	}
 }
@@ -473,92 +484,52 @@ void level::load_shaders()
 
 std::vector<physics_mesh> level::get_rigid()
 {
-	hierarchy* rigid_node = nullptr;
-	for (auto& i : scene_graph_.children)
-	{
-		if (i.name == "Rigid") {
-			rigid_node = &i;
-		}
-	}
-	collect_rigid_physic_meshes(rigid_node, glm::mat4(1));
 	return rigid_;
 }
 
 std::vector<physics_mesh> level::get_dynamic()
 {
-	collect_dynamic_physic_meshes(dynamic_node_, glm::mat4(1));
 	return dynamic_;
 }
 
-void level::collect_rigid_physic_meshes(hierarchy* node, glm::mat4 global_transform)
+void level::collect_physic_meshes()
 {
-	glm::mat4 node_matrix = global_transform * node->get_node_matrix();
+	rigid_.reserve(meshes_.size());
+	dynamic_.reserve(meshes_.size());
 	
-	if (node->mesh_index != -1)
+	for (size_t i = 0; i < scene_.size(); i++)
 	{
-		uint32_t model_index = node->mesh_index;
-		uint32_t vtx_offset = meshes_[model_index].vertex_offset;
-		uint32_t vtx_count = meshes_[model_index].vertex_count;
-		physics_mesh phy_mesh;
+		entity& entity = scene_[i];
 
-		transformation trs;
-		glm::decompose(node_matrix, trs.scale, trs.rotation, trs.translate, glm::vec3(), glm::vec4());
-		trs.rotation = glm::normalize(glm::conjugate(trs.rotation));
-
-		for (uint32_t j = 0; j != vtx_count; j++)
+		if (entity.type == rigid || entity.type == dynamic)
 		{
-			auto vertex_offset = (vtx_offset + j) * 8;
-			const float* vf = &vertices[vertex_offset];
+			glm::mat4 node_matrix = entity.get_node_matrix();
+			uint32_t model_index = entity.mesh_index;
+			uint32_t vtx_offset = meshes_[model_index].vertex_offset;
+			uint32_t vtx_count = meshes_[model_index].vertex_count;
+			physics_mesh phy_mesh;
 
-			phy_mesh.vtx_positions.push_back(vf[0]);
-			phy_mesh.vtx_positions.push_back(vf[1]);
-			phy_mesh.vtx_positions.push_back(vf[2]);
+			transformation trs;
+			glm::decompose(node_matrix, trs.scale, trs.rotation, trs.translate, glm::vec3(), glm::vec4());
+			trs.rotation = glm::normalize(glm::conjugate(trs.rotation));
+
+			for (uint32_t j = 0; j != vtx_count; j++)
+			{
+				auto vertex_offset = (vtx_offset + j) * 8;
+				const float* vf = &vertices[vertex_offset];
+
+				phy_mesh.vtx_positions.push_back(vf[0]);
+				phy_mesh.vtx_positions.push_back(vf[1]);
+				phy_mesh.vtx_positions.push_back(vf[2]);
+			}
+
+			phy_mesh.model_trs = trs;
+			phy_mesh.entity = &scene_[i];
+			if (entity.type == rigid)
+				rigid_.emplace_back(phy_mesh);
+			else
+				dynamic_.emplace_back(phy_mesh);
 		}
-
-		phy_mesh.model_trs = trs;
-		phy_mesh.node = node;
-		rigid_.push_back(phy_mesh);
-	}
-
-	for (auto& i : node->children)
-	{
-		collect_rigid_physic_meshes(&i, node_matrix);
-	}
-}
-
-void level::collect_dynamic_physic_meshes(hierarchy* node, glm::mat4 global_transform)
-{
-	glm::mat4 node_matrix = global_transform * node->get_node_matrix();
-
-	if (node->mesh_index != -1)
-	{
-		uint32_t model_index = node->mesh_index;
-		uint32_t vtx_offset = meshes_[model_index].vertex_offset;
-		uint32_t vtx_count = meshes_[model_index].vertex_count;
-		physics_mesh phy_mesh;
-
-		transformation trs;
-		glm::decompose(node_matrix, trs.scale, trs.rotation, trs.translate, glm::vec3(), glm::vec4());
-		trs.rotation = glm::normalize(glm::conjugate(trs.rotation));
-
-		for (uint32_t j = 0; j != vtx_count; j++)
-		{
-			auto vertex_offset = (vtx_offset + j) * 8;
-			const float* vf = &vertices[vertex_offset];
-
-			phy_mesh.vtx_positions.push_back(vf[0]);
-			phy_mesh.vtx_positions.push_back(vf[1]);
-			phy_mesh.vtx_positions.push_back(vf[2]);
-		}
-
-		phy_mesh.model_trs = trs;
-		phy_mesh.node = node;
-		dynamic_.push_back(phy_mesh);
-	}
-
-	for (auto& i : node->children)
-	{
-		collect_dynamic_physic_meshes(&i, node_matrix);
 	}
 }
 
@@ -600,7 +571,7 @@ void level::draw_scene() {
 		glEnable(GL_BLEND);
 		aabb_viewer_->use();
 		aabb_viewer_->set_vec4("lineColor", glm::vec4(0.0f,1.0f,0.0f, .1f));
-			draw_aabbs(scene_graph_); // draw AABBs
+			draw_aabbs(); // draw AABBs
 		frustumviewer_->use();
 		frustumviewer_->set_vec4("lineColor", glm::vec4(1.0f, 1.0f, 0.0f, .1f));
 		frustumviewer_->set_vec3("corner0", frustum_culler::frustum_corners[0]);
@@ -639,11 +610,12 @@ void level::draw_scene_shadow_map()
 	// recalculate bounds & set lod uniforms
 	if (perframe_data_->delta_time.y > 60.0f)
 	{
-		lava_->TRS.translate.y += perframe_data_->delta_time.x * .2f; //TODO
-		state_->lava_height = lava_->TRS.translate.y;
+		glm::vec3 t = scene_[lava_].TRS.translate;
+		t.y += perframe_data_->delta_time.x * .2f;
+		scene_[lava_].set_node_trs(t, scene_[lava_].TRS.rotation, scene_[lava_].TRS.scale);
+		state_->lava_height = scene_[lava_].TRS.translate.y;
 	}
 	OPTICK_PUSH("transform bounding boxes")
-	transform_bounding_boxes(lava_, glm::mat4(1));
 	OPTICK_POP()
 	OPTICK_PUSH("update frustum culler uniform")
 	lod_system::near_plane = perframe_data_->ssao1.z;
@@ -655,7 +627,7 @@ void level::draw_scene_shadow_map()
 	// flatten tree
 	OPTICK_PUSH("build render queue")
 	reset_queue();
-	build_render_queue(&scene_graph_, glm::mat4(1));
+	build_render_queue();
 	OPTICK_POP()
 	OPTICK_POP()
 
@@ -674,19 +646,18 @@ void level::draw_scene_shadow_map()
 	OPTICK_POP()
 }
 
-void level::build_render_queue(const hierarchy* node, const glm::mat4 global_transform) {
-	if (!node->game_properties.is_active)
-		return;
-	
-
-	const glm::mat4 node_matrix = global_transform * node->get_node_matrix();
-	if (node->mesh_index != -1)
+void level::build_render_queue() {
+	for (const entity& entity : scene_) 
 	{
-		const uint32_t mesh_index = node->mesh_index;
+		if (!entity.game_properties.is_active)
+			continue;
+
+		const glm::mat4 node_matrix = entity.get_node_matrix();
+		const uint32_t mesh_index = entity.mesh_index;
 		const uint32_t material_index = meshes_[mesh_index].material_index;
 		const uint32_t model_index = queue_shadow_.model_matrices.size();
 		if (materials_[material_index].type == invisible)
-			return;
+			continue;
 		uint32_t LOD = 0;
 		
 
@@ -710,7 +681,7 @@ void level::build_render_queue(const hierarchy* node, const glm::mat4 global_tra
 		// add to scene queue ---------------------------------------------
 		if (state_->cull && cmd.instanceCount_ == 1)
 		{
-			if (!frustum_culler::is_box_in_frustum(frustum_culler::frustum_planes, frustum_culler::frustum_corners, node->world_bounds))
+			if (!frustum_culler::is_box_in_frustum(frustum_culler::frustum_planes, frustum_culler::frustum_corners, entity.world_bounds))
 				cmd.instanceCount_ = 0;
 		}
 		
@@ -723,12 +694,6 @@ void level::build_render_queue(const hierarchy* node, const glm::mat4 global_tra
 
 
 		frustum_culler::models_visible += cmd.instanceCount_;
-	}
-	
-
-	for (const auto& hierarchy : node->children)
-	{
-		build_render_queue(&hierarchy, node_matrix);
 	}
 }
 
@@ -749,27 +714,22 @@ void level::reset_queue()
 
 
 
-void level::draw_aabbs(const hierarchy node)
+void level::draw_aabbs() const
 {
-	if (node.mesh_index != -1)
+	for (const entity& entity : scene_)
 	{
-		bounding_box bounds = node.world_bounds;
-		aabb_viewer_->set_vec3("min", node.world_bounds.min_);
-		aabb_viewer_->set_vec3("max", node.world_bounds.max_);
+		bounding_box bounds = entity.world_bounds;
+		aabb_viewer_->set_vec3("min", entity.world_bounds.min_);
+		aabb_viewer_->set_vec3("max", entity.world_bounds.max_);
 
 		glDrawArrays(GL_TRIANGLES, 0, 36);
-	}
-
-	for (const auto& hierarchy : node.children)
-	{
-		draw_aabbs(hierarchy);
 	}
 }
 
 glm::mat4 level::get_tight_scene_frustum(glm::mat4 light_view) const
 {
-	glm::vec3 min = scene_graph_.world_bounds.min_;
-	glm::vec3 max = scene_graph_.world_bounds.max_;
+	glm::vec3 min = scene_bounds_.min_;
+	glm::vec3 max = scene_bounds_.max_;
 
 	glm::vec3 corners[] = {
 			glm::vec3(min.x, min.y, min.z),

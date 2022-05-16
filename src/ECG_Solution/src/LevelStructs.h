@@ -67,11 +67,11 @@ struct game_properties {
 };
 
 /// @brief implements a simple scene graph of hierarchical transformations
-struct hierarchy
+struct hierarchy_
 {
 	std::string name;
-	hierarchy* parent = nullptr;
-	std::vector <hierarchy> children;
+	//hierarchy* parent = nullptr;
+	//std::vector <hierarchy> children;
 	int32_t mesh_index = -1;		// assumed to only hold one model
 
 	transformation TRS;
@@ -100,6 +100,40 @@ struct hierarchy
 	}
 };
 
+enum entity_type { rigid, dynamic, decoration, lava };
+
+struct entity
+{
+	std::string name;
+	entity_type type;
+	int32_t mesh_index = -1;
+
+	transformation TRS;
+
+	mutable bounding_box world_bounds;					// pretransformed bounds
+	bounding_box model_bounds;					// bounds in model space
+
+	game_properties game_properties;
+
+	/// return TRS "model matrix" of the node
+	glm::mat4 get_node_matrix() const { return TRS.get_matrix(); }
+
+	/// @return memory efficient TRS data
+	transformation get_node_trs() const { return TRS; }
+
+	/// @brief set TRS "model matrix" of the node
+	void set_node_trs(const glm::vec3 T, const glm::quat R, const glm::vec3 S)
+	{
+		OPTICK_PUSH("set trs")
+			TRS.translate = T; TRS.rotation = R; TRS.scale = S;
+		TRS.local = glm::translate(T) * glm::toMat4(R);
+		auto min = TRS.local * glm::vec4(model_bounds.min_, 1.0f);
+		auto max = TRS.local * glm::vec4(model_bounds.max_, 1.0f);
+		world_bounds = { min, max };
+		OPTICK_POP()
+	}
+};
+
 /// @brief contains a list of draw commands and matching model matrices for models of the same material
 struct render_queue
 {
@@ -113,7 +147,7 @@ struct physics_mesh
 {
 	std::vector<float> vtx_positions;		// all positions (x,y,z) in model space
 	transformation model_trs;				// model tranformation into world space
-	hierarchy* node{};						// pointer to set node matrices, only for dynamic objects
+	entity* entity;						// pointer to set node matrices, only for dynamic objects
 };
 
 /// @brief needed for mesh optimizer

@@ -24,7 +24,7 @@ public:
 	/// </summary>
 	struct PhysicsObject {
 		btRigidBody* rigidbody;
-		hierarchy* modelGraphics;
+		entity* modelGraphics;
 		Physics::ObjectMode mode;
 	};
 
@@ -47,7 +47,7 @@ public:
 	/// The object mode determines if the object will move at all
 	/// </summary>
 	PhysicsObject& createPhysicsObject(
-		hierarchy* modelGraphics,
+		entity* modelGraphics,
 		transformation modelMatrix,
 		std::vector<float> colliderVerticePositions,
 		ObjectMode mode
@@ -93,7 +93,7 @@ private:
 	/// Adds a rigidbody (created from the input parameters) to the physics world.
 	/// Also adds the rigidbody and the modelGraphics to a list to keep track of them.
 	/// </summary>
-	PhysicsObject& addPhysicsObject(btRigidBody* rigidbody, hierarchy* modelGraphics, Physics::ObjectMode mode);
+	PhysicsObject& addPhysicsObject(btRigidBody* rigidbody, entity* modelGraphics, Physics::ObjectMode mode);
 
 	/// <summary>
 	/// Sets the transformation matrix of the visual representation

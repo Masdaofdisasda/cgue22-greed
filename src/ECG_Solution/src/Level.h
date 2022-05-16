@@ -42,9 +42,9 @@ private:
 	light_sources lights_;
 	render_queue queue_shadow_;
 	render_queue queue_scene_;
-	hierarchy scene_graph_;
-	hierarchy* lava_;
-	hierarchy* dynamic_node_;
+	std::vector<entity> scene_;
+	uint32_t lava_;
+	bounding_box scene_bounds_;
 	std::vector<physics_mesh> rigid_;
 	std::vector<physics_mesh> dynamic_;
 
@@ -93,10 +93,9 @@ private:
 	/**
 	 * \brief recursive function that builds a scenegraph with hierarchical transformation, similiar to assimps scene
 	 * \param n is an assimp node that holds transformations, nodes or meshes
-	 * \param parent is the parent node of the currently created node, mainly used for debugging
-	 * \param node  is the current node from the view of the parent node
+	 * \param type of the mesh and all child meshes
 	 */
-	void traverse_tree(const aiNode* n, hierarchy* parent, hierarchy* node);
+	void traverse_tree(const aiNode* n, const glm::mat4 mat, entity_type type);
 
 	/**
 	 * \brief loads and compiles shaders for debugging the AABBs and the frustum culler
@@ -127,35 +126,31 @@ private:
 	 * \param global_transform is the accumulation of parent transforms
 	 * \param high_quality only uses lowest LOD if false, uses normal LOD decision heuristic if true
 	 */
-	void build_render_queue(const hierarchy* node, glm::mat4 global_transform);
+	void build_render_queue();
 
 
 	/**
 	 * \brief recursively renders every AABB as a wireframe box
 	 * \param node that gets traversed
 	 */
-	void draw_aabbs(hierarchy node);
+	void draw_aabbs() const;
 
 	/**
 	 * \brief recursively transforms AABBs in the scene graph from model space to world space
 	 * \param node that gets transformed
 	 * \param global_transform is the accumulation of parent transforms
 	 */
-	void transform_bounding_boxes(hierarchy* node, glm::mat4 global_transform);
+	void transform_bounding_boxes() const;
+
+	void get_scene_bounds();
 
 	/**
 	 * \brief adds position vertex data of all "rigid" children to the rigid_ list
 	 * \param node that gets added if it has data
 	 * \param global_transform is the accumulation of parent transforms
 	 */
-	void collect_rigid_physic_meshes(hierarchy* node, glm::mat4 global_transform);
-
-	/**
-	 * \brief adds position vertex data of all "dynamic" children to the dynamic_ list
-	 * \param node that gets added if it has data
-	 * \param global_transform is the accumulation of parent transforms
-	 */
-	void collect_dynamic_physic_meshes(hierarchy* node, glm::mat4 global_transform);
+	void collect_physic_meshes();
+	
 
 	/**
 	 * \brief deletes all entries in the render queue, call after a draw cycle

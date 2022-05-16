@@ -16,7 +16,7 @@ Physics::Physics() {
 }
 
 Physics::PhysicsObject& Physics::createPhysicsObject(
-	hierarchy* modelGraphics,
+	entity* modelGraphics,
 	transformation modelMatrix,
 	std::vector<float> colliderVerticePositions,
 	ObjectMode mode)
@@ -91,10 +91,10 @@ void Physics::updateModelTransform(PhysicsObject* physicsObject) {
 	if (physicsObject->modelGraphics == nullptr)
 		return;
 
-	btRigidBody rb = *physicsObject->rigidbody;
-	glm::vec3 pos = btToGlm(rb.getCenterOfMassTransform().getOrigin());
-	float angle = static_cast<float>(rb.getOrientation().getAngle());
-	glm::vec3 axis = btToGlm(rb.getOrientation().getAxis());
+	const btRigidBody* rb = physicsObject->rigidbody;
+	glm::vec3 pos = btToGlm(rb->getCenterOfMassTransform().getOrigin());
+	float angle = static_cast<float>(rb->getOrientation().getAngle());
+	glm::vec3 axis = btToGlm(rb->getOrientation().getAxis());
 	glm::vec3 scale = glm::vec3(1.0);
 
 	glm::quat rot = glm::angleAxis(angle, axis);
@@ -102,7 +102,7 @@ void Physics::updateModelTransform(PhysicsObject* physicsObject) {
 	physicsObject->modelGraphics->set_node_trs(pos, rot, scale);
 }
 
-Physics::PhysicsObject& Physics::addPhysicsObject(btRigidBody* rigidbody, hierarchy* modelGraphics, Physics::ObjectMode mode) {
+Physics::PhysicsObject& Physics::addPhysicsObject(btRigidBody* rigidbody, entity* modelGraphics, Physics::ObjectMode mode) {
 	// add it to physics world
 	dynamics_world->addRigidBody(rigidbody);
 
