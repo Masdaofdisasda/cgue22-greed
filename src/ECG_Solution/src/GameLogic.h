@@ -20,7 +20,8 @@ private:
 	std::list<observer*> observer_list_;
 	std::shared_ptr<global_state> state_;
 	PerFrameData* perframe_data_{};
-	float exit_height_ = 500.0f;
+	float exit_height_ = 100.0f;
+	float lava_trigger_height_ = 20.0f;
 	float player_size_ = 1.8f;
 };
 
@@ -48,6 +49,12 @@ inline void game_logic::update()
 {
 	if (state_->won == true || state_->lost == true)
 		return;
+
+	if (state_->lava_triggered == false && perframe_data_->view_pos.y > lava_trigger_height_ + player_size_)
+	{
+		state_->lava_triggered = true;
+		notify_observers(escape);
+	}
 
 	if (perframe_data_->view_pos.y > exit_height_+ player_size_)
 	{

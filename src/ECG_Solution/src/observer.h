@@ -12,6 +12,7 @@ enum event
 
 	loading,
 	collecting,
+	escape,
 };
 
 /**

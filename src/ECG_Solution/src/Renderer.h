@@ -95,7 +95,7 @@ private:
 	framebuffer blur1_ = framebuffer(state->width / 2, state->height / 2, GL_RGBA8, 0);
 	framebuffer depth_half_res_ = framebuffer(state->width / 2, state->height / 2, 0, GL_DEPTH_COMPONENT24);
 
-	GLuint hud_ = Texture::load_texture_transparent("../../assets/textures/loading/alpha HUD.png");
+	GLuint hud_ = Texture::load_texture("../../assets/textures/loading/alpha HUD.ktx");
 
 	/**
 	 * \brief bind light sources to binding points

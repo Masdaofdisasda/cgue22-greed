@@ -33,25 +33,26 @@ GLuint Texture::load_texture(const char* tex_path)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	
+	gli::texture gli_tex = gli::load_ktx(tex_path);
 
-	stbi_set_flip_vertically_on_load(true);
-
-	int w, h, comp;
-	const uint8_t* img = stbi_load(tex_path, &w, &h, &comp, 3);
-
-	if (img > nullptr)
+	if (!gli_tex.empty())
 	{
-		glTextureStorage2D(handle, 1, GL_RGB8, w, h);
-		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-		glTextureSubImage2D(handle, 0, 0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, img);
-		glBindTextures(0, 1, &handle);
-		delete img;
+		gli_tex = flip(gli_tex);
+		const gli::gl GL(gli::gl::PROFILE_KTX);
+		gli::gl::format const format = GL.translate(gli_tex.format(), gli_tex.swizzles());
+		const glm::tvec3<GLsizei> extent(gli_tex.extent(0));
+		const int w = extent.x;
+		const int h = extent.y;
+		//const int numMipmaps = get_num_mip_map_levels_2d(w, h);
+		glTextureStorage2D(handle, 1, format.Internal, w, h);
+		glTextureSubImage2D(handle, 0, 0, 0, w, h, format.External, format.Type, gli_tex.data(0, 0, 0));
 	}
 	else
 	{
 		std::cout << "could not load texture" << tex_path << std::endl;
 	}
-	glBindTexture(GL_TEXTURE_2D, 0);
+
 	return handle;
 }
 

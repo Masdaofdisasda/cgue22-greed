@@ -12,11 +12,11 @@ LoadingScreen::LoadingScreen(glfw_app* app, const int width, const int height)
 
 void LoadingScreen::init()
 {
-	scrn0_ = Texture::load_texture("../../assets/textures/loading/screen0.jpg");
-	scrn25_ = Texture::load_texture("../../assets/textures/loading/screen25.jpg");
-	scrn50_ = Texture::load_texture("../../assets/textures/loading/screen50.jpg");
-	scrn75_ = Texture::load_texture("../../assets/textures/loading/screen75.jpg");
-	scrn100_ = Texture::load_texture("../../assets/textures/loading/screen100.jpg");
+	scrn0_ = Texture::load_texture("../../assets/textures/loading/screen0.ktx");
+	scrn25_ = Texture::load_texture("../../assets/textures/loading/screen25.ktx");
+	scrn50_ = Texture::load_texture("../../assets/textures/loading/screen50.ktx");
+	scrn75_ = Texture::load_texture("../../assets/textures/loading/screen75.ktx");
+	scrn100_ = Texture::load_texture("../../assets/textures/loading/screen100.ktx");
 
 	render_image_ = std::make_unique<program>();
 	Shader render_img_vert("../../assets/shaders/fullScreenTriangle.vert");

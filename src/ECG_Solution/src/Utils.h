@@ -49,6 +49,7 @@ struct global_state
 	//game logic
 	bool won = false;
 	bool lost = false;
+	bool lava_triggered = false;
 	float lava_height = 0.0f;
 	//ui
 	bool display_collect_item_hint = false;

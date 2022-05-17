@@ -146,8 +146,8 @@ void renderer::draw(level* level)
 	perframe_data_->light_view_proj = light_proj * light_view;
 
 	// TODO
-	lights_.point[0].position = perframe_data_->view_pos;
-	positional_lights_.update(lights_.point.size() * sizeof(positional_light), lights_.point.data());
+	//lights_.point[0].position = perframe_data_->view_pos;
+	//positional_lights_.update(lights_.point.size() * sizeof(positional_light), lights_.point.data());
 
 	perframe_buffer_.update(sizeof(PerFrameData), perframe_data_);
 

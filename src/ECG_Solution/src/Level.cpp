@@ -591,12 +591,12 @@ void level::draw_scene_shadow_map()
 	OPTICK_PUSH("update scene")
 
 	// recalculate bounds & set lod uniforms
-	if (perframe_data_->delta_time.y > 60.0f)
+	if (state_->lava_triggered)
 	{
 		glm::vec3 t = scene_[lava_].TRS.translate;
 		t.y += perframe_data_->delta_time.x * .2f;
-		//scene_[lava_].set_node_trs(t, scene_[lava_].TRS.rotation, scene_[lava_].TRS.scale);
-		//state_->lava_height = scene_[lava_].TRS.translate.y;
+		scene_[lava_].set_node_trs(t, scene_[lava_].TRS.rotation, scene_[lava_].TRS.scale);
+		state_->lava_height = scene_[lava_].TRS.translate.y;
 	}
 	OPTICK_PUSH("transform bounding boxes")
 	OPTICK_POP()

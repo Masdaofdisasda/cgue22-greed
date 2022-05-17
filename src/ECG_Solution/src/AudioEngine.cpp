@@ -76,6 +76,11 @@ void music::update(const event event)
 		engine_->play2D(ost_collecting_, true);
 		engine_->play2D(amb_drops_, true);
 		break;
+	case escape:
+		engine_->stopAllSounds();
+		engine_->play2D(ost_collecting_, true); //TODO
+		engine_->play2D(amb_drops_, true);
+		break;
 	case fx_lost:
 		engine_->stopAllSounds();
 		break;

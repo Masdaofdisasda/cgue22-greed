@@ -143,7 +143,7 @@ vec3 getIBLContribution(PBRInfo pbrInputs, vec3 n, vec3 reflection)
 	vec3 diffuse = diffuseLight * pbrInputs.diffuseColor;
 	vec3 specular = specularLight * (pbrInputs.specularColor * brdf.x + brdf.y);
 
-	return diffuse + specular;
+	return diffuse;
 }
 
 // Disney Implementation of diffuse from Physically-Based Shading at Disney by Brent Burley. See Section 5.3.
@@ -347,8 +347,9 @@ void main()
 {
 	// read textures
     Material mat = materials[mat_id];
-
-	vec2 UV = parallaxUV(normalize(fPosition - viewPos.xyz));
+	
+	//vec2 UV = parallaxUV(normalize(fPosition - viewPos.xyz));
+	vec2 UV = fUV;
     
 	vec4 Kd = texture(sampler2D(unpackUint2x32(mat.albedo_map_)), UV);
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "gli/gli.hpp"
 #include "Utils.h"
 #include <vector>
 
@@ -37,6 +38,7 @@ public:
 	static GLuint load_texture_transparent(const char* tex_path);
 	static GLuint load_3dlut(const char* tex_path);
 	static void stbi_load_single(const std::string& tex_path, stbiData* img);
+	
 
 	/**
 	 * \brief generates a SSAO filter kernel texture

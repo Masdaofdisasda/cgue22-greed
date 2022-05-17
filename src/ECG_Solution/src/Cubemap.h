@@ -1,5 +1,6 @@
 #pragma once
 #include "Utils.h"
+#include "gli/gli.hpp"
 
 /// @brief loads and processes 4 different textures for image based lightning
 /// loads an equirectangular panorama HDR image and prepares it for the render pipeline
