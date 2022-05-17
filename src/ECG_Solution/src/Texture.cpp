@@ -247,7 +247,6 @@ void Texture::stbi_load_single(const std::string& tex_path, image_data* img)
 void Texture::gli_load_single(const std::string& tex_path, gli::texture* img)
 {
 	*img = gli::load_ktx(tex_path);
-	//img = flip(img);
 }
 
 GLuint Texture::get_ssao_kernel()
