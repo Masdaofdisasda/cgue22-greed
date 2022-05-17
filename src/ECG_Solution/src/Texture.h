@@ -4,7 +4,7 @@
 #include "Utils.h"
 #include <vector>
 
-struct stbiData
+struct image_data
 {
 	uint8_t* data;
 	int w, h, comp;
@@ -37,7 +37,8 @@ public:
 	static void load_texture_mt(const char* tex_path, GLuint handles[], uint64_t bindless[]);
 	static GLuint load_texture_transparent(const char* tex_path);
 	static GLuint load_3dlut(const char* tex_path);
-	static void stbi_load_single(const std::string& tex_path, stbiData* img);
+	static void stbi_load_single(const std::string& tex_path, image_data* img);
+	static void gli_load_single(const std::string& tex_path, gli::texture* img);
 	
 
 	/**

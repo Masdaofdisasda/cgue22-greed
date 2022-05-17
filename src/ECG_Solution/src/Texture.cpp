@@ -62,30 +62,27 @@ GLuint Texture::load_texture(const char* tex_path)
 void Texture::load_texture_mt(const char* tex_path, GLuint handles[], uint64_t bindless[])
 {
 	
-	stbiData img_data[7]; std::thread workers[7];
+	gli::texture img_data[7];
 
-	std::string albedo = append(tex_path, "/albedo.png");
-	workers[0] = std::thread (Texture::stbi_load_single, albedo, &img_data[0]);
-	std::string normal = append(tex_path, "/normal.png");
-	workers[1] = std::thread (Texture::stbi_load_single, normal, &img_data[1]);
-	std::string metal = append(tex_path, "/metal.png");
-	workers[2] = std::thread (Texture::stbi_load_single, metal, &img_data[2]);
-	std::string rough = append(tex_path, "/rough.png");
-	workers[3] = std::thread (Texture::stbi_load_single, rough, &img_data[3]);
-	std::string ao = append(tex_path, "/ao.png");
-	workers[4] = std::thread(Texture::stbi_load_single, ao, &img_data[4]);
-	std::string emissive = append(tex_path, "/emissive.png");
-	workers[5] = std::thread(Texture::stbi_load_single, emissive, &img_data[5]);
-	std::string height = append(tex_path, "/height.png");
-	workers[6] = std::thread(Texture::stbi_load_single, height, &img_data[6]);
+	img_data[0] = gli::load_ktx(append(tex_path, "/albedo.ktx"));
+	img_data[1] = gli::load_ktx(append(tex_path, "/normal.ktx"));
+	img_data[2] = gli::load_ktx(append(tex_path, "/metal.ktx"));
+	img_data[3] = gli::load_ktx(append(tex_path, "/rough.ktx"));
+	img_data[4] = gli::load_ktx(append(tex_path, "/ao.ktx"));
+	img_data[5] = gli::load_ktx(append(tex_path, "/emissive.ktx"));
+	img_data[6] = gli::load_ktx(append(tex_path, "/height.ktx"));
 
 	for (size_t i = 0; i < 7; i++)
 	{
-		workers[i].join();
-		
-		if (img_data[i].data > nullptr)
+		if (!img_data[i].empty())
 		{
-			const int mipMapLevel = get_num_mip_map_levels_2d(img_data[i].w, img_data[i].h);
+			img_data[i] = flip(img_data[i]);
+			const gli::gl GL(gli::gl::PROFILE_KTX);
+			gli::gl::format const format = GL.translate(img_data[i].format(), img_data[i].swizzles());
+			const glm::tvec3<GLsizei> extent(img_data[i].extent(0));
+			const int w = extent.x;
+			const int h = extent.y;
+			const int mipMapLevel = get_num_mip_map_levels_2d(w, h);
 			glCreateTextures(GL_TEXTURE_2D, 1, &handles[i]);
 
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -93,15 +90,14 @@ void Texture::load_texture_mt(const char* tex_path, GLuint handles[], uint64_t b
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-			glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-			glTextureStorage2D(handles[i], mipMapLevel, GL_RGBA8, img_data[i].w, img_data[i].h);
-			glTextureSubImage2D(handles[i], 0, 0, 0, img_data[i].w, img_data[i].h, GL_RGBA, GL_UNSIGNED_BYTE, img_data[i].data);
+			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+			glTextureStorage2D(handles[i], mipMapLevel, format.Internal, w, h);
+			glTextureSubImage2D(handles[i], 0, 0, 0, w, h, format.External, format.Type, img_data[i].data(0, 0, 0));
 			glGenerateTextureMipmap(handles[i]);
 			glTextureParameteri(handles[i], GL_TEXTURE_MAX_LEVEL, mipMapLevel - 1);
 			glTextureParameteri(handles[i], GL_TEXTURE_MAX_ANISOTROPY, 16);
 			bindless[i] = glGetTextureHandleARB(handles[i]);
 			glMakeTextureHandleResidentARB(bindless[i]);
-			delete img_data[i].data;
 		}
 		else
 		{
@@ -241,11 +237,17 @@ int Texture::get_num_mip_map_levels_2d(const int w, const int h)
 	return levels;
 }
 
-void Texture::stbi_load_single(const std::string& tex_path, stbiData* img)
+void Texture::stbi_load_single(const std::string& tex_path, image_data* img)
 {
 	stbi_set_flip_vertically_on_load(true);
 
 	img->data = stbi_load(tex_path.c_str(), &img->w, &img->h, &img->comp, STBI_rgb_alpha);
+}
+
+void Texture::gli_load_single(const std::string& tex_path, gli::texture* img)
+{
+	*img = gli::load_ktx(tex_path);
+	//img = flip(img);
 }
 
 GLuint Texture::get_ssao_kernel()
