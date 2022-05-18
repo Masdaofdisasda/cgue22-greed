@@ -50,6 +50,7 @@ struct global_state
 	bool won = false;
 	bool lost = false;
 	bool lava_triggered = false;
+	bool paused = false;
 	float lava_height = 0.0f;
 	//ui
 	bool display_collect_item_hint = false;
@@ -100,7 +101,7 @@ struct PerFrameData
 	glm::mat4 view_inv;		// todo
 	glm::mat4 proj_inv;		// todo
 	glm::vec4 bloom;		// x = exposure, y = maxWhite, z = bloomStrength, w = adaptionSpeed
-	glm::vec4 delta_time;	// x = deltaSeconds, y = summedTime, z = ?, w = ?
+	glm::vec4 delta_time;	// x = deltaSeconds, y = summedTime, z = screen width, w = screen height
 	glm::vec4 normal_map;	// x = normalMapToogle, y = lavaID, z = ?, w = ?
 	glm::vec4 ssao1;		// x = scale,, y = bias, z = znear, w = zfar
 	glm::vec4 ssao2;		// x = radius, y = attscale, z = distscale, w = ?
@@ -155,7 +156,7 @@ glm::vec3 uniform_circle();
 ///	11 - skybox
 /// 12 - depth map
 ///	13 - 3D LUT look
-/// 14 -
+/// 14 - volumetric light
 ///	15 -
 ///	postprocessing
 ///	16 - ssao / bloom / fullscreen images

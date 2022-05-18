@@ -60,6 +60,8 @@ void renderer::set_render_settings() const
 		1.0f);
 
 	perframe_data_->delta_time = glm::vec4(0);
+	perframe_data_->delta_time.z = state->width;
+	perframe_data_->delta_time.w = state->height;
 }
 
 void renderer::build_shader_programs()
@@ -151,6 +153,10 @@ void renderer::draw(level* level)
 
 	perframe_buffer_.update(sizeof(PerFrameData), perframe_data_);
 
+
+	if (!state->paused)
+	{
+
 	glEnable(GL_DEPTH_TEST);
 
 	// 1 - depth mapping
@@ -210,7 +216,7 @@ void renderer::draw(level* level)
 		blur0_.bind();
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 		blur0_.unbind();
-		glBindTextureUnit(12, blur0_.get_texture_color().get_handle());
+		glBindTextureUnit(14, blur0_.get_texture_color().get_handle());
 
 
 		/*
@@ -351,6 +357,7 @@ void renderer::draw(level* level)
 			state->width, state->height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 	}
 	OPTICK_POP()
+	}
 	
 	// 5 - render HUD
 	OPTICK_PUSH("HUD pass")
@@ -358,6 +365,12 @@ void renderer::draw(level* level)
 	font_renderer_.print("+", state->width * 0.4956f, state->height * 0.4934f, .5f, glm::vec3(.7f, .7f, .7f));
 	font_renderer_.print("CLOSED BETA FOOTAGE", state->width * 0.8f, state->height * 0.08f, .5f, glm::vec3(.7f, .7f, .7f));
 	font_renderer_.print("all content is subject to change", state->width * 0.78f, state->height * 0.05f, .5f, glm::vec3(.5f, .5f, .5f));
+	if (state->paused)
+	{
+		font_renderer_.print("PAUSED", state->width * 0.2f, state->height * 0.6f, 1.0f, glm::vec3(.9f, .9f, .9f));
+		font_renderer_.print("[ENTER] continue", state->width * 0.2f, state->height * 0.53f, .5f, glm::vec3(.7f, .7f, .7f));
+		font_renderer_.print("[ESC] exit", state->width * 0.2f, state->height * 0.5f, .5f, glm::vec3(.7f, .7f, .7f));
+	}
 
 	render_color_.use();
 	render_color_.set_vec4("color", glm::vec4(0.0f, 0.0f, 0.0f, 0.7f));

@@ -38,6 +38,7 @@ struct PositionalLight
 	vec4 position;
     vec4 intensity;
 };
+uniform int numPos;
 
 layout (std140, binding = 2) uniform pLightUBlock {
  PositionalLight pLights [ pMAXLIGHTS ];
@@ -59,16 +60,16 @@ int numSamples = 64;
 #define PI (0.31830988618379067153776752674503)
 
 vec3 world_pos_from_depth(float depth) {
-    float z = depth * 2.0 - 1.0;
+	float x = (uv.x * 2.0) - 1.0;
+	float y = (uv.y * 2.0) - 1.0;
+	float z = (depth * 2.0) - 1.0;
 
-    vec4 clip_space_position = vec4(uv * 2.0 - 1.0, z, 1.0);
-    vec4 view_space_position = projInv * clip_space_position;
+	vec4 pos_clip = vec4(x, y, z, 1.0);
 
-    // Perspective divide
-    view_space_position /= view_space_position.w;
+	vec4 pos_ws = viewInv * projInv * pos_clip;
+	pos_ws.xyz /= pos_ws.w;
 
-    vec4 world_space_position = viewInv * view_space_position;
-    return world_space_position.xyz;
+	return pos_ws.xyz;
 }
 
 
@@ -179,5 +180,5 @@ void main() {
 	
 	vec3 vol_color = volumetric_lighting_directional(frag_pos, dLights[0]) * dLights[0].intensity.rgb;
 	
-	FragColor = vec4(vol_color, depth);
+	FragColor = vec4(depth,depth,depth, depth);
 }

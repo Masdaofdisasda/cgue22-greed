@@ -161,6 +161,7 @@ int main(int argc, char** argv)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glLineWidth(2.0f);
 	glEnable(GL_CULL_FACE);
+	glDepthRangef(0.0f, 1000.0f);
 
 	music_engine.update(collecting);
 
@@ -201,7 +202,8 @@ int main(int argc, char** argv)
 
 		// calculate physics
 		OPTICK_PUSH("physics simulation")
-		physics.simulateOneStep(delta_seconds);
+		if (!state_->paused)
+			physics.simulateOneStep(delta_seconds);
 		OPTICK_POP()
 
 		OPTICK_PUSH("draw routine")
@@ -273,10 +275,17 @@ void registerInputCallbacks(glfw_app& app) {
 				keyboard_input_.pressing_shift = press;
 			if (key == GLFW_KEY_SPACE)
 				keyboard_input_.pressing_space = press;
+			if (key == GLFW_KEY_ENTER)
+				state_->paused = false;
 
 			// Window management, Debug, Effects
-			if (key == GLFW_KEY_ESCAPE)
-				glfwSetWindowShouldClose(window, GLFW_TRUE);
+			if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+			{
+				if (!state_->paused)
+					state_->paused = true;
+				else
+					glfwSetWindowShouldClose(window, GLFW_TRUE);
+			}
 			if (key == GLFW_KEY_F1 && action == GLFW_PRESS)
 			{
 				if (state_->fullscreen)

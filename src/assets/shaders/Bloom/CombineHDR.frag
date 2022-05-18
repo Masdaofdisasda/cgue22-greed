@@ -9,6 +9,7 @@ layout(binding = 16) uniform sampler2D texScene;
 layout(binding = 17) uniform sampler2D texLuminance;
 layout(binding = 18) uniform sampler2D texBloom;
 layout(binding = 13) uniform sampler3D Lut3D;
+layout(binding = 14) uniform sampler2D texlight;
 
 layout(std140, binding = 0) uniform PerFrameData
 {
