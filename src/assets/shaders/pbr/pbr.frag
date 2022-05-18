@@ -143,7 +143,7 @@ vec3 getIBLContribution(PBRInfo pbrInputs, vec3 n, vec3 reflection)
 	vec3 diffuse = diffuseLight * pbrInputs.diffuseColor;
 	vec3 specular = specularLight * (pbrInputs.specularColor * brdf.x + brdf.y);
 
-	return diffuse;
+	return diffuse + specular ;
 }
 
 // Disney Implementation of diffuse from Physically-Based Shading at Disney by Brent Burley. See Section 5.3.
@@ -355,6 +355,7 @@ void main()
 
     vec3 normal_sample = vec3(0,0,0);
     normal_sample = texture(sampler2D(unpackUint2x32(mat.normal_map_)), UV).rgb;
+	normal_sample = pow( normal_sample, vec3(1.0/2.2) ) ; // toktx tool maps normal map to linear space
     vec3 n = normalize(fNormal);
     if (length(normal_sample) > 0.5 && (normalMap.x > 0.0f))
         n = perturbNormal(normalize(fNormal), normalize(viewPos.xyz - fPosition), normal_sample, UV);
