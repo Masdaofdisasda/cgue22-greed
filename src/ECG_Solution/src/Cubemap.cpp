@@ -39,27 +39,31 @@ void cubemap::load_hdr(const char* tex_path)
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, captureRBO);
 
+    glCreateTextures(GL_TEXTURE_2D, 1, &hdr_id);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
     // pbr: load the HDR environment map
     // ---------------------------------
-    stbi_set_flip_vertically_on_load(true);
-    int width, height, nrComponents;
+    gli::texture gli_tex = gli::load_ktx(tex_path);
 
-    float* data = stbi_loadf(tex_path, &width, &height, &nrComponents, 0);
-    if (data)
+    if (!gli_tex.empty())
     {
-        glBindTexture(GL_TEXTURE_2D, hdr_id);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, data); // note how we specify the texture's data value to be float
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        stbi_image_free(data);
+        gli_tex = flip(gli_tex);
+        const gli::gl GL(gli::gl::PROFILE_KTX);
+        gli::gl::format const format = GL.translate(gli_tex.format(), gli_tex.swizzles());
+        const glm::tvec3<GLsizei> extent(gli_tex.extent(0));
+        const int w = extent.x;
+        const int h = extent.y;
+        glTextureStorage2D(hdr_id, 1, format.Internal, w, h);
+        glTextureSubImage2D(hdr_id, 0, 0, 0, w, h, format.External, format.Type, gli_tex.data(0, 0, 0));
     }
     else
     {
-        std::cout << "Failed to load HDR image: " << tex_path << std::endl;
+        std::cout << "could not load texture" << tex_path << std::endl;
     }
 
     // pbr: setup cubemap to render to and attach to framebuffer

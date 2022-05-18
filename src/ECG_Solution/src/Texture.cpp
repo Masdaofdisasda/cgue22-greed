@@ -76,7 +76,7 @@ void Texture::load_texture_mt(const char* tex_path, GLuint handles[], uint64_t b
 	{
 		if (!img_data[i].empty())
 		{
-			img_data[i] = flip(img_data[i]);
+			//img_data[i] = flip(img_data[i]);
 			const gli::gl GL(gli::gl::PROFILE_KTX);
 			gli::gl::format const format = GL.translate(img_data[i].format(), img_data[i].swizzles());
 			const glm::tvec3<GLsizei> extent(img_data[i].extent(0));
@@ -114,40 +114,6 @@ void Texture::load_texture_mt(const char* tex_path, GLuint handles[], uint64_t b
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-/// @brief loads a texture from image, used in Material.h
-/// @param tex_path is the location of an image
-/// @return the created texture handle
-GLuint Texture::load_texture_transparent(const char* tex_path)
-{
-	GLuint handle = 0;
-	// generate texture
-	glCreateTextures(GL_TEXTURE_2D, 1, &handle);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	stbi_set_flip_vertically_on_load(true);
-
-	int w, h, comp;
-	const uint8_t* img = stbi_load(tex_path, &w, &h, &comp, STBI_rgb_alpha);
-
-	if (img > nullptr)
-	{
-		glTextureStorage2D(handle, 1, GL_RGBA8, w, h);
-		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-		glTextureSubImage2D(handle, 0, 0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, img);
-		glBindTextures(0, 1, &handle);
-		delete img;
-	}
-	else
-	{
-		std::cout << "could not load texture" << tex_path << std::endl;
-	}
-	glBindTexture(GL_TEXTURE_2D, 0);
-	return handle;
-}
 
 /// @brief loads a 3dlut in .cube format, used for color grading in Renderer
 /// code from https://svnte.se/3d-lut
@@ -242,11 +208,6 @@ void Texture::stbi_load_single(const std::string& tex_path, image_data* img)
 	stbi_set_flip_vertically_on_load(true);
 
 	img->data = stbi_load(tex_path.c_str(), &img->w, &img->h, &img->comp, STBI_rgb_alpha);
-}
-
-void Texture::gli_load_single(const std::string& tex_path, gli::texture* img)
-{
-	*img = gli::load_ktx(tex_path);
 }
 
 GLuint Texture::get_ssao_kernel()

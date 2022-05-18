@@ -35,10 +35,8 @@ public:
 
 	static GLuint load_texture(const char* tex_path);
 	static void load_texture_mt(const char* tex_path, GLuint handles[], uint64_t bindless[]);
-	static GLuint load_texture_transparent(const char* tex_path);
 	static GLuint load_3dlut(const char* tex_path);
 	static void stbi_load_single(const std::string& tex_path, image_data* img);
-	static void gli_load_single(const std::string& tex_path, gli::texture* img);
 	
 
 	/**

@@ -18,9 +18,9 @@ renderer::renderer(PerFrameData& perframe_data, light_sources& sources)
 	prepare_framebuffers();
 
 	std::cout << "load Enviroment Map.." << std::endl;
-	ibl_.load_hdr("../../assets/textures/cubemap/cellar.hdr");
+	ibl_.load_hdr("../../assets/textures/cubemap/cellar_skybox.ktx");
 	std::cout << "load Skybox.." << std::endl;
-	sky_tex_.load_hdr("../../assets/textures/cubemap/beach.hdr");
+	sky_tex_.load_hdr("../../assets/textures/cubemap/beach_skybox.ktx");
 	const GLuint textures[] = {ibl_.get_environment(), ibl_.get_irradiance_id(), ibl_.get_bdrf_lut_id(), sky_tex_.get_environment() };
 	glBindTextures(8, 4, textures);
 	glBindTextureUnit(13, lut_3d_);
@@ -354,10 +354,8 @@ void renderer::draw(level* level)
 	
 	// 5 - render HUD
 	OPTICK_PUSH("HUD pass")
-	render_image_.use();
 	glEnable(GL_BLEND);
-	glBindTextureUnit(16, hud_);
-	glDrawArrays(GL_TRIANGLES, 0, 3);
+	font_renderer_.print("+", state->width * 0.4956f, state->height * 0.4934f, .5f, glm::vec3(.7f, .7f, .7f));
 	font_renderer_.print("CLOSED BETA FOOTAGE", state->width * 0.8f, state->height * 0.08f, .5f, glm::vec3(.7f, .7f, .7f));
 	font_renderer_.print("all content is subject to change", state->width * 0.78f, state->height * 0.05f, .5f, glm::vec3(.5f, .5f, .5f));
 
@@ -405,5 +403,4 @@ renderer::~renderer()
 	perframe_data_ = nullptr;
 	glDeleteTextures(1, &luminance1x1_);
 	glDeleteTextures(1, &pattern_);
-	glDeleteTextures(1, &hud_);
 }
