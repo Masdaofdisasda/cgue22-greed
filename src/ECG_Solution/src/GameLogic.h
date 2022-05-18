@@ -21,7 +21,7 @@ private:
 	std::shared_ptr<global_state> state_;
 	PerFrameData* perframe_data_{};
 	float exit_height_ = 100.0f;
-	float lava_trigger_height_ = 20.0f;
+	float lava_trigger_height_ = 7.0f;
 	float player_size_ = 1.8f;
 };
 

@@ -355,7 +355,7 @@ void main()
 
     vec3 normal_sample = vec3(0,0,0);
     normal_sample = texture(sampler2D(unpackUint2x32(mat.normal_map_)), UV).rgb;
-	normal_sample = pow( normal_sample, vec3(1.0/2.2) ) ;
+	normal_sample = pow( normal_sample, vec3(1.0/2.2) ) ; // toktx tool maps normal map to linear space
     vec3 n = normalize(fNormal);
     if (length(normal_sample) > 0.5 && (normalMap.x > 0.0f))
         n = perturbNormal(normalize(fNormal), normalize(viewPos.xyz - fPosition), normal_sample, UV);

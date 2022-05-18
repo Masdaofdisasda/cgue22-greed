@@ -38,7 +38,7 @@ PerFrameData perframe_data_;
 mouse_state mouse_state_;
 
 camera_positioner_interface* camera_positioner_;
-camera_positioner_first_person floating_positioner_(glm::vec3(-30.0f, 6.0f, 30.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+camera_positioner_first_person floating_positioner_(glm::vec3(-15.0f, 6.0f, 15.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 camera_positioner_player player_camera_positioner_;
 camera camera_(*camera_positioner_);
 
