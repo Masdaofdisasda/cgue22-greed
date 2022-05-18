@@ -51,6 +51,7 @@ struct global_state
 	bool lost = false;
 	bool lava_triggered = false;
 	bool paused = false;
+	bool restart = false;
 	float lava_height = 0.0f;
 	//ui
 	bool display_collect_item_hint = false;

@@ -54,6 +54,8 @@ int main(int argc, char** argv)
 	OPTICK_THREAD("MainThread")
 	OPTICK_START_CAPTURE()
 	OPTICK_PUSH("init program")
+	while(true)
+	{
 	/* --------------------------------------------- */
 	// Load settings.ini
 	/* --------------------------------------------- */
@@ -88,7 +90,7 @@ int main(int argc, char** argv)
 	glDebugMessageCallback(debug::message_callback, nullptr);
 #endif
 	
-	LoadingScreen loading_screen = LoadingScreen(&glfw_app, state_->width, state_->height);
+	LoadingScreen loading_screen(&glfw_app, state_->width, state_->height);
 	loading_screen.draw_progress();
 
 	/* --------------------------------------------- */
@@ -191,6 +193,8 @@ int main(int argc, char** argv)
 		glfw_app.update_window();
 
 		// player actions
+		if (state_->restart)
+			break;
 		if (state_->using_debug_camera)
 			floating_positioner_.set_movement_state(keyboard_input_);
 		else {
@@ -243,7 +247,12 @@ int main(int argc, char** argv)
 		OPTICK_POP()
 	}
 
+	if (glfwWindowShouldClose(glfw_app.get_window()))
+		break;
 
+	renderer::state = std::make_shared<global_state>(load_settings());
+
+	}
 	/* --------------------------------------------- */
 	// Destroy context and exit
 	/* --------------------------------------------- */
@@ -275,10 +284,12 @@ void registerInputCallbacks(glfw_app& app) {
 				keyboard_input_.pressing_shift = press;
 			if (key == GLFW_KEY_SPACE)
 				keyboard_input_.pressing_space = press;
-			if (key == GLFW_KEY_ENTER)
-				state_->paused = false;
 
 			// Window management, Debug, Effects
+			if (key == GLFW_KEY_ENTER)
+				state_->paused = false;
+			if (key == GLFW_KEY_R)
+				state_->restart = true;
 			if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 			{
 				if (!state_->paused)
