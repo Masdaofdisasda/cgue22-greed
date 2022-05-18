@@ -47,6 +47,14 @@ inline void game_logic::notify_observers(const event event)
 
 inline void game_logic::update()
 {
+	//tutorial
+	if (perframe_data_->delta_time.y > 5 && perframe_data_->delta_time.y < 15)
+		state_->display_walk_tutorial = true;
+	if (perframe_data_->delta_time.y > 25 && perframe_data_->delta_time.y < 35)
+		state_->display_pause_tutorial = true;
+	if (perframe_data_->delta_time.y > 45 && perframe_data_->delta_time.y < 55)
+		state_->display_jump_tutorial = true;
+
 	if (state_->won == true || state_->lost == true)
 		return;
 

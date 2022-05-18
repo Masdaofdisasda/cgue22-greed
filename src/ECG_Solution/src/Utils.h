@@ -55,6 +55,9 @@ struct global_state
 	float lava_height = 0.0f;
 	//ui
 	bool display_collect_item_hint = false;
+	bool display_walk_tutorial = false;
+	bool display_pause_tutorial = false;
+	bool display_jump_tutorial = false;
 	float total_cash = 0;
 	int collected_items = 0;
 };

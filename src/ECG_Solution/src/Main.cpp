@@ -224,12 +224,14 @@ int main(int argc, char** argv)
 		perframe_data_.view_inv = glm::inverse(view);
 		perframe_data_.proj_inv = glm::inverse(projection);
 		perframe_data_.delta_time.x = delta_seconds;
-		perframe_data_.delta_time.y += delta_seconds;
+		if (!state_->paused)
+			perframe_data_.delta_time.y += delta_seconds;
 
 		// simple game logic WIP
 		state_->total_cash = item_collection.get_total_monetary_value();
 		state_->collected_items = static_cast<int>(item_collection.size());
-		logic.update();
+		if (!state_->paused)
+			logic.update();
 
 		// actual draw call
 		renderer.draw(&level);
