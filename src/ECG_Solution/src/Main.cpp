@@ -163,7 +163,6 @@ int main(int argc, char** argv)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glLineWidth(2.0f);
 	glEnable(GL_CULL_FACE);
-	glDepthRangef(0.0f, 1000.0f);
 
 	music_engine.update(collecting);
 

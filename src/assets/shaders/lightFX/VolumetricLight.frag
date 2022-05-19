@@ -54,8 +54,8 @@ layout (std140, binding = 2) uniform pLightUBlock {
 // https://www.shadertoy.com/view/WsfBDf
 int numberOfRaySteps = 32;
 
-float tau = 0.02; // probability of collision
-float phi = length(dLights[0].intensity.rgb); // power of light source
+float tau = 0.0015; // probability of collision
+float phi = 50000*length(dLights[0].intensity.rgb); // power of light source
 float PI_RCP = 0.31830988618379067153776752674503;
 const float c_goldenRatioConjugate = 0.61803398875f; // also just fract(goldenRatio)
 const mat4 scaleBias = mat4(
@@ -63,6 +63,7 @@ const mat4 scaleBias = mat4(
 0.0, 0.5, 0.0, 0.0,
 0.0, 0.0, 0.5, 0.0,
 0.5, 0.5, 0.5, 1.0);
+
 
 /*
 *   Calculates the world position given a texture coordinate and depth.
@@ -151,12 +152,12 @@ void main() {
         // blue noise
     float dither_value = texture(bluNoise, uv).r;
     dither_value = fract(dither_value + deltaTime.x * c_goldenRatioConjugate);
-	vec4 ray_position_lightview = start_pos_lightview+dither_value + step_size_lightview * delta_lightview;
-	vec4 ray_position_worldspace = start_pos_worldspace+dither_value + step_size_worldspace * delta_worldspace;
+	vec4 ray_position_lightview = start_pos_lightview + dither_value *step_size_lightview * delta_lightview;
+	vec4 ray_position_worldspace = start_pos_worldspace + dither_value * step_size_worldspace * delta_worldspace;
 
 	//Perform the ray.
 	float light_contribution = 0.0;
-	for (float l = raymarch_distance_worldspace; l > step_size_worldspace; l -= (step_size_worldspace+dither_value)) {
+	for (float l = raymarch_distance_worldspace; l > step_size_worldspace; l -= (step_size_worldspace)) {
 		vec4 ray_position_lightspace = lightProj * vec4(ray_position_lightview.xyz, 1);
 		// perform perspective divide            
 		vec3 proj_coords = ray_position_lightspace.xyz / ray_position_lightspace.w;
@@ -175,15 +176,13 @@ void main() {
 			shadow_term = 0.0;
 		}
 
-		
-		//float d = length(ray_position_worldspace.xyz - light.position);
-		//float d_rcp = 1.0/d;
-		float d_rcp = 1.0;
+		vec3 lightPos = vec3(-7,60,-14); // directional light has no position
+		float d = length(ray_position_worldspace.xyz - lightPos);
+		float d_rcp = 1.0/d;
 		
 		float fog = sample_fog(ray_position_worldspace.xyz);
 		
-		//light_contribution += fog * tau * (shadow_term * (phi * 0.25 * PI_RCP) * d_rcp * d_rcp ) * exp(-d*tau)*exp(-l*tau) * step_size_worldspace;
-		light_contribution += fog * tau * (shadow_term * (phi * 0.25 * PI_RCP) * d_rcp * d_rcp ) *exp(-tau) * step_size_worldspace;
+		light_contribution += fog * tau * (shadow_term * (phi * 0.25 * PI_RCP) * d_rcp * d_rcp ) *exp(-d*tau) * exp(-l*tau) * step_size_worldspace;
 	
 		ray_position_lightview += step_size_lightview * delta_lightview;
 		ray_position_worldspace += step_size_worldspace * delta_worldspace;

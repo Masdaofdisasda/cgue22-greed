@@ -87,8 +87,8 @@ private:
 
 	// Framebuffers for light/shadow
 	framebuffer depth_map_fb_ = framebuffer(1024 * state->shadow_res, 1024 * state->shadow_res, 0, GL_DEPTH_COMPONENT24);
-	framebuffer blur0_ = framebuffer(state->width / 2, state->height / 2, GL_RGBA8, 0);
-	framebuffer blur1_ = framebuffer(state->width / 2, state->height / 2, GL_RGBA8, 0);
+	framebuffer blur0_ = framebuffer(state->width / 2, state->height / 2, GL_RGBA16F, 0);
+	framebuffer blur1_ = framebuffer(state->width / 2, state->height / 2, GL_RGBA16F, 0);
 	//texture from https://github.com/jdupuy/BlueNoiseDitherMaskTiles
 	GLuint blue_noise = Texture::load_texture("../../assets/shaders/lightFX/blue_noise_512_512.ktx");
 
