@@ -24,6 +24,7 @@ renderer::renderer(PerFrameData& perframe_data, light_sources& sources)
 	const GLuint textures[] = {ibl_.get_environment(), ibl_.get_irradiance_id(), ibl_.get_bdrf_lut_id(), sky_tex_.get_environment() };
 	glBindTextures(8, 4, textures);
 	glBindTextureUnit(13, lut_3d_);
+	glBindTextureUnit(20, blue_noise);
 
 	font_renderer_.init("../../assets/fonts/Quasimoda/Quasimoda-Regular.otf", state->width, state->height);
 	lava_sim_.init(glm::ivec3(lights_.directional.size(), lights_.point.size(), 0));
@@ -113,14 +114,6 @@ void renderer::build_shader_programs()
 	Shader volight_frag("../../assets/shaders/lightFX/VolumetricLight.frag", glm::ivec3(lights_.directional.size(), lights_.point.size(), 0));
 	volumetric_light_.build_from(full_screen_triangle_vert, volight_frag);
 
-	Shader down_vl_vert("../../assets/shaders/lightFX/downVL.vert");
-	Shader down_vl_frag("../../assets/shaders/lightFX/downVL.frag");
-	downsample_vl_.build_from(down_vl_vert, down_vl_frag);
-
-	Shader up_vl_vert("../../assets/shaders/lightFX/upVL.vert");
-	Shader up_vl_frag("../../assets/shaders/lightFX/upVL.frag");
-	upsample_vl_.build_from(up_vl_vert, up_vl_frag);
-
 	pbr_shader_.use();
 	pbr_shader_.set_int("numDir", lights_.directional.size());
 	pbr_shader_.set_int("numPos", lights_.point.size());
@@ -145,6 +138,7 @@ void renderer::draw(level* level)
 	const glm::vec3 dir = glm::normalize(lights_.directional[0].direction);
 	const glm::mat4 light_view = glm_look_at(glm::vec3(0, 0, 0), -dir, glm::vec3(0, 0, 1));
 	const glm::mat4 light_proj = level->get_tight_scene_frustum(light_view);
+	perframe_data_->light_view = light_view;
 	perframe_data_->light_view_proj = light_proj * light_view;
 
 	// TODO
@@ -196,56 +190,37 @@ void renderer::draw(level* level)
 	glDisable(GL_DEPTH_TEST);
 	OPTICK_POP()
 
-	// Volumetric Light
-	// https://github.com/metzzo/ezg17-transition
-	if (true)
-	{
-		/*
-		// down sample scene using depth aware downsampling
-		downsampleVL.Use();
-		depthHalfRes.bind();
-		glClearNamedFramebufferfi(depthHalfRes.getHandle(), GL_DEPTH_STENCIL, 0, 1.0f, 0);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
-		depthHalfRes.unbind();
-		glBindTextureUnit(12, depthHalfRes.getTextureDepth().getHandle());
-		*/
+	OPTICK_PUSH("SSAO pass")
+		// Volumetric Light
+		// https://github.com/metzzo/ezg17-transition
 		// calculate volumetric lighting
 		volumetric_light_.use();
+		volumetric_light_.set_mat4("lightProj", light_proj);
 		blur0_.bind();
-		glBindTextureUnit(16, framebuffer1_.get_texture_depth().get_handle());
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+			glBindTextureUnit(16, framebuffer1_.get_texture_depth().get_handle());
+			glDrawArrays(GL_TRIANGLES, 0, 3);
 		blur0_.unbind();
-		glBindTextureUnit(14, blur0_.get_texture_color().get_handle());
+		glBindTextureUnit(16, blur0_.get_texture_color().get_handle());
 
-
-		/*
+		
 		// blur volumetric lighting vertically
 		// Blur X
-		blur1.bind();
-		BlurX.Use();
-		glBindTextureUnit(12, blur0.getTextureColor().getHandle());
-		glDrawArrays(GL_TRIANGLES, 0, 3);
-		blur1.unbind();
+		blur1_.bind();
+			blur_x_.use();
+			glBindTextureUnit(16, blur0_.get_texture_color().get_handle());
+			glDrawArrays(GL_TRIANGLES, 0, 3);
+		blur1_.unbind();
 
 		// blur volumetric lighting horizontally
 		// Blur Y
-		blur0.bind();
-		BlurY.Use();
-		glBindTextureUnit(12, blur1.getTextureColor().getHandle());
-		glDrawArrays(GL_TRIANGLES, 0, 3);
-		blur0.unbind();
-		glBindTextureUnit(12, blur0.getTextureColor().getHandle());
-		/*
-		// get volumetric lighting to full resolution using depth aware upsampling
-		upsampleVL.Use();
-		glBindTextureUnit(9, framebuffer1.getTextureColor().getHandle());
-		glBindTextureUnit(12, blur0.getTextureColor().getHandle());
-		framebuffer3.bind();
-		glDrawArrays(GL_TRIANGLES, 0, 3);
-		framebuffer3.unbind();
-		glBindTextureUnit(12, framebuffer3.getTextureColor().getHandle());
-		*/
-	}
+		blur0_.bind();
+			blur_y_.use();
+			glBindTextureUnit(16, blur1_.get_texture_color().get_handle());
+			glDrawArrays(GL_TRIANGLES, 0, 3);
+		blur0_.unbind();
+		glBindTextureUnit(14, blur0_.get_texture_color().get_handle());
+
+	OPTICK_POP()
 
 	
 	// 3 - Apply SSAO

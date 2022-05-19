@@ -100,7 +100,7 @@ struct PerFrameData
 {
 	glm::vec4 view_pos;		// view/eye vector
 	glm::mat4 view_proj;		// view projection matrix
-	glm::mat4 lava_level;	// ?
+	glm::mat4 light_view;	// light view matrix
 	glm::mat4 light_view_proj;// light matrix for shadowmapping
 	glm::mat4 view_inv;		// todo
 	glm::mat4 proj_inv;		// todo
@@ -167,7 +167,7 @@ glm::vec3 uniform_circle();
 ///	17 - ssao / bloom 
 ///	18 - bloom postprocessing
 ///	19 - text
-///	20 - 
+///	20 - blue noise volumetric light
 ///	21 - 
 ///	22 - 
 ///	23 - 

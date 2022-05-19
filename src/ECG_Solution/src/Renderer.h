@@ -58,10 +58,6 @@ private:
 	// Volumetric Light
 	program depth_map_;			// samples depth from a directional light
 	program volumetric_light_;	// calculate light with raymarching
-	program downsample_vl_;		// downsamples depth buffer
-	program upsample_vl_;		// upsamples depth buffer
-	program blur_xvl_;
-	program blur_yvl_;
 	// HUD
 	program render_image_;		// draw image to full viewport
 	program render_color_;		// draw color to full viewport
@@ -93,7 +89,8 @@ private:
 	framebuffer depth_map_fb_ = framebuffer(1024 * state->shadow_res, 1024 * state->shadow_res, 0, GL_DEPTH_COMPONENT24);
 	framebuffer blur0_ = framebuffer(state->width / 2, state->height / 2, GL_RGBA8, 0);
 	framebuffer blur1_ = framebuffer(state->width / 2, state->height / 2, GL_RGBA8, 0);
-	framebuffer depth_half_res_ = framebuffer(state->width / 2, state->height / 2, 0, GL_DEPTH_COMPONENT24);
+	//texture from https://github.com/jdupuy/BlueNoiseDitherMaskTiles
+	GLuint blue_noise = Texture::load_texture("../../assets/shaders/lightFX/blue_noise_512_512.ktx");
 
 	/**
 	 * \brief bind light sources to binding points
