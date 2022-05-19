@@ -289,13 +289,19 @@ void registerInputCallbacks(glfw_app& app) {
 
 			// Window management, Debug, Effects
 			if (key == GLFW_KEY_ENTER)
+			{
 				state_->paused = false;
+				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+			}
 			if (key == GLFW_KEY_R)
 				state_->restart = true;
 			if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 			{
-				if (!state_->paused)
+				if (!state_->paused && !state_->lost && ! state_->won)
+				{
 					state_->paused = true;
+					glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+				}
 				else
 					glfwSetWindowShouldClose(window, GLFW_TRUE);
 			}

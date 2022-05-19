@@ -4,6 +4,7 @@ layout(location = 0) in vec2 uv;
 
 layout(location = 0) out vec4 outColor;
 
+layout(binding = 14) uniform sampler2D texlight;
 layout(binding = 16) uniform sampler2D texScene;
 layout(binding = 17) uniform sampler2D texSSAO;
 
@@ -28,10 +29,11 @@ void main()
 	float bias = ssao1.y;
 	
 	vec4 color = texture(texScene, uv);
+	vec4 light = texture(texlight, uv);
 	float ssao = clamp( texture(texSSAO,  uv).r + bias, 0.0, 1.0 );
 	
 	outColor = vec4(
-		mix(color, color * ssao, scale).rgb,
+		mix(color+light, color * ssao, scale).rgb,
 		1.0
 	);
 }

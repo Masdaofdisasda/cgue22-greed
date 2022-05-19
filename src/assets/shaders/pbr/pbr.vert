@@ -64,7 +64,6 @@ void main()
 	}
 
 	gl_Position = ViewProj * model * vec4(position, 1.0);
-	//gl_Position = lightViewProj * model * vec4(vPosition, 1.0); // view from light
 	fUV = vUV;
 	fPosition = vec3(model * vec4(position, 1.0));
 	fNormal = mat3(transpose(inverse(model))) * normal;

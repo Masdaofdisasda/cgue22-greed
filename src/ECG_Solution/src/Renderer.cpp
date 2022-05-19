@@ -160,7 +160,6 @@ void renderer::draw(level* level)
 	glEnable(GL_DEPTH_TEST);
 
 	// 1 - depth mapping
-#if 1 // under construction
 	OPTICK_PUSH("depth pass")
 	depth_map_fb_.bind();
 		glClearNamedFramebufferfi(depth_map_fb_.get_handle(), GL_DEPTH_STENCIL, 0, 1.0f, 0);
@@ -169,7 +168,6 @@ void renderer::draw(level* level)
 	depth_map_fb_.unbind();
 	glBindTextureUnit(12, depth_map_fb_.get_texture_depth().get_handle());
 	OPTICK_POP()
-#endif // constructions ends
 
 
 	// 2 - render scene to framebuffer
@@ -200,7 +198,7 @@ void renderer::draw(level* level)
 
 	// Volumetric Light
 	// https://github.com/metzzo/ezg17-transition
-	if (false)
+	if (true)
 	{
 		/*
 		// down sample scene using depth aware downsampling
@@ -214,6 +212,7 @@ void renderer::draw(level* level)
 		// calculate volumetric lighting
 		volumetric_light_.use();
 		blur0_.bind();
+		glBindTextureUnit(16, framebuffer1_.get_texture_depth().get_handle());
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 		blur0_.unbind();
 		glBindTextureUnit(14, blur0_.get_texture_color().get_handle());
