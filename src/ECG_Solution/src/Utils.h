@@ -102,11 +102,11 @@ struct PerFrameData
 	glm::mat4 view_proj;		// view projection matrix
 	glm::mat4 light_view;	// light view matrix
 	glm::mat4 light_view_proj;// light matrix for shadowmapping
-	glm::mat4 view_inv;		// todo
-	glm::mat4 proj_inv;		// todo
+	glm::mat4 view_inv;		// inverse view matrix
+	glm::mat4 proj_inv;		// inverse projection matric
 	glm::vec4 bloom;		// x = exposure, y = maxWhite, z = bloomStrength, w = adaptionSpeed
 	glm::vec4 delta_time;	// x = deltaSeconds, y = summedTime, z = screen width, w = screen height
-	glm::vec4 normal_map;	// x = normalMapToogle, y = lavaID, z = ?, w = ?
+	glm::vec4 normal_map;	// x = normalMapToogle, y = lavaID, z = vl density, w = ?
 	glm::vec4 ssao1;		// x = scale,, y = bias, z = znear, w = zfar
 	glm::vec4 ssao2;		// x = radius, y = attscale, z = distscale, w = ?
 };

@@ -55,7 +55,7 @@ layout (std140, binding = 2) uniform pLightUBlock {
 int numberOfRaySteps = 32;
 
 float tau = 0.0015; // probability of collision
-float phi = 50000*length(dLights[0].intensity.rgb); // power of light source
+float phi = normalMap.z*length(dLights[0].intensity.rgb); // power of light source
 float PI_RCP = 0.31830988618379067153776752674503;
 const float c_goldenRatioConjugate = 0.61803398875f; // also just fract(goldenRatio)
 const mat4 scaleBias = mat4(

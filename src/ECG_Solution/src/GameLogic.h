@@ -64,6 +64,11 @@ inline void game_logic::update()
 		notify_observers(escape);
 	}
 
+	if (perframe_data_->normal_map.z < 400000 && state_->lava_triggered)
+	{
+		perframe_data_->normal_map.z += 600 * perframe_data_->delta_time.x;
+	}
+
 	if (perframe_data_->view_pos.y > exit_height_+ player_size_)
 	{
 		state_->won = true;

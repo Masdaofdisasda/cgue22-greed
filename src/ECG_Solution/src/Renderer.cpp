@@ -48,6 +48,7 @@ void renderer::set_render_settings() const
 		state->adaptation_speed);
 
 	perframe_data_->normal_map.x = 1.0f;
+	perframe_data_->normal_map.z = 25000.0f;
 
 	perframe_data_->ssao1 = glm::vec4(
 		state->scale,
@@ -190,7 +191,7 @@ void renderer::draw(level* level)
 	glDisable(GL_DEPTH_TEST);
 	OPTICK_POP()
 
-	OPTICK_PUSH("SSAO pass")
+	OPTICK_PUSH("Volumetric Light pass")
 		// Volumetric Light
 		// https://github.com/metzzo/ezg17-transition
 		// calculate volumetric lighting

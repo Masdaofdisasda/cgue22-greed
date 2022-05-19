@@ -617,14 +617,12 @@ void level::draw_scene_shadow_map()
 	OPTICK_PUSH("draw scene")
 	glBindVertexArray(vao_);
 
-	//glDisable(GL_CULL_FACE);
-	glCullFace(GL_FRONT);
+	glDisable(GL_CULL_FACE);
 	matrix_ssbo_.update(static_cast<GLsizeiptr>(sizeof(glm::mat4) * queue_scene_.model_matrices.size()), queue_scene_.model_matrices.data());
 	ibo_.update(static_cast<GLsizeiptr>(queue_scene_.commands.size() * sizeof(draw_elements_indirect_command)), queue_scene_.commands.data());
 	glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, static_cast<GLvoid*>(nullptr), static_cast<GLsizei>(queue_scene_.commands.size()), 0);
 	
-	//glEnable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
+	glEnable(GL_CULL_FACE);
 	OPTICK_POP()
 }
 
