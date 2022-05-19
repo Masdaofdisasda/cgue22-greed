@@ -2,7 +2,7 @@
 
 layout( local_size_x = 100 ) in;
 
-uniform float Gravity1 = 5.0;
+uniform float Gravity1 = 1.0;
 uniform vec3 BlackHolePos1;
 
 uniform float ParticleMass = 0.1;
@@ -30,6 +30,12 @@ layout(std430, binding=0) buffer Pos {
 layout(std430, binding=1) buffer Vel {
   vec4 Velocity[];
 };
+float dither_pattern[16] = float[16] (
+	0.0f, 0.5f, 0.125f, 0.625f,
+	0.75f, 0.22f, 0.875f, 0.375f,
+	0.1875f, 0.6875f, 0.0625f, 0.5625,
+	0.9375f, 0.4375f, 0.8125f, 0.3125
+);
 
 void main() {
   uint idx = gl_GlobalInvocationID.x;
@@ -44,9 +50,10 @@ void main() {
 
   // Reset particles that get too far from the attractor
   if( Position[idx].y < BlackHolePos1.y || test > 25) {
-    Position[idx] = vec4(-8,150,-16,1);
+    Position[idx] = vec4(-8,60,-16,1);
 	if(length(Velocity[idx]) > 1){
 	 Velocity[idx] = Velocity[idx]/2;
+    Velocity[idx] *= dither_pattern[ (int(Velocity[idx].x) % 4)* 4 + (int(Velocity[idx].y) % 4) ];
 	}
   } else {
     // Apply simple Euler integrator

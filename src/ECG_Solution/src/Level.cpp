@@ -674,13 +674,17 @@ void level::update_render_queue(const bool for_shadow) {
 			cmd.instanceCount_ = 1;
 			if (!entity.game_properties.is_active)
 				cmd.instanceCount_ = 0;
-			const glm::mat4 node_matrix = entity.get_node_matrix();
-			const uint32_t mesh_index = entity.mesh_index;
-			const uint32_t material_index = meshes_[mesh_index].material_index;
-			if (materials_[material_index].type == invisible)
-				cmd.instanceCount_ = 0;
-			cmd.baseInstance_ = material_index + (i << 16);
-			queue_scene_.model_matrices[i] = node_matrix;
+
+			if (entity.type == dynamic || entity.type == lava)
+			{
+				const glm::mat4 node_matrix = entity.get_node_matrix();
+				const uint32_t mesh_index = entity.mesh_index;
+				const uint32_t material_index = meshes_[mesh_index].material_index;
+				if (materials_[material_index].type == invisible)
+					cmd.instanceCount_ = 0;
+				cmd.baseInstance_ = material_index + (i << 16);
+				queue_scene_.model_matrices[i] = node_matrix;
+			}
 		}else
 		{
 			if (state_->cull && cmd.instanceCount_ == 1)
@@ -690,7 +694,7 @@ void level::update_render_queue(const bool for_shadow) {
 			}
 
 			const uint32_t mesh_index = entity.mesh_index;
-			uint32_t LOD = lod_system::decide_lod(meshes_[mesh_index].index_count.size(), entity.world_bounds);
+			uint32_t LOD = 0; // lod_system::decide_lod(meshes_[mesh_index].index_count.size(), entity.world_bounds);
 			cmd.count_ = meshes_[mesh_index].index_count[LOD];
 			cmd.firstIndex_ = meshes_[mesh_index].index_offset[LOD];
 
