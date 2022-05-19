@@ -102,12 +102,13 @@ layout (binding = 12) uniform sampler2D depthTex;
 
 // Global variables
 const float M_PI = 3.141592653589793;
+const float shadow_bias = 0.1;
 
 // helper functions
 float debugDepthmap()
 {
    float depth = texture(depthTex, fShadow.xy).r;
-   return depth < fShadow.z ? 0 : 1.0;
+   return depth + shadow_bias < fShadow.z ? 0 : 1.0;
 }
 float shadow =  debugDepthmap();
 
