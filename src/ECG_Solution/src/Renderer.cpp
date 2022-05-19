@@ -60,6 +60,8 @@ void renderer::set_render_settings() const
 		1.0f);
 
 	perframe_data_->delta_time = glm::vec4(0);
+	perframe_data_->delta_time.z = state->width;
+	perframe_data_->delta_time.w = state->height;
 }
 
 void renderer::build_shader_programs()
@@ -151,6 +153,10 @@ void renderer::draw(level* level)
 
 	perframe_buffer_.update(sizeof(PerFrameData), perframe_data_);
 
+
+	if (!state->paused)
+	{
+
 	glEnable(GL_DEPTH_TEST);
 
 	// 1 - depth mapping
@@ -210,7 +216,7 @@ void renderer::draw(level* level)
 		blur0_.bind();
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 		blur0_.unbind();
-		glBindTextureUnit(12, blur0_.get_texture_color().get_handle());
+		glBindTextureUnit(14, blur0_.get_texture_color().get_handle());
 
 
 		/*
@@ -351,6 +357,7 @@ void renderer::draw(level* level)
 			state->width, state->height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 	}
 	OPTICK_POP()
+	}
 	
 	// 5 - render HUD
 	OPTICK_PUSH("HUD pass")
@@ -363,6 +370,8 @@ void renderer::draw(level* level)
 	render_color_.set_vec4("color", glm::vec4(0.0f, 0.0f, 0.0f, 0.7f));
 	glViewport(state->width * 0.04, state->height * 0.06, state->width * 0.1, state->height * 0.08);
 	glDrawArrays(GL_TRIANGLES, 0, 3);
+	glViewport(state->width * 0.02, state->height * 0.87, state->width * 0.25, state->height * 0.11);
+	glDrawArrays(GL_TRIANGLES, 0, 3);
 	glViewport(0, 0, state->width, state->height);
 
 	const int items = state->collected_items;
@@ -371,6 +380,42 @@ void renderer::draw(level* level)
 	const int money = (int)state->total_cash;
 	const std::string loot = "Loot: " + std::to_string(money) + "$";
 	font_renderer_.print(loot, state->width * 0.05f, state->height * 0.07f, .5f, glm::vec3(.95f, .86f, .6f));
+
+	font_renderer_.print("Current Objective", state->width * 0.03f, state->height * 0.94f, .7f, glm::vec3(.95f, .86f, .6f));
+
+	if (state->display_walk_tutorial)
+	{
+		font_renderer_.print("Use WASD keys to move", state->width * 0.03f, state->height * 0.9f, .4f, glm::vec3(1.0f, 1.0f, 1.0f));
+		state->display_walk_tutorial = false;
+	}
+	if (state->display_pause_tutorial)
+	{
+		font_renderer_.print("Press [ESC] to pause", state->width * 0.03f, state->height * 0.9f, .4f, glm::vec3(1.0f, 1.0f, 1.0f));
+		state->display_pause_tutorial = false;
+	}
+	if (state->display_jump_tutorial)
+	{
+		font_renderer_.print("Press [SPACE] to jump", state->width * 0.03f, state->height * 0.9f, .4f, glm::vec3(1.0f, 1.0f, 1.0f));
+		state->display_jump_tutorial = false;
+	}
+
+	if (state->display_collect_item_hint) {
+		font_renderer_.print("Click to collect", state->width * 0.42f, state->height * 0.40f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f));
+	}
+
+	if (state->paused)
+	{
+		render_color_.use();
+		render_color_.set_vec4("color", glm::vec4(0.0f, 0.0f, 0.0f, 0.7f));
+		glViewport(state->width * 0.17, state->height * 0.0, state->width * 0.4, state->height * 1.0);
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glViewport(0, 0, state->width, state->height);
+
+		font_renderer_.print("PAUSED", state->width * 0.2f, state->height * 0.6f, 1.0f, glm::vec3(.95f, .86f, .6f));
+		font_renderer_.print("[ENTER] continue", state->width * 0.2f, state->height * 0.53f, .5f, glm::vec3(.7f, .7f, .7f));
+		font_renderer_.print("[R] restart", state->width * 0.2f, state->height * 0.5f, .5f, glm::vec3(.7f, .7f, .7f));
+		font_renderer_.print("[ESC] exit", state->width * 0.2f, state->height * 0.47f, .5f, glm::vec3(.7f, .7f, .7f));
+	}
 
 	if (state->won)
 	{
@@ -385,9 +430,6 @@ void renderer::draw(level* level)
 		render_color_.set_vec4("color", glm::vec4(0,0,0, 1.0f));
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 		font_renderer_.print("FAILED", state->width * 0.4f, state->height * 0.48f, 2.0f, glm::vec3(0.710, 0.200, 0.180));
-	}
-	if (state->display_collect_item_hint) {
-		font_renderer_.print("Click to collect", state->width * 0.42f, state->height * 0.60f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f));
 	}
 	glDisable(GL_BLEND);
 	OPTICK_POP()

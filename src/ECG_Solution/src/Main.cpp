@@ -54,6 +54,8 @@ int main(int argc, char** argv)
 	OPTICK_THREAD("MainThread")
 	OPTICK_START_CAPTURE()
 	OPTICK_PUSH("init program")
+	while(true)
+	{
 	/* --------------------------------------------- */
 	// Load settings.ini
 	/* --------------------------------------------- */
@@ -88,7 +90,7 @@ int main(int argc, char** argv)
 	glDebugMessageCallback(debug::message_callback, nullptr);
 #endif
 	
-	LoadingScreen loading_screen = LoadingScreen(&glfw_app, state_->width, state_->height);
+	LoadingScreen loading_screen(&glfw_app, state_->width, state_->height);
 	loading_screen.draw_progress();
 
 	/* --------------------------------------------- */
@@ -161,6 +163,7 @@ int main(int argc, char** argv)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glLineWidth(2.0f);
 	glEnable(GL_CULL_FACE);
+	glDepthRangef(0.0f, 1000.0f);
 
 	music_engine.update(collecting);
 
@@ -190,6 +193,8 @@ int main(int argc, char** argv)
 		glfw_app.update_window();
 
 		// player actions
+		if (state_->restart)
+			break;
 		if (state_->using_debug_camera)
 			floating_positioner_.set_movement_state(keyboard_input_);
 		else {
@@ -201,7 +206,8 @@ int main(int argc, char** argv)
 
 		// calculate physics
 		OPTICK_PUSH("physics simulation")
-		physics.simulateOneStep(delta_seconds);
+		if (!state_->paused)
+			physics.simulateOneStep(delta_seconds);
 		OPTICK_POP()
 
 		OPTICK_PUSH("draw routine")
@@ -218,12 +224,14 @@ int main(int argc, char** argv)
 		perframe_data_.view_inv = glm::inverse(view);
 		perframe_data_.proj_inv = glm::inverse(projection);
 		perframe_data_.delta_time.x = delta_seconds;
-		perframe_data_.delta_time.y += delta_seconds;
+		if (!state_->paused)
+			perframe_data_.delta_time.y += delta_seconds;
 
 		// simple game logic WIP
 		state_->total_cash = item_collection.get_total_monetary_value();
 		state_->collected_items = static_cast<int>(item_collection.size());
-		logic.update();
+		if (!state_->paused)
+			logic.update();
 
 		// actual draw call
 		renderer.draw(&level);
@@ -241,7 +249,12 @@ int main(int argc, char** argv)
 		OPTICK_POP()
 	}
 
+	if (glfwWindowShouldClose(glfw_app.get_window()))
+		break;
 
+	renderer::state = std::make_shared<global_state>(load_settings());
+
+	}
 	/* --------------------------------------------- */
 	// Destroy context and exit
 	/* --------------------------------------------- */
@@ -275,8 +288,17 @@ void registerInputCallbacks(glfw_app& app) {
 				keyboard_input_.pressing_space = press;
 
 			// Window management, Debug, Effects
-			if (key == GLFW_KEY_ESCAPE)
-				glfwSetWindowShouldClose(window, GLFW_TRUE);
+			if (key == GLFW_KEY_ENTER)
+				state_->paused = false;
+			if (key == GLFW_KEY_R)
+				state_->restart = true;
+			if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+			{
+				if (!state_->paused)
+					state_->paused = true;
+				else
+					glfwSetWindowShouldClose(window, GLFW_TRUE);
+			}
 			if (key == GLFW_KEY_F1 && action == GLFW_PRESS)
 			{
 				if (state_->fullscreen)
