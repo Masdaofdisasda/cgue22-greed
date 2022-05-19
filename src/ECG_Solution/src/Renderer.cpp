@@ -67,8 +67,8 @@ void renderer::set_render_settings() const
 
 void renderer::build_shader_programs()
 {
-	Shader pbr_vert("../../assets/shaders/PBR/pbr.vert");
-	Shader pbr_frag("../../assets/shaders/PBR/pbr.frag", glm::ivec3(lights_.directional.size(), lights_.point.size(), 0));
+	Shader pbr_vert("../../assets/shaders/pbr/pbr.vert");
+	Shader pbr_frag("../../assets/shaders/pbr/pbr.frag", glm::ivec3(lights_.directional.size(), lights_.point.size(), 0));
 	pbr_shader_.build_from(pbr_vert, pbr_frag);
 	pbr_shader_.use();
 
