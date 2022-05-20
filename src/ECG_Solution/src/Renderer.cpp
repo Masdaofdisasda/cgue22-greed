@@ -49,6 +49,7 @@ void renderer::set_render_settings() const
 
 	perframe_data_->normal_map.x = 1.0f;
 	perframe_data_->normal_map.z = 25000.0f;
+	perframe_data_->normal_map.w = state->fog_quality;
 
 	perframe_data_->ssao1 = glm::vec4(
 		state->scale,

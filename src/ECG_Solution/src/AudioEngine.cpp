@@ -21,7 +21,7 @@ sound_fx::sound_fx()
 		src->setDefaultVolume(0.3f);
 
 	for (irrklang::ISoundSource* src : mock_)
-		src->setDefaultVolume(0.6f);
+		src->setDefaultVolume(0.3f);
 
 }
 

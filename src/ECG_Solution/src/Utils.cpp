@@ -84,6 +84,7 @@ global_state load_settings()
 	state.att_scale = reader.GetReal("image", "attScale", 1.0f);
 	state.dist_scale = reader.GetReal("image", "distScale", 0.5f);
 	state.shadow_res = reader.GetInteger("image", "shadowRes", 4);
+	state.fog_quality = reader.GetInteger("image", "fogQuality", 2);
 
 	return state;
 }

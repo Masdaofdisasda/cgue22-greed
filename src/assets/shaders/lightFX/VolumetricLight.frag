@@ -52,7 +52,9 @@ layout (std140, binding = 2) uniform pLightUBlock {
 // code from: https://github.com/metzzo/ezg17-transition
 // https://satellitnorden.wordpress.com/2018/09/09/vulkan-adventures-part-5-rayloaded-simple-volumetric-fog/
 // https://www.shadertoy.com/view/WsfBDf
-int numberOfRaySteps = 32;
+
+int fog_quality = int(normalMap.w);
+int numberOfRaySteps = 16 * fog_quality;
 
 float tau = 0.0015; // probability of collision
 float phi = normalMap.z*length(dLights[0].intensity.rgb); // power of light source
@@ -125,7 +127,7 @@ float triNoise3d(in vec3 p, in float spd, in float time)
 }
 
 float sample_fog(vec3 pos) {
-	return triNoise3d(pos * 2.2 / 8, 0.2, deltaTime.x)*0.75;
+	return triNoise3d(pos * 2.2 / 8, 0.2, deltaTime.y)*0.75;
 }
 
 void main() {
@@ -151,7 +153,7 @@ void main() {
 	
         // blue noise
     float dither_value = texture(bluNoise, uv).r;
-    dither_value = fract(dither_value + deltaTime.x * c_goldenRatioConjugate);
+    dither_value = fract(dither_value + deltaTime.y * c_goldenRatioConjugate);
 	vec4 ray_position_lightview = start_pos_lightview + dither_value *step_size_lightview * delta_lightview;
 	vec4 ray_position_worldspace = start_pos_worldspace + dither_value * step_size_worldspace * delta_worldspace;
 

@@ -102,7 +102,7 @@ layout (binding = 12) uniform sampler2D depthTex;
 
 // Global variables
 const float M_PI = 3.141592653589793;
-float shadow_bias = 0.1;
+const float shadow_bias = 0.1;
 
 // helper functions
 float debugDepthmap()
