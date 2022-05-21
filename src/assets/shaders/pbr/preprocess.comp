@@ -1,0 +1,192 @@
+#version 460 core
+//code from https://sites.google.com/site/john87connor/indirect-rendering/4-lod-selection-on-gpu
+
+layout (local_size_x = 1024) in;
+
+/* argument type buffered in GL_DRAW_INDIRECT_BUFFER */
+struct DrawElementsIndirectCommand {
+    uint Count;
+    uint InstanceCount;
+    uint FirstIndex;
+    uint BaseVertex;
+    uint BaseInstance;
+};
+
+// contains for each mesh vertex offset, element  
+// offset, element count and bounding sphere
+struct MeshLODProperty {
+    uint BaseVertex;
+    uint BaseIndex;
+    uint IndexCount;
+    uint _padding1;
+};
+
+
+
+struct MeshProperty {
+    MeshLODProperty LODs[4];
+    vec4 BSphere;
+};
+
+
+// array containing instanced data
+layout (std430, binding = 1) buffer InstanceBlock {
+    mat4 modelview[];
+};
+
+
+// array containing indirect draw calls
+layout (std430, binding = 2) buffer IndirectBlock {
+    DrawElementsIndirectCommand cmds[];
+};
+
+
+// array containing drawables
+layout (std430, binding = 3) buffer DrawablesBlock {
+    uvec2 drawables[];
+};
+
+
+// array containing bounding spheres for each object instance
+layout (std430, binding = 6) buffer MeshPropertyBlock {
+    MeshProperty meshproperties[];
+};
+
+layout (location = 0) uniform float FieldOfView = 0.0f;
+layout (location = 1) uniform float AspectRatio = 0.0f;
+layout (location = 2) uniform float ZNear = 0.0f;
+layout (location = 3) uniform float ZFar = 0.0f;
+
+void main()
+{
+    // get drawable index
+    uint index = gl_GlobalInvocationID.x;
+    if (index >= modelview.length())
+        return;
+    if (index >= cmds.length())
+        return;
+    if (index >= drawables.length())
+        return;
+
+
+    // get mesh properties
+    uint meshindex = drawables[index].y;
+    if (meshindex >= meshproperties.length())
+        return;
+
+    MeshProperty meshproperty = meshproperties[meshindex];
+
+    // bsphere position (in view space)
+    vec3 center = meshproperty.BSphere.xyz;
+    float radius = meshproperty.BSphere.w;
+    vec3 position = (modelview[index] * vec4(center, 1)).xyz;
+
+    float A = 1.0f / tan(FieldOfView * AspectRatio / 2.0f);
+    float B = 1.0f / tan(FieldOfView / 2.0f);
+
+    // camera frustum face normals
+    vec3 normal_L = normalize(vec3(-A, 0, 1));
+
+    vec3 normal_R = normalize(vec3(+A, 0, 1));
+
+    vec3 normal_T = normalize(vec3(0, +B, 1));
+
+    vec3 normal_B = normalize(vec3(0, -B, 1));
+
+
+
+    // distances of bounding sphere to camera frustum faces
+
+    float distance_L = dot(position, normal_L);
+
+    float distance_R = dot(position, normal_R);
+
+    float distance_T = dot(position, normal_T);
+
+    float distance_B = dot(position, normal_B);
+
+
+
+    // cull invisible objects
+
+    cmds[index].InstanceCount = 0;
+
+
+
+    if (distance_L > radius)
+
+        return;
+
+    if (distance_R > radius)
+
+        return;
+
+    if (distance_T > radius)
+
+        return;
+
+    if (distance_B > radius)
+
+        return;
+
+
+
+    // get lod count
+
+    uint lodcount = 0;
+
+    for (uint lod = 0; lod < 4; lod++)
+
+    {
+
+        if (meshproperty.LODs[lod].IndexCount == 0)
+
+            break;
+
+        lodcount++;
+
+    }
+
+
+
+    if (lodcount == 0)
+
+        return;
+
+
+
+    // select lod
+
+    uint lod = uint(0.2f * length(position) / radius);
+
+    lod = clamp(lod, 0, lodcount - 1);
+
+
+
+    // object is visible: set mesh LOD parameters
+
+    cmds[index].InstanceCount = 1;
+
+    cmds[index].BaseInstance = index;
+
+    cmds[index].BaseVertex = meshproperty.LODs[lod].BaseVertex;
+
+    cmds[index].FirstIndex = meshproperty.LODs[lod].BaseIndex;
+
+    cmds[index].Count = meshproperty.LODs[lod].IndexCount;
+
+
+
+    // example: set material
+
+    // lod 0 = gold
+
+    // lod 1 = silver
+
+    // lod 2 = bronze
+
+    // lod 3 = green_plastic
+
+    drawables[index].x = lod;
+
+}

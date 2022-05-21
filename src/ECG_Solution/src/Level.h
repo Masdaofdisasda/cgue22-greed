@@ -143,6 +143,8 @@ private:
 	 */
 	void transform_bounding_boxes() const;
 
+	bounding_box corrected_bounds_transform(glm::mat4 mat, bounding_box bounds) const;
+
 	void get_scene_bounds();
 
 	/**

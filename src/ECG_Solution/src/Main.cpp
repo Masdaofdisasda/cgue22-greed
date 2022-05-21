@@ -258,7 +258,9 @@ int main(int argc, char** argv)
 	// Destroy context and exit
 	/* --------------------------------------------- */
 	OPTICK_STOP_CAPTURE()
+#ifdef _DEBUG
 	OPTICK_SAVE_CAPTURE("profiler_dump")
+#endif
 	printf("Exiting program...\n");
 	return EXIT_SUCCESS;
 }

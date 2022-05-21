@@ -14,7 +14,6 @@ bullet_debug_drawer::bullet_debug_drawer(){
 
 void bullet_debug_drawer::draw() {
 
-#ifdef _DEBUG
 	if (vertices_.empty())
 		return;
 
@@ -31,12 +30,13 @@ void bullet_debug_drawer::draw() {
 
 	// draw
 	program_.use();
+#ifdef _DEBUG
 	glDrawArrays(GL_LINES, 0, vertices_.size());
+#endif
 
 	// cleanup
 	
 	vertices_.clear(); 
-#endif
 }
 
 void bullet_debug_drawer::drawLine(const btVector3& from, const btVector3& to, const btVector3& color) {

@@ -239,9 +239,8 @@ void level::transform_bounding_boxes() const
 	{
 		glm::mat4 M = entity.get_node_matrix();
 		bounding_box bounds = entity.model_bounds;
-		bounds.min_ = M * glm::vec4(bounds.min_, 1.0f);
-		bounds.max_ = M * glm::vec4(bounds.max_, 1.0f);
-		entity.world_bounds = bounding_box(bounds.min_, bounds.max_);
+		bounds = corrected_bounds_transform(M, bounds);
+		entity.world_bounds = bounding_box(bounds.min_, bounds.max_); 
 	}
 }
 
@@ -713,10 +712,10 @@ void level::draw_aabbs() const
 	}
 }
 
-glm::mat4 level::get_tight_scene_frustum(glm::mat4 light_view) const
+bounding_box level::corrected_bounds_transform(glm::mat4 mat, bounding_box bounds) const
 {
-	glm::vec3 min = scene_bounds_.min_;
-	glm::vec3 max = scene_bounds_.max_;
+	glm::vec3 min = bounds.min_;
+	glm::vec3 max = bounds.max_;
 
 	glm::vec3 corners[] = {
 			glm::vec3(min.x, min.y, min.z),
@@ -729,7 +728,7 @@ glm::mat4 level::get_tight_scene_frustum(glm::mat4 light_view) const
 			glm::vec3(max.x, max.y, max.z),
 	};
 	for (auto& v : corners)
-		v = glm::vec3(light_view * glm::vec4(v, 1.0f));
+		v = glm::vec3(mat * glm::vec4(v, 1.0f));
 
 	glm::vec3 vmin(std::numeric_limits<float>::max());
 	glm::vec3 vmax(std::numeric_limits<float>::lowest());
@@ -739,8 +738,17 @@ glm::mat4 level::get_tight_scene_frustum(glm::mat4 light_view) const
 		vmin = glm::min(vmin, corner);
 		vmax = glm::max(vmax, corner);
 	}
-	min = vmin;
-	max = vmax;
+
+	bounding_box aabb{vmin,vmax};
+
+	return aabb;
+}
+
+glm::mat4 level::get_tight_scene_frustum(glm::mat4 light_view) const
+{
+	bounding_box aabb = corrected_bounds_transform(light_view, scene_bounds_);
+	glm::vec3 min = aabb.min_;
+	glm::vec3 max = aabb.max_;
 
 	return glm::ortho(min.x, max.x, min.y, max.y, -max.z, -min.z);
 }
