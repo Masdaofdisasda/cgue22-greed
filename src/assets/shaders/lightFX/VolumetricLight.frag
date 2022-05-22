@@ -81,57 +81,13 @@ vec3 CalculateWorldPosition(vec2 textureCoordinate, float depth)
 
     return worldSpacePosition.xyz;
 }
- 
-/*
-*   Returns the length of a vector squared.
-*/
-float LengthSquared(vec3 vector)
-{
-    return vector.x * vector.x + vector.y * vector.y + vector.z * vector.z;
-}
-
-
-float tri( float x ){ 
-  return abs( fract(x) - .5 );
-}
-
-vec3 tri3( vec3 p ){
- 
-  return vec3( 
-      tri( p.z + tri( p.y * 1. ) ), 
-      tri( p.z + tri( p.x * 1. ) ), 
-      tri( p.y + tri( p.x * 1. ) )
-  );
-
-}
-// Taken from https://www.shadertoy.com/view/4ts3z2
-// By NIMITZ  (twitter: @stormoid)
-float triNoise3d(in vec3 p, in float spd, in float time)
-{
-    float z=1.4;
-	float rz = 0.;
-    vec3 bp = p;
-	for (float i=0.; i<=3.; i++ )
-	{
-        vec3 dg = tri3(bp*2.);
-        p += (dg+time*spd);
-
-        bp *= 1.8;
-		z *= 1.5;
-		p *= 1.2;
-        //p.xz*= m2;
-        
-        rz+= (tri(p.z+tri(p.x+tri(p.y))))/z;
-        bp += 0.14;
-	}
-	return rz;
-}
 
 float sample_fog(vec3 pos) {
-	float triNoise = triNoise3d(pos * 2.2 / 8, 0.2, deltaTime.y)*0.75;
 	pos.y *= deltaTime.y;
+	pos =normalize(pos-dLights[0].direction.xyz);
 	float perlin = texture(perlinNoise, pos).r;
-	return triNoise;
+	perlin = (cos( perlin * PI_RCP ) + 1.0) / 2.0;
+	return perlin;
 }
 
 void main() {

@@ -48,7 +48,7 @@ void main()
 {
 	float exposure = bloom.x;
 	float bloomStrength = bloom.z;
-
+	
 	vec3 color = texture(texScene, uv).rgb;
 	vec3 bloom = texture(texBloom, uv).rgb;
 	float avgLuminance = texture(texLuminance, vec2(0.5, 0.5)).x;

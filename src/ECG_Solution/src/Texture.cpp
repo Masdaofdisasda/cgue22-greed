@@ -226,7 +226,7 @@ GLuint Texture::get_3D_noise(int size, float base_freq) // todo
 
 	printf("Generating noise texture...");
 
-	GLubyte* data = new GLubyte[width * height * depth * 4];
+	GLfloat* data = static_cast<GLfloat*>(malloc(width * height * depth * 8));
 
 	float xFactor = 1.0f / (width - 1);
 	float yFactor = 1.0f / (height - 1);
@@ -256,7 +256,7 @@ GLuint Texture::get_3D_noise(int size, float base_freq) // todo
 					result = result < 0.0f ? 0.0f : result;
 
 					// Store in texture
-					data[(slice * width * height + row * width + col) + oct] = static_cast<GLubyte>(result);
+					data[(slice * size * size + row * size + col) + oct] = result;
 					freq *= 2.0f;
 					persist *= persistence;
 				}
@@ -266,15 +266,14 @@ GLuint Texture::get_3D_noise(int size, float base_freq) // todo
 
 	GLuint tex_id_;
 	glCreateTextures(GL_TEXTURE_3D, 1, &tex_id_);
-	glTextureStorage3D(tex_id_, 1, GL_R16F, width, height, depth);
+	glTextureStorage3D(tex_id_, 1, GL_R32F, width, height, depth);
 	glTextureSubImage3D(tex_id_, 0, 0, 0, 0, width, height, depth, GL_RED, GL_FLOAT, data);
 	glTextureParameteri(tex_id_, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTextureParameteri(tex_id_, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTextureParameteri(tex_id_, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTextureParameteri(tex_id_, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTextureParameteri(tex_id_, GL_TEXTURE_WRAP_R, GL_REPEAT);
-
-	delete[] data;
+	
 	return tex_id_;
 }
 
