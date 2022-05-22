@@ -54,6 +54,10 @@ inline void game_logic::update()
 		state_->display_pause_tutorial = true;
 	if (perframe_data_->delta_time.y > 45 && perframe_data_->delta_time.y < 55)
 		state_->display_jump_tutorial = true;
+	if (perframe_data_->delta_time.y > 60 && state_->lava_triggered == false)
+		state_->display_loot_obj = true;
+	if (perframe_data_->delta_time.y > 60 && state_->lava_triggered == true)
+		state_->display_escape_obj = true;
 
 	if (state_->won == true || state_->lost == true)
 		return;
@@ -78,6 +82,7 @@ inline void game_logic::update()
 	{
 		state_->lost = true;
 		notify_observers(fx_lost);
+		state_->time_of_death = perframe_data_->delta_time.y;
 	}
 }
 

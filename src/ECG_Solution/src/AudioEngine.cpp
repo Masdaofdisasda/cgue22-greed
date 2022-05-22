@@ -59,6 +59,7 @@ music::music()
 {
 	ost_loading_->setDefaultVolume(0.3f);
 	ost_collecting_->setDefaultVolume(0.3f);
+	ost_escape_->setDefaultVolume(0.3f);
 
 	amb_drops_->setDefaultVolume(0.3f);
 }
@@ -78,7 +79,7 @@ void music::update(const event event)
 		break;
 	case escape:
 		engine_->stopAllSounds();
-		engine_->play2D(ost_collecting_, true); //TODO
+		engine_->play2D(ost_escape_, true);
 		engine_->play2D(amb_drops_, true);
 		break;
 	case fx_lost:

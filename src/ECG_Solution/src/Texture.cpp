@@ -1,16 +1,14 @@
 #include "Texture.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/noise.hpp>
 #include <thread>
 
 GLuint Texture::defaults_[7] = { 0,0,0,0,0,0,0 };
 uint64_t Texture::defaults64_[7] = { 0,0,0,0,0,0,0 };
 
-/// @brief create a new texture, used in Framebuffer.h
-/// @param type GL Texture type, eg GL_TEXTURE_2D
-/// @param width of the texture (same as framebuffer)
-/// @param height of the texture (same as framebuffer)
-/// @param internal_format is the color or depth format
 Texture::Texture(const GLenum type, const int width, const int height, const GLenum internal_format)
 	: type_(type)
 {
@@ -20,9 +18,7 @@ Texture::Texture(const GLenum type, const int width, const int height, const GLe
 	glTextureParameteri(tex_id_, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTextureStorage2D(tex_id_, get_num_mip_map_levels_2d(width, height), internal_format, width, height);
 }
-/// @brief loads a texture from image, used in Material.h
-/// @param tex_path is the location of an image
-/// @return the created texture handle
+
 GLuint Texture::load_texture(const char* tex_path)
 {
 	GLuint handle = 0;
@@ -56,9 +52,6 @@ GLuint Texture::load_texture(const char* tex_path)
 	return handle;
 }
 
-/// @brief load 6 pbr textures using multiple threads
-/// @param tex_path folder location of the material
-/// @param handles target containing the texture handles after call
 void Texture::load_texture_mt(const char* tex_path, GLuint handles[], uint64_t bindless[])
 {
 	
@@ -85,10 +78,10 @@ void Texture::load_texture_mt(const char* tex_path, GLuint handles[], uint64_t b
 			const int mipMapLevel = get_num_mip_map_levels_2d(w, h);
 			glCreateTextures(GL_TEXTURE_2D, 1, &handles[i]);
 
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTextureParameteri(handles[i], GL_TEXTURE_WRAP_S, GL_REPEAT);
+			glTextureParameteri(handles[i], GL_TEXTURE_WRAP_T, GL_REPEAT);
+			glTextureParameteri(handles[i], GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+			glTextureParameteri(handles[i], GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 			glTextureStorage2D(handles[i], mipMapLevel, format.Internal, w, h);
@@ -114,11 +107,6 @@ void Texture::load_texture_mt(const char* tex_path, GLuint handles[], uint64_t b
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-
-/// @brief loads a 3dlut in .cube format, used for color grading in Renderer
-/// code from https://svnte.se/3d-lut
-/// @param tex_path is the location of the lut
-/// @return the created texture handle
 GLuint Texture::load_3dlut(const char* tex_path)
 {
 	// Load .CUBE file 
@@ -191,10 +179,6 @@ GLuint Texture::load_3dlut(const char* tex_path)
 
 }
 
-/// @brief calculates mimap level for framebuffer textures
-/// @param w width of the texture
-/// @param h height of the texture
-/// @return the number of mipmap levles
 int Texture::get_num_mip_map_levels_2d(const int w, const int h)
 {
 	int levels = 1;
@@ -233,10 +217,81 @@ GLuint Texture::get_ssao_kernel()
 	return tex;
 }
 
-/// @brief adds a subfolder to a given path
-/// @param tex_path is the path to the root folder
-/// @param tex_type is the name of the image file in the root folder
-/// @return the path to the image file
+GLuint Texture::get_3D_noise(int size, float base_freq) // todo
+{
+	int width = size;
+	int height = size;
+	int depth = size;
+	float persistence = 0.5f;
+
+	printf("Generating noise texture...");
+
+	GLubyte* data = new GLubyte[width * height * depth * 4];
+
+	float xFactor = 1.0f / (width - 1);
+	float yFactor = 1.0f / (height - 1);
+	float zFactor = 1.0f / (depth - 1);
+
+	for (int slice = 0; slice < depth; slice++) {
+		for (int row = 0; row < height; row++) {
+			for (int col = 0; col < width; col++) {
+				float x = xFactor * col;
+				float y = yFactor * row;
+				float z = zFactor * slice;
+				float sum = 0.0f;
+				float freq = base_freq;
+				float persist = base_freq;
+				for (int oct = 0; oct < 4; oct++) {
+					glm::vec3 p(x * freq, y * freq, z * freq);
+
+					float val = 0.0f;
+					val = glm::perlin(p, glm::vec3(freq)) * persist;
+
+					sum += val;
+
+					float result = (sum + 1.0f) / 2.0f;
+
+					// Clamp strictly between 0 and 1
+					result = result > 1.0f ? 1.0f : result;
+					result = result < 0.0f ? 0.0f : result;
+
+					// Store in texture
+					data[(slice * width * height + row * width + col) + oct] = static_cast<GLubyte>(result);
+					freq *= 2.0f;
+					persist *= persistence;
+				}
+			}
+		}
+	}
+
+	GLuint tex_id_;
+	glCreateTextures(GL_TEXTURE_3D, 1, &tex_id_);
+	glTextureStorage3D(tex_id_, 1, GL_R16F, width, height, depth);
+	glTextureSubImage3D(tex_id_, 0, 0, 0, 0, width, height, depth, GL_RED, GL_FLOAT, data);
+	glTextureParameteri(tex_id_, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTextureParameteri(tex_id_, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTextureParameteri(tex_id_, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTextureParameteri(tex_id_, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTextureParameteri(tex_id_, GL_TEXTURE_WRAP_R, GL_REPEAT);
+
+	delete[] data;
+	return tex_id_;
+}
+
+void Texture::destory_texture_mt(GLuint handles[], uint64_t bindless[])
+{
+	for (size_t i = 0; i < 7; i++)
+	{
+		if (defaults_[i] != handles[i])
+		{
+			glMakeTextureHandleNonResidentARB(bindless[i]);
+			glDeleteTextures(1, &handles[i]);
+		}
+	}
+
+
+}
+
 std::string Texture::append(const char* tex_path, const char* tex_type)
 {
 	char c[100];

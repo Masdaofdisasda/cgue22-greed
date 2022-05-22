@@ -361,13 +361,13 @@ void main()
     if (length(normal_sample) > 0.5 && (normalMap.x > 0.0f))
         n = perturbNormal(normalize(fNormal), normalize(viewPos.xyz - fPosition), normal_sample, UV);
 
-	vec4 Ke = texture(sampler2D(unpackUint2x32(mat.emissive_map_)), UV);
+	vec4 Ke = texture(sampler2D(unpackUint2x32(mat.emissive_map_)), UV) ;
 	Ke.rgb = SRGBtoLINEAR(Ke).rgb;
 
 	vec4 Kao = texture(sampler2D(unpackUint2x32(mat.ao_map_)),UV);
 
 	vec4 MeR;
-	MeR.g = texture(sampler2D(unpackUint2x32(mat.rough_map_)), UV).r ;
+	MeR.g =  pow( texture(sampler2D(unpackUint2x32(mat.rough_map_)), UV).r, 1.0/2.2) ;
 	MeR.b = texture(sampler2D(unpackUint2x32(mat.metal_map_)), UV).r;
 
 	PBRInfo pbrInputs;

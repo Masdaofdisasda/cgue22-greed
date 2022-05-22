@@ -50,6 +50,7 @@ struct global_state
 	//game logic
 	bool won = false;
 	bool lost = false;
+	float time_of_death = 0;
 	bool lava_triggered = false;
 	bool paused = false;
 	bool restart = false;
@@ -59,6 +60,8 @@ struct global_state
 	bool display_walk_tutorial = false;
 	bool display_pause_tutorial = false;
 	bool display_jump_tutorial = false;
+	bool display_loot_obj = false;
+	bool display_escape_obj = false;
 	float total_cash = 0;
 	int collected_items = 0;
 };
@@ -169,6 +172,6 @@ glm::vec3 uniform_circle();
 ///	18 - bloom postprocessing
 ///	19 - text
 ///	20 - blue noise volumetric light
-///	21 - 
+///	21 - perlin noise
 ///	22 - 
 ///	23 - 

@@ -91,6 +91,7 @@ private:
 	framebuffer blur1_ = framebuffer(state->width / 2, state->height / 2, GL_RGBA16F, 0);
 	//texture from https://github.com/jdupuy/BlueNoiseDitherMaskTiles
 	GLuint blue_noise = Texture::load_texture("../../assets/shaders/lightFX/blue_noise_512_512.ktx");
+	GLuint perlin_noise = Texture::get_3D_noise(32, 4.0f);
 
 	/**
 	 * \brief bind light sources to binding points

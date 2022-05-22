@@ -25,6 +25,7 @@ renderer::renderer(PerFrameData& perframe_data, light_sources& sources)
 	glBindTextures(8, 4, textures);
 	glBindTextureUnit(13, lut_3d_);
 	glBindTextureUnit(20, blue_noise);
+	glBindTextureUnit(21, perlin_noise);
 
 	font_renderer_.init("../../assets/fonts/Quasimoda/Quasimoda-Regular.otf", state->width, state->height);
 	lava_sim_.init(glm::ivec3(lights_.directional.size(), lights_.point.size(), 0));
@@ -363,16 +364,28 @@ void renderer::draw(level* level)
 	{
 		font_renderer_.print("Use WASD keys to move", state->width * 0.03f, state->height * 0.9f, .4f, glm::vec3(1.0f, 1.0f, 1.0f));
 		state->display_walk_tutorial = false;
-	}
+	} else
 	if (state->display_pause_tutorial)
 	{
 		font_renderer_.print("Press [ESC] to pause", state->width * 0.03f, state->height * 0.9f, .4f, glm::vec3(1.0f, 1.0f, 1.0f));
 		state->display_pause_tutorial = false;
-	}
+	}else
 	if (state->display_jump_tutorial)
 	{
 		font_renderer_.print("Press [SPACE] to jump", state->width * 0.03f, state->height * 0.9f, .4f, glm::vec3(1.0f, 1.0f, 1.0f));
 		state->display_jump_tutorial = false;
+	}
+	else
+	if (state->display_loot_obj)
+	{
+		font_renderer_.print("Collect gold treasure", state->width * 0.03f, state->height * 0.9f, .4f, glm::vec3(1.0f, 1.0f, 1.0f));
+		state->display_escape_obj = false;
+	}
+	else
+	if (state->display_escape_obj)
+	{
+		font_renderer_.print("Escape the rising lava", state->width * 0.03f, state->height * 0.9f, .4f, glm::vec3(1.0f, 1.0f, 1.0f));
+		state->display_escape_obj = false;
 	}
 
 	if (state->display_collect_item_hint) {
@@ -406,6 +419,10 @@ void renderer::draw(level* level)
 		render_color_.set_vec4("color", glm::vec4(0,0,0, 1.0f));
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 		font_renderer_.print("FAILED", state->width * 0.4f, state->height * 0.48f, 2.0f, glm::vec3(0.710, 0.200, 0.180));
+		if (state->time_of_death + 5.0f < perframe_data_->delta_time.y)
+		{
+			font_renderer_.print("[R] restart", state->width * 0.4f, state->height * 0.30f, .5f, glm::vec3(0.7, 0.7, 0.7));
+		}
 	}
 	glDisable(GL_BLEND);
 	OPTICK_POP()

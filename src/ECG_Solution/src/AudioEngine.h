@@ -72,6 +72,7 @@ public:
 private:
 	irrklang::ISoundSource* ost_loading_ = engine_->addSoundSourceFromFile("../../assets/media/ost_loading.mp3");
 	irrklang::ISoundSource* ost_collecting_ = engine_->addSoundSourceFromFile("../../assets/media/ost_collecting.mp3");
+	irrklang::ISoundSource* ost_escape_ = engine_->addSoundSourceFromFile("../../assets/media/ost_escape.mp3");
 
 	irrklang::ISoundSource* amb_drops_ = engine_->addSoundSourceFromFile("../../assets/media/amb_drops.mp3");
 };

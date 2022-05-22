@@ -3,35 +3,67 @@
 
 layout (local_size_x = 1024) in;
 
+layout(std140, binding = 0) uniform PerFrameData
+{
+	vec4 viewPos;
+	mat4 ViewProj;
+	mat4 lavaLevel;
+	mat4 lightViewProj;
+	mat4 viewInv;
+	mat4 projInv;
+	vec4 bloom;
+	vec4 deltaTime;
+    vec4 normalMap;
+    vec4 ssao1;
+    vec4 ssao2;
+	vec4 frustumPlanes[6];
+	vec4 frustumCorners[8];
+	uint numShapesToCull;
+};
+
 /* argument type buffered in GL_DRAW_INDIRECT_BUFFER */
 struct DrawElementsIndirectCommand {
-    uint Count;
-    uint InstanceCount;
-    uint FirstIndex;
-    uint BaseVertex;
-    uint BaseInstance;
+    uint count;
+    uint instanceCount;
+    uint firstIndex;
+    uint baseVertex;
+    uint baseInstance;
 };
 
 // contains for each mesh vertex offset, element  
 // offset, element count and bounding sphere
-struct MeshLODProperty {
+struct LODProperty {
     uint BaseVertex;
     uint BaseIndex;
     uint IndexCount;
     uint _padding1;
 };
 
+uniform bool for_shadow;
 
-
-struct MeshProperty {
-    MeshLODProperty LODs[4];
-    vec4 BSphere;
+struct AABB
+{
+	float pt[6];
 };
+
+#define rigid       0x00000001u
+#define dynamic     0x00000002u
+#define decoration  0x00000004u
+#define lava        0x00000008u
+
+struct Mesh {
+    LODProperty LODs[8];
+    AABB bounds;
+    bool is_active;
+    int type;
+    int mesh_index;
+};
+
 
 
 // array containing instanced data
 layout (std430, binding = 1) buffer InstanceBlock {
-    mat4 modelview[];
+    mat4 model[];
 };
 
 
@@ -49,19 +81,49 @@ layout (std430, binding = 3) buffer DrawablesBlock {
 
 // array containing bounding spheres for each object instance
 layout (std430, binding = 6) buffer MeshPropertyBlock {
-    MeshProperty meshproperties[];
+    Mesh entities[];
 };
 
-layout (location = 0) uniform float FieldOfView = 0.0f;
-layout (location = 1) uniform float AspectRatio = 0.0f;
-layout (location = 2) uniform float ZNear = 0.0f;
-layout (location = 3) uniform float ZFar = 0.0f;
+#define b_min_x b.pt[0]
+#define b_min_y b.pt[1]
+#define b_min_z b.pt[2]
+#define b_max_x b.pt[3]
+#define b_max_y b.pt[4]
+#define b_max_z b.pt[5]
+
+bool is_box_in_frustum(AABB b)
+{
+	// rejects if box is outside a frustum plane
+	for (int i = 0; i < 6; i++) {
+		int r = 0;
+		r += (dot(frustumPlanes[i], vec4(b_min_x, b_min_y, b_min_z, 1.0f)) < 0.0f) ? 1 : 0;
+		r += (dot(frustumPlanes[i], vec4(b_max_x, b_min_y, b_min_z, 1.0f)) < 0.0f) ? 1 : 0;
+		r += (dot(frustumPlanes[i], vec4(b_min_x, b_max_y, b_min_z, 1.0f)) < 0.0f) ? 1 : 0;
+		r += (dot(frustumPlanes[i], vec4(b_max_x, b_max_y, b_min_z, 1.0f)) < 0.0f) ? 1 : 0;
+		r += (dot(frustumPlanes[i], vec4(b_min_x, b_min_y, b_max_z, 1.0f)) < 0.0f) ? 1 : 0;
+		r += (dot(frustumPlanes[i], vec4(b_max_x, b_min_y, b_max_z, 1.0f)) < 0.0f) ? 1 : 0;
+		r += (dot(frustumPlanes[i], vec4(b_min_x, b_max_y, b_max_z, 1.0f)) < 0.0f) ? 1 : 0;
+		r += (dot(frustumPlanes[i], vec4(b_max_x, b_max_y, b_max_z, 1.0f)) < 0.0f) ? 1 : 0;
+		if (r == 8) return false;
+	}
+
+	// rejects if box is outside frustum box
+	int r = 0;
+	r = 0; for (int i = 0; i < 8; i++) r += ((frustumCorners[i].x > b_max_x) ? 1 : 0); if (r == 8) return false;
+	r = 0; for (int i = 0; i < 8; i++) r += ((frustumCorners[i].x < b_min_x) ? 1 : 0); if (r == 8) return false;
+	r = 0; for (int i = 0; i < 8; i++) r += ((frustumCorners[i].y > b_max_y) ? 1 : 0); if (r == 8) return false;
+	r = 0; for (int i = 0; i < 8; i++) r += ((frustumCorners[i].y < b_min_y) ? 1 : 0); if (r == 8) return false;
+	r = 0; for (int i = 0; i < 8; i++) r += ((frustumCorners[i].z > b_max_z) ? 1 : 0); if (r == 8) return false;
+	r = 0; for (int i = 0; i < 8; i++) r += ((frustumCorners[i].z < b_min_z) ? 1 : 0); if (r == 8) return false;
+
+	return true;
+}
 
 void main()
 {
     // get drawable index
     uint index = gl_GlobalInvocationID.x;
-    if (index >= modelview.length())
+    if (index >= model.length())
         return;
     if (index >= cmds.length())
         return;
@@ -70,11 +132,40 @@ void main()
 
 
     // get mesh properties
-    uint meshindex = drawables[index].y;
-    if (meshindex >= meshproperties.length())
-        return;
+    Mesh entity = entities[index];
+    DrawElementsIndirectCommand cmd = cmds[index];
 
-    MeshProperty meshproperty = meshproperties[meshindex];
+		if (for_shadow)
+		{
+			cmd.instanceCount = 1;
+			if (!entity.is_active)
+				cmd.instanceCount = 0;
+
+			if (entity.type == dynamic || entity.type == lava)
+			{
+				const mat4 node_matrix = model[index];
+				const int mesh_index = entity.mesh_index;
+				const uint32_t material_index = meshes_[mesh_index].material_index;
+				if (materials_[material_index].type == invisible)
+					cmd.instanceCount_ = 0;
+				cmd.baseInstance_ = material_index + (i << 16);
+				queue_scene_.model_matrices[i] = node_matrix;
+			}
+		}else
+		{
+			if (state_->cull && cmd.instanceCount_ == 1)
+			{
+				if (!frustum_culler::is_box_in_frustum(frustum_culler::frustum_planes, frustum_culler::frustum_corners, entity.world_bounds))
+					cmd.instanceCount_ = 0;
+			}
+
+			const uint32_t mesh_index = entity.mesh_index;
+			uint32_t LOD = 0; // lod_system::decide_lod(meshes_[mesh_index].index_count.size(), entity.world_bounds);
+			cmd.count_ = meshes_[mesh_index].index_count[LOD];
+			cmd.firstIndex_ = meshes_[mesh_index].index_offset[LOD];
+
+			frustum_culler::models_visible += cmd.instanceCount_;
+		}
 
     // bsphere position (in view space)
     vec3 center = meshproperty.BSphere.xyz;
@@ -174,19 +265,5 @@ void main()
     cmds[index].FirstIndex = meshproperty.LODs[lod].BaseIndex;
 
     cmds[index].Count = meshproperty.LODs[lod].IndexCount;
-
-
-
-    // example: set material
-
-    // lod 0 = gold
-
-    // lod 1 = silver
-
-    // lod 2 = bronze
-
-    // lod 3 = green_plastic
-
-    drawables[index].x = lod;
 
 }

@@ -19,7 +19,7 @@ void material::create(const char* tex_path, const char* name, material& mat) {
 	strcpy(c, "../../assets/");
 	strcat(c, file);
 
-	// load textures multi-threaded
+	// load textures
 	GLuint handles[7];
 	uint64_t bindless[7];
 	Texture::load_texture_mt(c, handles, bindless);
@@ -44,19 +44,26 @@ void material::create(const char* tex_path, const char* name, material& mat) {
 /// @brief explicitly deletes every texture in this material
 void material::clear(material& mat)
 {
-	glMakeTextureHandleNonResidentARB(mat.albedo64_);
-	glDeleteTextures(1, &mat.albedo_);
-	glMakeTextureHandleNonResidentARB(mat.normal64_);
-	glDeleteTextures(1, &mat.normal_);
-	glMakeTextureHandleNonResidentARB(mat.metal64_);
-	glDeleteTextures(1, &mat.metal_);
-	glMakeTextureHandleNonResidentARB(mat.rough64_);
-	glDeleteTextures(1, &mat.rough_);
-	glMakeTextureHandleNonResidentARB(mat.ao64_);
-	glDeleteTextures(1, &mat.ao_);
-	glMakeTextureHandleNonResidentARB(mat.emissive64_);
-	glDeleteTextures(1, &mat.emissive_);
-	glMakeTextureHandleNonResidentARB(mat.height64_);
-	glDeleteTextures(1, &mat.height_);
+
+	GLuint handles[7];
+	uint64_t bindless[7];
+
+	handles[0] = mat.albedo_;
+	handles[1] = mat.normal_;
+	handles[2] = mat.metal_;
+	handles[3] = mat.rough_;
+	handles[4] = mat.ao_;
+	handles[5] = mat.emissive_;
+	handles[6] = mat.height_;
+
+	bindless[0] = mat.albedo64_;
+	bindless[1] = mat.normal64_;
+	bindless[2] = mat.metal64_;
+	bindless[3] = mat.rough64_;
+	bindless[4] = mat.ao64_;
+	bindless[5] = mat.emissive64_;
+	bindless[6] = mat.height64_;
+
+	Texture::destory_texture_mt(handles, bindless);
 }
 

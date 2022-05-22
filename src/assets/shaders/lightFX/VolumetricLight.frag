@@ -7,6 +7,7 @@ layout(location = 0) in vec2 uv;
 layout (binding = 12) uniform sampler2D depthTex;
 layout (binding = 16) uniform sampler2D sceneTex;
 layout (binding = 20) uniform sampler2D bluNoise;
+layout (binding = 21) uniform sampler3D perlinNoise;
 
 layout(std140, binding = 0) uniform PerFrameData
 {
@@ -127,7 +128,10 @@ float triNoise3d(in vec3 p, in float spd, in float time)
 }
 
 float sample_fog(vec3 pos) {
-	return triNoise3d(pos * 2.2 / 8, 0.2, deltaTime.y)*0.75;
+	float triNoise = triNoise3d(pos * 2.2 / 8, 0.2, deltaTime.y)*0.75;
+	pos.y *= deltaTime.y;
+	float perlin = texture(perlinNoise, pos).r;
+	return triNoise;
 }
 
 void main() {
