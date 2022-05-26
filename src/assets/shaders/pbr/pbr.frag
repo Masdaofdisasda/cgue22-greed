@@ -119,12 +119,6 @@ vec4 SRGBtoLINEAR(vec4 srgbIn)
 }
 
 // Shadow Caluclations
-float debugDepthmap()
-{
-   float depth = texture(depthTex, fShadow.xy).r;
-   return depth + 0.01 < fShadow.z ? 0 : 1.0;
-}
-
 float PCF(int kernelSize, vec2 shadowCoord, float depth)
 {
 	float size = 1.0 / float( textureSize(depthTex, 0 ).x );
@@ -135,21 +129,19 @@ float PCF(int kernelSize, vec2 shadowCoord, float depth)
 	return shadow / (kernelSize * kernelSize);
 }
 
-float shadowFactor(vec4 shadowCoord)
+float shadowFactor(vec4 shadowCoord, float depthBias)
 {
 	vec4 shadowCoords4 = shadowCoord / shadowCoord.w;
 
 	if (shadowCoords4.z > -1.0 && shadowCoords4.z < 1.0)
 	{
-		float depthBias = -0.01;
-		float shadowSample = PCF( 13, shadowCoords4.xy, shadowCoords4.z + depthBias );
+		float shadowSample = PCF( 7, shadowCoords4.xy, shadowCoords4.z + depthBias );
 		return mix(1.0, 0.3, shadowSample);
 	}
 
 	return 1.0; 
 }
 
-float shadow =  shadowFactor(fShadow);
 
 // Calculation of the lighting contribution from an optional Image Based Light source.
 // Precomputed Environment Maps are required uniform inputs and are computed as outlined in [1].
@@ -368,6 +360,12 @@ vec3 perturbNormal(vec3 n, vec3 v, vec3 normalSample, vec2 uv)
 	return normalize(TBN * map);
 }
 
+vec3 decodeNormal(vec3 normal)
+{
+    normal.xy = normal.xy * 2.0 - 1.0;           // Unpack to [-1,1]
+    normal.z = sqrt(1 - dot(normal.xy, normal.xy)); // Compute Z
+	return normal;
+}
 
 void main()
 {
@@ -381,7 +379,8 @@ void main()
 
     vec3 normal_sample = vec3(0,0,0);
     normal_sample = texture(sampler2D(unpackUint2x32(mat.normal_map_)), UV).rgb;
-	normal_sample = pow( normal_sample, vec3(1.0/2.2) ) ; // toktx tool maps normal map to linear space
+	//normal_sample = pow( normal_sample, vec3(1.0/2.2) ) ; // toktx tool maps normal map to linear space
+	normal_sample = decodeNormal(normal_sample);
     vec3 n = normalize(fNormal);
     if (length(normal_sample) > 0.5 && (normalMap.x > 0.0f))
         n = perturbNormal(normalize(fNormal), normalize(viewPos.xyz - fPosition), normal_sample, UV);
@@ -389,11 +388,14 @@ void main()
 	vec4 Ke = texture(sampler2D(unpackUint2x32(mat.emissive_map_)), UV) ;
 	Ke.rgb = SRGBtoLINEAR(Ke).rgb;
 
-	vec4 Kao = texture(sampler2D(unpackUint2x32(mat.ao_map_)),UV);
+	float Kao = texture(sampler2D(unpackUint2x32(mat.ao_map_)),UV).r ;
 
 	vec4 MeR;
-	MeR.g =  pow( texture(sampler2D(unpackUint2x32(mat.rough_map_)), UV).r, 1.0/2.2) ;
+	MeR.g = texture(sampler2D(unpackUint2x32(mat.rough_map_)), UV).r ;
 	MeR.b = texture(sampler2D(unpackUint2x32(mat.metal_map_)), UV).r;
+
+	float shadow_bias = max(-0.001 * (1.0 - dot(n, dLights[0].direction.xyz)), -0.0001);
+	float shadow =  shadowFactor(fShadow, shadow_bias);
 
 	PBRInfo pbrInputs;
 
@@ -408,8 +410,8 @@ void main()
 	for(int i = 0; i < numPos; i++)
   		color += calculatePBRLightContributionPoint(pbrInputs, pLights[i]);
 
-	color = color * (Kao.r < 0.01 ? 1.0 : Kao.r);
+	color = color * (Kao.r < 0.01 ? 1.0 : Kao);
 	color = pow(Ke.rgb + color, vec3(1.0/2.2) ) ;
 	
-    out_FragColor = vec4(color, 1.0);
+    out_FragColor = vec4(normal_sample, 1.0);
 }
