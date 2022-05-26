@@ -110,6 +110,10 @@ void renderer::build_shader_programs()
 	render_image_.build_from(render_img_vert, render_img_frag);
 	render_color_.build_from(render_img_vert, render_col_frag);
 
+	Shader render_way_vert("../../assets/shaders/HUD/waypoint.vert");
+	Shader render_way_frag("../../assets/shaders/HUD/waypoint.frag");
+	render_waypoint.build_from(render_way_vert, render_way_frag);
+
 	Shader depth_vert("../../assets/shaders/lightFX/depthMap.vert");
 	Shader depth_frag("../../assets/shaders/lightFX/depthMap.frag");
 	depth_map_.build_from(depth_vert, depth_frag);
@@ -341,6 +345,13 @@ void renderer::draw(level* level)
 	// 5 - render HUD
 	OPTICK_PUSH("HUD pass")
 	glEnable(GL_BLEND);
+	draw_hud();
+	glDisable(GL_BLEND);
+	OPTICK_POP()
+}
+
+void renderer::draw_hud()
+{
 	font_renderer_.print("+", state->width * 0.4956f, state->height * 0.4934f, .5f, glm::vec3(.7f, .7f, .7f));
 	font_renderer_.print("CLOSED BETA FOOTAGE", state->width * 0.8f, state->height * 0.08f, .5f, glm::vec3(.7f, .7f, .7f));
 	font_renderer_.print("all content is subject to change", state->width * 0.78f, state->height * 0.05f, .5f, glm::vec3(.5f, .5f, .5f));
@@ -360,35 +371,45 @@ void renderer::draw(level* level)
 	const std::string loot = "Loot: " + std::to_string(money) + "$";
 	font_renderer_.print(loot, state->width * 0.05f, state->height * 0.07f, .5f, glm::vec3(.95f, .86f, .6f));
 
-	font_renderer_.print("Current Objective", state->width * 0.03f, state->height * 0.94f, .7f, glm::vec3(.95f, .86f, .6f));
+	font_renderer_.print("Objective", state->width * 0.03f, state->height * 0.94f, .7f, glm::vec3(.95f, .86f, .6f));
 
 	if (state->display_walk_tutorial)
 	{
 		font_renderer_.print("Use WASD keys to move", state->width * 0.03f, state->height * 0.9f, .4f, glm::vec3(1.0f, 1.0f, 1.0f));
 		state->display_walk_tutorial = false;
-	} else
-	if (state->display_pause_tutorial)
-	{
-		font_renderer_.print("Press [ESC] to pause", state->width * 0.03f, state->height * 0.9f, .4f, glm::vec3(1.0f, 1.0f, 1.0f));
-		state->display_pause_tutorial = false;
-	}else
-	if (state->display_jump_tutorial)
-	{
-		font_renderer_.print("Press [SPACE] to jump", state->width * 0.03f, state->height * 0.9f, .4f, glm::vec3(1.0f, 1.0f, 1.0f));
-		state->display_jump_tutorial = false;
 	}
 	else
-	if (state->display_loot_obj)
-	{
-		font_renderer_.print("Collect gold treasure", state->width * 0.03f, state->height * 0.9f, .4f, glm::vec3(1.0f, 1.0f, 1.0f));
-		state->display_escape_obj = false;
-	}
-	else
-	if (state->display_escape_obj)
-	{
-		font_renderer_.print("Escape the rising lava", state->width * 0.03f, state->height * 0.9f, .4f, glm::vec3(1.0f, 1.0f, 1.0f));
-		state->display_escape_obj = false;
-	}
+		if (state->display_pause_tutorial)
+		{
+			font_renderer_.print("Press [ESC] to pause", state->width * 0.03f, state->height * 0.9f, .4f, glm::vec3(1.0f, 1.0f, 1.0f));
+			state->display_pause_tutorial = false;
+		}
+		else
+			if (state->display_jump_tutorial)
+			{
+				font_renderer_.print("Press [SPACE] to jump", state->width * 0.03f, state->height * 0.9f, .4f, glm::vec3(1.0f, 1.0f, 1.0f));
+				state->display_jump_tutorial = false;
+			}
+			else
+				if (state->display_loot_obj)
+				{
+					font_renderer_.print("Collect treasure and find a way out", state->width * 0.03f, state->height * 0.9f, .4f, glm::vec3(1.0f, 1.0f, 1.0f));
+					glBindTextureUnit(16, way_point);
+					render_waypoint.use();
+					render_waypoint.set_vec3("position", glm::vec3(0.0, 7.0, 0.0));
+					glDrawArrays(GL_TRIANGLES, 0, 6);
+					state->display_loot_obj = false;
+				}
+				else
+					if (state->display_escape_obj)
+					{
+						font_renderer_.print("Escape the rising lava", state->width * 0.03f, state->height * 0.9f, .4f, glm::vec3(1.0f, 1.0f, 1.0f));
+						glBindTextureUnit(16, way_point);
+						render_waypoint.use();
+						render_waypoint.set_vec3("position", glm::vec3(0.0, 40.0, 0.0));
+						glDrawArrays(GL_TRIANGLES, 0, 6);
+						state->display_escape_obj = false;
+					}
 
 	if (state->display_collect_item_hint) {
 		font_renderer_.print("Click to collect", state->width * 0.42f, state->height * 0.40f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f));
@@ -418,7 +439,7 @@ void renderer::draw(level* level)
 	else if (state->lost)
 	{
 		render_color_.use();
-		render_color_.set_vec4("color", glm::vec4(0,0,0, 1.0f));
+		render_color_.set_vec4("color", glm::vec4(0, 0, 0, 1.0f));
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 		font_renderer_.print("FAILED", state->width * 0.4f, state->height * 0.48f, 2.0f, glm::vec3(0.710, 0.200, 0.180));
 		if (state->time_of_death + 5.0f < perframe_data_->delta_time.y)
@@ -426,8 +447,6 @@ void renderer::draw(level* level)
 			font_renderer_.print("[R] restart", state->width * 0.4f, state->height * 0.30f, .5f, glm::vec3(0.7, 0.7, 0.7));
 		}
 	}
-	glDisable(GL_BLEND);
-	OPTICK_POP()
 }
 
 void renderer::swap_luminance()

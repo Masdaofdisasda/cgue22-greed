@@ -61,6 +61,7 @@ private:
 	// HUD
 	program render_image_;		// draw image to full viewport
 	program render_color_;		// draw color to full viewport
+	program render_waypoint;    // draws marker
 
 	// global Textures
 	cubemap ibl_, sky_tex_;
@@ -93,6 +94,8 @@ private:
 	GLuint blue_noise = Texture::load_texture("../../assets/shaders/lightFX/blue_noise_512_512.ktx");
 	GLuint perlin_noise = Texture::get_3D_noise(32, 4.0f);
 
+	GLuint way_point = Texture::load_texture("../../assets/shaders/HUD/waypoint.ktx");
+
 	/**
 	 * \brief bind light sources to binding points
 	 */
@@ -106,6 +109,8 @@ private:
 
 	/// @brief initializes settings for post processing and rendering
 	void set_render_settings() const;
+
+	void draw_hud();
 };
 
 
