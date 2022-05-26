@@ -102,16 +102,8 @@ layout (binding = 12) uniform sampler2D depthTex;
 
 // Global variables
 const float M_PI = 3.141592653589793;
-const float shadow_bias = 0.1;
 
 // helper functions
-float debugDepthmap()
-{
-   float depth = texture(depthTex, fShadow.xy).r;
-   return depth + shadow_bias < fShadow.z ? 0 : 1.0;
-}
-float shadow =  debugDepthmap();
-
 vec2 parallaxUV(vec3 view)
 {
 	float height = texture(sampler2D(unpackUint2x32(materials[mat_id].height_map_)), fUV).r;
@@ -125,6 +117,39 @@ vec4 SRGBtoLINEAR(vec4 srgbIn)
 
 	return vec4(linOut, srgbIn.a);
 }
+
+// Shadow Caluclations
+float debugDepthmap()
+{
+   float depth = texture(depthTex, fShadow.xy).r;
+   return depth + 0.01 < fShadow.z ? 0 : 1.0;
+}
+
+float PCF(int kernelSize, vec2 shadowCoord, float depth)
+{
+	float size = 1.0 / float( textureSize(depthTex, 0 ).x );
+	float shadow = 0.0;
+	int range = kernelSize / 2;
+	for ( int v=-range; v<=range; v++ ) for ( int u=-range; u<=range; u++ )
+		shadow += (depth >= texture( depthTex, shadowCoord + size * vec2(u, v) ).r) ? 1.0 : 0.0;
+	return shadow / (kernelSize * kernelSize);
+}
+
+float shadowFactor(vec4 shadowCoord)
+{
+	vec4 shadowCoords4 = shadowCoord / shadowCoord.w;
+
+	if (shadowCoords4.z > -1.0 && shadowCoords4.z < 1.0)
+	{
+		float depthBias = -0.01;
+		float shadowSample = PCF( 13, shadowCoords4.xy, shadowCoords4.z + depthBias );
+		return mix(1.0, 0.3, shadowSample);
+	}
+
+	return 1.0; 
+}
+
+float shadow =  shadowFactor(fShadow);
 
 // Calculation of the lighting contribution from an optional Image Based Light source.
 // Precomputed Environment Maps are required uniform inputs and are computed as outlined in [1].
