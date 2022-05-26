@@ -21,6 +21,7 @@ private:
     program sim_update_;
     program sim_render_;
     int count_ = 0;
+    GLuint lava_particle = Texture::load_texture("../../assets/shaders/Lava/lava_particle.ktx");
 
     glm::ivec3 n_particles_ = glm::ivec3(20,20,20);
     GLuint total_particles_ = n_particles_.x * n_particles_.y * n_particles_.z;

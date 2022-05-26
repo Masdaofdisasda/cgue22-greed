@@ -1,14 +1,15 @@
 #version 460
 
 in vec3 Position;
-layout (binding = 5) uniform sampler2D albedoTex;
-
+//in vec2 UV;
+layout(binding = 15) uniform sampler2D particleTex;
 
 layout( location = 0 ) out vec4 FragColor;
 
 void main() {
 
-	vec3 albedo = vec3(1,0,0);
+	//vec4 albedo = texture(particleTex, UV);
+	vec4 albedo = texture(particleTex, vec2(0.9,0.5));
 
-	FragColor = vec4(albedo,1.0);
+	FragColor = albedo;
 }

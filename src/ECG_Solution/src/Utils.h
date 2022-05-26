@@ -165,7 +165,7 @@ glm::vec3 uniform_circle();
 /// 12 - depth map
 ///	13 - 3D LUT look
 /// 14 - volumetric light
-///	15 -
+///	15 - lava particle
 ///	postprocessing
 ///	16 - ssao / bloom / fullscreen images
 ///	17 - ssao / bloom 

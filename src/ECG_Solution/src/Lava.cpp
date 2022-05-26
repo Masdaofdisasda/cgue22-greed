@@ -45,9 +45,21 @@ void lava_system::setup_buffers()
 
     GLuint bufSize = total_particles_ * 4 * sizeof(GLfloat);
 
+    std::vector<float> quad_vertices = {
+        -1.0f,  1.0f,
+        -1.0f, -1.0f,
+        1.0f,  1.0f,
+        1.0f, -1.0f };
+
     // The buffers for positions
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, posBuf);
     glBufferData(GL_SHADER_STORAGE_BUFFER, bufSize, &init_pos[0], GL_DYNAMIC_DRAW);
+
+    // The buffer the quad
+    GLuint vbo;
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(quad_vertices.size() * sizeof(float)), quad_vertices.data(), GL_STATIC_DRAW);
 
     // Velocities
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, velBuf);
@@ -57,12 +69,19 @@ void lava_system::setup_buffers()
     glGenVertexArrays(1, &particles_vao_);
     glBindVertexArray(particles_vao_);
 
-    glBindBuffer(GL_ARRAY_BUFFER, posBuf);
-    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
     glEnableVertexAttribArray(0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, posBuf);
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribDivisor(1, 0);
+
 
     glBindVertexArray(0);
 
+#if 0
     // Set up a buffer and a VAO for drawing the attractors (the "black holes")
     glGenBuffers(1, &bh_buf_);
     glBindBuffer(GL_ARRAY_BUFFER, bh_buf_);
@@ -77,6 +96,9 @@ void lava_system::setup_buffers()
     glEnableVertexAttribArray(0);
 
     glBindVertexArray(0);
+#endif
+    
+    glBindTextureUnit(15, lava_particle);
 }
 
 void lava_system::update(const float t)
@@ -107,7 +129,13 @@ void lava_system::draw()
     sim_render_.use();
     glPointSize(10.0f);
     glBindVertexArray(particles_vao_);
+	//glEnableVertexAttribArray(0);
+    //glVertexAttribDivisor(1, 1);
+
     glDrawArrays(GL_POINTS, 0, static_cast<GLsizeiptr>(total_particles_));
+    //glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, static_cast<GLsizeiptr>(total_particles_));
+    //glDisableVertexAttribArray(0);
+    //glVertexAttribDivisor(1, 0);
 
 
 #if 0
