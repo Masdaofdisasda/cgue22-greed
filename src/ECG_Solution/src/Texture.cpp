@@ -273,7 +273,9 @@ GLuint Texture::get_3D_noise(int size, float base_freq) // todo
 	glTextureParameteri(tex_id_, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTextureParameteri(tex_id_, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTextureParameteri(tex_id_, GL_TEXTURE_WRAP_R, GL_REPEAT);
-	
+
+	free(data);
+
 	return tex_id_;
 }
 
