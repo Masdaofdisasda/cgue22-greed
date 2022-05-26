@@ -184,7 +184,9 @@ void renderer::draw(level* level)
 		// 2.3 - draw lava
 		lava_sim_.update(perframe_data_->delta_time.x);
 		lava_sim_.simulation_step();
+		glEnable(GL_BLEND);
 		lava_sim_.draw();
+		glDisable(GL_BLEND);
 
 	framebuffer1_.unbind(); 
 	glGenerateTextureMipmap(framebuffer1_.get_texture_color().get_handle());

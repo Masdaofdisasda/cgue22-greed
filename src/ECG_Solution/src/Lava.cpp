@@ -73,12 +73,6 @@ void lava_system::setup_buffers()
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
     glEnableVertexAttribArray(0);
 
-    glBindBuffer(GL_ARRAY_BUFFER, posBuf);
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, 0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribDivisor(1, 0);
-
-
     glBindVertexArray(0);
 
 #if 0
@@ -127,15 +121,8 @@ void lava_system::draw()
 
     // Draw the particles
     sim_render_.use();
-    glPointSize(10.0f);
     glBindVertexArray(particles_vao_);
-	//glEnableVertexAttribArray(0);
-    //glVertexAttribDivisor(1, 1);
-
-    glDrawArrays(GL_POINTS, 0, static_cast<GLsizeiptr>(total_particles_));
-    //glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, static_cast<GLsizeiptr>(total_particles_));
-    //glDisableVertexAttribArray(0);
-    //glVertexAttribDivisor(1, 0);
+    glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, static_cast<GLsizeiptr>(total_particles_));
 
 
 #if 0

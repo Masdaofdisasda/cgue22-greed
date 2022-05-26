@@ -360,13 +360,6 @@ vec3 perturbNormal(vec3 n, vec3 v, vec3 normalSample, vec2 uv)
 	return normalize(TBN * map);
 }
 
-vec3 decodeNormal(vec3 normal)
-{
-    normal.xy = normal.xy * 2.0 - 1.0;           // Unpack to [-1,1]
-    normal.z = sqrt(1 - dot(normal.xy, normal.xy)); // Compute Z
-	return normal;
-}
-
 void main()
 {
 	// read textures
@@ -379,8 +372,6 @@ void main()
 
     vec3 normal_sample = vec3(0,0,0);
     normal_sample = texture(sampler2D(unpackUint2x32(mat.normal_map_)), UV).rgb;
-	//normal_sample = pow( normal_sample, vec3(1.0/2.2) ) ; // toktx tool maps normal map to linear space
-	normal_sample = decodeNormal(normal_sample);
     vec3 n = normalize(fNormal);
     if (length(normal_sample) > 0.5 && (normalMap.x > 0.0f))
         n = perturbNormal(normalize(fNormal), normalize(viewPos.xyz - fPosition), normal_sample, UV);
@@ -413,5 +404,5 @@ void main()
 	color = color * (Kao.r < 0.01 ? 1.0 : Kao);
 	color = pow(Ke.rgb + color, vec3(1.0/2.2) ) ;
 	
-    out_FragColor = vec4(normal_sample, 1.0);
+    out_FragColor = vec4(color, 1.0);
 }
