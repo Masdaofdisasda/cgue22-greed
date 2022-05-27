@@ -2,7 +2,6 @@
 #include "Utils.h"
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
-#include "glm/gtx/euler_angles.hpp"
 
 /* Camera Interface
 * every camera has to give a view matrix and position vector for rendering and shading
@@ -123,4 +122,46 @@ private:
 	float mouse_speed_ = 4.0f;
 
 	glm::vec3 up_ = glm::vec3(0.0f, 1.0f, 0.0f);
+};
+
+
+class camera_positioner_move_to final : public camera_positioner_interface
+{
+public:
+	camera_positioner_move_to(const glm::vec3& pos, const glm::vec3& angles);
+
+	void update(double delta_seconds, const glm::vec2& mouse_pos, bool mouse_pressed) override;
+
+	void setPosition(const glm::vec3& p);
+	void setAngles(float pitch, float pan, float roll);
+	void setAngles(const glm::vec3& angles);
+	void setDesiredPosition(const glm::vec3& p);
+	void setDesiredAngles(float pitch, float pan, float roll);
+	void setDesiredAngles(const glm::vec3& angles);
+
+	virtual glm::vec3 get_position() const override { return positionCurrent_; }
+	virtual glm::mat4 get_view_matrix() const override { return currentTransform_; }
+
+	virtual glm::quat get_orientation() const override;
+
+public:
+	float speed_ = 0.01f;
+	float dampingLinear_ = 10.0f;
+	glm::vec3 dampingEulerAngles_ = glm::vec3(5.0f, 5.0f, 5.0f);
+
+private:
+	glm::vec3 positionCurrent_ = glm::vec3(0.0f);
+	glm::vec3 positionDesired_ = glm::vec3(0.0f);
+
+	/// pitch, pan, roll
+	glm::vec3 anglesCurrent_ = glm::vec3(0.0f);
+	glm::vec3 anglesDesired_ = glm::vec3(0.0f);
+
+	glm::mat4 currentTransform_ = glm::mat4(1.0f);
+
+	static float clipAngle(float d);
+
+	static glm::vec3 clipAngles(const glm::vec3& angles);
+
+	static glm::vec3 angleDelta(const glm::vec3& anglesCurrent, const glm::vec3& anglesDesired);
 };

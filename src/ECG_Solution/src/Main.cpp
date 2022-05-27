@@ -37,9 +37,16 @@ keyboard_input_state keyboard_input_;
 PerFrameData perframe_data_;
 mouse_state mouse_state_;
 
+// only used for moveto camera animation
+glm::vec3 cam_start_pos(0.0f, 2.0f, 0.0f);
+glm::vec3 cam_start_rot(90.0f, 0.0f, 0.0f);
+glm::vec3 cam_end_pos(0.0f, 40.0f, 0.0f);
+glm::vec3 cam_end_rot(90.0f, 0.0f, 0.0f);
+
 camera_positioner_interface* camera_positioner_;
 camera_positioner_first_person floating_positioner_(glm::vec3(-15.0f, 6.0f, 15.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 camera_positioner_player player_camera_positioner_;
+camera_positioner_move_to positioner_moveTo(cam_start_pos, cam_start_rot);
 camera camera_(*camera_positioner_);
 
 void registerInputCallbacks(glfw_app& app);
@@ -395,6 +402,17 @@ void registerInputCallbacks(glfw_app& app) {
 					printf("SSAO on\n");
 					state_->ssao = true;
 				}
+			}
+			if (key == GLFW_KEY_F10 && action == GLFW_PRESS) {
+				if (state_->using_debug_camera) {
+					printf("Switch animation camera\n");
+					camera_positioner_ = &positioner_moveTo;
+					state_->debug_draw_physics = false;
+					positioner_moveTo.setDesiredPosition(cam_end_pos);
+					positioner_moveTo.setDesiredAngles(cam_end_rot);
+					glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+				}
+				camera_.set_positioner(camera_positioner_);
 			}
 		});
 	glfwSetMouseButtonCallback(app.get_window(),

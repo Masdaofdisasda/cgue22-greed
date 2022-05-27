@@ -23,3 +23,4 @@ void camera_positioner_player::update(double delta_seconds, const glm::vec2& mou
 	const glm::vec3 dir = -glm::vec3(view[0][2], view[1][2], view[2][2]);
 	camera_orientation_ = glm_look_at(camera_position_, camera_position_ + dir, up_);
 }
+

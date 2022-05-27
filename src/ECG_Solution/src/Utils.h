@@ -138,6 +138,41 @@ glm::vec3 scale_from_transform(glm::mat4 transform);
 /// @return a view matrix according to the input vectors
 glm::mat4 glm_look_at(const glm::vec3 pos, const glm::vec3 target, const glm::vec3 up);
 
+template <typename T>
+glm::mat4 glm_euler_angle_xyz
+(
+	T const& yaw,
+	T const& pitch,
+	T const& roll
+)
+{
+	T tmp_ch = glm::cos(yaw);
+	T tmp_sh = glm::sin(yaw);
+	T tmp_cp = glm::cos(pitch);
+	T tmp_sp = glm::sin(pitch);
+	T tmp_cb = glm::cos(roll);
+	T tmp_sb = glm::sin(roll);
+
+	glm::mat4 Result;
+	Result[0][0] = tmp_ch * tmp_cb + tmp_sh * tmp_sp * tmp_sb;
+	Result[0][1] = tmp_sb * tmp_cp;
+	Result[0][2] = -tmp_sh * tmp_cb + tmp_ch * tmp_sp * tmp_sb;
+	Result[0][3] = static_cast<T>(0);
+	Result[1][0] = -tmp_ch * tmp_sb + tmp_sh * tmp_sp * tmp_cb;
+	Result[1][1] = tmp_cb * tmp_cp;
+	Result[1][2] = tmp_sb * tmp_sh + tmp_ch * tmp_sp * tmp_cb;
+	Result[1][3] = static_cast<T>(0);
+	Result[2][0] = tmp_sh * tmp_cp;
+	Result[2][1] = -tmp_sp;
+	Result[2][2] = tmp_ch * tmp_cp;
+	Result[2][3] = static_cast<T>(0);
+	Result[3][0] = static_cast<T>(0);
+	Result[3][1] = static_cast<T>(0);
+	Result[3][2] = static_cast<T>(0);
+	Result[3][3] = static_cast<T>(1);
+	return Result;
+}
+
 /**
  * \brief loads settings from settings.ini, should only be called at startup
  * \return the loaded settings

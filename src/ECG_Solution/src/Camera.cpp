@@ -1,5 +1,8 @@
 #include "Camera.h"
 
+#include "BulletDebugDrawer.h"
+#include "glm/gtx/euler_angles.hpp"
+
 void camera_positioner_first_person::set_movement_state(keyboard_input_state input)
 {
 	movement.forward = input.pressing_w;
@@ -87,4 +90,73 @@ inline void camera_positioner_first_person::flook_at(const glm::vec3& pos, const
 	camera_orientation_ = glm_look_at(pos, target, up);
 }
 
+camera_positioner_move_to::camera_positioner_move_to(const glm::vec3& pos, const glm::vec3& angles): positionCurrent_(pos)
+	, positionDesired_(pos)
+	, anglesCurrent_(angles)
+	, anglesDesired_(angles)
+{}
+
+void camera_positioner_move_to::update(double delta_seconds, const glm::vec2& mouse_pos, bool mouse_pressed)
+{
+	positionCurrent_ += dampingLinear_ * delta_seconds * (positionDesired_ - positionCurrent_) * speed_;
+
+	// normalization is required to avoid "spinning" around the object 2pi times
+	anglesCurrent_ = clipAngles(anglesCurrent_);
+	anglesDesired_ = clipAngles(anglesDesired_);
+
+	// update angles
+	anglesCurrent_ -= angleDelta(anglesCurrent_, anglesDesired_) * dampingEulerAngles_ * delta_seconds * speed_;
+
+	// normalize new angles
+	anglesCurrent_ = clipAngles(anglesCurrent_);
+
+	const glm::vec3 a = glm::radians(anglesCurrent_);
+
+	currentTransform_ = glm::translate(glm_euler_angle_xyz(a.y, a.x, a.z), -positionCurrent_);
+}
+
+void camera_positioner_move_to::setPosition(const glm::vec3& p)
+{ positionCurrent_ = p; }
+
+void camera_positioner_move_to::setAngles(float pitch, float pan, float roll)
+{ anglesCurrent_ = glm::vec3(pitch, pan, roll); }
+
+void camera_positioner_move_to::setAngles(const glm::vec3& angles)
+{ anglesCurrent_ = angles; }
+
+void camera_positioner_move_to::setDesiredPosition(const glm::vec3& p)
+{ positionDesired_ = p; }
+
+void camera_positioner_move_to::setDesiredAngles(float pitch, float pan, float roll)
+{ anglesDesired_ = glm::vec3(pitch, pan, roll); }
+
+void camera_positioner_move_to::setDesiredAngles(const glm::vec3& angles)
+{ anglesDesired_ = angles; }
+
+glm::quat camera_positioner_move_to::get_orientation() const
+{
+	return glm::quat(glm::vec3(0.0f));
+}
+
+float camera_positioner_move_to::clipAngle(float d)
+{
+	if (d < -180.0f) return d + 360.0f;
+	if (d > +180.0f) return d - 360.f;
+	return d;
+}
+
+glm::vec3 camera_positioner_move_to::clipAngles(const glm::vec3& angles)
+{
+	return glm::vec3(
+		std::fmod(angles.x, 360.0f),
+		std::fmod(angles.y, 360.0f),
+		std::fmod(angles.z, 360.0f)
+	);
+}
+
+glm::vec3 camera_positioner_move_to::angleDelta(const glm::vec3& anglesCurrent, const glm::vec3& anglesDesired)
+{
+	const glm::vec3 d = clipAngles(anglesCurrent) - clipAngles(anglesDesired);
+	return glm::vec3(clipAngle(d.x), clipAngle(d.y), clipAngle(d.z));
+}
 
