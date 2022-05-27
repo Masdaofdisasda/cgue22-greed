@@ -33,6 +33,10 @@ void player_controller::move(const keyboard_input_state inputs, const float delt
 	// hinder rigidbody from sleeping
 	player_object_->rigidbody->activate(true);
 
+	btVector3 force = player_object_->rigidbody->getLinearVelocity();
+	glm::vec3 velocity = glm::vec3((float)force.getX(), (float)force.getY(), (float)force.getZ());
+	check_movement_state(velocity);
+
 	// translate movement input
 	movement movement;
 	input_to_movement_state(inputs, movement);
@@ -61,7 +65,7 @@ void player_controller::accelerate(glm::vec3 movement_direction, const float del
 }
 
 void player_controller::jump() {
-	printf("jump");
+	//printf("jump");
 	notify_observers(fx_jump);
 	player_object_->rigidbody->applyCentralImpulse(btVector3(0, jump_strength_, 0));
 }
@@ -105,6 +109,7 @@ void player_controller::try_collect_item(const mouse_state mouse_state, const ke
 
 	// collect
 	printf("collected item\n");
+	notify_observers(fx_collect);
 	item_collection.collect(item);
 	item_weight_ = item_collection.get_total_weight();
 }
@@ -195,5 +200,21 @@ void player_controller::enforce_speed_limit() const
 		velocity.getY(),
 		new_xz_velocity.y
 	));
+}
+
+void player_controller::check_movement_state(const glm::vec3 velocity)
+{
+	if (glm::length(velocity) > 0.0001f)
+	{
+		if (is_moving_ == false) // player starts moving
+			notify_observers(fx_step);
+		is_moving_ = true;
+	}
+	else
+	{
+		if (is_moving_ == true) // player stops moving
+			notify_observers(fx_still);
+		is_moving_ = false;
+	}
 }
 

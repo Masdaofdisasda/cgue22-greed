@@ -44,6 +44,7 @@ private:
 		bool right = false;
 		bool jump = false;
 	};
+	bool is_moving_ = false;
 
 	std::list<observer*> observer_list_;
 
@@ -72,5 +73,6 @@ private:
 	void accelerate(glm::vec3 movement_direction, const float delta_time);
 	void jump();
 	bool is_ground_under_player();
+	void check_movement_state(glm::vec3 velocity);
 };
 

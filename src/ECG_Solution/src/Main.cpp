@@ -37,11 +37,11 @@ keyboard_input_state keyboard_input_;
 PerFrameData perframe_data_;
 mouse_state mouse_state_;
 
-// only used for moveto camera animation
+// used for moveto camera animation
 glm::vec3 cam_start_pos(0.0f, 2.0f, 0.0f);
-glm::vec3 cam_start_rot(90.0f, 0.0f, 0.0f);
+glm::vec3 cam_start_rot(-90.0f, 90.0f, 90.0f);
 glm::vec3 cam_end_pos(0.0f, 40.0f, 0.0f);
-glm::vec3 cam_end_rot(90.0f, 0.0f, 0.0f);
+glm::vec3 cam_end_rot(90.0f, 90.0f, 90.0f);
 
 camera_positioner_interface* camera_positioner_;
 camera_positioner_first_person floating_positioner_(glm::vec3(-15.0f, 6.0f, 15.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
