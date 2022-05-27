@@ -356,22 +356,35 @@ void renderer::draw_hud()
 	font_renderer_.print("CLOSED BETA FOOTAGE", state->width * 0.8f, state->height * 0.08f, .5f, glm::vec3(.7f, .7f, .7f));
 	font_renderer_.print("all content is subject to change", state->width * 0.78f, state->height * 0.05f, .5f, glm::vec3(.5f, .5f, .5f));
 
+	render_image_.use();
+	glBindTextureUnit(16, gold_icon);
+	glViewport(state->width * 0.02, state->height * 0.09, state->width * 0.03, state->width * 0.03);
+	glDrawArrays(GL_TRIANGLES, 0, 3);
+	glBindTextureUnit(16, money_icon);
+	glViewport(state->width * 0.02, state->height * 0.03, state->width * 0.03, state->width * 0.03);
+	glDrawArrays(GL_TRIANGLES, 0, 3);
 	render_color_.use();
 	render_color_.set_vec4("color", glm::vec4(0.0f, 0.0f, 0.0f, 0.7f));
-	glViewport(state->width * 0.04, state->height * 0.06, state->width * 0.1, state->height * 0.08);
-	glDrawArrays(GL_TRIANGLES, 0, 3);
 	glViewport(state->width * 0.02, state->height * 0.87, state->width * 0.25, state->height * 0.11);
 	glDrawArrays(GL_TRIANGLES, 0, 3);
 	glViewport(0, 0, state->width, state->height);
 
 	const int items = state->collected_items;
-	const std::string weightText = "Items: " + std::to_string(items);
-	font_renderer_.print(weightText, state->width * 0.05f, state->height * 0.105f, .5f, glm::vec3(.95f, .86f, .6f));
+	const std::string weightText = "x" + std::to_string(items);
+	font_renderer_.print(weightText, state->width * 0.065f, state->height * 0.105f, .5f, glm::vec3(.95f, .86f, .6f));
 	const int money = (int)state->total_cash;
-	const std::string loot = "Loot: " + std::to_string(money) + "$";
-	font_renderer_.print(loot, state->width * 0.05f, state->height * 0.07f, .5f, glm::vec3(.95f, .86f, .6f));
+	const std::string loot = std::to_string(money) + "$";
+	font_renderer_.print(loot, state->width * 0.065f, state->height * 0.04f, .5f, glm::vec3(.95f, .86f, .6f));
 
 	font_renderer_.print("Objective", state->width * 0.03f, state->height * 0.94f, .7f, glm::vec3(.95f, .86f, .6f));
+
+	if (!state->display_loot_obj || !state->display_escape_obj)
+	{
+		glBindTextureUnit(16, way_point);
+		render_waypoint.use();
+		render_waypoint.set_vec3("position", glm::vec3(0.0, 2.0, 0.0));
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+	}
 
 	if (state->display_walk_tutorial)
 	{
@@ -410,6 +423,7 @@ void renderer::draw_hud()
 						glDrawArrays(GL_TRIANGLES, 0, 6);
 						state->display_escape_obj = false;
 					}
+	
 
 	if (state->display_collect_item_hint) {
 		font_renderer_.print("Click to collect", state->width * 0.42f, state->height * 0.40f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f));

@@ -95,6 +95,8 @@ private:
 	GLuint perlin_noise = Texture::get_3D_noise(32, 4.0f);
 
 	GLuint way_point = Texture::load_texture("../../assets/shaders/HUD/waypoint.ktx");
+	GLuint gold_icon = Texture::load_texture("../../assets/shaders/HUD/goldicons.ktx");
+	GLuint money_icon = Texture::load_texture("../../assets/shaders/HUD/moneybagicon.ktx");
 
 	/**
 	 * \brief bind light sources to binding points

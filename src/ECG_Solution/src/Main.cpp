@@ -403,17 +403,21 @@ void registerInputCallbacks(glfw_app& app) {
 					state_->ssao = true;
 				}
 			}
+#ifdef _DEBUG
 			if (key == GLFW_KEY_F10 && action == GLFW_PRESS) {
 				if (state_->using_debug_camera) {
 					printf("Switch animation camera\n");
 					camera_positioner_ = &positioner_moveTo;
 					state_->debug_draw_physics = false;
-					positioner_moveTo.setDesiredPosition(cam_end_pos);
-					positioner_moveTo.setDesiredAngles(cam_end_rot);
+					positioner_moveTo.set_position(cam_start_pos);
+					positioner_moveTo.set_angles(cam_start_rot);
+					positioner_moveTo.set_desired_position(cam_end_pos);
+					positioner_moveTo.set_desired_angles(cam_end_rot);
 					glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 				}
 				camera_.set_positioner(camera_positioner_);
 			}
+#endif
 		});
 	glfwSetMouseButtonCallback(app.get_window(),
 		[](auto* window, int button, int action, int mods)

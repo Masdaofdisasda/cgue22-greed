@@ -132,36 +132,36 @@ public:
 
 	void update(double delta_seconds, const glm::vec2& mouse_pos, bool mouse_pressed) override;
 
-	void setPosition(const glm::vec3& p);
-	void setAngles(float pitch, float pan, float roll);
-	void setAngles(const glm::vec3& angles);
-	void setDesiredPosition(const glm::vec3& p);
-	void setDesiredAngles(float pitch, float pan, float roll);
-	void setDesiredAngles(const glm::vec3& angles);
+	void set_position(const glm::vec3& p);
+	void set_angles(float pitch, float pan, float roll);
+	void set_angles(const glm::vec3& angles);
+	void set_desired_position(const glm::vec3& p);
+	void set_desired_angles(float pitch, float pan, float roll);
+	void set_desired_angles(const glm::vec3& angles);
 
-	virtual glm::vec3 get_position() const override { return positionCurrent_; }
-	virtual glm::mat4 get_view_matrix() const override { return currentTransform_; }
+	virtual glm::vec3 get_position() const override { return position_current_; }
+	virtual glm::mat4 get_view_matrix() const override { return current_transform_; }
 
 	virtual glm::quat get_orientation() const override;
 
 public:
-	float speed_ = 0.01f;
-	float dampingLinear_ = 10.0f;
-	glm::vec3 dampingEulerAngles_ = glm::vec3(5.0f, 5.0f, 5.0f);
+	float speed = 0.01f;
+	float damping_linear = 10.0f;
+	glm::vec3 damping_euler_angles = glm::vec3(5.0f, 5.0f, 5.0f);
 
 private:
-	glm::vec3 positionCurrent_ = glm::vec3(0.0f);
-	glm::vec3 positionDesired_ = glm::vec3(0.0f);
+	glm::vec3 position_current_ = glm::vec3(0.0f);
+	glm::vec3 position_desired_ = glm::vec3(0.0f);
 
 	/// pitch, pan, roll
-	glm::vec3 anglesCurrent_ = glm::vec3(0.0f);
-	glm::vec3 anglesDesired_ = glm::vec3(0.0f);
+	glm::vec3 angles_current_ = glm::vec3(0.0f);
+	glm::vec3 angles_desired_ = glm::vec3(0.0f);
 
-	glm::mat4 currentTransform_ = glm::mat4(1.0f);
+	glm::mat4 current_transform_ = glm::mat4(1.0f);
 
-	static float clipAngle(float d);
+	static float clip_angle(float d);
 
-	static glm::vec3 clipAngles(const glm::vec3& angles);
+	static glm::vec3 clip_angles(const glm::vec3& angles);
 
-	static glm::vec3 angleDelta(const glm::vec3& anglesCurrent, const glm::vec3& anglesDesired);
+	static glm::vec3 angle_delta(const glm::vec3& anglesCurrent, const glm::vec3& anglesDesired);
 };
