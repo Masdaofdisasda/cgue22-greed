@@ -138,7 +138,7 @@ void main() {
 			shadow_term = 0.0;
 		}
 
-		vec3 lightPos = vec3(-7,60,-14); // directional light has no position
+		vec3 lightPos = vec3(-7,75,-14); // directional light has no position
 		float d = length(ray_position_worldspace.xyz - lightPos);
 		float d_rcp = 1.0/d;
 		

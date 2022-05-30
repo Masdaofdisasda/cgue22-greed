@@ -377,14 +377,11 @@ void renderer::draw_hud()
 	font_renderer_.print(loot, state->width * 0.065f, state->height * 0.04f, .5f, glm::vec3(.95f, .86f, .6f));
 
 	font_renderer_.print("Objective", state->width * 0.03f, state->height * 0.94f, .7f, glm::vec3(.95f, .86f, .6f));
-
-	if (!state->display_loot_obj || !state->display_escape_obj)
-	{
-		glBindTextureUnit(16, way_point);
-		render_waypoint.use();
-		render_waypoint.set_vec3("position", glm::vec3(0.0, 2.0, 0.0));
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-	}
+	
+	glBindTextureUnit(16, way_point);
+	render_waypoint.use();
+	render_waypoint.set_vec3("position", state->waypoint);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
 
 	if (state->display_walk_tutorial)
 	{
@@ -407,20 +404,12 @@ void renderer::draw_hud()
 				if (state->display_loot_obj)
 				{
 					font_renderer_.print("Collect treasure and find a way out", state->width * 0.03f, state->height * 0.9f, .4f, glm::vec3(1.0f, 1.0f, 1.0f));
-					glBindTextureUnit(16, way_point);
-					render_waypoint.use();
-					render_waypoint.set_vec3("position", glm::vec3(0.0, 7.0, 0.0));
-					glDrawArrays(GL_TRIANGLES, 0, 6);
 					state->display_loot_obj = false;
 				}
 				else
 					if (state->display_escape_obj)
 					{
 						font_renderer_.print("Escape the rising lava", state->width * 0.03f, state->height * 0.9f, .4f, glm::vec3(1.0f, 1.0f, 1.0f));
-						glBindTextureUnit(16, way_point);
-						render_waypoint.use();
-						render_waypoint.set_vec3("position", glm::vec3(0.0, 40.0, 0.0));
-						glDrawArrays(GL_TRIANGLES, 0, 6);
 						state->display_escape_obj = false;
 					}
 	

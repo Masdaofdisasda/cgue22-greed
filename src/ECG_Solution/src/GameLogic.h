@@ -20,9 +20,20 @@ private:
 	std::list<observer*> observer_list_;
 	std::shared_ptr<global_state> state_;
 	PerFrameData* perframe_data_{};
-	float exit_height_ = 100.0f;
+	float exit_height_ = 59.0f;
 	float lava_trigger_height_ = 7.0f;
 	float player_size_ = 1.8f;
+	std::vector<glm::vec3> checkpoints_ = {
+		glm::vec3(0.0f, 2.0f, 0.0f), // gold treasure
+		glm::vec3(0.0f, 7.0f, 0.0f), // lvl 0 lava rise trigger
+		glm::vec3(-17.0f, 24.0f, 1.0f), // lvl 1 exit jumping
+		glm::vec3(-18.0f, 35.0f, 2.0f), // lvl 2 exit precision
+		glm::vec3(16.0f, 48.0f, 0.0f), // lvl 3 exit climbing
+		glm::vec3(17.0f, 59.0f, -6.0f), // lvl 4 exit physic
+
+		glm::vec3(0.0f, 200.0f, 0.0f) // prevent crashes
+	};
+	int checkpoint_ = -1;
 };
 
 inline game_logic::game_logic(std::shared_ptr<global_state> state, PerFrameData& perframe_data)
@@ -59,6 +70,12 @@ inline void game_logic::update()
 	if (perframe_data_->delta_time.y > 60 && state_->lava_triggered == true)
 		state_->display_escape_obj = true;
 
+	if (perframe_data_->view_pos.y > state_->waypoint.y + player_size_)
+	{
+		++checkpoint_;
+		state_->waypoint = checkpoints_[checkpoint_];
+	}
+
 	if (state_->won == true || state_->lost == true)
 		return;
 
@@ -68,9 +85,9 @@ inline void game_logic::update()
 		notify_observers(escape);
 	}
 
-	if (perframe_data_->normal_map.z < 400000 && state_->lava_triggered)
+	if (perframe_data_->normal_map.z < 50000 && state_->lava_triggered)
 	{
-		perframe_data_->normal_map.z += 600 * perframe_data_->delta_time.x;
+		perframe_data_->normal_map.z += 60 * perframe_data_->delta_time.x;
 	}
 
 	if (perframe_data_->view_pos.y > exit_height_+ player_size_)

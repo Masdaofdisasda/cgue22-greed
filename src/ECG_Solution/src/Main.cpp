@@ -40,7 +40,7 @@ mouse_state mouse_state_;
 // used for moveto camera animation
 glm::vec3 cam_start_pos(0.0f, 2.0f, 0.0f);
 glm::vec3 cam_start_rot(-90.0f, 90.0f, 90.0f);
-glm::vec3 cam_end_pos(0.0f, 40.0f, 0.0f);
+glm::vec3 cam_end_pos(0.0f, 70.0f, 0.0f);
 glm::vec3 cam_end_rot(90.0f, 90.0f, 90.0f);
 
 camera_positioner_interface* camera_positioner_;

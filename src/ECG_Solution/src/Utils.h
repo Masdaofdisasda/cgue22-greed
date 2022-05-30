@@ -62,6 +62,7 @@ struct global_state
 	bool display_jump_tutorial = false;
 	bool display_loot_obj = false;
 	bool display_escape_obj = false;
+	glm::vec3 waypoint = glm::vec3(0);
 	float total_cash = 0;
 	int collected_items = 0;
 };

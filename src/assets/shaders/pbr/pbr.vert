@@ -1,4 +1,6 @@
 #version 460
+#extension GL_ARB_bindless_texture : require
+#extension GL_ARB_gpu_shader_int64 : enable
 
 layout (location = 0) in vec3 vPosition;
 layout (location = 1) in vec3 vNormal;
@@ -49,7 +51,7 @@ void main()
 	mat4 model = modelMatrix[gl_BaseInstance >> 16];
 	mat_id = gl_BaseInstance & 0xffff;
 	
-	vec3 position =  vPosition;
+	vec3 position = vPosition;
 	vec3 normal = vNormal;
 	if(mat_id == normalMap.y)
 	{

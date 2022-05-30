@@ -59,7 +59,7 @@ private:
 	float player_speed_ = 100.0f; // how fast the player accelerates (x,z axis)
 	float jump_strength_ = 4.0f; // how high the player can jump (y axis)
 	float stop_speed_ = 7.0f; // how fast the player decelerates when not giving input (x,z axis)
-	float max_speed_ = 3.0f; // how fast the player is allowed to run at max (x,z axis)
+	float max_speed_ = 5.0f; // how fast the player is allowed to run at max (x,z axis)
 	float reach_ = 5.0f; // maximum distance that items can be away and still be collected
 	float item_weight_ = 0; // how much all the items weigh together (influences movement)
 	float jump_max_cooldown_time_ = 1.0f; // how long the jump will be on cooldown after initialization

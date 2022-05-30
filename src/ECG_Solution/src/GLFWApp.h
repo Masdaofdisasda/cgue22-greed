@@ -40,14 +40,8 @@ public:
 			const GLFWvidmode* info = glfwGetVideoMode(glfwGetPrimaryMonitor());
 			state_->width = info->width;
 			state_->height = info->height;
-			glfwSetWindowSize(window_, state_->width, state_->height);
-			glfwSetWindowPos(window_, 0, 0);
-		}else{
-			int w, h;
-			glfwGetFramebufferSize(window_, &w, &h);
-			state_->width = w;
-			state_->height = h;
-			}
+			glfwSetWindowMonitor(window_, glfwGetPrimaryMonitor(), 0, 0, state_->width, state_->height, state_->refresh_rate);
+		}
 	}
 
 private:
