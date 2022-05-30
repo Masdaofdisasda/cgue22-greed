@@ -438,6 +438,10 @@ void renderer::draw_hud()
 		render_color_.set_vec4("color", glm::vec4(0.0f, 0.0f, 0.0f, 0.7f));
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 		font_renderer_.print("You made it!", state->width * 0.36f, state->height * 0.48f, 2.0f, glm::vec3(.85f, .68f, .19f));
+		if (state->time_of_death + 5.0f < perframe_data_->delta_time.y)
+		{
+			font_renderer_.print("[R] retry", state->width * 0.4f, state->height * 0.30f, .5f, glm::vec3(0.7, 0.7, 0.7));
+		}
 	}
 	else if (state->lost)
 	{

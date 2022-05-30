@@ -25,7 +25,7 @@ layout(std140, binding = 0) uniform PerFrameData
 };
 
 vec4 particlePos = pos[gl_InstanceID];
-float scale = 0.4;
+float scale = 0.2;
 vec4 CameraRight_worldspace = viewInv[0];
 vec4 CameraUp_worldspace = viewInv[1];
 

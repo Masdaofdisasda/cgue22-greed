@@ -22,10 +22,10 @@ void lava_system::setup_buffers()
 
     std::default_random_engine generator;
     std::normal_distribution<float> distribution(0, 1.0);
-    const glm::vec3 spawn(-6, 60, -16);
+    const glm::vec3 spawn(-6, 29, -16);
 
     // We want to center the particles at (0,0,0)
-    const float steps = 130.0f / static_cast<float>(total_particles_);
+    const float steps = 29.0f / static_cast<float>(total_particles_);
     for (auto i = 0; i < total_particles_; i++) {
         glm::vec4 p(0.0f, 0.0f, 0.0f, 1.0f);
         p.x = spawn.x + distribution(generator);

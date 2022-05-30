@@ -50,10 +50,11 @@ void main() {
 
   // Reset particles that get too far from the attractor
   if( Position[idx].y < BlackHolePos1.y || test > 25) {
-    Position[idx] = vec4(-8,60,-16,1);
+    Position[idx] = vec4(-8,29,-16,1);
 	if(length(Velocity[idx]) > 1){
-	 Velocity[idx] = Velocity[idx]/2;
-    Velocity[idx] *= dither_pattern[ (int(Velocity[idx].x) % 4)* 4 + (int(Velocity[idx].y) % 4) ];
+	 Velocity[idx] = Velocity[idx]*0.5;
+	 int rng = (int(Velocity[idx].x) % 4)* 4 + (int(Velocity[idx].y) % 4);
+    Velocity[idx] *= dither_pattern[ rng ];
 	}
   } else {
     // Apply simple Euler integrator

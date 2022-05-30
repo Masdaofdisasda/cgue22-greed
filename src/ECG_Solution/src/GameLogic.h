@@ -94,6 +94,7 @@ inline void game_logic::update()
 	{
 		state_->won = true;
 		notify_observers(fx_won);
+		state_->time_of_death = perframe_data_->delta_time.y;
 	}
 	if (perframe_data_->view_pos.y < state_->lava_height + player_size_)
 	{
