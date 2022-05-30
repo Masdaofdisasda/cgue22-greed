@@ -593,7 +593,7 @@ void level::draw_scene_shadow_map()
 	if (state_->lava_triggered)
 	{
 		glm::vec3 t = scene_[lava_].TRS.translate;
-		t.y += perframe_data_->delta_time.x * .8f;
+		t.y += perframe_data_->delta_time.x * .4f;
 		scene_[lava_].set_node_trs(t, scene_[lava_].TRS.rotation, scene_[lava_].TRS.scale);
 		state_->lava_height = scene_[lava_].TRS.translate.y;
 	}

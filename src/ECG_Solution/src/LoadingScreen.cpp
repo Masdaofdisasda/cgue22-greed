@@ -58,6 +58,7 @@ void LoadingScreen::start() //TODO
 
 LoadingScreen::~LoadingScreen()
 {
+	window_ = nullptr;
 	glDeleteTextures(1, &scrn0_);
 	glDeleteTextures(1, &scrn25_);
 	glDeleteTextures(1, &scrn50_);

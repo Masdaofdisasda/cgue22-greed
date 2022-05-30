@@ -29,7 +29,7 @@ void lava_system::setup_buffers()
     for (auto i = 0; i < total_particles_; i++) {
         glm::vec4 p(0.0f, 0.0f, 0.0f, 1.0f);
         p.x = spawn.x + distribution(generator);
-        p.y = i * steps;
+        p.y = 29.0f + i * steps;
         p.z = spawn.z + distribution(generator);
         init_pos.push_back(p.x);
         init_pos.push_back(p.y);

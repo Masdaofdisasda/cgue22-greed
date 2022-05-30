@@ -65,6 +65,7 @@ struct global_state
 	glm::vec3 waypoint = glm::vec3(0);
 	float total_cash = 0;
 	int collected_items = 0;
+	int score = 0;
 };
 
 struct keyboard_input_state {
