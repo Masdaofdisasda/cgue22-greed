@@ -441,8 +441,12 @@ void renderer::draw_hud()
 		render_color_.set_vec4("color", glm::vec4(0.0f, 0.0f, 0.0f, 0.77f));
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 		font_renderer_.print("You made it!", state->width * 0.36f, state->height * 0.48f, 2.0f, glm::vec3(.85f, .68f, .19f));
-		const std::string score = "Score: " + std::to_string(state->score);
-		font_renderer_.print(score, state->width * 0.4f, state->height * 0.4f, 1.0f, glm::vec3(.95f, .86f, .6f));
+		const std::string time_score = "Time Bonus: " + std::to_string(state->time_bonus);
+		const std::string item_score = "Item Score: " + std::to_string(state->item_score);
+		const std::string score = "Total Score: " + std::to_string(state->score);
+		font_renderer_.print(item_score, state->width * 0.4f, state->height * 0.44f, .5f, glm::vec3(.95f, .86f, .6f));
+		font_renderer_.print(time_score, state->width * 0.4f, state->height * 0.40f, .5f, glm::vec3(.95f, .86f, .6f));
+		font_renderer_.print(score, state->width * 0.4f, state->height * 0.36f, .5f, glm::vec3(.95f, .86f, .6f));
 		if (state->time_of_death + 5.0f < perframe_data_->delta_time.y)
 		{
 			font_renderer_.print("[R] retry", state->width * 0.4f, state->height * 0.30f, .5f, glm::vec3(0.7, 0.7, 0.7));
@@ -455,8 +459,12 @@ void renderer::draw_hud()
 		render_color_.set_vec4("color", glm::vec4(0, 0, 0, 1.0f));
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 		font_renderer_.print("FAILED", state->width * 0.4f, state->height * 0.48f, 2.0f, glm::vec3(0.710, 0.200, 0.180));
-		const std::string score = "Score: " + std::to_string(state->score);
-		font_renderer_.print(score , state->width * 0.4f, state->height * 0.4f, 1.0f, glm::vec3(.95f, .86f, .6f));
+		const std::string time_score = "Time Bonus: " + std::to_string(state->time_bonus);
+		const std::string item_score = "Item Score: " + std::to_string(state->item_score);
+		const std::string score = "Total Score: " + std::to_string(state->score);
+		font_renderer_.print(item_score, state->width * 0.4f, state->height * 0.44f, .5f, glm::vec3(.95f, .86f, .6f));
+		font_renderer_.print(time_score, state->width * 0.4f, state->height * 0.40f, .5f, glm::vec3(.95f, .86f, .6f));
+		font_renderer_.print(score, state->width * 0.4f, state->height * 0.36f, .5f, glm::vec3(.95f, .86f, .6f));
 		if (state->time_of_death + 5.0f < perframe_data_->delta_time.y)
 		{
 			font_renderer_.print("[R] restart", state->width * 0.4f, state->height * 0.30f, .5f, glm::vec3(0.7, 0.7, 0.7));

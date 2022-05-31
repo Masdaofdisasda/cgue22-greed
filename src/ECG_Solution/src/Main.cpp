@@ -157,7 +157,7 @@ int main(int argc, char** argv)
 	camera_.set_positioner(camera_positioner_);
 	player_camera_positioner_.set_position(glm::vec3(0,1,0));
 
-	player_controller player(physics, player_camera_positioner_, glm::vec3(-20, 1, 20));
+	player_controller player(physics, player_camera_positioner_, glm::vec3(-17, 1, 17));
 	player.add_observer(fx_engine);
 
 	item_collection item_collection;

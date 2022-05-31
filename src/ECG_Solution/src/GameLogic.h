@@ -16,13 +16,13 @@ public:
 
 	void update();
 
-	int calculate_score() const;
+	void calculate_score() const;
 
 private:
 	std::list<observer*> observer_list_;
 	std::shared_ptr<global_state> state_;
 	PerFrameData* perframe_data_{};
-	float exit_height_ = 60.0f;
+	float exit_height_ = 70.0f;
 	float lava_trigger_height_ = 7.0f;
 	float player_size_ = 1.8f;
 	std::vector<glm::vec3> checkpoints_ = {
@@ -31,7 +31,7 @@ private:
 		glm::vec3(-17.0f, 24.0f, 1.0f), // lvl 1 exit jumping
 		glm::vec3(-18.0f, 35.0f, 2.0f), // lvl 2 exit precision
 		glm::vec3(16.0f, 48.0f, 0.0f), // lvl 3 exit climbing
-		glm::vec3(17.0f, 59.0f, -6.0f), // lvl 4 exit physic
+		glm::vec3(0.0f, 70.0f, -21.0f), // lvl 4 exit physic
 
 		glm::vec3(0.0f, 200.0f, 0.0f) // prevent crashes
 	};
@@ -97,25 +97,23 @@ inline void game_logic::update()
 		state_->won = true;
 		notify_observers(fx_won);
 		state_->time_of_death = perframe_data_->delta_time.y;
-		state_->score = calculate_score();
 	}
 	if (perframe_data_->view_pos.y < state_->lava_height + player_size_)
 	{
 		state_->lost = true;
 		notify_observers(fx_lost);
 		state_->time_of_death = perframe_data_->delta_time.y;
-		state_->score = calculate_score();
 	}
+	calculate_score();
 }
 
-inline int game_logic::calculate_score() const
+inline void game_logic::calculate_score() const
 {
-	const int time_score = std::max(3 * 60 - static_cast<int32_t>(perframe_data_->delta_time.y),0);
-	const int item_score = state_->total_cash;
 	const int distance_score = std::max(static_cast<int32_t>(perframe_data_->view_pos.y - (state_->lava_height + player_size_)), 0);
+	state_->time_bonus = std::max(3 * 60 - static_cast<int32_t>(perframe_data_->delta_time.y),0) * distance_score;
 	const int score_multiplier = checkpoint_ + 1;
-
-	const auto score = time_score * item_score * distance_score * score_multiplier;
-	return score;
+	state_->item_score = state_->total_cash * score_multiplier;
+	
+	state_->score = state_->item_score + state_->time_bonus;
 }
 
