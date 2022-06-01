@@ -27,6 +27,8 @@ private:
 
 		GLuint empty_vao_ = 0;
 
+		GLuint logo_ = 0;
+
 	    GLuint scrn0_ = 0;
 	    GLuint scrn25_ = 0;
 	    GLuint scrn50_ = 0;

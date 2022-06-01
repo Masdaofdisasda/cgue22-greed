@@ -12,6 +12,8 @@ LoadingScreen::LoadingScreen(glfw_app* app, const int width, const int height)
 
 void LoadingScreen::init()
 {
+	logo_ = Texture::load_texture("../../assets/textures/loading/loading_logo.ktx");
+
 	scrn0_ = Texture::load_texture("../../assets/textures/loading/screen0.ktx");
 	scrn25_ = Texture::load_texture("../../assets/textures/loading/screen25.ktx");
 	scrn50_ = Texture::load_texture("../../assets/textures/loading/screen50.ktx");
@@ -28,14 +30,24 @@ void LoadingScreen::init()
 
 void LoadingScreen::draw_progress()
 {
+	if (step_ == 0)
+	{
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glViewport(w_ * 0.05, h_ * 0.08 + 40, 392, 97);
+
+		render_image_->use();
+		glBindTextureUnit(16, logo_);
+		glBindVertexArray(empty_vao_);
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+	}
+
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glViewport(0, 0, w_, h_);
+	glViewport(w_*0.05, h_*0.08, 392, 24);
 
 	render_image_->use();
 	glBindTextureUnit(16, *screens_[step_]);
 	glBindVertexArray(empty_vao_);
 	glDrawArrays(GL_TRIANGLES, 0, 3);
-	Sleep(100);
 
 	window_->swap_buffers();
 	step_++;

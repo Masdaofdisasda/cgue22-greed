@@ -5,7 +5,7 @@ std::string Shader::read_code_from(const char* file)
 	std::ifstream ifs(file);
 	if (!ifs.is_open())
 	{
-		std::cout << "ERROR: Couldnt read file" << std::endl;
+		std::cout << "ERROR: Couldnt read file: " << file << std::endl;
 	}
 	std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 	return content;

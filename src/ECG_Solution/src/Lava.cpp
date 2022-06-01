@@ -9,9 +9,6 @@ void lava_system::init(glm::ivec3 lights)
     Shader update("../../assets/shaders/Lava/lavaParticles.comp");
     sim_update_.build_from(update);
 
-    Shader lava_floor_vert("../../assets/shaders/Lava/lavaFloor.vert");
-    Shader lava_floor_frag("../../assets/shaders/Lava/lavaPbr.frag", lights);
-
     setup_buffers();
 }
 
