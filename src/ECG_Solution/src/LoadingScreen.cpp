@@ -12,17 +12,17 @@ LoadingScreen::LoadingScreen(glfw_app* app, const int width, const int height)
 
 void LoadingScreen::init()
 {
-	logo_ = Texture::load_texture("../../assets/textures/loading/loading_logo.ktx");
+	logo_ = Texture::load_texture("../assets/textures/loading/loading_logo.ktx");
 
-	scrn0_ = Texture::load_texture("../../assets/textures/loading/screen0.ktx");
-	scrn25_ = Texture::load_texture("../../assets/textures/loading/screen25.ktx");
-	scrn50_ = Texture::load_texture("../../assets/textures/loading/screen50.ktx");
-	scrn75_ = Texture::load_texture("../../assets/textures/loading/screen75.ktx");
-	scrn100_ = Texture::load_texture("../../assets/textures/loading/screen100.ktx");
+	scrn0_ = Texture::load_texture("../assets/textures/loading/screen0.ktx");
+	scrn25_ = Texture::load_texture("../assets/textures/loading/screen25.ktx");
+	scrn50_ = Texture::load_texture("../assets/textures/loading/screen50.ktx");
+	scrn75_ = Texture::load_texture("../assets/textures/loading/screen75.ktx");
+	scrn100_ = Texture::load_texture("../assets/textures/loading/screen100.ktx");
 
 	render_image_ = std::make_unique<program>();
-	Shader render_img_vert("../../assets/shaders/fullScreenTriangle.vert");
-	Shader render_img_frag("../../assets/shaders/HUD/fullScreenImage.frag");
+	Shader render_img_vert("../assets/shaders/fullScreenTriangle.vert");
+	Shader render_img_frag("../assets/shaders/HUD/fullScreenImage.frag");
 	render_image_->build_from(render_img_vert, render_img_frag);
 
 	glCreateVertexArrays(1, &empty_vao_);

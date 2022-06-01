@@ -94,8 +94,8 @@ void cubemap::load_hdr(const char* tex_path)
 
     // pbr: convert HDR equirectangular environment map to cubemap equivalent
     // ----------------------------------------------------------------------
-    Shader rect2cubeVert("../../assets/shaders/IBL/rectangleToCubemap.vert");
-    Shader rect2cubeFrag("../../assets/shaders/IBL/rectangleToCubemap.frag");
+    Shader rect2cubeVert("../assets/shaders/IBL/rectangleToCubemap.vert");
+    Shader rect2cubeFrag("../assets/shaders/IBL/rectangleToCubemap.frag");
     program rectangleToCubemap;
     rectangleToCubemap.build_from(rect2cubeVert, rect2cubeFrag);
 
@@ -140,8 +140,8 @@ void cubemap::load_hdr(const char* tex_path)
 
     // pbr: solve diffuse integral by convolution to create an irradiance (cube)map.
     // -----------------------------------------------------------------------------
-    Shader irradianceVert("../../assets/shaders/IBL/irradiance.vert");
-    Shader irradianceFrag("../../assets/shaders/IBL/irradiance.frag");
+    Shader irradianceVert("../assets/shaders/IBL/irradiance.vert");
+    Shader irradianceFrag("../assets/shaders/IBL/irradiance.frag");
     program irradiance;
     irradiance.build_from(irradianceVert, irradianceFrag);
 
@@ -180,8 +180,8 @@ void cubemap::load_hdr(const char* tex_path)
 
     // pbr: run a quasi monte-carlo simulation on the environment lighting to create a prefilter (cube)map.
     // ----------------------------------------------------------------------------------------------------
-    Shader preFilterVert("../../assets/shaders/IBL/preFilter.vert");
-    Shader preFilterFrag("../../assets/shaders/IBL/preFilter.frag");
+    Shader preFilterVert("../assets/shaders/IBL/preFilter.vert");
+    Shader preFilterFrag("../assets/shaders/IBL/preFilter.frag");
     program preFilter;
     preFilter.build_from(preFilterVert, preFilterFrag);
 
@@ -234,8 +234,8 @@ void cubemap::load_hdr(const char* tex_path)
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, brdf_lut_id_, 0);
 
-    Shader brdfLutVert("../../assets/shaders/IBL/brdfLut.vert");
-    Shader brdfLutFrag("../../assets/shaders/IBL/brdfLut.frag");
+    Shader brdfLutVert("../assets/shaders/IBL/brdfLut.vert");
+    Shader brdfLutFrag("../assets/shaders/IBL/brdfLut.frag");
     program brdfLut;
     brdfLut.build_from(brdfLutVert, brdfLutFrag);
 
@@ -370,5 +370,5 @@ void cubemap::save_image() const
     
     //glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, buffer.data());
     stbi_flip_vertically_on_write(true);
-    //stbi_write_jpg("../../assets/textures/cubemap/bdrf.png", width, height, nrChannels, buffer.data(), 100);
+    //stbi_write_jpg("../assets/textures/cubemap/bdrf.png", width, height, nrChannels, buffer.data(), 100);
 }

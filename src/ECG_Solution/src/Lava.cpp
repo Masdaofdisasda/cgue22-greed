@@ -2,11 +2,11 @@
 
 void lava_system::init(glm::ivec3 lights)
 {
-    Shader render_vert("../../assets/shaders/Lava/lavaParticles.vert");
-    Shader render_frag("../../assets/shaders/Lava/lavaParticles.frag");
+    Shader render_vert("../assets/shaders/Lava/lavaParticles.vert");
+    Shader render_frag("../assets/shaders/Lava/lavaParticles.frag");
     sim_render_.build_from(render_vert, render_frag);
 
-    Shader update("../../assets/shaders/Lava/lavaParticles.comp");
+    Shader update("../assets/shaders/Lava/lavaParticles.comp");
     sim_update_.build_from(update);
 
     setup_buffers();

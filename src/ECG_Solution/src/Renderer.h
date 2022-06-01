@@ -65,7 +65,7 @@ private:
 
 	// global Textures
 	cubemap ibl_, sky_tex_;
-	GLuint lut_3d_ = Texture::load_3dlut("../../assets/textures/look32.CUBE");
+	GLuint lut_3d_ = Texture::load_3dlut("../assets/textures/look32.CUBE");
 
 	// Framebuffers for HDR/Bloom
 	GLuint luminance1x1_{};
@@ -91,12 +91,12 @@ private:
 	framebuffer blur0_ = framebuffer(state->width / 2, state->height / 2, GL_RGBA16F, 0);
 	framebuffer blur1_ = framebuffer(state->width / 2, state->height / 2, GL_RGBA16F, 0);
 	//texture from https://github.com/jdupuy/BlueNoiseDitherMaskTiles
-	GLuint blue_noise = Texture::load_texture("../../assets/shaders/lightFX/blue_noise_512_512.ktx");
+	GLuint blue_noise = Texture::load_texture("../assets/shaders/lightFX/blue_noise_512_512.ktx");
 	GLuint perlin_noise = Texture::get_3D_noise(32, 4.0f);
 
-	GLuint way_point = Texture::load_texture("../../assets/shaders/HUD/waypoint.ktx");
-	GLuint gold_icon = Texture::load_texture("../../assets/shaders/HUD/goldicons.ktx");
-	GLuint money_icon = Texture::load_texture("../../assets/shaders/HUD/moneybagicon.ktx");
+	GLuint way_point = Texture::load_texture("../assets/shaders/HUD/waypoint.ktx");
+	GLuint gold_icon = Texture::load_texture("../assets/shaders/HUD/goldicons.ktx");
+	GLuint money_icon = Texture::load_texture("../assets/shaders/HUD/moneybagicon.ktx");
 
 	/**
 	 * \brief bind light sources to binding points

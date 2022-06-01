@@ -60,7 +60,7 @@ global_state load_settings()
 {
 	global_state state;
 	std::cout << "reading setting from settings.ini..." << std::endl;
-	INIReader reader("../../assets/settings.ini");
+	INIReader reader("../assets/settings.ini");
 
 	// first param: section [window], second param: property name, third param: default value
 	state.width = reader.GetInteger("window", "width", 800);

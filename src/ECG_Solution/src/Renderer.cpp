@@ -18,16 +18,16 @@ renderer::renderer(PerFrameData& perframe_data, light_sources& sources)
 	prepare_framebuffers();
 
 	std::cout << "load Enviroment Map.." << std::endl;
-	ibl_.load_hdr("../../assets/textures/cubemap/cellar_skybox.ktx");
+	ibl_.load_hdr("../assets/textures/cubemap/cellar_skybox.ktx");
 	std::cout << "load Skybox.." << std::endl;
-	sky_tex_.load_hdr("../../assets/textures/cubemap/beach_skybox.ktx");
+	sky_tex_.load_hdr("../assets/textures/cubemap/beach_skybox.ktx");
 	const GLuint textures[] = {ibl_.get_environment(), ibl_.get_irradiance_id(), ibl_.get_bdrf_lut_id(), sky_tex_.get_environment() };
 	glBindTextures(8, 4, textures);
 	glBindTextureUnit(13, lut_3d_);
 	glBindTextureUnit(20, blue_noise);
 	glBindTextureUnit(21, perlin_noise);
 
-	font_renderer_.init("../../assets/fonts/Quasimoda/Quasimoda-Regular.otf", state->width, state->height);
+	font_renderer_.init("../assets/fonts/Quasimoda/Quasimoda-Regular.otf", state->width, state->height);
 	lava_sim_.init(glm::ivec3(lights_.directional.size(), lights_.point.size(), 0));
 	OPTICK_POP()
 }
@@ -70,55 +70,55 @@ void renderer::set_render_settings() const
 
 void renderer::build_shader_programs()
 {
-	Shader pbr_vert("../../assets/shaders/pbr/pbr.vert");
-	Shader pbr_frag("../../assets/shaders/pbr/pbr.frag", glm::ivec3(lights_.directional.size(), lights_.point.size(), 0));
+	Shader pbr_vert("../assets/shaders/pbr/pbr.vert");
+	Shader pbr_frag("../assets/shaders/pbr/pbr.frag", glm::ivec3(lights_.directional.size(), lights_.point.size(), 0));
 	pbr_shader_.build_from(pbr_vert, pbr_frag);
 	pbr_shader_.use();
 
-	Shader skybox_vert("../../assets/shaders/skybox/skybox.vert");
-	Shader skybox_frag("../../assets/shaders/skybox/skybox.frag");
+	Shader skybox_vert("../assets/shaders/skybox/skybox.vert");
+	Shader skybox_frag("../assets/shaders/skybox/skybox.frag");
 	skybox_shader_.build_from(skybox_vert, skybox_frag);
 	skybox_shader_.use();
 
-	Shader full_screen_triangle_vert("../../assets/shaders/fullScreenTriangle.vert");
+	Shader full_screen_triangle_vert("../assets/shaders/fullScreenTriangle.vert");
 
-	Shader bright_pass_frag("../../assets/shaders/Bloom/BrightPass.frag");
+	Shader bright_pass_frag("../assets/shaders/Bloom/BrightPass.frag");
 	bright_pass_.build_from(full_screen_triangle_vert, bright_pass_frag);
 
-	Shader combine_hdr_frag("../../assets/shaders/Bloom/CombineHDR.frag");
+	Shader combine_hdr_frag("../assets/shaders/Bloom/CombineHDR.frag");
 	combine_hdr_.build_from(full_screen_triangle_vert, combine_hdr_frag);
 
-	Shader blur_x_frag("../../assets/shaders/Bloom/BlurX.frag");
-	Shader blur_y_frag("../../assets/shaders/Bloom/BlurY.frag");
+	Shader blur_x_frag("../assets/shaders/Bloom/BlurX.frag");
+	Shader blur_y_frag("../assets/shaders/Bloom/BlurY.frag");
 	blur_x_.build_from(full_screen_triangle_vert, blur_x_frag);
 	blur_y_.build_from(full_screen_triangle_vert, blur_y_frag);
 
-	Shader luminance_frag("../../assets/shaders/Bloom/toLuminance.frag");
+	Shader luminance_frag("../assets/shaders/Bloom/toLuminance.frag");
 	to_luminance_.build_from(full_screen_triangle_vert, luminance_frag);
 
-	Shader light_adapt_comp("../../assets/shaders/Bloom/lightAdaption.comp");
+	Shader light_adapt_comp("../assets/shaders/Bloom/lightAdaption.comp");
 	light_adapt_.build_from(light_adapt_comp);
 
-	Shader ssao_frag("../../assets/shaders/SSAO/SSAO.frag");
-	Shader combine_ssao_frag("../../assets/shaders/SSAO/combineSSAO.frag");
+	Shader ssao_frag("../assets/shaders/SSAO/SSAO.frag");
+	Shader combine_ssao_frag("../assets/shaders/SSAO/combineSSAO.frag");
 	ssao_.build_from(full_screen_triangle_vert, ssao_frag);
 	combine_ssao_.build_from(full_screen_triangle_vert, combine_ssao_frag);
 
-	Shader render_img_vert("../../assets/shaders/fullScreenTriangle.vert");
-	Shader render_img_frag("../../assets/shaders/HUD/fullScreenImage.frag");
-	Shader render_col_frag("../../assets/shaders/HUD/fullScreenColor.frag");
+	Shader render_img_vert("../assets/shaders/fullScreenTriangle.vert");
+	Shader render_img_frag("../assets/shaders/HUD/fullScreenImage.frag");
+	Shader render_col_frag("../assets/shaders/HUD/fullScreenColor.frag");
 	render_image_.build_from(render_img_vert, render_img_frag);
 	render_color_.build_from(render_img_vert, render_col_frag);
 
-	Shader render_way_vert("../../assets/shaders/HUD/waypoint.vert");
-	Shader render_way_frag("../../assets/shaders/HUD/waypoint.frag");
+	Shader render_way_vert("../assets/shaders/HUD/waypoint.vert");
+	Shader render_way_frag("../assets/shaders/HUD/waypoint.frag");
 	render_waypoint.build_from(render_way_vert, render_way_frag);
 
-	Shader depth_vert("../../assets/shaders/lightFX/depthMap.vert");
-	Shader depth_frag("../../assets/shaders/lightFX/depthMap.frag");
+	Shader depth_vert("../assets/shaders/lightFX/depthMap.vert");
+	Shader depth_frag("../assets/shaders/lightFX/depthMap.frag");
 	depth_map_.build_from(depth_vert, depth_frag);
 
-	Shader volight_frag("../../assets/shaders/lightFX/VolumetricLight.frag", glm::ivec3(lights_.directional.size(), lights_.point.size(), 0));
+	Shader volight_frag("../assets/shaders/lightFX/VolumetricLight.frag", glm::ivec3(lights_.directional.size(), lights_.point.size(), 0));
 	volumetric_light_.build_from(full_screen_triangle_vert, volight_frag);
 
 	pbr_shader_.use();

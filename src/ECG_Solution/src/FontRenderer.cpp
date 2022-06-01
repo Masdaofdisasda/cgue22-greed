@@ -60,8 +60,8 @@ void font_renderer::init(const char* tex_path, const int w, const int h)
     FT_Done_Face(face);
     FT_Done_FreeType(ft);
 
-    Shader text_vert("../../assets/shaders/HUD/textPrinter.vert");
-    Shader text_frag("../../assets/shaders/HUD/textPrinter.frag");
+    Shader text_vert("../assets/shaders/HUD/textPrinter.vert");
+    Shader text_frag("../assets/shaders/HUD/textPrinter.frag");
     printer_.build_from(text_vert, text_frag);
 
     proj_ = glm::ortho(0.0f, static_cast<float>(w), 0.0f, static_cast<float>(h));

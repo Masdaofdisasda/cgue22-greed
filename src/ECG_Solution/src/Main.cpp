@@ -67,7 +67,7 @@ int main(int argc, char** argv)
 	// Load settings.ini
 	/* --------------------------------------------- */
 
-	std::ifstream file("../../assets/gameplay.fbx");
+	std::ifstream file("../assets/gameplay.fbx");
 	// if this assertion fails, and you cloned this project from Github,
 	// try setting your working directory of the debugger to "$(TargetDir)"
 	assert(file.is_open());
@@ -114,7 +114,7 @@ int main(int argc, char** argv)
 	loading_screen.draw_progress();
 	printf("Loading level...\n");
 	OPTICK_PUSH("load level")
-	level level("../../assets/gameplay.fbx", state_, perframe_data_);
+	level level("../assets/gameplay.fbx", state_, perframe_data_);
 	OPTICK_POP()
 
 	loading_screen.draw_progress();

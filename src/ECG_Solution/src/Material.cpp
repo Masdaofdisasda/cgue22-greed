@@ -12,11 +12,11 @@ void material::create(const char* tex_path, const char* name, material& mat) {
 	const size_t start = path.length() - 11;
 	path.erase(start, 11);
 
-	// append "../../assets/" to the start of the string
+	// append "../assets/" to the start of the string
 	const auto file = new char[path.length() + 1];
 	strcpy(file, path.c_str());
 	char c[100];
-	strcpy(c, "../../assets/");
+	strcpy(c, "../assets/");
 	strcat(c, file);
 
 	// load textures

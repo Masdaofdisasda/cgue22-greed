@@ -99,7 +99,7 @@ void Texture::load_texture_mt(const char* tex_path, GLuint handles[], uint64_t b
 #endif
 			if (defaults_[0] == 0)
 			{
-				load_texture_mt("../../assets/textures/default", defaults_, defaults64_);
+				load_texture_mt("../assets/textures/default", defaults_, defaults64_);
 			}
 			handles[i] = defaults_[i];
 		}

@@ -453,12 +453,12 @@ void level::load_lights(const aiScene* scene) {
 void level::load_shaders()
 {
 	aabb_viewer_ = std::make_unique<program>();
-	Shader bounds_vert("../../assets/shaders/Testing/AABBviewer.vert");
-	Shader bounds_frag("../../assets/shaders/Testing/AABBviewer.frag");
+	Shader bounds_vert("../assets/shaders/Testing/AABBviewer.vert");
+	Shader bounds_frag("../assets/shaders/Testing/AABBviewer.frag");
 	aabb_viewer_->build_from(bounds_vert, bounds_frag);
 
 	frustumviewer_ = std::make_unique<program>();
-	Shader frustum_vert("../../assets/shaders/Testing/Frustumviewer.vert");
+	Shader frustum_vert("../assets/shaders/Testing/Frustumviewer.vert");
 	frustumviewer_->build_from(frustum_vert, bounds_frag);
 }
 
