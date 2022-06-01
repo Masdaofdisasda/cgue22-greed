@@ -1,0 +1,65 @@
+#version 460
+
+layout( local_size_x = 100 ) in;
+
+uniform float Gravity1 = 1.0;
+uniform vec3 BlackHolePos1;
+
+uniform float ParticleMass = 0.1;
+uniform float ParticleInvMass = 1.0 / 0.1;
+uniform float MinDist = 1.0;
+
+layout(std140, binding = 0) uniform PerFrameData
+{
+	vec4 viewPos;
+	mat4 ViewProj;
+	mat4 lavaLevel;
+	mat4 lightViewProj;
+	mat4 viewInv;
+	mat4 projInv;
+	vec4 bloom;
+	vec4 deltaTime;
+    vec4 normalMap;
+    vec4 ssao1;
+    vec4 ssao2;
+};
+
+layout(std430, binding=0) buffer Pos {
+  vec4 Position[];
+};
+layout(std430, binding=1) buffer Vel {
+  vec4 Velocity[];
+};
+float dither_pattern[16] = float[16] (
+	0.0f, 0.5f, 0.125f, 0.625f,
+	0.75f, 0.22f, 0.875f, 0.375f,
+	0.1875f, 0.6875f, 0.0625f, 0.5625,
+	0.9375f, 0.4375f, 0.8125f, 0.3125
+);
+
+void main() {
+  uint idx = gl_GlobalInvocationID.x;
+
+  vec3 p = Position[idx].xyz;
+
+  // Force from black hole #1
+  float test = length(vec3(BlackHolePos1.x,0,BlackHolePos1.z) - vec3(p.x,0,p.z));
+  vec3 d = BlackHolePos1 - p;
+  float dist = length(d);
+  vec3 force = (Gravity1 / dist) * normalize(d);
+
+  // Reset particles that get too far from the attractor
+  if( Position[idx].y < BlackHolePos1.y || test > 25) {
+    Position[idx] = vec4(-8,29,-16,1);
+	if(length(Velocity[idx]) > 1){
+	 Velocity[idx] = Velocity[idx]*0.5;
+	 int rng = (int(Velocity[idx].x) % 4)* 4 + (int(Velocity[idx].y) % 4);
+    Velocity[idx] *= dither_pattern[ rng ];
+	}
+  } else {
+    // Apply simple Euler integrator
+    vec3 a = force * ParticleInvMass;
+    Position[idx] = vec4(p + Velocity[idx].xyz * deltaTime.x + 0.5 * a * deltaTime.x * deltaTime.x, 1.0);
+    Velocity[idx] = vec4( Velocity[idx].xyz + a * deltaTime.x, 0.0);
+  }
+}

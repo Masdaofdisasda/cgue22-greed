@@ -1,0 +1,7 @@
+albedo: toktx --target_type RGBA --assign_oetf srgb 
+ao: toktx --assign_oetf linear 
+emissive: toktx --target_type RGB --assign_oetf srgb 
+height: toktx --assign_oetf linear 
+metal: toktx --assign_oetf linear 
+normal: toktx --assign_oetf linear --normalize --normal_mode 
+rough: toktx --assign_oetf linear 

@@ -27,7 +27,7 @@ x86/
 [Aa][Rr][Mm]/
 [Aa][Rr][Mm]64/
 bld/
-[Bb]in/
+#[Bb]in/
 !src/bin/Debug/assimp-vc142-mtd.dll
 !src/bin/Debug/ikpFlac.dll
 !src/bin/Debug/ikpMP3.dll
