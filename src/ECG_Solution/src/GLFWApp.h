@@ -92,6 +92,10 @@ inline glfw_app::glfw_app(const std::shared_ptr<global_state>& state)
 
 inline glfw_app::~glfw_app()
 {
-	glfwDestroyWindow(window_);
-	glfwTerminate();
+	if (window_)
+	{
+		glfwDestroyWindow(window_);
+		window_ = nullptr;
+		glfwTerminate();
+	}
 }

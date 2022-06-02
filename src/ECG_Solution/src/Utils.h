@@ -38,6 +38,7 @@ struct global_state
 	float max_white = 1.07f;
 	float bloom_strength = 0.2f;
 	float adaptation_speed = 0.1f;
+	float compatibility_mode = false;
 	//ssao
 	float scale = 1.0f;
 	float bias = 0.2f;
@@ -47,6 +48,7 @@ struct global_state
 	//lightFX
 	int shadow_res = 4;
 	int fog_quality = 2;
+	bool use_lod = false;
 	//game logic
 	bool won = false;
 	bool lost = false;

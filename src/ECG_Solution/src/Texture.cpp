@@ -283,14 +283,21 @@ void Texture::destory_texture_mt(GLuint handles[], uint64_t bindless[])
 {
 	for (size_t i = 0; i < 7; i++)
 	{
-		if (defaults_[i] != handles[i])
+		if (defaults_[i] != handles[i] && glIsTexture(handles[i]))
 		{
 			glMakeTextureHandleNonResidentARB(bindless[i]);
 			glDeleteTextures(1, &handles[i]);
 		}
 	}
+}
 
-
+void Texture::destroy_defaults()
+{
+	for (size_t i = 0; i < 7; i++)
+	{
+		glMakeTextureHandleNonResidentARB(defaults64_[i]);
+		glDeleteTextures(1, &defaults_[i]);
+	}
 }
 
 std::string Texture::append(const char* tex_path, const char* tex_type)

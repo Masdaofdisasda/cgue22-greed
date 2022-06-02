@@ -16,7 +16,7 @@ class font_renderer
 {
 public:
     font_renderer() = default;
-	~font_renderer() = default;
+	~font_renderer(){release();}
 
     void init(const char* tex_path, int w, int h);
     void print(std::string, float x, float y, float size, glm::vec3 color);
@@ -26,5 +26,7 @@ private:
     program printer_;
     glm::mat4 proj_;
     GLuint vao_ = 0, vbo_ = 0;
+
+    void release();
 };
 

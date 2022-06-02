@@ -3,7 +3,7 @@
 
 LoadingScreen::LoadingScreen(glfw_app* app, const int width, const int height)
 {
-	window_ = std::make_shared<glfw_app>(*app);
+	window_ = app;
 	w_ = width;
 	h_ = height;
 
@@ -71,6 +71,8 @@ void LoadingScreen::start() //TODO
 LoadingScreen::~LoadingScreen()
 {
 	window_ = nullptr;
+	glDeleteBuffers(1, &empty_vao_);
+	glDeleteTextures(1, &logo_);
 	glDeleteTextures(1, &scrn0_);
 	glDeleteTextures(1, &scrn25_);
 	glDeleteTextures(1, &scrn50_);

@@ -77,6 +77,7 @@ global_state load_settings()
 	state.max_white = reader.GetReal("image", "maxWhite", 1.07f);
 	state.bloom_strength = reader.GetReal("image", "bloomStrength", 0.2f);
 	state.adaptation_speed = reader.GetReal("image", "lightAdaption", 0.1f);
+	state.compatibility_mode = reader.GetBoolean("image", "compatibility_mode", false);
 	state.ssao = reader.GetBoolean("image", "ssao", true);
 	state.scale = reader.GetReal("image", "scale", 1.0f);
 	state.bias = reader.GetReal("image", "bias", 0.2f);
@@ -85,6 +86,7 @@ global_state load_settings()
 	state.dist_scale = reader.GetReal("image", "distScale", 0.5f);
 	state.shadow_res = reader.GetInteger("image", "shadowRes", 4);
 	state.fog_quality = reader.GetInteger("image", "fogQuality", 2);
+	state.use_lod = reader.GetBoolean("image", "useLOD", false);
 
 	return state;
 }

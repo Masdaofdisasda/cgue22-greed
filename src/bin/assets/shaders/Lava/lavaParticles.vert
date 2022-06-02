@@ -30,7 +30,7 @@ vec4 CameraRight_worldspace = viewInv[0];
 vec4 CameraUp_worldspace = viewInv[1];
 
 
-const mat4 model = mat4(
+mat4 model = mat4(
 scale, 0.0, 0.0, 0.0,
 0.0, scale, 0.0, 0.0,
 0.0, 0.0, scale, 0.0,

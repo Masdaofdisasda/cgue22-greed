@@ -10,7 +10,7 @@ class lava_system
 {
 public:
 	lava_system()= default;
-	~lava_system() = default;
+	~lava_system(){release();};
 
     void init(glm::ivec3 lights);
     void update(float t);
@@ -32,6 +32,7 @@ private:
     glm::vec4 bh1_ = glm::vec4(-8, -5, -16, 1);
 
 	void setup_buffers();
+	void release() const;
 
 };
 

@@ -44,7 +44,7 @@ glm::vec3 cam_end_pos(0.0f, 70.0f, 0.0f);
 glm::vec3 cam_end_rot(90.0f, 90.0f, 90.0f);
 
 camera_positioner_interface* camera_positioner_;
-camera_positioner_first_person floating_positioner_(glm::vec3(-15.0f, 6.0f, 15.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+camera_positioner_first_person floating_positioner_(glm::vec3(-10.0f, 6.0f, 10.0f), glm::vec3(0.0f, 2.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 camera_positioner_player player_camera_positioner_;
 camera_positioner_move_to positioner_moveTo(cam_start_pos, cam_start_rot);
 camera camera_(*camera_positioner_);
@@ -178,6 +178,7 @@ int main(int argc, char** argv)
 	fps_counter fps_counter{};
 
 	glfwSetInputMode(glfw_app.get_window(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	mouse_state_.pos = glm::vec2(0);
 	OPTICK_POP()
 
 	//---------------------------------- RENDER LOOP ----------------------------------//
@@ -255,6 +256,7 @@ int main(int argc, char** argv)
 		OPTICK_POP()
 	}
 
+
 	if (glfwWindowShouldClose(glfw_app.get_window()))
 		break;
 
@@ -264,6 +266,7 @@ int main(int argc, char** argv)
 	/* --------------------------------------------- */
 	// Destroy context and exit
 	/* --------------------------------------------- */
+	Texture::destroy_defaults();
 	OPTICK_STOP_CAPTURE()
 #ifdef _DEBUG
 	OPTICK_SAVE_CAPTURE("profiler_dump")

@@ -135,3 +135,11 @@ void lava_system::draw()
 
 }
 
+void lava_system::release() const
+{
+    glDeleteTextures(1, &lava_particle);
+    glDeleteBuffers(1, &particles_vao_);
+    glDeleteBuffers(1, &bh_vao_);
+    glDeleteBuffers(1, &bh_buf_);
+}
+

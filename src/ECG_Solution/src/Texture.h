@@ -97,6 +97,8 @@ public:
 	 */
 	static void destory_texture_mt(GLuint handles[], uint64_t bindless[]);
 
+	static void destroy_defaults();
+
 	
 	// ensure RAII compliance
 	Texture(const Texture&) = delete;

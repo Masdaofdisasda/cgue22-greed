@@ -31,5 +31,7 @@ void main()
    
    float newAdaptation = adaptedL + (currentL - adaptedL) * (1.0 - exp(-deltaTime.x * adaptationSpeed));
 
+   newAdaptation = max(newAdaptation, 0.000001);
+
 	imageStore(imgOutput, ivec2(0, 0), vec4(vec3(newAdaptation), 1.0));
 }

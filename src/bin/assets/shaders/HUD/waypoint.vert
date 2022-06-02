@@ -21,7 +21,7 @@ layout(std140, binding = 0) uniform PerFrameData
 uniform vec3 position = vec3(0.0, 7.0, 0.0);
 float scale = .7;
 
-const mat4 model = mat4(
+mat4 model = mat4(
 scale, 0.0, 0.0, 0.0,
 0.0, scale, 0.0, 0.0,
 0.0, 0.0, scale, 0.0,

@@ -119,3 +119,15 @@ void font_renderer::print(std::string msg, float x, const float y, const float s
         x += (l.advance >> 6) * size; // bitshift by 6 to get value in pixels (2^6 = 64)
     }
 }
+
+void font_renderer::release()
+{
+    for (auto p : letters_)
+    {
+        auto l = p.second;
+        glDeleteTextures(1, &l.texture_id);
+    }
+
+    glDeleteBuffers(1, &vao_);
+    glDeleteBuffers(1, &vbo_);
+}

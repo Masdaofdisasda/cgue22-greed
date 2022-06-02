@@ -16,9 +16,9 @@ public:
 
 private:
 	
-	 void init();
+	void init();
 
-	 std::shared_ptr<glfw_app> window_;
+	glfw_app* window_;
 	    int w_;
 	    int h_;
 		bool end_ = false;
@@ -37,5 +37,5 @@ private:
 
 		GLuint* screens_[5] = { &scrn0_,&scrn25_, &scrn50_,&scrn75_, &scrn100_ };
 
-		std::shared_ptr<program> render_image_;
+		std::unique_ptr<program> render_image_;
 };

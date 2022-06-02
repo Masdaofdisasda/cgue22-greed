@@ -131,7 +131,7 @@ void renderer::prepare_framebuffers() {
 	glGenTextures(1, &luminance1x1_);
 	glTextureView(luminance1x1_, GL_TEXTURE_2D, luminance_.get_texture_color().get_handle(), GL_RGBA16F, 6, 1, 0, 1);
 
-	const glm::vec4 startingLuminance(glm::vec3(0.0f), 1.0f);
+	const glm::vec4 startingLuminance(glm::vec3(50.0f), 1.0f);
 	glTextureSubImage2D(luminance0_.get_handle(), 0, 0, 0, 1, 1, GL_RGBA, GL_FLOAT, &startingLuminance[0]);
 	
 }
@@ -297,9 +297,19 @@ void renderer::draw(level* level)
 		// 4.2 - compute light adaption (OpenGL memory model requires these memory barriers: https://www.khronos.org/opengl/wiki/Memory_Model )
 		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 		light_adapt_.use();
+		if (false)
+		{
+		const GLuint imageTextures[] = {
+		luminances_[0]->get_handle(),
+		luminance1x1_,
+		luminances_[1]->get_handle() };
+		glBindImageTextures(0, 3, imageTextures);
+		}else
+		{
 		glBindImageTexture(0, luminances_[0]->get_handle(), 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA16F);
 		glBindImageTexture(1, luminance1x1_, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA16F);
 		glBindImageTexture(2, luminances_[1]->get_handle(), 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA16F);
+		}
 		glDispatchCompute(1, 1, 1);
 		glMemoryBarrier(GL_TEXTURE_FETCH_BARRIER_BIT);
 
@@ -483,4 +493,10 @@ renderer::~renderer()
 	perframe_data_ = nullptr;
 	glDeleteTextures(1, &luminance1x1_);
 	glDeleteTextures(1, &pattern_);
+	glDeleteTextures(1, &lut_3d_);
+	glDeleteTextures(1, &blue_noise);
+	glDeleteTextures(1, &perlin_noise);
+	glDeleteTextures(1, &way_point);
+	glDeleteTextures(1, &gold_icon);
+	glDeleteTextures(1, &money_icon);
 }

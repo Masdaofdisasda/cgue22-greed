@@ -269,7 +269,9 @@ void level::load_materials(const aiScene* scene)
 	{
 		const aiMaterial* mm = scene->mMaterials[m];
 
+#ifdef _DEBUG
 		printf("Material [%s] %u\n", mm->GetName().C_Str(), m + 1);
+#endif
 
 		aiString path;
 
@@ -691,7 +693,11 @@ void level::update_render_queue(const bool for_shadow) {
 			}
 
 			const uint32_t mesh_index = entity.mesh_index;
-			uint32_t LOD = 0; // lod_system::decide_lod(meshes_[mesh_index].index_count.size(), entity.world_bounds);
+
+			uint32_t LOD = 0;
+			if (state_->use_lod)
+				LOD = lod_system::decide_lod(meshes_[mesh_index].index_count.size(), entity.world_bounds);
+
 			cmd.count_ = meshes_[mesh_index].index_count[LOD];
 			cmd.firstIndex_ = meshes_[mesh_index].index_offset[LOD];
 

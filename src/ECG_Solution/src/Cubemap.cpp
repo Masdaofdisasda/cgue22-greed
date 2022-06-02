@@ -94,6 +94,7 @@ void cubemap::load_hdr(const char* tex_path)
 
     // pbr: convert HDR equirectangular environment map to cubemap equivalent
     // ----------------------------------------------------------------------
+    glEnableVertexAttribArray(0); // prevents compiler from complaining about missing shader attributes
     Shader rect2cubeVert("../assets/shaders/IBL/rectangleToCubemap.vert");
     Shader rect2cubeFrag("../assets/shaders/IBL/rectangleToCubemap.frag");
     program rectangleToCubemap;
@@ -140,6 +141,7 @@ void cubemap::load_hdr(const char* tex_path)
 
     // pbr: solve diffuse integral by convolution to create an irradiance (cube)map.
     // -----------------------------------------------------------------------------
+    glEnableVertexAttribArray(0); // prevents compiler from complaining about missing shader attributes
     Shader irradianceVert("../assets/shaders/IBL/irradiance.vert");
     Shader irradianceFrag("../assets/shaders/IBL/irradiance.frag");
     program irradiance;
@@ -180,6 +182,7 @@ void cubemap::load_hdr(const char* tex_path)
 
     // pbr: run a quasi monte-carlo simulation on the environment lighting to create a prefilter (cube)map.
     // ----------------------------------------------------------------------------------------------------
+    glEnableVertexAttribArray(0); // prevents compiler from complaining about missing shader attributes
     Shader preFilterVert("../assets/shaders/IBL/preFilter.vert");
     Shader preFilterFrag("../assets/shaders/IBL/preFilter.frag");
     program preFilter;
@@ -234,6 +237,8 @@ void cubemap::load_hdr(const char* tex_path)
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, brdf_lut_id_, 0);
 
+    glEnableVertexAttribArray(0); // prevents compiler from complaining about missing shader attributes
+    glEnableVertexAttribArray(1);
     Shader brdfLutVert("../assets/shaders/IBL/brdfLut.vert");
     Shader brdfLutFrag("../assets/shaders/IBL/brdfLut.frag");
     program brdfLut;
