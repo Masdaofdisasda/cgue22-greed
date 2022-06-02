@@ -47,8 +47,6 @@ void LoadingScreen::draw_progress()
 	glBindTextureUnit(16, *screens_[step_]);
 	glBindVertexArray(empty_vao_);
 	glDrawArrays(GL_TRIANGLES, 0, 3);
-
-	Sleep(1000);
 	
 	step_++;
 }

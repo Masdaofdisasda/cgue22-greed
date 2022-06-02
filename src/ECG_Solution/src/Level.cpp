@@ -545,8 +545,7 @@ void level::draw_scene() {
 	glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, static_cast<GLvoid*>(nullptr), static_cast<GLsizei>(queue_scene_.commands.size()), 0);
 	
 	OPTICK_POP()
-
-#ifdef _DEBUG
+		
 	if (state_->cull_debug) // bounding box & frustum culling debug view
 	{
 		OPTICK_PUSH("draw debug AABB")
@@ -584,7 +583,6 @@ void level::draw_scene() {
 		}
 		OPTICK_POP()
 	}
-#endif
 }
 
 void level::draw_scene_shadow_map()
