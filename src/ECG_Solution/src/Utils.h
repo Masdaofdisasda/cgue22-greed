@@ -58,6 +58,7 @@ struct global_state
 	bool restart = false;
 	float lava_height = 0.0f;
 	//ui
+	bool hud = true;
 	bool display_collect_item_hint = false;
 	bool display_walk_tutorial = false;
 	bool display_pause_tutorial = false;

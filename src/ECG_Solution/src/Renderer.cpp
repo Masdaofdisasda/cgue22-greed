@@ -356,11 +356,14 @@ void renderer::draw(level* level)
 	}
 	
 	// 5 - render HUD
-	OPTICK_PUSH("HUD pass")
-	glEnable(GL_BLEND);
-	draw_hud();
-	glDisable(GL_BLEND);
-	OPTICK_POP()
+	if (state->hud)
+	{
+		OPTICK_PUSH("HUD pass")
+		glEnable(GL_BLEND);
+		draw_hud();
+		glDisable(GL_BLEND);
+		OPTICK_POP()
+	}
 }
 
 void renderer::draw_hud()

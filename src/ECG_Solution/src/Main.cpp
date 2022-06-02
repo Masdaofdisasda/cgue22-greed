@@ -16,9 +16,7 @@
 #include "Renderer.h"
 #include "FPSCounter.h"
 #include "GLFWApp.h"
-#ifdef _DEBUG
 #include "Debugger.h"
-#endif
 #include "Level.h"
 #include "Physics.h"
 #include "PlayerController.h"
@@ -89,16 +87,15 @@ int main(int argc, char** argv)
 	glewExperimental = GL_TRUE;
 	if (glewInit() != GLEW_OK)
 		EXIT_WITH_ERROR("Failed to load GLEW\n");
-
-#ifdef _DEBUG
+	
 	glEnable(GL_DEBUG_OUTPUT);
 	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, nullptr, GL_FALSE);
 	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 	glDebugMessageCallback(debug::message_callback, nullptr);
-#endif
-	
-	LoadingScreen loading_screen(&glfw_app, state_->width, state_->height);
+
+	LoadingScreen loading_screen(state_->width, state_->height);
 	loading_screen.draw_progress();
+	glfw_app.swap_buffers();
 
 	/* --------------------------------------------- */
 	// Initialize scene and render loop
@@ -112,18 +109,21 @@ int main(int argc, char** argv)
 	music_engine.update(loading);
 	
 	loading_screen.draw_progress();
+	glfw_app.swap_buffers();
 	printf("Loading level...\n");
 	OPTICK_PUSH("load level")
 	level level("../assets/gameplay.fbx", state_, perframe_data_);
 	OPTICK_POP()
 
 	loading_screen.draw_progress();
+	glfw_app.swap_buffers();
 	printf("Initializing renderer...\n");
 	OPTICK_PUSH("load renderer")
 	renderer renderer(perframe_data_, *level.get_lights());
 	OPTICK_POP()
 
 	loading_screen.draw_progress();
+	glfw_app.swap_buffers();
 	//Physics Initialization
 	printf("Initializing physics...\n");
 	OPTICK_PUSH("init physics")
@@ -396,14 +396,14 @@ void registerInputCallbacks(glfw_app& app) {
 			}
 			if (key == GLFW_KEY_F9 && action == GLFW_PRESS)
 			{
-				if (state_->ssao)
+				if (state_->hud)
 				{
-					printf("SSAO off\n");
-					state_->ssao = false;
+					printf("HUD off\n");
+					state_->hud = false;
 				}
 				else {
-					printf("SSAO on\n");
-					state_->ssao = true;
+					printf("HUD on\n");
+					state_->hud = true;
 				}
 			}
 #ifdef _DEBUG
