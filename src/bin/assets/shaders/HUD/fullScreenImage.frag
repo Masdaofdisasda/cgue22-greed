@@ -8,7 +8,5 @@ layout(binding = 16) uniform sampler2D texScene;
 
 void main()
 {
-	float gamma = 2.2;
-	vec4 color = texture(texScene, uv);
-	outColor = vec4(pow( color.xyz, vec3(1.0/gamma) ), color.w) ;
+	outColor = texture(texScene, uv);
 }

@@ -30,23 +30,25 @@ void LoadingScreen::draw_progress()
 	if (step_ == 0)
 	{
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glViewport(w_ * 0.05, h_ * 0.08 + 40, 392, 97);
+		glViewport((w_ - 784) * 0.5f, (h_ - 194)*0.5f, 784, 194);
 
 		render_image_->use();
 		glBindTextureUnit(16, logo_);
 		glBindVertexArray(empty_vao_);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 	}
-	if (5 >= step_)
+	if (5 == step_)
 		return;
 
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glViewport(w_*0.05, h_*0.08, 392, 24);
+	glViewport((w_- 1457)*0.5f, h_*0.2, 1457, 94);
 
 	render_image_->use();
 	glBindTextureUnit(16, *screens_[step_]);
 	glBindVertexArray(empty_vao_);
 	glDrawArrays(GL_TRIANGLES, 0, 3);
+
+	Sleep(1000);
 	
 	step_++;
 }

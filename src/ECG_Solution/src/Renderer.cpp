@@ -131,7 +131,7 @@ void renderer::prepare_framebuffers() {
 	glGenTextures(1, &luminance1x1_);
 	glTextureView(luminance1x1_, GL_TEXTURE_2D, luminance_.get_texture_color().get_handle(), GL_RGBA16F, 6, 1, 0, 1);
 
-	const glm::vec4 startingLuminance(glm::vec3(50.0f), 1.0f);
+	const glm::vec4 startingLuminance(glm::vec3(2.0f), 1.0f);
 	glTextureSubImage2D(luminance0_.get_handle(), 0, 0, 0, 1, 1, GL_RGBA, GL_FLOAT, &startingLuminance[0]);
 	
 }
