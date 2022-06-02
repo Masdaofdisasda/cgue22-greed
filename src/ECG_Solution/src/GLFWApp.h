@@ -32,15 +32,20 @@ public:
 	}
 
 	/// @brief should toggle between fullscreen and window mode
-	void update_window() const
+	void update_window()
 	{
-		
-		if (state_->fullscreen)
+		if (state_->fullscreen && !is_fullscreen_)
 		{
+			is_fullscreen_ = true;
 			const GLFWvidmode* info = glfwGetVideoMode(glfwGetPrimaryMonitor());
 			state_->width = info->width;
 			state_->height = info->height;
 			glfwSetWindowMonitor(window_, glfwGetPrimaryMonitor(), 0, 0, state_->width, state_->height, state_->refresh_rate);
+		}
+		if (!state_->fullscreen && is_fullscreen_)
+		{
+			is_fullscreen_ = false;
+			//glfwSetWindowMonitor(window_, nullptr, 0, 0, state_->width, state_->height, state_->refresh_rate);
 		}
 	}
 
@@ -49,6 +54,7 @@ private:
 	GLFWwindow* window_ = nullptr;
 	double time_stamp_ = glfwGetTime();
 	float delta_seconds_ = 0.0f;
+	bool is_fullscreen_ = true;
 };
 
 inline glfw_app::glfw_app(const std::shared_ptr<global_state>& state)
@@ -64,6 +70,7 @@ inline glfw_app::glfw_app(const std::shared_ptr<global_state>& state)
 		exit(EXIT_FAILURE);
 
 	this->state_ = state;
+	is_fullscreen_ = state->refresh_rate;
 
 	// GLFW should use OpenGL Version 4.6 with core functions
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);

@@ -297,7 +297,7 @@ void renderer::draw(level* level)
 		// 4.2 - compute light adaption (OpenGL memory model requires these memory barriers: https://www.khronos.org/opengl/wiki/Memory_Model )
 		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 		light_adapt_.use();
-		if (false)
+		if (state->compatibility_mode)
 		{
 		const GLuint imageTextures[] = {
 		luminances_[0]->get_handle(),

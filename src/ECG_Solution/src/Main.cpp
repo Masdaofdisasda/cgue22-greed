@@ -38,7 +38,7 @@ mouse_state mouse_state_;
 // used for moveto camera animation
 glm::vec3 cam_start_pos(0.0f, 2.0f, 0.0f);
 glm::vec3 cam_start_rot(-90.0f, 90.0f, 90.0f);
-glm::vec3 cam_end_pos(0.0f, 70.0f, 0.0f);
+glm::vec3 cam_end_pos(0.0f, 100.0f, 0.0f);
 glm::vec3 cam_end_rot(90.0f, 90.0f, 90.0f);
 
 camera_positioner_interface* camera_positioner_;
@@ -261,6 +261,7 @@ int main(int argc, char** argv)
 		break;
 
 	renderer::state = std::make_shared<global_state>(load_settings());
+	floating_positioner_.set_position(glm::vec3(-10.0f, 6.0f, 10.0f));
 
 	}
 	/* --------------------------------------------- */
@@ -406,21 +407,28 @@ void registerInputCallbacks(glfw_app& app) {
 					state_->hud = true;
 				}
 			}
-#ifdef _DEBUG
 			if (key == GLFW_KEY_F10 && action == GLFW_PRESS) {
-				if (state_->using_debug_camera) {
-					printf("Switch animation camera\n");
-					camera_positioner_ = &positioner_moveTo;
-					state_->debug_draw_physics = false;
-					positioner_moveTo.set_position(cam_start_pos);
-					positioner_moveTo.set_angles(cam_start_rot);
-					positioner_moveTo.set_desired_position(cam_end_pos);
-					positioner_moveTo.set_desired_angles(cam_end_rot);
-					glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-				}
+				printf("Switch animation camera\n");
+				state_->using_animation_camera = true;
+				camera_positioner_ = &positioner_moveTo;
+				state_->debug_draw_physics = false;
+				state_->hud = false;
+				positioner_moveTo.set_position(cam_start_pos);
+				positioner_moveTo.set_angles(cam_start_rot);
+				positioner_moveTo.set_desired_position(cam_end_pos);
+				positioner_moveTo.set_desired_angles(cam_end_rot);
+				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 				camera_.set_positioner(camera_positioner_);
 			}
-#endif
+			if (key == GLFW_KEY_F11 && action == GLFW_PRESS)
+			{
+				if (perframe_data_.ssao2.w > 0.0f)
+					printf("shadow debug off\n");
+				else
+					printf("shadow debug on\n");
+
+				perframe_data_.ssao2.w *= -1.0f;
+			}
 		});
 	glfwSetMouseButtonCallback(app.get_window(),
 		[](auto* window, int button, int action, int mods)

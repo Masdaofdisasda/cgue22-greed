@@ -92,17 +92,20 @@ inline void game_logic::update()
 		perframe_data_->normal_map.z += 60 * perframe_data_->delta_time.x;
 	}
 
-	if (perframe_data_->view_pos.y > exit_height_+ player_size_)
+	if (!state_->using_debug_camera && !state_->using_animation_camera)
 	{
-		state_->won = true;
-		notify_observers(fx_won);
-		state_->time_of_death = perframe_data_->delta_time.y;
-	}
-	if (perframe_data_->view_pos.y < state_->lava_height + player_size_)
-	{
-		state_->lost = true;
-		notify_observers(fx_lost);
-		state_->time_of_death = perframe_data_->delta_time.y;
+		if (perframe_data_->view_pos.y > exit_height_+ player_size_)
+		{
+			state_->won = true;
+			notify_observers(fx_won);
+			state_->time_of_death = perframe_data_->delta_time.y;
+		}
+		if (perframe_data_->view_pos.y < state_->lava_height + player_size_)
+		{
+			state_->lost = true;
+			notify_observers(fx_lost);
+			state_->time_of_death = perframe_data_->delta_time.y;
+		}
 	}
 	calculate_score();
 }

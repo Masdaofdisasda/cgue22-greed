@@ -56,6 +56,8 @@ To run the game, open the .exe in bin/Release. Make sure you meet the requiremen
 * F7 - freeze frustum for culling
 * F8 - toggle frustum culling
 * F9 - toggle SSAO
+
+* F11 - toggle shadow debugging, renders shadow value instead of color
 * ESC - exit game
 
 ### Free Camera Controls (F6):

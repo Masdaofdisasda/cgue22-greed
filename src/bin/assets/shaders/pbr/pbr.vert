@@ -64,7 +64,7 @@ void main()
 		normal.xy = normalize(vec2(cos(u), 1.0));
 		normal.yz = normalize(vec2(cos(v), 1.0));
 	}
-
+	
 	gl_Position = ViewProj * model * vec4(position, 1.0);
 	fUV = vUV;
 	fPosition = vec3(model * vec4(position, 1.0));

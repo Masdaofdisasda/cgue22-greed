@@ -33,11 +33,12 @@ struct global_state
 	bool cull_debug = false;
 	bool debug_draw_physics = false;
 	bool using_debug_camera = false;
+	bool using_animation_camera = false;
 	//bloom
 	float exposure = 0.9f;
 	float max_white = 1.07f;
 	float bloom_strength = 0.2f;
-	float adaptation_speed = 0.1f;
+	float adaptation_speed = 1.3f;
 	float compatibility_mode = false;
 	//ssao
 	float scale = 1.0f;
@@ -119,7 +120,7 @@ struct PerFrameData
 	glm::vec4 delta_time;	// x = deltaSeconds, y = summedTime, z = screen width, w = screen height
 	glm::vec4 normal_map;	// x = normalMapToogle, y = lavaID, z = vl density, w = vl quality
 	glm::vec4 ssao1;		// x = scale,, y = bias, z = znear, w = zfar
-	glm::vec4 ssao2;		// x = radius, y = attscale, z = distscale, w = ?
+	glm::vec4 ssao2;		// x = radius, y = attscale, z = distscale, w = shadow debug
 };
 
 #define EXIT_WITH_ERROR(err) \

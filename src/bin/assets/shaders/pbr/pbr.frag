@@ -385,7 +385,7 @@ void main()
 	vec4 MeR;
 	MeR.g = texture(sampler2D(unpackUint2x32(mat.rough_map_)), UV).r ;
 	MeR.b = texture(sampler2D(unpackUint2x32(mat.metal_map_)), UV).r;
-
+	
 	float shadow_bias = max(-0.001 * (1.0 - dot(n, dLights[0].direction.xyz)), -0.0001);
 	float shadow =  shadowFactor(fShadow, shadow_bias);
 
@@ -400,10 +400,13 @@ void main()
 
 	// point light contribution
 	for(int i = 0; i < numPos; i++)
-  		color += calculatePBRLightContributionPoint(pbrInputs, pLights[i]);
+  		color += calculatePBRLightContributionPoint(pbrInputs, pLights[i])*shadow;
 
 	color = color * (Kao.r < 0.01 ? 1.0 : Kao);
 	color = pow(Ke.rgb + color, vec3(1.0/2.2) ) ;
+
+	if(ssao2.w < 0.0f)
+		color = vec3(shadow);
 	
     out_FragColor = vec4(color, 1.0);
 }
