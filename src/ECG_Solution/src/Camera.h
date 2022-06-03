@@ -117,7 +117,7 @@ public:
 	}
 private:
 	glm::vec3 camera_position_ = glm::vec3(0.0f, 0.0f, 0.0f);
-	glm::quat camera_orientation_ = glm::quat(glm::vec3((0.0f)));
+	glm::quat camera_orientation_ = glm::quat(glm::vec3(0.0f, 0.7853982f,0.0f));
 	glm::vec2 last_mouse_pos_ = glm::vec2(0);
 	float mouse_speed_ = 4.0f;
 
