@@ -77,7 +77,6 @@ global_state load_settings()
 	state.max_white = reader.GetReal("image", "maxWhite", 1.07f);
 	state.bloom_strength = reader.GetReal("image", "bloomStrength", 0.2f);
 	state.adaptation_speed = reader.GetReal("image", "lightAdaption", 0.1f);
-	state.compatibility_mode = reader.GetBoolean("image", "compatibility_mode", false);
 	state.ssao = reader.GetBoolean("image", "ssao", true);
 	state.scale = reader.GetReal("image", "scale", 1.0f);
 	state.bias = reader.GetReal("image", "bias", 0.2f);

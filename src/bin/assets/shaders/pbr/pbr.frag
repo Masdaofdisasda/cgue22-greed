@@ -1,5 +1,5 @@
 #version 460
-#extension GL_ARB_bindless_texture : require
+#extension GL_ARB_bindless_texture : enable
 #extension GL_ARB_gpu_shader_int64 : enable
 
 // in and out variables
@@ -102,14 +102,6 @@ layout (binding = 12) uniform sampler2D depthTex;
 
 // Global variables
 const float M_PI = 3.141592653589793;
-
-// helper functions
-vec2 parallaxUV(vec3 view)
-{
-	float height = texture(sampler2D(unpackUint2x32(materials[mat_id].height_map_)), fUV).r;
-	vec2 p = view.xy / view.z * (height * 0.1);
-	return fUV - p;
-}
 
 vec4 SRGBtoLINEAR(vec4 srgbIn)
 {
@@ -361,12 +353,12 @@ vec3 perturbNormal(vec3 n, vec3 v, vec3 normalSample, vec2 uv)
 	return normalize(TBN * map);
 }
 
+#if defined(GL_ARB_bindless_texture) && defined(GL_ARB_gpu_shader_int64)
 void main()
 {
 	// read textures
     Material mat = materials[mat_id];
 	
-	//vec2 UV = parallaxUV(normalize(fPosition - viewPos.xyz));
 	vec2 UV = fUV;
     
 	vec4 Kd = texture(sampler2D(unpackUint2x32(mat.albedo_map_)), UV);
@@ -410,3 +402,40 @@ void main()
 	
     out_FragColor = vec4(color, 1.0);
 }
+#else // makes game run on low end gpus
+void main()
+{
+	vec2 UV = fUV;
+	vec4 Kd = vec4(1.0);
+    vec3 n = normalize(fNormal);
+	vec4 Ke = vec4(vec3(0.0),1.0) ;
+	float Kao = 0.0 ;
+	vec4 MeR;
+	MeR.g = 0.5 ;
+	MeR.b = 0.04;
+	
+	float shadow_bias = max(-0.001 * (1.0 - dot(n, dLights[0].direction.xyz)), -0.0001);
+	float shadow =  shadowFactor(fShadow, shadow_bias);
+
+	PBRInfo pbrInputs;
+
+	// IBL contribution
+	vec3 color = calculatePBRInputsMetallicRoughness(Kd, n, viewPos.xyz, fPosition, MeR, pbrInputs);
+
+	// directional light contribution
+	for(int i = 0; i < numDir; i++)
+		color *= calculatePBRLightContributionDir( pbrInputs, dLights[i])*shadow;
+
+	// point light contribution
+	for(int i = 0; i < numPos; i++)
+  		color += calculatePBRLightContributionPoint(pbrInputs, pLights[i])*shadow;
+
+	color = color * (Kao.r < 0.01 ? 1.0 : Kao);
+	color = pow(Ke.rgb + color, vec3(1.0/2.2) ) ;
+
+	if(ssao2.w < 0.0f)
+		color = vec3(shadow);
+	
+    out_FragColor = vec4(color, 1.0);
+}
+#endif

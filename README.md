@@ -32,7 +32,6 @@ To run the game, open the .exe in bin/Release. Make sure you meet the requiremen
 * maxWhite - everything brighter than this value gets mapped to 1
 * bloomStrength - how visible the bloom is
 * lightAdaption - how fast the light adapts to the scene
-* compatability_mode - uses a different setup for the hdr pipeline, fixes bright images on some GPUs
 * ssao - sets ssao effect
 * scale - sets the scale of ssao tiling
 * bias - sets strength of the ssao
