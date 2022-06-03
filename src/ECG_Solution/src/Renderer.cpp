@@ -191,7 +191,9 @@ void renderer::draw(level* level)
 		lava_sim_.update(perframe_data_->delta_time.x);
 		lava_sim_.simulation_step();
 		glEnable(GL_BLEND);
+		glDepthMask(GL_FALSE);
 		lava_sim_.draw();
+		glDepthMask(GL_TRUE);
 		glDisable(GL_BLEND);
 		}	
 
