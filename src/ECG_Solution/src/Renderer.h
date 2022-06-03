@@ -72,7 +72,6 @@ private:
 	// Framebuffer size cant be changed after init eg. window resizing not correctly working
 	framebuffer framebuffer1_ = framebuffer(state->width, state->height, GL_RGBA16F, GL_DEPTH_COMPONENT24); // main render target for processing
 	framebuffer framebuffer2_ = framebuffer(state->width, state->height, GL_RGBA16F, GL_DEPTH_COMPONENT24); // main render target for processing
-	framebuffer framebuffer3_ = framebuffer(state->width, state->height, GL_RGBA16F, GL_DEPTH_COMPONENT24); // main render target for processing
 	framebuffer luminance_ = framebuffer(64, 64, GL_RGBA16F, 0);
 	framebuffer bright_pass_fb_ = framebuffer(256, 256, GL_RGBA16F, 0);
 	framebuffer bloom0_ = framebuffer(256, 256, GL_RGBA16F, 0); 

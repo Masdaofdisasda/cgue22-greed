@@ -127,6 +127,14 @@ void renderer::build_shader_programs()
 }
 
 void renderer::prepare_framebuffers() {
+	auto vendor = std::string(reinterpret_cast<const char*>(glGetString(GL_VENDOR)));
+	std::cout << vendor + " GPU detected \n";
+	if (vendor == "INTEL")
+	{
+		std::cout << "automatic light adaption will be deactivated \nplease adjust the brightness via the exposure settings \n";
+		std::cout << "bindless textures may not be available \nrendered scene may be rendered with placeholder textures \n";
+		state->intel_mode = true;
+	}
 
 	glGenTextures(1, &luminance1x1_);
 	glTextureView(luminance1x1_, GL_TEXTURE_2D, luminance_.get_texture_color().get_handle(), GL_RGBA16F, 6, 1, 0, 1);
@@ -147,10 +155,6 @@ void renderer::draw(level* level)
 	const glm::mat4 light_proj = level->get_tight_scene_frustum(light_view);
 	perframe_data_->light_view = light_view;
 	perframe_data_->light_view_proj = light_proj * light_view;
-
-	// TODO
-	//lights_.point[0].position = perframe_data_->view_pos;
-	//positional_lights_.update(lights_.point.size() * sizeof(positional_light), lights_.point.data());
 
 	perframe_buffer_.update(sizeof(PerFrameData), perframe_data_);
 
@@ -288,7 +292,7 @@ void renderer::draw(level* level)
 	if (state->bloom)
 	{
 
-		// 4.1 - downscale for addiational blur and convert framebuffer to luminance
+		// 4.1 - downscale for additional blur and convert scene image to luminance
 		luminance_.bind();
 			to_luminance_.use();
 			glBindTextureUnit(16, framebuffer2_.get_texture_color().get_handle());
@@ -296,15 +300,18 @@ void renderer::draw(level* level)
 		luminance_.unbind();
 		glGenerateTextureMipmap(luminance_.get_texture_color().get_handle());
 
+		if (state->intel_mode)
+		{
+			const glm::vec4 luminance(glm::vec3(0.1f), 1.0f);
+			glTextureSubImage2D(luminance1x1_, 0, 0, 0, 1, 1, GL_RGBA, GL_FLOAT, &luminance[0]);
+		}
+
 		// 4.2 - compute light adaption (OpenGL memory model requires these memory barriers: https://www.khronos.org/opengl/wiki/Memory_Model )
 		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 		light_adapt_.use();
-		//glBindImageTexture(0, luminances_[0]->get_handle(), 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA16F);
-		//glBindImageTexture(1, luminance1x1_, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA16F);
-		//glBindImageTexture(2, luminances_[1]->get_handle(), 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA16F);
-		glBindImageTexture(0, luminances_[0]->get_handle(), 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA16F);
-		glBindImageTexture(1, luminance1x1_, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA16F);
-		glBindImageTexture(2, luminances_[1]->get_handle(), 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
+		glBindImageTexture(0, luminances_[0]->get_handle(), 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA16F);
+		glBindImageTexture(1, luminance1x1_, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA16F);
+		glBindImageTexture(2, luminances_[1]->get_handle(), 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA16F);
 		glDispatchCompute(1, 1, 1);
 		glMemoryBarrier(GL_TEXTURE_FETCH_BARRIER_BIT);
 

@@ -39,6 +39,7 @@ struct global_state
 	float max_white = 1.07f;
 	float bloom_strength = 0.2f;
 	float adaptation_speed = 1.3f;
+	bool intel_mode = false;
 	//ssao
 	float scale = 1.0f;
 	float bias = 0.2f;

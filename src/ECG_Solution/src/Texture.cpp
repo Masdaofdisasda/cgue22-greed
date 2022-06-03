@@ -25,10 +25,10 @@ GLuint Texture::load_texture(const char* tex_path)
 	// generate texture
 	glCreateTextures(GL_TEXTURE_2D, 1, &handle);
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTextureParameteri(handle, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTextureParameteri(handle, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTextureParameteri(handle, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTextureParameteri(handle, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	
 	gli::texture gli_tex = gli::load_ktx(tex_path);
 
@@ -110,7 +110,7 @@ void Texture::load_texture_mt(const char* tex_path, GLuint handles[], uint64_t b
 GLuint Texture::load_3dlut(const char* tex_path)
 {
 	// Load .CUBE file 
-	printf("Loading LUT file %s \n", tex_path);
+	printf("Loading LUT file \n");
 	FILE* file = fopen(tex_path, "r");
 
 	if (file == nullptr) {
@@ -152,28 +152,17 @@ GLuint Texture::load_3dlut(const char* tex_path)
 
 	// Create texture
 	GLuint texture;
-	glGenTextures(1, &texture);
-	glBindTexture(GL_TEXTURE_3D, texture);
+	glCreateTextures(GL_TEXTURE_3D, 1, &texture);
 
 	// Load data to texture
-	glTexImage3D(
-
-		GL_TEXTURE_3D,
-		0,
-		GL_RGB,
-		size, size, size,
-		0,
-		GL_RGB,
-		GL_FLOAT,
-		lut_data
-	);
+	glTextureSubImage3D(texture, 0, 0, 0, 0, size, size, size, GL_RGB, GL_FLOAT, lut_data);
 
 	// Set sampling parameters
-	glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-	glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP);
+	glTextureParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTextureParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTextureParameteri(texture, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	glTextureParameteri(texture, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	glTextureParameteri(texture, GL_TEXTURE_WRAP_R, GL_CLAMP);
 
 	return texture;
 
@@ -224,7 +213,7 @@ GLuint Texture::get_3D_noise(int size, float base_freq) // todo
 	int depth = size;
 	float persistence = 0.5f;
 
-	printf("Generating noise texture...");
+	printf("Generating noise texture...\n");
 
 	GLfloat* data = static_cast<GLfloat*>(malloc(width * height * depth * 8));
 

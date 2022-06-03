@@ -49,6 +49,7 @@ layout(std140, binding = 0) uniform PerFrameData
     vec4 ssao2;
 };
 
+#if defined(GL_ARB_bindless_texture) && defined(GL_ARB_gpu_shader_int64)
 struct Material
 {
 	uint albedo_;
@@ -74,6 +75,7 @@ layout(std430, binding = 5) restrict readonly buffer material
 {
 	Material materials[];
 };
+#endif
 
 struct PBRInfo
 {
