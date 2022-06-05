@@ -9,6 +9,7 @@ layout( location = 0 ) out vec4 FragColor;
 void main() {
 
 	vec4 albedo = texture(particleTex, UV);
+	albedo.w *= 0.2;
 
 	FragColor = albedo;
 }

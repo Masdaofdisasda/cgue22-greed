@@ -36,10 +36,13 @@ PerFrameData perframe_data_;
 mouse_state mouse_state_;
 
 // used for moveto camera animation
+// demo
+#if 1
 glm::vec3 cam_start_pos(0.0f, 2.0f, 0.0f);
 glm::vec3 cam_start_rot(-90.0f, 90.0f, 90.0f);
 glm::vec3 cam_end_pos(0.0f, 100.0f, 0.0f);
 glm::vec3 cam_end_rot(90.0f, 90.0f, 90.0f);
+#endif
 
 camera_positioner_interface* camera_positioner_;
 camera_positioner_first_person floating_positioner_(glm::vec3(-10.0f, 6.0f, 10.0f), glm::vec3(0.0f, 2.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -219,6 +222,20 @@ int main(int argc, char** argv)
 
 		OPTICK_PUSH("draw routine")
 		// update camera
+		if (state_->won && !state_->using_animation_camera)
+		{
+
+			state_->using_animation_camera = true;
+			camera_positioner_ = &positioner_moveTo;
+			state_->debug_draw_physics = false;
+			state_->hud = false;
+			positioner_moveTo.set_position(cam_start_pos);
+			positioner_moveTo.set_angles(cam_start_rot);
+			positioner_moveTo.set_desired_position(cam_end_pos);
+			positioner_moveTo.set_desired_angles(cam_end_rot);
+			glfwSetInputMode(glfw_app.get_window(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+			camera_.set_positioner(camera_positioner_);
+		}
 		player.update_camera_positioner();
 		camera_positioner_->update(delta_seconds, mouse_state_.pos, mouse_state_.pressed_left);
 
@@ -298,7 +315,7 @@ void registerInputCallbacks(glfw_app& app) {
 				keyboard_input_.pressing_shift = press;
 			if (key == GLFW_KEY_SPACE)
 				keyboard_input_.pressing_space = press;
-
+			
 			// Window management, Debug, Effects
 			if (key == GLFW_KEY_ENTER)
 			{

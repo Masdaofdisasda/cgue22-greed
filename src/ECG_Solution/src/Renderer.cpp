@@ -129,7 +129,7 @@ void renderer::build_shader_programs()
 void renderer::prepare_framebuffers() {
 	auto vendor = std::string(reinterpret_cast<const char*>(glGetString(GL_VENDOR)));
 	std::cout << vendor + " GPU detected \n";
-	if (vendor == "INTEL")
+	if (vendor == "Intel")
 	{
 		std::cout << "automatic light adaption will be deactivated \nplease adjust the brightness via the exposure settings \n";
 		std::cout << "bindless textures may not be available \nrendered scene may be rendered with placeholder textures \n";
@@ -194,10 +194,12 @@ void renderer::draw(level* level)
 		{
 		lava_sim_.update(perframe_data_->delta_time.x);
 		lava_sim_.simulation_step();
-		glEnable(GL_BLEND);
+		glEnable(GL_BLEND); glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
 		glDepthMask(GL_FALSE);
 		lava_sim_.draw();
-		glDepthMask(GL_TRUE);
+		glDepthMask(GL_TRUE); glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 		glDisable(GL_BLEND);
 		}	
 
@@ -400,7 +402,7 @@ void renderer::draw_hud()
 	render_waypoint.use();
 	render_waypoint.set_vec3("position", state->waypoint);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
-
+	
 	if (state->display_walk_tutorial)
 	{
 		font_renderer_.print("Use WASD keys to move", state->width * 0.03f, state->height * 0.9f, .4f, glm::vec3(1.0f, 1.0f, 1.0f));
@@ -435,7 +437,7 @@ void renderer::draw_hud()
 	if (state->display_collect_item_hint) {
 		font_renderer_.print("Click to collect", state->width * 0.42f, state->height * 0.40f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f));
 	}
-
+	
 	if (state->paused)
 	{
 		render_color_.use();

@@ -155,7 +155,7 @@ GLuint Texture::load_3dlut(const char* tex_path)
 	glCreateTextures(GL_TEXTURE_3D, 1, &texture);
 
 	// Load data to texture
-	glTextureSubImage3D(texture, 0, 0, 0, 0, size, size, size, GL_RGB, GL_FLOAT, lut_data);
+	glTexImage3D(GL_TEXTURE_3D,0,GL_RGB,size, size, size,0,GL_RGB,GL_FLOAT,lut_data);
 
 	// Set sampling parameters
 	glTextureParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
