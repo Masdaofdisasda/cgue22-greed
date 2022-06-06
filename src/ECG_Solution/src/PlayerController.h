@@ -57,13 +57,13 @@ private:
 	// settings
 	glm::vec3 rigidbody_to_camera_offset_ = glm::vec3(0,1,0);
 	float player_speed_ = 100.0f; // how fast the player accelerates (x,z axis)
-	float jump_strength_ = 4.0f; // how high the player can jump (y axis)
+	float jump_strength_ = 6.0f; // how high the player can jump (y axis)
 	float stop_speed_ = 7.0f; // how fast the player decelerates when not giving input (x,z axis)
 	float max_speed_ = 5.0f; // how fast the player is allowed to run at max (x,z axis)
 	float reach_ = 5.0f; // maximum distance that items can be away and still be collected
 	float item_weight_ = 0; // how much all the items weigh together (influences movement)
-	float jump_max_cooldown_time_ = 1.0f; // how long the jump will be on cooldown after initialization
-	float max_ground_distance_ = 1.25f; // how far the ground can be away, so that the player can still jump off of it.
+	float jump_max_cooldown_time_ = 0.25f; // how long the jump will be on cooldown after initialization
+	float max_ground_distance_ = 1.2f; // how far the ground can be away, so that the player can still jump off of it.
 
 	Physics::PhysicsObject* get_collectable_in_front_of_player() const;
 	static void input_to_movement_state(keyboard_input_state inputs, movement& movement);

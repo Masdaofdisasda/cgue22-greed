@@ -90,7 +90,7 @@ class camera_positioner_first_person final : public camera_positioner_interface
 
 	private:
 		glm::vec2 mouse_pos_ = glm::vec2(0);
-		glm::vec3 camera_position_ = glm::vec3(0.0f, 10.0f, 10.0f);
+		glm::vec3 camera_position_ = glm::vec3(0.0f, 0.0f, 0.0f);
 		glm::quat camera_orientation_ = glm::quat(glm::vec3(0));
 		glm::vec3 move_speed_ = glm::vec3(0.0f);
 		glm::vec3 up_ = glm::vec3(0.0f, 0.0f, 1.0f);
