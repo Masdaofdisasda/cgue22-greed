@@ -1,4 +1,4 @@
-#include "material.h"
+#include "Material.h"
 
 // expects path to be "textures/rockground/albedo.jpg"
 

@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 #include <functional>
-#include "material.h"
+#include "Material.h"
 #include "LightSource.h"
 #include "Camera.h"
 #include "LevelStructs.h"
