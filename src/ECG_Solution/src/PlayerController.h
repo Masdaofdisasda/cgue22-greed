@@ -24,7 +24,7 @@ public:
 	/// Tries to move the rigidbody in the desired direction. 
 	/// Forwards and backwards depend on the orientation of the camera.
 	/// </summary>
-	void move(keyboard_input_state inputs, float delta_time);
+	void move(keyboard_input_state inputs, float delta_time, bool can_fly);
 
 	/// <summary>
 	/// Sets the camera position to be on top of the player rigidbody

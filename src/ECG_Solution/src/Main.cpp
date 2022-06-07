@@ -67,8 +67,8 @@ int main(int argc, char** argv)
 	/* --------------------------------------------- */
 	// Load settings.ini
 	/* --------------------------------------------- */
-
-	std::ifstream file("../assets/gameplay.fbx");
+	const char* scenePath = "../assets/gameplay.fbx";
+	std::ifstream file(scenePath);
 	// if this assertion fails, and you cloned this project from Github,
 	// try setting your working directory of the debugger to "$(TargetDir)"
 	assert(file.is_open());
@@ -115,7 +115,7 @@ int main(int argc, char** argv)
 	glfw_app.swap_buffers();
 	printf("Loading level...\n");
 	OPTICK_PUSH("load level")
-	level level("../assets/gameplay.fbx", state_, perframe_data_);
+	level level(scenePath, state_, perframe_data_);
 	OPTICK_POP()
 
 	loading_screen.draw_progress();
@@ -208,7 +208,7 @@ int main(int argc, char** argv)
 		if (state_->using_debug_camera)
 			floating_positioner_.set_movement_state(keyboard_input_);
 		else {
-			player.move(keyboard_input_, delta_seconds);
+			player.move(keyboard_input_, delta_seconds, state_->cheat_fly_mode);
 			state_->display_collect_item_hint = player.has_collectable_item_in_reach();
 			player.try_collect_item(mouse_state_, keyboard_input_, item_collection);
 		}
@@ -315,6 +315,13 @@ void registerInputCallbacks(glfw_app& app) {
 				keyboard_input_.pressing_shift = press;
 			if (key == GLFW_KEY_SPACE)
 				keyboard_input_.pressing_space = press;
+			if (key == GLFW_KEY_C && action == GLFW_PRESS) {
+				if(state_->cheat_fly_mode)
+					printf("Toggle cheat: fly off\n");
+				else
+					printf("Toggle cheat: fly on\n");
+				state_->cheat_fly_mode = !state_->cheat_fly_mode;
+			}
 			
 			// Window management, Debug, Effects
 			if (key == GLFW_KEY_ENTER)

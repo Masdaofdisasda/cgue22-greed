@@ -27,7 +27,7 @@ player_controller::player_controller(Physics &physics, camera_positioner_player 
 		Physics::ObjectMode::Dynamic_NoRotation);
 }
 
-void player_controller::move(const keyboard_input_state inputs, const float delta_time)
+void player_controller::move(const keyboard_input_state inputs, const float delta_time, const bool can_fly)
 {
 	// hinder rigidbody from sleeping
 	player_object_->rigidbody->activate(true);
@@ -52,7 +52,7 @@ void player_controller::move(const keyboard_input_state inputs, const float delt
 	// jumping
 	is_grounded_ = is_ground_under_player();
 	jump_cooldown_time_ = jump_cooldown_time_ > 0 ? jump_cooldown_time_ - delta_time : 0;
-	const bool allowedToJump = is_grounded_ && jump_cooldown_time_ <= 0;
+	const bool allowedToJump = (is_grounded_ && jump_cooldown_time_ <= 0) || can_fly;
 	if (movement.jump && allowedToJump)
 	{
 		jump();
@@ -67,9 +67,9 @@ void player_controller::accelerate(glm::vec3 movement_direction, const float del
 
 void player_controller::jump()
 {
-	// printf("jump");
 	notify_observers(fx_jump);
-	player_object_->rigidbody->applyCentralImpulse(btVector3(0, jump_strength_, 0));
+	const btVector3 currentVelocity = player_object_->rigidbody->getLinearVelocity();
+	player_object_->rigidbody->setLinearVelocity(btVector3(currentVelocity.getX(), jump_strength_, currentVelocity.getZ()));
 }
 
 bool player_controller::is_ground_under_player()

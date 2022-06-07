@@ -58,6 +58,7 @@ struct global_state
 	bool paused = false;
 	bool restart = false;
 	float lava_height = 0.0f;
+	bool cheat_fly_mode = false;
 	//ui
 	bool hud = true;
 	bool display_collect_item_hint = false;
