@@ -63,6 +63,7 @@ To run the game, open the .exe in bin/Release. Make sure you meet the requiremen
 * F9 - toggle SSAO
 * F10 - start camera animation
 * F11 - toggle shadow debugging, renders shadow value instead of color
+* c - toggle flying mode in player controls. You can hold space to fly up infinitely
 * ESC - exit game
 
 ### Free Camera Controls (F6):
