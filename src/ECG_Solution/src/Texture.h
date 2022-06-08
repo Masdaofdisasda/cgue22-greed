@@ -75,13 +75,6 @@ public:
 	static GLuint load_3dlut(const char* tex_path);
 
 	/**
-	 * \brief only for testing
-	 * \param tex_path 
-	 * \param img 
-	 */
-	static void stbi_load_single(const std::string& tex_path, image_data* img);
-
-	/**
 	 * \brief generates a SSAO filter kernel texture
 	 * from OpenGL 4 Shading Language Cookbook
 	 * \return handle to the texture

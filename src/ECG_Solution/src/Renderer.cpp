@@ -373,9 +373,7 @@ void renderer::draw(level* level)
 void renderer::draw_hud()
 {
 	font_renderer_.print("+", state->width * 0.4956f, state->height * 0.4934f, .5f, glm::vec3(.7f, .7f, .7f));
-	font_renderer_.print("CLOSED BETA FOOTAGE", state->width * 0.8f, state->height * 0.08f, .5f, glm::vec3(.7f, .7f, .7f));
-	font_renderer_.print("all content is subject to change", state->width * 0.78f, state->height * 0.05f, .5f, glm::vec3(.5f, .5f, .5f));
-
+	
 	render_image_.use();
 	glBindTextureUnit(16, gold_icon);
 	glViewport(state->width * 0.02, state->height * 0.09, state->width * 0.03, state->width * 0.03);

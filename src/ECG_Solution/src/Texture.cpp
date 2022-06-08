@@ -1,6 +1,4 @@
 #include "Texture.h"
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb/stb_image.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/noise.hpp>
@@ -174,13 +172,6 @@ int Texture::get_num_mip_map_levels_2d(const int w, const int h)
 	while ((w | h) >> levels)
 		levels += 1;
 	return levels;
-}
-
-void Texture::stbi_load_single(const std::string& tex_path, image_data* img)
-{
-	stbi_set_flip_vertically_on_load(true);
-
-	img->data = stbi_load(tex_path.c_str(), &img->w, &img->h, &img->comp, STBI_rgb_alpha);
 }
 
 GLuint Texture::get_ssao_kernel()

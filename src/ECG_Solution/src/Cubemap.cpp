@@ -1,9 +1,5 @@
 #include "Cubemap.h"
 #include "Program.h"
-#define STB_IMAGE_IMPLEMENTATION1
-#include <stb/stb_image.h>
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include <stb/stb_image_write.h>
 
 /// @brief initalize the handles, caution: using the cubemap without actually
 /// assigned textures breaks the program. this was only done to allow member
@@ -253,7 +249,6 @@ void cubemap::load_hdr(const char* tex_path)
 
     glDeleteTextures(1, &hdr_id);
 
-    save_image();
 }
 
 void cubemap::render_cube()
@@ -360,20 +355,3 @@ void cubemap::render_quad()
     glBindVertexArray(0);
 }
 
-void cubemap::save_image() const
-{
-    int width, height;
-    glGetTextureLevelParameteriv(brdf_lut_id_, 0, GL_TEXTURE_WIDTH, &width);
-    glGetTextureLevelParameteriv(brdf_lut_id_, 0, GL_TEXTURE_HEIGHT, &height);
-
-    GLsizei nrChannels = 2;
-    GLsizei bufferSize = static_cast<GLsizei>(width * height * 2 * sizeof(float));
-    std::vector<char> buffer(bufferSize);
-
-    /* get texture data from video memory */
-    glGetTextureImage(brdf_lut_id_, 0, GL_RG, GL_FLOAT, bufferSize, buffer.data());
-    
-    //glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, buffer.data());
-    stbi_flip_vertically_on_write(true);
-    //stbi_write_jpg("../assets/textures/cubemap/bdrf.png", width, height, nrChannels, buffer.data(), 100);
-}
