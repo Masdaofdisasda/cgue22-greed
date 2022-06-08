@@ -576,8 +576,8 @@ void level::draw_scene() {
 			frustum_culler::seconds_since_flush += perframe_data_->delta_time.x;
 			if (frustum_culler::seconds_since_flush >= 2)
 			{
-				std::cout << "Models Loaded: " << frustum_culler::models_loaded << ", Models rendered: " << frustum_culler::models_visible
-					<< ", Models culled: " << frustum_culler::models_loaded - frustum_culler::models_visible << "\n";
+				std::cout << "Models in memory: " << frustum_culler::models_loaded << ", visible: " << frustum_culler::models_visible
+					<< ", culled: " << frustum_culler::models_loaded - frustum_culler::models_visible << "\n";
 				frustum_culler::seconds_since_flush = 0;
 			}
 		}
@@ -593,10 +593,18 @@ void level::draw_scene_shadow_map()
 	if (state_->lava_triggered)
 	{
 		glm::vec3 t = scene_[lava_].TRS.translate;
-		t.y += perframe_data_->delta_time.x * .4f;
+		if (!state_->won)
+		{
+			t.y += perframe_data_->delta_time.x * .4f;
+		}
+		else
+		{
+			t.y = -1.0f;
+		}
 		scene_[lava_].set_node_trs(t, scene_[lava_].TRS.rotation, scene_[lava_].TRS.scale);
 		state_->lava_height = scene_[lava_].TRS.translate.y;
 	}
+
 	OPTICK_PUSH("transform bounding boxes")
 	OPTICK_POP()
 	OPTICK_PUSH("update frustum culler uniform")

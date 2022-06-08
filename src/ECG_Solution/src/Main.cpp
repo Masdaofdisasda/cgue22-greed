@@ -228,7 +228,6 @@ int main(int argc, char** argv)
 			state_->using_animation_camera = true;
 			camera_positioner_ = &positioner_moveTo;
 			state_->debug_draw_physics = false;
-			state_->hud = false;
 			positioner_moveTo.set_position(cam_start_pos);
 			positioner_moveTo.set_angles(cam_start_rot);
 			positioner_moveTo.set_desired_position(cam_end_pos);
