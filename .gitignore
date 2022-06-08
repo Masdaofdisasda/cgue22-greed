@@ -375,3 +375,8 @@ FodyWeavers.xsd
 
 # Maya files
 .mayaSwatches/
+*.ma
+
+# original images
+*.png
+*.hdr
