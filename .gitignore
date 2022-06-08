@@ -17,9 +17,10 @@
 mono_crash.*
 
 # Build results
-[Dd]ebug/
+[Dd]ebug/*
+ECG_Solution/
 [Dd]ebugPublic/
-[Rr]elease/
+[Rr]elease/*
 [Rr]eleases/
 x64/
 x86/
@@ -28,21 +29,12 @@ x86/
 [Aa][Rr][Mm]64/
 bld/
 #[Bb]in/
-!src/bin/Debug/assimp-vc142-mtd.dll
-!src/bin/Debug/ikpFlac.dll
-!src/bin/Debug/ikpMP3.dll
-!src/bin/Debug/irrKlang.dll
-!src/bin/Release/assimp-vc142-mt.dll
-!src/bin/Release/ikpFlac.dll
-!src/bin/Release/ikpMP3.dll
-!src/bin/Release/irrKlang.dll
+src/bin/Debug/*.exe
+src/bin/Release/*.exe
 [Oo]bj/
 [Oo]ut/
 [Ll]og/
 [Ll]ogs/
-
-# Test Scene
-src/assets/Bistro_v5_2
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
