@@ -4,7 +4,6 @@
 
 /// @brief loads and processes 4 different textures for image based lightning
 /// loads an equirectangular panorama HDR image and prepares it for the render pipeline
-/// for an actual implemention of a cubemap texture use Texture.h
 class cubemap{
 private:
 	GLuint env_id_ = 0; // enviroment created from the hdri image (Cubemap)
@@ -24,7 +23,7 @@ private:
 		brdf_lut_id_ = 0;
 	}
 
-	// only needed for initialization
+	// helper functions only needed for initialization
 	void render_cube();
 	void render_quad();
 
@@ -32,6 +31,11 @@ public:
 	cubemap();
 	~cubemap() { release(); }
 
+	/**
+	 * \brief load an hdr image from ktx format and generate cubemaps for enviroment mapping, irradiance and pre filtered irradiance
+	 * aswell as a 2d texture of the brdf lut
+	 * \param tex_path location of the ktx file
+	 */
 	void load_hdr(const char* tex_path);
 
 	// ensure RAII compliance

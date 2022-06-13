@@ -21,7 +21,7 @@ public:
 
 	/**
 	 * \brief run through the render pipeline
-	 * \param level that should get rendered
+	 * \param level to be rendered
 	 */
 	void draw(level* level);
 	void swap_luminance();
@@ -67,9 +67,8 @@ private:
 	cubemap ibl_, sky_tex_;
 	GLuint lut_3d_ = Texture::load_3dlut("../assets/textures/look32.CUBE");
 
-	// Framebuffers for HDR/Bloom
+	// HDR/Bloom
 	GLuint luminance1x1_{};
-	// Framebuffer size cant be changed after init eg. window resizing not correctly working
 	framebuffer framebuffer1_ = framebuffer(state->width, state->height, GL_RGBA16F, GL_DEPTH_COMPONENT24); // main render target for processing
 	framebuffer framebuffer2_ = framebuffer(state->width, state->height, GL_RGBA16F, GL_DEPTH_COMPONENT24); // main render target for processing
 	framebuffer luminance_ = framebuffer(64, 64, GL_RGBA16F, 0);
@@ -80,12 +79,12 @@ private:
 	Texture luminance1_ = Texture(GL_TEXTURE_2D, 1, 1, GL_RGBA16F);
 	const Texture* luminances_[2] = { &luminance0_, &luminance1_ };
 
-	// Framebuffers for SSAO
+	// SSAO
 	framebuffer ssao_fb_ = framebuffer(1024, 1024, GL_RGBA8, 0);
 	framebuffer blur_ = framebuffer(1024, 1024, GL_RGBA8, 0);
 	GLuint pattern_ = Texture::get_ssao_kernel();
 
-	// Framebuffers for light/shadow
+	// light/shadow
 	framebuffer depth_map_fb_ = framebuffer(1024 * state->shadow_res, 1024 * state->shadow_res, 0, GL_DEPTH_COMPONENT24);
 	framebuffer blur0_ = framebuffer(state->width / 2, state->height / 2, GL_RGBA16F, 0);
 	framebuffer blur1_ = framebuffer(state->width / 2, state->height / 2, GL_RGBA16F, 0);
@@ -93,6 +92,7 @@ private:
 	GLuint blue_noise = Texture::load_texture("../assets/shaders/lightFX/blue_noise_512_512.ktx");
 	GLuint perlin_noise = Texture::get_3D_noise(32, 4.0f);
 
+	// HUD
 	GLuint way_point = Texture::load_texture("../assets/shaders/HUD/waypoint.ktx");
 	GLuint gold_icon = Texture::load_texture("../assets/shaders/HUD/goldicons.ktx");
 	GLuint money_icon = Texture::load_texture("../assets/shaders/HUD/moneybagicon.ktx");
@@ -111,6 +111,9 @@ private:
 	/// @brief initializes settings for post processing and rendering
 	void set_render_settings() const;
 
+	/**
+	 * \brief draws waypoint, text and some icons
+	 */
 	void draw_hud();
 };
 

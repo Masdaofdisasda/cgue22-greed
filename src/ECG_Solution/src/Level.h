@@ -143,8 +143,17 @@ private:
 	 */
 	void transform_bounding_boxes() const;
 
+	/**
+	 * \brief calculates bounds in world space from model space
+	 * \param mat model transformation
+	 * \param bounds of the model in model space
+	 * \return bounds in world space
+	 */
 	bounding_box corrected_bounds_transform(glm::mat4 mat, bounding_box bounds) const;
 
+	/**
+	 * \brief computes the tightest possible bounds of the whole scene
+	 */
 	void get_scene_bounds();
 
 	/**
@@ -190,7 +199,7 @@ public:
 	 */
 	std::vector<physics_mesh> get_dynamic();
 
-	/** TODO
+	/**
 	 * \brief calculates the tightest possible orthogonal view frustum of the whole scene, used for directional shadow mapping
 	 * \return an orthogonal projection of the level
 	 */

@@ -282,7 +282,7 @@ vec3 calculatePBRLightContributionDir( inout PBRInfo pbrInputs, DirectionalLight
 	vec3 diffuseContrib = (1.0 - F) * diffuseBurley(pbrInputs);
 	vec3 specContrib = F * G * D / (4.0 * NdotL * NdotV);
 	// Obtain final intensity as reflectance (BRDF) scaled by the energy of the light (cosine law)
-	vec3 color = NdotL * light.intensity.rgb * (diffuseContrib + specContrib);
+	vec3 color = NdotL * light.intensity.rgb * 3.0f * (diffuseContrib + specContrib);
 
 	return color;
 }

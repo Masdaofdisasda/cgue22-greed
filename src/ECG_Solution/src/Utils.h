@@ -147,6 +147,15 @@ glm::vec3 scale_from_transform(glm::mat4 transform);
 /// @return a view matrix according to the input vectors
 glm::mat4 glm_look_at(const glm::vec3 pos, const glm::vec3 target, const glm::vec3 up);
 
+
+/**
+ * \brief implements the function of the same name from glm
+ * \tparam T some type of matrix
+ * \param yaw angle in radians
+ * \param pitch angle in radians
+ * \param roll angle in radians
+ * \return view matrix from euler angles
+ */
 template <typename T>
 glm::mat4 glm_euler_angle_xyz
 (
@@ -188,7 +197,10 @@ glm::mat4 glm_euler_angle_xyz
  */
 global_state load_settings();
 
-
+/**
+ * \brief random direction vector generator for SSAO
+ * \return normalized vector in some direction
+ */
 glm::vec3 uniform_circle();
 
 /// texture bindings in shader:

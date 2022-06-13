@@ -8,7 +8,7 @@
 #include <glm/gtx/matrix_decompose.hpp>
 #include <optick/optick.h>
 
-/// @brief describes the bounding box of a mesh, can be used for frustum culling or physics simulation
+/// @brief describes the (8 corners of the) bounding box of a mesh, used for frustum culling
 struct bounding_box
 {
 	glm::vec3 min_;
@@ -67,7 +67,7 @@ struct game_properties {
 };
 
 /// @brief implements a simple scene graph of hierarchical transformations
-///	DEPRECATED
+///	DEPRECATED - use entity
 struct hierarchy
 {
 	std::string name;
@@ -103,6 +103,9 @@ struct hierarchy
 
 enum entity_type { rigid, dynamic, decoration, lava };
 
+/**
+ * \brief describes a single model in a scene
+ */
 struct entity
 {
 	std::string name;

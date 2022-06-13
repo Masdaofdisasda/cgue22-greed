@@ -28,7 +28,7 @@ renderer::renderer(PerFrameData& perframe_data, light_sources& sources)
 	glBindTextureUnit(21, perlin_noise);
 
 	font_renderer_.init("../assets/fonts/Quasimoda/Quasimoda-Regular.otf", state->width, state->height);
-	lava_sim_.init(glm::ivec3(lights_.directional.size(), lights_.point.size(), 0));
+	lava_sim_.init();
 	OPTICK_POP()
 }
 

@@ -9,10 +9,17 @@ class LoadingScreen
 public:
 	LoadingScreen(int width, int height);
 	~LoadingScreen();
-	 void draw_progress();
+
+	/**
+	 * \brief draws the current loading progress
+	 */
+	void draw_progress();
 
 private:
-	
+
+	/**
+	 * \brief  loads loading screen images and compiles the needed shaders
+	 */
 	void init();
 	
 	    int w_;

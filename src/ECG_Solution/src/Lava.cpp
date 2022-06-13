@@ -1,6 +1,6 @@
 #include "Lava.h"
 
-void lava_system::init(glm::ivec3 lights)
+void lava_system::init()
 {
     Shader render_vert("../assets/shaders/Lava/lavaParticles.vert");
     Shader render_frag("../assets/shaders/Lava/lavaParticles.frag");
@@ -25,9 +25,9 @@ void lava_system::setup_buffers()
     const float steps = 29.0f / static_cast<float>(total_particles_);
     for (auto i = 0; i < total_particles_; i++) {
         glm::vec4 p(0.0f, 0.0f, 0.0f, 1.0f);
-        p.x = spawn.x + distribution(generator);
+        p.x = spawn.x + distribution(generator) * 0.1f;
         p.y = 29.0f + i * steps;
-        p.z = spawn.z + distribution(generator);
+        p.z = spawn.z + distribution(generator) * 0.1f;
         init_pos.push_back(p.x);
         init_pos.push_back(p.y);
         init_pos.push_back(p.z);

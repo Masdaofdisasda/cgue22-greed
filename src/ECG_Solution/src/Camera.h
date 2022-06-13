@@ -10,9 +10,31 @@ class camera_positioner_interface
 {
 public:
 	virtual ~camera_positioner_interface() = default;
+
+	/**
+	 * \brief get the current view matrix of the camera
+	 * \return the view matrix
+	 */
 	virtual glm::mat4 get_view_matrix() const = 0;
+
+	/**
+	 * \brief get the current position of the camera in world space
+	 * \return positon vector
+	 */
 	virtual glm::vec3 get_position() const = 0;
+
+	/**
+	 * \brief get the current orientation of the camera
+	 * \return unit quaternion in camera direction rotation
+	 */
 	virtual glm::quat get_orientation() const = 0;
+
+	/**
+	 * \brief translate and rotate the camera based on inputs
+	 * \param delta_seconds time passed since last frame
+	 * \param mouse_pos current mouse position
+	 * \param mouse_pressed if the left mouse button is pressed
+	 */
 	virtual void update(double delta_seconds, const glm::vec2& mouse_pos, bool mouse_pressed) = 0;
 };
 
@@ -38,7 +60,7 @@ private:
 	camera_positioner_interface* positioner_;
 };
 
-/* Camera with first person view
+/* free flying camera with first person view
 * view position can be moved in all 6 directions
 * the player can only add accelertion to the camera, if the player stops pressing a key, the movement slowly stops
 */
@@ -97,6 +119,9 @@ class camera_positioner_first_person final : public camera_positioner_interface
 
 };
 
+/**
+ * \brief first person camera coupled to the player, position gets controlled by the physics engine
+ */
 class camera_positioner_player final : public camera_positioner_interface {
 public:
 	virtual glm::mat4 get_view_matrix() const override
@@ -124,7 +149,10 @@ private:
 	glm::vec3 up_ = glm::vec3(0.0f, 1.0f, 0.0f);
 };
 
-
+/**
+ * \brief animation camera, travels from some position with some orientation to a set position and set orientation
+ * the movement speed can be changed, by continuously setting new end positions the camera can move along paths
+ */
 class camera_positioner_move_to final : public camera_positioner_interface
 {
 public:

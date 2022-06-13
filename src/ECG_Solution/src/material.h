@@ -44,7 +44,13 @@ struct PACKED_STRUCT material final
 
 	uint64_t type = visible;
 
+/// expects path to be "textures/rockground/albedo.jpg"
+/// @brief loads five textures from a texture folder
+/// @param tex_path should be of the form "textures/(Material_1)/albedo.ktx"
+/// @param name of the material, eg. Material_1
 	static void create(const char* tex_path, const char* name, material& mat);
+
+/// @brief explicitly deletes every texture in this material
 	static void clear(material& mat);
 };
 

@@ -1,10 +1,6 @@
 #include "Material.h"
 
-// expects path to be "textures/rockground/albedo.jpg"
 
-/// @brief loads five textures from a texture folder
-/// @param tex_path should be of the form "textures/(Material_1)/albedo.jpg"
-/// @param name the name of the material, eg. Material_1
 void material::create(const char* tex_path, const char* name, material& mat) {
 	
 	// remove "/albedo.jpg" from path end
@@ -41,7 +37,6 @@ void material::create(const char* tex_path, const char* name, material& mat) {
 	mat.height64_ = bindless[6];
 }
 
-/// @brief explicitly deletes every texture in this material
 void material::clear(material& mat)
 {
 

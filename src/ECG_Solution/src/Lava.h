@@ -12,10 +12,26 @@ public:
 	lava_system()= default;
 	~lava_system(){release();};
 
-    void init(glm::ivec3 lights);
-    void update(float t);
-    void simulation_step();
-    void draw();
+	/**
+	 * \brief compiles shaders and buffers needed for the simulation
+	 */
+	void init();
+
+	/**
+	 * \brief updates time step
+	 * \param t time since last frame
+	 */
+	void update(float t);
+
+	/**
+	 * \brief computes one simulation step
+	 */
+	void simulation_step();
+
+	/**
+	 * \brief draws the particles
+	 */
+	void draw();
 
 private:
     program sim_update_;
@@ -29,8 +45,11 @@ private:
     float time_ = 0.0f, delta_t_ = 0.0f, speed_ = 5.0f, angle_ = 0.0f;
     GLuint particles_vao_ = 0;
     GLuint bh_vao_ = 0, bh_buf_ = 0;  // black hole VAO and buffer
-    glm::vec4 bh1_ = glm::vec4(-8, -5, -16, 1);
+    glm::vec4 bh1_ = glm::vec4(-6, -5, -16, 1);
 
+	/**
+	 * \brief fills buffers for position and velocity and binds them to the vao
+	 */
 	void setup_buffers();
 	void release() const;
 
